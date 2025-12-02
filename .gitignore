@@ -46,3 +46,6 @@ Thumbs.db
 # Misc
 .cache/
 *.log
+
+# Claude Code
+.claude/
