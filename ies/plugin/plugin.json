@@ -1,0 +1,28 @@
+{
+  "name": "ies-explorer",
+  "author": "chris",
+  "url": "https://github.com/chris/ies-explorer",
+  "version": "0.1.4",
+  "minAppVersion": "3.0.12",
+  "backends": [
+    "all"
+  ],
+  "frontends": [
+    "desktop",
+    "mobile",
+    "browser-desktop",
+    "browser-mobile"
+  ],
+  "displayName": {
+    "default": "IES Explorer",
+    "zh_CN": "IES 探索助手"
+  },
+  "description": {
+    "default": "Intelligent Exploration System - AI-guided Socratic questioning for knowledge building",
+    "zh_CN": "智能探索系统 - AI引导的苏格拉底式提问，用于知识建构"
+  },
+  "readme": {
+    "default": "README.md"
+  },
+  "keywords": ["ai", "exploration", "socratic", "knowledge"]
+}

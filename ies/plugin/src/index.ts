@@ -1,0 +1,135 @@
+import {
+    Plugin,
+    showMessage,
+    Dialog,
+    openTab,
+    getFrontend,
+    openWindow
+} from "siyuan";
+
+import "@/index.scss";
+
+import { setPluginInstance, t } from "./utils/i18n";
+import IESSidebar from "./ies-sidebar-simple.svelte";
+
+export const SETTINGS_FILE = "settings.json";
+
+const IES_SIDEBAR_TYPE = "ies-explorer-sidebar";
+export const IES_TAB_TYPE = "ies-explorer-tab";
+
+export default class IESExplorerPlugin extends Plugin {
+    private iesSidebarApp: IESSidebar;
+
+    async onload() {
+        // Set i18n plugin instance
+        setPluginInstance(this);
+
+        // Add custom icon
+        this.addIcons(`
+    <symbol id="iconIESExplorer" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </symbol>
+    `);
+
+        // Register IES tab type
+        const pluginInstance = this;
+        this.addTab({
+            type: IES_TAB_TYPE,
+            init() {
+                const element = this.element as HTMLElement;
+                element.style.display = 'flex';
+                element.style.flexDirection = 'column';
+                element.style.height = '100%';
+                // Create IES sidebar in tab
+                new IESSidebar({
+                    target: element,
+                    props: {
+                        plugin: pluginInstance
+                    }
+                });
+            },
+            destroy() {
+                // Svelte component auto-cleanup
+            }
+        });
+    }
+
+    async onLayoutReady() {
+        // Register IES sidebar dock
+        this.addDock({
+            config: {
+                position: "RightBottom",
+                size: { width: 400, height: 0 },
+                icon: "iconIESExplorer",
+                title: "IES Explorer",
+            },
+            data: {
+                text: "IES Explorer"
+            },
+            type: IES_SIDEBAR_TYPE,
+            init: (dock) => {
+                this.iesSidebarApp = new IESSidebar({
+                    target: dock.element,
+                    props: {
+                        plugin: this
+                    }
+                });
+            },
+            destroy: () => {
+                if (this.iesSidebarApp) {
+                    this.iesSidebarApp.$destroy();
+                }
+            }
+        });
+    }
+
+    async onunload() {
+        console.log("IES Explorer plugin unloaded");
+    }
+
+    async uninstall() {
+        console.log("IES Explorer plugin uninstalled");
+        // Remove plugin data
+        await this.removeData(SETTINGS_FILE);
+        await this.removeData("ies-sessions.json");
+    }
+
+    /**
+     * Open IES in a new tab
+     */
+    openIESTab() {
+        const tabId = this.name + IES_TAB_TYPE;
+        openTab({
+            app: this.app,
+            custom: {
+                title: 'IES Explorer',
+                icon: 'iconIESExplorer',
+                id: tabId,
+                data: {
+                    time: Date.now()
+                }
+            }
+        });
+    }
+
+    /**
+     * Open IES in a new window
+     */
+    async openIESWindow() {
+        const tabId = this.name + IES_TAB_TYPE;
+        const tab = openTab({
+            app: this.app,
+            custom: {
+                title: 'IES Explorer',
+                icon: 'iconIESExplorer',
+                id: tabId,
+            }
+        });
+
+        openWindow({
+            height: 700,
+            width: 500,
+            tab: await tab,
+        });
+    }
+}

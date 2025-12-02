@@ -1,0 +1,1094 @@
+# Framework Project Progress
+
+*Building the system for exploring therapeutic worldview*
+
+**Start with:** `/framework-session`
+
+## Session: 2025-12-01 (E2E Testing) - Backend Verification & Bug Fixes
+
+### Accomplished
+
+**End-to-End Backend Testing:**
+
+Verified all backend components with running Docker services (Neo4j + Qdrant):
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Docker (Neo4j + Qdrant) | ✅ | Containers healthy |
+| Backend health | ✅ | Running on port 8081 |
+| Session context endpoint | ✅ | Returns profile/session context |
+| Question Engine - State detection | ✅ | Detects user state from messages |
+| Question Engine - Generate questions | ✅ | Full pipeline state→approach→questions |
+| Session processing | ⚠️ | Needs `IES_ANTHROPIC_API_KEY` |
+| Tests | ✅ | 54/61 passing |
+
+**Bug Fixes:**
+
+Fixed method name mismatches in `question_engine.py`:
+- `get_templates()` → `get_templates_for_approach()`
+- `get_categories()` → `get_categories_for_approach()`
+
+**Test Results:**
+- 54 passing, 7 failing (pre-existing state detection edge cases from Phase 3)
+- Core Question Engine pipeline verified working
+
+### Current State
+
+**Status:** PHASE 4 VERIFIED WORKING
+
+**Backend:** Running on port 8081
+- Start: `cd ies-backend && IES_NEO4J_PASSWORD=brainexplore uv run uvicorn ies_backend.main:app --host 0.0.0.0 --port 8081`
+- Session processing requires: `IES_ANTHROPIC_API_KEY`
+
+**Files Modified:**
+- `ies-backend/src/ies_backend/api/question_engine.py` — Fixed method name bugs
+
+### Next Steps
+
+1. Add `IES_ANTHROPIC_API_KEY` to test entity extraction
+2. Consider Phase 5: SiYuan plugin integration
+3. Fix 7 state detection test edge cases (optional)
+
+---
+
+## Session: 2025-12-01 (Phase 4) - Session Integration Design
+
+### Accomplished
+
+**Phase 4 Design Decisions — Session Integration Architecture**
+
+Decided on **Hybrid approach** for integrating Question Engine with Claude Code:
+- Claude Code handles conversation naturally
+- Backend called at key moments (start, state changes, end)
+- Question Engine is a tool, not a controller
+
+**Session Start — Context Loading:**
+- Load profile + current capacity
+- Load last 2-3 session summaries (continuity without overwhelm)
+- Load active "developing" entities
+- *Rationale:* Cold starts kill momentum, but too much context paralyzes
+
+**During Session — Judgment-Based API Calls:**
+- No automatic polling (breaks conversational flow)
+- Claude calls Question Engine when sensing shift OR user says "I'm stuck"
+- API available as tool, not mandatory controller
+- *Rationale:* Good conversation has natural rhythm; forced state-checks feel robotic
+
+**Session End — Explicit + Gentle Suggestion:**
+- Primary: User says `/end-session`
+- Secondary: Claude suggests when user says "done/tired", energy drops, or 45+ min elapsed
+- Suggestion is gentle: "Want to wrap up and capture what we explored?"
+- *Rationale:* ADHD means poor time awareness; gentle nudges help without forcing
+
+**End-Session Flow — Minimal Closure:**
+- Trigger backend extraction automatically
+- Show summary to user
+- No required reflection prompts (user may be tired)
+- *Rationale:* Extraction happens without requiring more user energy
+
+**New Endpoint — `GET /session/context/{user_id}`:**
+```json
+{
+  "profile_summary": "condensed profile for prompts",
+  "capacity": 7,
+  "recent_sessions": [
+    {
+      "date": "2025-12-01",
+      "topic": "Meaning-making as solution",
+      "entities": ["Narrow Window", "Unnecessary Pain"],
+      "hanging_question": "How distinguish addressable vs unavoidable pain?"
+    }
+  ],
+  "active_entities": [
+    {"name": "Narrow Window", "status": "developing"},
+    {"name": "Meaning-making", "status": "seed"}
+  ]
+}
+```
+- Medium detail for session summaries: topic + entities + hanging question
+- *Rationale:* Enough to jog memory, not enough to overwhelm
+
+### Current State
+
+**Status:** PHASE 4 IMPLEMENTATION COMPLETE ✓
+
+### End-to-End Testing (2025-12-01)
+
+**Issue found:** Port 8000 was occupied by Portainer (another service).
+
+**Resolution:**
+- Backend now runs on port 8081
+- Updated command files to use port 8081
+- Start command: `cd ies-backend && IES_NEO4J_PASSWORD=brainexplore uv run uvicorn ies_backend.main:app --host 0.0.0.0 --port 8081`
+
+**Verified working:**
+```bash
+curl http://localhost:8081/session/context/chris
+# Returns: {"profile_summary": "No profile configured...", "capacity": null, "recent_sessions": [], "active_entities": []}
+```
+
+All 16 API routes registered and accessible.
+
+### Implementation Completed
+
+1. **Context Loading Endpoint** (`GET /session/context/{user_id}`)
+   - Returns profile summary, capacity, recent sessions, active entities
+   - Aggregates from ProfileService and EntityStorageService
+   - New schemas: `SessionContext`, `RecentSession`, `ActiveEntity`
+   - New service: `SessionContextService`
+   - 5 passing tests
+
+2. **Session Metadata Storage**
+   - `store_session_metadata()` in EntityStorageService
+   - `get_recent_sessions()` for context loading
+   - `get_active_entities()` for developing/seed entities
+   - Session node type in Neo4j
+
+3. **Enhanced `/explore-session` Command**
+   - Calls context endpoint at session start
+   - Shows re-entry context (last session, hanging question, active entities)
+   - Capacity check if not recent
+   - Profile-aware exploration with Question Engine integration
+   - Session end triggers (tired, done, 45+ min)
+
+4. **New `/end-session` Command**
+   - Summarizes session content
+   - Calls `POST /session/process` with transcript
+   - Shows extracted entities and insights
+   - Stores session metadata for future context loading
+
+### Files Created/Modified
+
+**New files:**
+- `ies-backend/src/ies_backend/services/session_context_service.py`
+- `ies-backend/tests/test_session_context.py`
+- `.claude/commands/end-session.md`
+
+**Modified files:**
+- `ies-backend/src/ies_backend/schemas/entity.py` — added context schemas
+- `ies-backend/src/ies_backend/services/entity_storage_service.py` — session methods
+- `ies-backend/src/ies_backend/api/session.py` — context endpoint, session metadata
+- `ies-backend/tests/conftest.py` — session/entity mocking
+- `.claude/commands/explore-session.md` — enhanced with backend integration
+
+### Test Results
+
+- Session context tests: 5/5 passing
+- Total tests: 54/61 passing (7 pre-existing failures from Phase 3 state detection)
+
+### Next Steps
+
+- Test full session flow end-to-end with running backend
+- Consider Phase 5: SiYuan plugin integration
+
+---
+
+## Session: 2025-12-01 (Phase 3) - Question Engine Complete
+
+### Accomplished
+
+**Phase 3: Question Engine — COMPLETE**
+
+Implemented the full Question Engine for adaptive questioning based on user state and profile:
+
+```
+ies-backend/src/ies_backend/
+├── schemas/
+│   └── question_engine.py        # UserState, InquiryApproach, templates
+├── services/
+│   ├── state_detection_service.py     # Detect state from conversation
+│   ├── approach_selection_service.py  # Select approach based on state+profile
+│   └── question_templates_service.py  # 30 templates from therapy books
+└── api/
+    └── question_engine.py             # 6 API endpoints
+```
+
+**State Detection:**
+- 8 states: flowing, stuck, overwhelmed, exploring, processing, uncertain, emotional, tired
+- Signal analysis: response length, certainty markers, repetition, energy words
+- Explicit capacity override (1-10 check-in)
+
+**Approach Selection:**
+- 5 MVP approaches: Socratic, Solution-Focused, Phenomenological, Systems, Metacognitive
+- Profile-aware: adapts to abstraction preference, decision style, structure need
+- State-aware: maps states to appropriate approaches
+
+**Question Templates (30 total):**
+- Socratic (6): From Paul & Elder "Art of Socratic Questioning"
+- Solution-Focused (6): From De Jong & Berg "Interviewing for Solutions"
+- Phenomenological (6): From Gendlin "Focusing"
+- Systems (6): From Meadows "Thinking in Systems"
+- Metacognitive (6): From Flavell, Schraw & Moshman
+
+**Profile Adaptations:**
+- Pacing: fast/moderate/slow based on state + profile
+- Directness: direct/balanced/gentle based on vulnerability + preference
+- Abstraction: concrete/mixed/abstract based on state + profile
+- Structure: tight/moderate/loose based on overwhelm + executive profile
+
+**API Endpoints:**
+- `POST /question-engine/detect-state` — Analyze messages for state
+- `POST /question-engine/select-approach` — Select approach with adaptations
+- `GET /question-engine/templates/{approach}` — Get question templates
+- `POST /question-engine/generate-questions` — Full pipeline: state→approach→questions
+- `GET /question-engine/approaches` — State-to-approach mappings
+- `GET /question-engine/categories` — Available question categories
+
+**Tests:** 43/50 passing (7 edge cases around short message classification)
+
+### Current State
+
+**Status:** PHASE 3 COMPLETE, READY FOR PHASE 4
+
+### Next Steps
+
+**Phase 4: Session Integration**
+- Enhanced `/explore-session` command with Question Engine
+- `/end-session` backend trigger
+- Context loading from recent sessions
+- Profile-informed session flow
+
+---
+
+## Session: 2025-12-01 (Formatting) - SiYuan Syntax Correction & Content Fixes
+
+### Accomplished
+
+**Identified and documented correct SiYuan formatting:**
+
+User pointed out I was using incorrect wiki-style formatting. Researched actual SiYuan syntax:
+
+| Element | Wrong | Correct |
+|---------|-------|---------|
+| Links | `[[Page Name]]` | `((block-id))` |
+| Tags | `#tag` | `#tag#` |
+
+**Key learnings:**
+- SiYuan uses block IDs for all references, not page names
+- Tags require closing `#` (unlike most systems)
+- Block attributes use kramdown IAL: `{: key="value"}`
+
+**Documentation created:**
+- Serena memory: `siyuan_formatting` — Complete API reference
+- SiYuan page: `/Specs/SiYuan Formatting Reference` — In-notebook reference
+
+**Content fixes applied:**
+
+| Location | Issue | Fix |
+|----------|-------|-----|
+| Therapy Framework: Narrow Window | `[[Unnecessary Pain]]` | Changed to **Unnecessary Pain** |
+| Therapy Framework: Narrow Window | `#needs-research` | Fixed to `#needs-research#` |
+| Framework Project: Concept Template | `#needs-research` | Fixed to `#needs-research#` |
+| Framework Project: Active Work | `[[/Sessions/...]]` | Changed to **/Sessions/...** |
+| Framework Project: Active Work | `[[/Implementation/...]]` | Changed to **/Implementation/...** |
+| Framework Project: Session notes | `[[entity]]` | Changed to **entity** |
+
+**Mockup clarifications:**
+- Added disclaimer to `/Mockups` folder explaining `[[...]]` syntax is illustrative
+- Added disclaimers to Option 2 and Option 3 README pages
+- Mockups intentionally keep wiki-style syntax to show conceptual cross-references
+
+### Current State
+
+**Formatting:** ✅ All real content uses correct SiYuan syntax
+**Mockups:** ✅ Clearly marked as illustrative examples
+
+---
+
+## Session: 2025-12-01 (Documentation) - SiYuan Notebook Completion
+
+### Accomplished
+
+**Completed comprehensive SiYuan IES notebook update:**
+
+The notebook was significantly out of date (showing "NOT STARTED" when Phase 1-2 were complete). Created a complete, current picture of the project.
+
+**New Pages Created:**
+- `/Specs/Profile System` — 6-dimension profile spec (Phase 1)
+- `/Specs/Entity System` — Entity schema spec (Phase 2)
+- `/Specs/Session Processing` — Extraction pipeline spec (Phase 2)
+- `/Specs/Question Engine` — Approach selection design (Phase 3)
+- `/Specs/API Reference` — Complete endpoint documentation
+- `/Implementation/Backend Structure` — ies-backend layout
+- `/Implementation/Commands` — 4 Claude Code commands
+- `/Implementation/Phases` — Phase tracking with status
+- `/Architecture/Data Flow` — Complete data flow diagram
+
+**Updated Pages:**
+- `/Overview` — Current status, phase progress
+- `/Specs/README` — Links to all specs
+- `/Implementation/Status` — Accurate phase completion
+- `/Dev Log/2025-12-01` — Today's session entries
+
+**Hook Updates:**
+- Enhanced Stop hook with clearer SiYuan requirements
+- Enhanced SessionStart hook with explicit 3-target reminder
+
+### Current State
+
+**SiYuan IES Notebook:** ✅ Now complete and current
+
+**Documentation Protocol:**
+1. progress-framework-project.md ✅
+2. Serena memories ✅
+3. SiYuan IES notebook ✅ (now enforced by Stop hook)
+
+### Next Steps
+
+- Continue with Phase 3 (Question Engine) when ready
+- SiYuan notebook will now stay current via Stop hook enforcement
+
+---
+
+## Session: 2025-12-01 (Implementation Continued) - Phase 2 Complete
+
+### Accomplished
+
+**Phase 2: Backend Core — COMPLETE**
+
+Added entity extraction and session processing to `ies-backend/`:
+
+```
+ies-backend/src/ies_backend/
+├── schemas/
+│   └── entity.py                    # Entity, extraction, session schemas
+├── services/
+│   ├── extraction_service.py        # Claude API entity extraction
+│   ├── session_document_service.py  # SiYuan session document generation
+│   └── entity_storage_service.py    # Neo4j entity persistence
+└── api/
+    └── session.py                   # Session processing endpoints
+```
+
+**New API Endpoints:**
+- `POST /session/process` — Process transcript → extract entities → create documents
+- `GET /session/entities/{user_id}` — Get all entities for user
+- `GET /session/entities/{user_id}/{name}/graph` — Get entity with connections
+
+**Entity Schema:**
+```
+kind: idea | person | process | question | tension
+domain: therapy | personal | meta
+status: seed | developing | solid
+connections: supports | tensions | develops
+```
+
+**Extraction Flow:**
+1. Transcript → Claude API (extraction prompt)
+2. Parsed entities + session summary
+3. Session document → SiYuan
+4. Entities → Neo4j (create or update)
+5. Connections → Neo4j relationships
+
+### Current State
+
+**Status:** PHASE 2 COMPLETE, READY FOR PHASE 3
+
+**Phase 2 Deliverables:**
+- ✅ Entity extraction service (Claude API)
+- ✅ Session document generation (SiYuan markdown)
+- ✅ Neo4j entity storage (create, update, connect)
+- ✅ Session processing endpoint
+- ✅ Entity query endpoints
+- ✅ Tests passing (6/6)
+
+### Next Steps
+
+**Phase 3: Question Engine**
+- State detection logic
+- Approach selection rules
+- Question templates from books
+
+**Phase 4: Session Integration**
+- Enhanced `/explore-session` command
+- `/end-session` backend trigger
+- Context loading
+
+---
+
+## Session: 2025-12-01 (Analysis) - Hook Testing & Documentation Audit
+
+### Accomplished
+
+**Tested Claude Code hooks:**
+- SessionStart hook working correctly — injects documentation protocol, parses last session date
+- Stop hook working correctly — blocked exit when analysis work done without documentation
+
+**Documentation audit findings:**
+
+| Issue | Severity | Status |
+|-------|----------|--------|
+| AGENTS.md outdated (897 vs 48,987 nodes) | Medium | Fixed |
+| ies-backend not in Serena memories | Medium | Fixed |
+| Missing `/synthesize-session` command | Low | Noted |
+
+### Current State
+
+**Hooks:** ✅ Both SessionStart and Stop hooks operational and tested
+
+### Next Steps
+
+- Consider adding `/synthesize-session` command (third mode)
+- Consider notification hook for long-running jobs
+
+---
+
+## Session: 2025-12-01 (Implementation) - Phase 1 Complete
+
+### Accomplished
+
+**Phase 1: Profile Foundation — COMPLETE**
+
+Created `ies-backend/` FastAPI project with full profile system:
+
+```
+ies-backend/
+├── src/ies_backend/
+│   ├── api/
+│   │   ├── profile.py       # Profile CRUD + capacity check-in
+│   │   └── session.py       # Session processing (stub)
+│   ├── schemas/
+│   │   └── profile.py       # 6-dimension profile schema
+│   ├── services/
+│   │   ├── neo4j_client.py  # Async Neo4j wrapper
+│   │   ├── profile_service.py # Neo4j persistence
+│   │   ├── siyuan_client.py # SiYuan API wrapper
+│   │   └── siyuan_profile_service.py # Human-readable profile pages
+│   ├── config.py            # Settings from env vars
+│   └── main.py              # FastAPI app
+├── tests/
+│   ├── conftest.py          # Neo4j mocking
+│   └── test_profile.py      # 6 passing tests
+└── pyproject.toml
+```
+
+**Profile API Endpoints:**
+- `GET /profile/{user_id}` — Get profile
+- `POST /profile/{user_id}` — Create profile
+- `PATCH /profile/{user_id}` — Update dimensions
+- `POST /profile/{user_id}/capacity` — Capacity check-in
+- `POST /profile/{user_id}/observe` — Session observations
+- `GET /profile/{user_id}/summary` — Condensed summary for prompts
+- `POST /profile/{user_id}/sync-siyuan` — Sync to SiYuan page
+
+**Claude Code Commands Created:**
+- `/onboard-profile` — Conversational profile building
+- `/check-in` — Session capacity check-in
+
+### Current State
+
+**Status:** PHASE 1 COMPLETE, READY FOR PHASE 2
+
+**Phase 1 Deliverables:**
+- ✅ Profile schema (6 dimensions, all fields)
+- ✅ Neo4j persistence (async client, CRUD operations)
+- ✅ SiYuan profile pages (human-readable markdown)
+- ✅ Onboarding command (`/onboard-profile`)
+- ✅ Capacity check-in command (`/check-in`)
+- ✅ Tests passing (6/6)
+
+### Next Steps
+
+**Phase 2: Backend Core**
+- Entity extraction endpoint (POST /session/process)
+- Claude API integration for extraction
+- Session document generation
+- Neo4j entity storage
+
+### Open Questions Resolved
+
+- ✅ Profile storage format → JSON in Neo4j properties + SiYuan pages for human view
+- ✅ Capacity check-in UX → Dedicated `/check-in` command
+
+### Remaining Questions
+
+- Session transcript capture format from Claude Code?
+- Approach switching frequency during sessions?
+
+---
+
+## Session: 2025-12-01 (Continued) - Develop Mode MVP Design
+
+### Accomplished
+
+**Completed full design for Develop Mode MVP:**
+
+1. **Profile System** — 6 dimensions for understanding user's brain:
+   - Processing Style (detail-first ↔ pattern-first, deliberative ↔ intuitive)
+   - Attention & Energy (hyperfocus triggers, capacity, recovery)
+   - Communication Preferences (fluency, directness, pace)
+   - Executive Functioning (initiation, transitions, structure needs)
+   - Sensory Context (environment, overwhelm signals)
+   - Masking Awareness (optional, energy costs)
+
+2. **Question Design Engine** — Dynamic approach selection:
+   - 10 inquiry approaches from resource library
+   - State detection → approach selection logic
+   - MVP scope: 5 core approaches (Socratic, Solution-focused, Phenomenological, Systems, Metacognitive)
+
+3. **Session Flow** — Profile-integrated lifecycle:
+   - Session start: Load profile, capacity check-in, context loading
+   - Exploration loop: State detection → approach selection → profile-adapted questioning
+   - Session end: Summary, backend extraction trigger
+
+4. **Backend Architecture** — FastAPI service:
+   - POST /session/process (extraction, page generation)
+   - GET/PATCH /profile/{user_id}
+   - GET /context/{user_id}
+   - Neo4j + Qdrant + SiYuan data flow
+
+5. **Entity System** — Light schema:
+   - kind: idea | person | process | question | tension
+   - domain: therapy | personal | meta
+   - status: seed | developing | solid
+
+**Key Insight Documented:** The conversation engine is the core of IES — conversations must be correctly focused, structured, and guided based on how the user's brain works.
+
+**Design Document Created:**
+- `docs/plans/2025-12-01-develop-mode-mvp-design.md` — Complete MVP specification
+
+**Resources Added to Library (10 books):**
+- Focusing (Gendlin), Peak (Ericsson), Metacognition (Dunlosky)
+- Mind Over Mood, Feeling Good (CBT)
+- Interviewing for Solutions (Solution-focused)
+- Superforecasting, Good Strategy Bad Strategy, Sources of Power (Strategic)
+- Narrative Means to Therapeutic Ends (Narrative)
+
+### Current State
+
+**Status:** DEVELOP MODE MVP DESIGNED, READY FOR IMPLEMENTATION
+
+**Design Complete:**
+- ✅ Profile system (6 dimensions, onboarding approach)
+- ✅ Question design engine (10 approaches, selection logic)
+- ✅ Session flow (profile-integrated lifecycle)
+- ✅ Backend architecture (FastAPI endpoints, data flow)
+- ✅ Entity system (light schema)
+
+### Next Steps (Implementation Phases)
+
+1. **Phase 1: Profile Foundation**
+   - Design profile schema (Neo4j + SiYuan)
+   - Build conversational onboarding flow
+   - Create profile CRUD endpoints
+
+2. **Phase 2: Backend Core**
+   - FastAPI project setup
+   - Entity extraction endpoint
+   - SiYuan/Neo4j integration
+
+3. **Phase 3: Question Engine**
+   - State detection logic
+   - Approach selection rules
+   - Question templates from books
+
+4. **Phase 4: Session Integration**
+   - Enhanced `/explore-session` command
+   - `/end-session` backend trigger
+   - Context loading
+
+### Open Questions (Implementation)
+
+- Profile storage format — JSON in SiYuan or Neo4j nodes?
+- Session transcript capture format from Claude Code?
+- Capacity check-in UX — inline vs explicit command?
+- Approach switching frequency during sessions?
+
+---
+
+## Session: 2025-12-01 (Night) - IES Architecture Refinement
+
+### Accomplished
+
+**Major architecture decisions made:**
+
+1. **Knowledgebase approach: Annotation Layer (Option 3)**
+   - Pages created ON DEMAND when accessed
+   - No 49k page bloat
+   - Literature entities clickable → creates page from graph
+   - Hub page with stats, recent activity, suggestions
+
+2. **Three document types clarified:**
+   - Session documents (immutable records)
+   - Entity pages (accumulate over time)
+   - Integrated Theories (THE GOAL - synthesized understanding)
+
+3. **Two connected systems:**
+   - Knowledgebase = raw material (literature + personal entities)
+   - Integrated Theories = synthesized output (tracks: Human Mind, Change Process, Method)
+
+4. **Plugin modes defined:**
+   - Develop mode: Socratic questioning → entities created
+   - Explore mode: Browse KB, fill gaps, research
+   - Synthesize mode: Integrate into theory documents
+
+5. **Key insight: User never manages metadata**
+   - AI identifies entities during conversation
+   - AI applies tags, makes connections
+   - User just thinks out loud
+
+**Mockups created in SiYuan (`/IES/Mockups/`):**
+- Knowledgebase approaches comparison (3 options)
+- Session document example (using Narrow Window)
+- Raw transcript example
+- Knowledge Hub dashboard
+- Entity page example
+- Integrated Theory example (1-Human Mind)
+
+**Serena memories updated:**
+- `project_overview` - Full architecture
+- `ies_architecture` - New, detailed IES design
+- `siyuan_structure` - Updated notebook plan
+
+### Current State
+
+**Status:** ARCHITECTURE DEFINED, READY FOR IMPLEMENTATION PLANNING
+
+**Decisions Made:**
+- ✅ Knowledgebase approach: Option 3 (annotation layer)
+- ✅ Keep Framework Project notebook (as reference)
+- ✅ Three document types: Session, Entity, Integrated Theory
+- ✅ Two systems: Knowledgebase ↔ Integrated Theories
+- ✅ Three plugin modes: Develop, Explore, Synthesize
+
+**Mockups Complete:**
+- Session document structure
+- Entity page structure
+- Integrated Theory structure
+- Knowledge Hub dashboard
+
+### Next Steps
+
+1. **Update design document** — Incorporate new architecture
+2. **Define entity schema** — Block attributes, flexible typing
+3. **Design backend API** — Endpoints for graph queries, page generation
+4. **Create plugin wireframes** — UI for each mode
+5. **Implement MVP** — Start with Develop mode + session capture
+
+### Open Questions
+
+- Exact block attributes for entity typing?
+- How does "Develop mode" questioning engine work?
+- Session transcript storage format?
+
+---
+
+## Session: 2025-12-01 (Late Evening) - Serena Onboarding
+
+### Accomplished
+
+**Set up Serena MCP for brain_explore:**
+- Activated project at `/home/chris/dev/projects/codex/brain_explore`
+- Completed onboarding exploration of codebase
+- Created 7 Serena memories documenting the project
+
+**Serena Memories Created:**
+| Memory | Content |
+|--------|---------|
+| `project_overview` | Two-layer architecture, GraphRAG stats |
+| `tech_stack` | Python stack, Docker, MCP servers |
+| `codebase_structure` | `library/`, `scripts/`, file layout |
+| `suggested_commands` | Docker, extraction, search commands |
+| `siyuan_structure` | Current + proposed notebook structure |
+| `task_completion` | Session handoff checklist |
+| `future_projects` | Plan for `ies-plugin`, `ies-backend` projects |
+
+**Documented multi-project plan:**
+- `brain_explore` (current) — GraphRAG library code
+- `ies-backend` (future) — FastAPI service
+- `ies-plugin` (future) — SiYuan plugin
+
+### Current State
+
+**Status:** SERENA ONBOARDING COMPLETE, READY FOR NOTEBOOK RESTRUCTURE
+
+**Serena:** 7 memories, project activated
+**SiYuan:** 3 notebooks (IES, Framework Project, Therapy Framework)
+**Proposed:** Knowledgebase + domain notebooks
+
+### Next Steps
+
+1. **Decision:** Confirm notebook restructure plan
+2. **Create Knowledgebase notebook** — Structure for GraphRAG entities
+3. **Begin spec work** — Entity Schema, Page Templates
+4. **Create ies-backend project** when starting backend development
+
+### Open Questions
+
+- Notebook restructure: Confirm Knowledgebase + domain structure?
+- Auto-populate Knowledgebase from Neo4j or manual curation?
+- Which domains besides Therapy?
+
+---
+
+## Session: 2025-12-01 (Evening) - Project Reframing & IES Notebook
+
+### Accomplished
+
+**Recognized project shift:**
+- Project evolved from "explore therapeutic worldview" to "build intelligent exploration system"
+- Two distinct layers: **The Tool** (IES) vs **The Content** (Therapy Framework)
+- Therapy Framework becomes first use case, not the only one
+
+**Created IES SiYuan notebook** (`Intelligent Exploration System`):
+- `/Overview` — Vision and core loop
+- `/Architecture/System Overview` — Component diagram, data flow
+- `/Specs/README` — Spec checklist and template
+- `/Implementation/Status` — Phase tracking
+- `/Dev Log/2025-12-01` — Session notes
+- `/Design/UI Mockups` — Visual wireframes of plugin UI
+
+**Proposed new notebook structure:**
+```
+SiYuan Notebooks:
+├── Intelligent Exploration System   # Tool development
+├── Knowledgebase                    # GraphRAG literature (reference)
+│   ├── Concepts/, Theories/, Researchers/, Assessments/
+├── Therapy                          # Domain: therapeutic worldview
+│   ├── Human Mind/, Change Process/, Method/
+├── Projects                         # Domain: work projects
+└── Personal                         # Domain: self/life
+```
+
+Key insight: **Knowledgebase** = "what literature says" (read-mostly), **Domain notebooks** = "what I think" (read-write, grounded in literature)
+
+### Current State
+
+**Status:** REFRAMING COMPLETE, AWAITING DECISION ON NOTEBOOK RESTRUCTURE
+
+**SiYuan Notebooks (current):**
+- Intelligent Exploration System (NEW) — Tool development
+- Framework Project — Meta/planning (may retire)
+- Therapy Framework — Content (may rename to "Therapy")
+
+**Proposed next:** Create Knowledgebase notebook, restructure domains
+
+### Next Steps
+
+1. **Decision:** Confirm notebook restructure plan
+2. **Create Knowledgebase notebook** — Populate with GraphRAG entity structure
+3. **Rename Therapy Framework → Therapy** — Add track subfolders
+4. **Begin spec work** — Entity Schema, Page Templates, Backend API
+
+### Open Questions
+
+- What domains besides Therapy? (Projects? Personal? Others?)
+- Should Knowledgebase be auto-populated from Neo4j, or manually curated?
+- Keep Framework Project notebook or fully retire it?
+
+---
+
+## Session: 2025-12-01 (Afternoon) - Intelligent Exploration System Design
+
+### Accomplished
+
+**Designed the core exploration pipeline:**
+- Brainstormed and documented the Intelligent Exploration System
+- Four-phase loop: ASSESS → GUIDE → CAPTURE → ENRICH
+- Learner profile with cognitive style, content gaps, engagement patterns
+- Entity system linking personal insights to literature
+- SiYuan plugin architecture with AI sidebar
+
+**Merged traversal mode ideas:**
+- Note-specific context (first-level graph connections per page)
+- Track-aware persistent memory
+- Ebook integration (jump to source)
+- Action buttons (Research, Connections, Source, Refine, Branch)
+- Bidirectional sync with deduplication strategy
+
+**Documents created/updated:**
+- `docs/plans/2025-12-01-intelligent-exploration-system.md` — Full design (~700 lines)
+- SiYuan: `/Architecture/Intelligent Exploration System` — Architecture overview
+- SiYuan: `/Ideas/traversal mode` — Original notes (preserved, linked to main design)
+- SiYuan: `/Sessions/2025-12-01-intelligent-exploration-design`
+- SiYuan: `/Current State/Active Work` — Updated
+
+**Entity extraction completed:**
+- Launched remaining 11 books in parallel
+- All 51 books now processed
+
+### Current State
+
+**Status:** DESIGN COMPLETE, READY FOR IMPLEMENTATION PLANNING
+
+**Knowledge Graph (COMPLETE):**
+- 51 books processed
+- 48,987 nodes: 11,878 Concepts, 16,220 Researchers, 2,517 Theories, 1,793 Assessments
+- 121,299+ relationships
+
+**The System (6 Implementation Phases):**
+1. **Phase A**: Foundation — Entity schema, page templates, extraction
+2. **Phase B**: Backend — FastAPI, Neo4j queries, Claude integration
+3. **Phase C**: Plugin MVP — Sidebar, modes, chat interface
+4. **Phase D**: Guided Exploration — Profiles, questioning engine
+5. **Phase E**: Enrichment — Research queue, ebook integration, sync
+6. **Phase F**: Polish — Action buttons, visualization
+
+### Next Steps
+
+1. **Develop entity page template spec** — How pages look/behave
+2. **Design backend API** — Endpoints, data models
+3. **Create plugin wireframes** — UI mockups for sidebar
+4. **Write system prompts** — Prompts for each mode (explore-session, explore-topic, etc.)
+
+### Open Questions
+
+- Entity deduplication strategy (fuzzy matching threshold?)
+- Connection weighting (should relationships have strength scores?)
+- Session transcript storage (full vs. highlights only?)
+
+---
+
+## Session: 2025-12-01 (Morning) - Parallel Entity Extraction
+
+### Accomplished
+
+**Massive parallel entity extraction:**
+- Launched 23 books extracting in parallel (up from sequential processing)
+- Created `scripts/batch_extract.py` for batch processing
+- Created `scripts/extract_single.py` for parallel-friendly single book extraction
+- Created `scripts/check_progress.sh` for monitoring
+
+**Completed extractions this session:**
+- The Denial of Death (Becker): 1,698 entities, 1,165 relationships
+- Atlas of the Heart (Brown): 1,432 entities, 855 relationships
+- Being You (Seth): 1,688 entities, 909 relationships
+
+### Current State
+
+**Status:** EXTRACTION IN PROGRESS (14 processes still running)
+
+**Knowledge Graph (40 books processed):**
+- 17,630 nodes: 6,388 Authors, 6,248 Concepts, 1,018 Theories, 191 Assessments
+- 39,391 relationships
+- 3,745 chunks indexed
+
+**Growth this session:**
+| Metric | Start | Now | Growth |
+|--------|-------|-----|--------|
+| Nodes | 1,428 | 17,630 | +16,202 |
+| Concepts | 423 | 6,248 | +5,825 |
+| Relationships | 2,525 | 39,391 | +36,866 |
+| Books | 15 | 40 | +25 |
+
+### Still Running (14 processes)
+
+Background extractions continue even after session ends. Monitor with:
+```bash
+./scripts/check_progress.sh
+```
+
+### Next Steps
+
+1. **Check extraction completion** — Run `./scripts/check_progress.sh`
+2. **Process remaining books** — ~11 books still unprocessed
+3. **Start exploration** — `/explore-session` with rich graph data
+4. **Build hybrid search UI** — Interactive querying of graph + vectors
+
+### Files Created/Modified
+
+- `scripts/batch_extract.py` — Batch extraction with priority ordering
+- `scripts/extract_single.py` — Single book extraction for parallelism
+- `scripts/check_progress.sh` — Monitor running extractions
+- `progress-framework-project.md` — This file
+
+**Not a git repo** — No commits needed
+
+---
+
+## Session: 2025-11-30 (Late Evening) - Graph Expansion
+
+### Accomplished
+
+**Expanded entity extraction to 6 more books:**
+- Man's Search for Meaning (Frankl): 34 entities, 26 relationships
+- Therapeutic Alliance (Muran/Barber): 98 entities, 45 relationships
+- How Emotions Are Made (Barrett): 120 entities, 89 relationships
+- Learning ACT 2nd Ed: 131 entities, 82 relationships
+- Unmasking Autism (Price): 87 entities, 227 relationships
+- Taking Charge of Adult ADHD (Barkley): 81 entities, 36 relationships
+
+**Updated SiYuan Framework Project:**
+- Created session log for GraphRAG work
+- Updated Active Work with current status
+- Updated Project Map with system architecture
+
+### Current State
+
+**Status:** KNOWLEDGE GRAPH SIGNIFICANTLY EXPANDED
+
+**Knowledge Graph (15 books processed):**
+- 1,428 nodes: 617 Authors, 423 Concepts, 101 Theories, 19 Assessments
+- 2,525 relationships
+
+**Vector Store:** 27,523 chunks (unchanged)
+
+**Not a git repo** — No commits needed
+
+### Next Steps
+
+1. **Continue entity extraction** — 36 books remaining
+2. **Session enrichment pipeline** — Post-session AI processing
+3. **SiYuan integration** — Auto-populate concepts from graph
+4. **Start exploration** — `/explore-session` with rich data
+
+---
+
+## Session: 2025-11-30 (Evening) - GraphRAG Library System
+
+### Accomplished
+
+**Library Processing System (GraphRAG):**
+- Built complete GraphRAG system for therapy book library
+- **Vector Store (Qdrant):** Ingested 50 books → 27,523 semantic chunks
+- **Knowledge Graph (Neo4j):** Extracted entities from 8 key books
+  - 897 nodes: 447 Authors, 234 Concepts, 63 Theories, 5 Assessments
+  - 1,444 relationships: MENTIONS, SUPPORTS, DEVELOPS, COMPONENT_OF, CITES
+- **Hybrid Search:** Combined vector similarity + graph context working
+
+**Key Books Processed (initial 8):**
+- ACT (Hayes): 59 entities, 36 relationships
+- Emotion Regulation (Gross): 151 entities, 16 relationships
+- IFS (Schwartz): 187 entities, 107 relationships
+- Motivational Interviewing: 89 entities, 64 relationships
+- Existential Psychotherapy (Yalom): 132 entities, 67 relationships
+- Body Keeps the Score (van der Kolk): 75 entities, 53 relationships
+- Developing Mind (Siegel): 121 entities, 51 relationships
+- Thinking Fast and Slow (Kahneman): 73 entities, 50 relationships
+
+**Infrastructure:**
+- Docker Compose with Qdrant + Neo4j containers
+- OpenAI embeddings (text-embedding-3-small)
+- LLM entity extraction (gpt-4o-mini)
+- Python library modules in `library/`
+
+### Next Steps
+
+1. **Expand entity extraction** — Process remaining books
+2. **Session enrichment pipeline** — Post-session AI processing
+3. **SiYuan integration** — Write discoveries to knowledge base
+4. **Interactive interface** — CLI or web for exploration
+
+### How to Use
+
+```bash
+# Start services
+docker compose up -d
+
+# Search the library
+python scripts/test_hybrid_search.py
+
+# Extract more entities
+python scripts/extract_entities.py --file books/SomeBook.pdf
+
+# Check graph stats
+python scripts/extract_entities.py --stats
+```
+
+### Blockers/Decisions Needed
+
+- None — system is operational
+
+---
+
+## Session: 2025-11-30 (Morning)
+
+### Accomplished
+
+**System Design:**
+- Designed complete exploration system via brainstorming
+- Decided on Happy app for mobile interface
+- Decided on Markmap for auto-generated visualizations
+- Created design document (`docs/plans/2025-11-30-system-design.md`)
+
+**SiYuan Implementation:**
+- Created both notebooks (Framework Project + Therapy Framework)
+- Built full folder structure in both notebooks
+- Enhanced Project Map as dashboard with status, navigation, progress tracking
+- Created Concept Template with custom attributes system
+- Created Session Log Template
+- Created Linking Conventions documentation
+- Created SQL Queries reference
+- Migrated "Narrow Window of Awareness" with full formatting
+- Set up custom attribute system:
+  - `custom-type`, `custom-status`, `custom-track`, `custom-research-status`, `custom-created`
+- Set up tag system:
+  - `#status/[status]`, `#track/[track]`, `#research/[status]`
+- Documented relationship types (supports, tensions, explores, implements, requires)
+
+### Current State (as of morning session)
+
+**Status:** READY TO USE
+
+**SiYuan notebooks are fully set up:**
+- Framework Project: Dashboard, Templates, Architecture docs
+- Therapy Framework: 3 Tracks, _Connections, _Inbox, 1 concept
+
+**Files modified locally:**
+- `progress-framework-project.md` — This file
+- `progress-therapy-framework.md` — Updated
+- `AGENTS.md` — Updated
+- `docs/plans/2025-11-30-system-design.md` — New design doc
+
+**Not a git repo** — No commits needed
+
+### Next Steps (from morning)
+
+1. **Install Happy app** — Set up mobile access to Claude Code
+2. **Build Markmap script** — Generate visualizations from SiYuan structure
+3. **Start exploration** — Run `/explore-session` to continue content work
+4. **Capture seed concepts** — Meaning as Solution, Unique Personhood, Unnecessary Pain
+
+### Blockers/Decisions Needed
+
+- None — system is operational
+
+### Architecture Summary
+
+```
+Happy App (mobile) ←→ Claude Code ←→ SiYuan + MCP
+                            │
+         ┌──────────────────┼──────────────────┐
+         ▼                  ▼                  ▼
+   Framework Project   Therapy Framework   Markmap
+   (Dashboard)         (Exploration)       (Visualization)
+```
+
+### SiYuan Documents Created
+
+**Framework Project notebook:**
+- Project Map (dashboard)
+- Current State/Active Work
+- Current State/Blockers
+- Current State/Decisions Needed
+- Navigation/Tracks
+- Navigation/Milestones
+- Navigation/Concept Index
+- Inbox/Quick Capture
+- Sessions/2025-11-30-system-design
+- Templates/Concept Template
+- Templates/Session Log Template
+- Architecture/Linking Conventions
+- Architecture/SQL Queries
+
+**Therapy Framework notebook:**
+- 1-Human Mind/README
+- 1-Human Mind/Narrow Window of Awareness (full concept)
+- 2-Change Process/README
+- 3-Method/README
+- _Connections/Tensions
+- _Connections/Foundations
+- _Connections/Open Questions
+- _Inbox/Unsorted
+
+---
+
+## Previous Sessions
+
+### Session: 2025-11-29
+
+- Completed brainstorming to define project requirements
+- Designed two-notebook SiYuan structure
+- Created MCP configuration, templates, slash commands
+- First exploration session — "Narrow Window of Awareness" emerged
+- Set up local directory structure as temporary workaround
