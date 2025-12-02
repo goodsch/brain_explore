@@ -22,7 +22,7 @@ A system for exploring therapeutic worldviews through three interconnected capab
 
 ## Current Status
 
-**Phase 1: Prove Core Hypothesis** 🚀 STARTED (Dec 2)
+**Phase 1: Prove Core Hypothesis** 🚀 IN PROGRESS (Dec 2)
 
 **What's Working (Verified Today):**
 - ✅ IES backend running on :8081 (54/61 tests passing)
@@ -31,13 +31,20 @@ A system for exploring therapeutic worldviews through three interconnected capab
 - ✅ Neo4j + Qdrant running with full data
 - ✅ SiYuan plugin builds and connects to backend
 - ✅ First therapy session completed successfully
+- ✅ First therapeutic concept extracted and documented
+
+**Progress (1/20-30):**
+- **Concept 1:** "Narrow Window of Awareness" (Track 1) — Extracted from Nov 29 session
+  - Foundational concept about human perception and meaning-making
+  - Addresses core therapeutic question: How do we work within human limitations?
+  - Leads to related concepts: Meaning-Making, Unnecessary Pain, Unique Personhood
 
 **Current Focus:**
-Run 10 therapy exploration sessions to extract entities and create 20-30 therapeutic concepts. See `docs/phase-1-action-plan.md` for daily workflow.
+Run remaining 9 therapy exploration sessions to extract entities and create 20-30 therapeutic concepts. See `docs/phase-1-action-plan.md` for daily workflow.
 
 **Success Looks Like:**
-- 10 documented therapy sessions
-- 20-30 therapeutic concepts created and connected
+- 10 documented therapy sessions (1/10 complete)
+- 20-30 therapeutic concepts created and connected (1/20 complete)
 - Clear therapeutic worldview articulated
 - Profile adapts based on exploration patterns
 - Complete feedback loop: profile → question → exploration → updated profile → next question
@@ -50,7 +57,7 @@ Run 10 therapy exploration sessions to extract entities and create 20-30 therape
 
 ### Before Starting Any Session
 
-1. Read `docs/five-agent-synthesis.md` (15 min) - understand vision and Phase 1 plan
+1. Read `docs/PROJECT-OVERVIEW.md` (20 min) - comprehensive understanding of vision, architecture, and Phase 1
 2. Check git log (`git log --oneline -10`) to see recent work
 3. Review `docs/session-notes.md` for context from previous sessions
 4. Verify you're not touching items in `docs/parking-lot.md` (reserved for Phase 1 completion)
@@ -84,15 +91,18 @@ brain_explore/
 │   └── plugin/                    # SiYuan plugin (14,092 lines TS/Svelte)
 │
 ├── therapy/                       # Therapy Framework (Content Layer)
-│   └── (concepts, tracks, research)
+│   ├── Track_1_Human_Mind/        # How humans perceive, think, and construct meaning
+│   │   ├── 01-narrow-window-of-awareness.md  # Foundational concept (1/20-30)
+│   │   └── (related concepts: meaning-making, unnecessary pain, personhood)
+│   └── (more tracks and research)
 │
 ├── library/                       # Shared: GraphRAG modules (Python)
 ├── scripts/                       # Shared: CLI tools
 ├── books/                         # Shared: 63 psychology/therapy books
 │
 ├── docs/                          # Documentation
-│   ├── five-agent-synthesis.md    # Vision, gaps, lessons, phased path
-│   ├── true-vision-document.md    # Vision extraction and articulation
+│   ├── PROJECT-OVERVIEW.md        # Single source of truth (comprehensive project overview)
+│   ├── five-agent-synthesis.md    # Vision, gaps, lessons, phased path (analysis depth)
 │   ├── session-notes.md           # Session reflection (append-only)
 │   ├── parking-lot.md             # Future features (don't work on these)
 │   └── archive/                   # Old progress files, archived memories
@@ -102,18 +112,21 @@ brain_explore/
 
 ## Key Resources
 
+**Primary Reference (Start Here):**
+- `docs/PROJECT-OVERVIEW.md` — Complete project overview: vision, architecture, what's built, Phase 1 plan, workflows. Single source of truth.
+
 **For Phase 1 (Right Now):**
 - `docs/phase-1-getting-started.md` — Quick start guide to begin therapy exploration sessions
 - `docs/phase-1-action-plan.md` — Daily workflow, topics, documentation approach
 - `scripts/run-session.py` — Session runner script (use to quickly start therapy sessions)
-- `docs/session-notes.md` — Log of what's happening each session
+- `docs/session-notes.md` — Reflection log (append-only, after each session)
 
-**To Understand Why We're Here:**
-- `docs/five-agent-synthesis.md` — Complete analysis with vision, gaps, lessons, phased path
+**For Deep Understanding:**
+- `docs/five-agent-synthesis.md` — Comprehensive analysis with vision, gaps, configuration problems, phased path
 
-**Reference:**
+**Reference & Constraints:**
 - `docs/parking-lot.md` — Future features (what NOT to work on yet)
-- `docs/true-vision-document.md` — Vision extraction (why this system makes sense)
+- `CLAUDE.md` (this file) — Quick reference guide
 
 **Technical:**
 - `ies/backend/README.md` — Backend setup and API
@@ -182,9 +195,12 @@ docker compose down              # Stop services
 
 ## Questions?
 
-See `docs/five-agent-synthesis.md` for comprehensive understanding of:
-- What the vision actually is
+See `docs/PROJECT-OVERVIEW.md` for comprehensive understanding of:
+- The complete vision (three interconnected layers)
+- What's built vs. deferred
 - Why configuration was blocking work
-- Why projects kept expanding
-- What Synapse teaches us
-- Clear phased path forward
+- Architecture and data flow
+- Phase 1 plan and success criteria
+- Known limitations and open questions
+
+For deeper context on the five-agent analysis, see `docs/five-agent-synthesis.md`.
