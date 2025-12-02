@@ -48,11 +48,14 @@ A three-layer system that enables people to think WITH an AI partner who adapts 
 - ✅ First therapeutic concept extracted and documented
 
 **Current Phase 1 Focus:**
-Run therapy exploration sessions (Layers 1 & 2) where personalized dialogue guides thinking, extraction of therapeutic concepts from that thinking happens, and concepts are formalized. Validate the complete pipeline:
-1. Layer 2 dialogue reveals individual thinking patterns
-2. Guided exploration surfaces new conceptualizations the user generates
-3. Those conceptualizations can be extracted and formalized into the system
-4. The full loop works before investing in Layer 3 interface
+Run therapy exploration sessions (Layers 1 & 2) where personalized dialogue guides thinking, extraction of therapeutic concepts from that thinking happens, and concepts are formalized. Follow the complete pipeline in `docs/PHASE-1-WORKFLOW.md`:
+1. Run session with `python scripts/run-session.py --topic "..."`
+2. Extract entities from transcript via backend API
+3. Formalize solid/developing concepts into concept documents
+4. Document connections in CONNECTIONS.md
+5. Commit frequently
+
+**Complete workflow with checklists:** See `docs/PHASE-1-WORKFLOW.md` (your day-to-day reference)
 
 **Phase 1 Success Criteria:**
 - 10 documented therapy exploration sessions (1/10 complete)
@@ -68,32 +71,40 @@ Run therapy exploration sessions (Layers 1 & 2) where personalized dialogue guid
 - **Phase 2:** Build Layer 3 (Flow/Flo interface) once hypothesis is proven
 - **Phase 2+:** Domain generalization and additional capabilities based on learning
 
-## How to Work Here
+## How to Work Here (Phase 1)
 
-### Before Starting Any Session
+### Before Starting a Therapy Exploration Session
 
-1. Read `docs/PROJECT-OVERVIEW.md` (20 min) - comprehensive understanding of vision, architecture, and Phase 1
-2. Check git log (`git log --oneline -10`) to see recent work
-3. Review `docs/session-notes.md` for context from previous sessions
-4. Verify you're not touching items in `docs/parking-lot.md` (reserved for Phase 1 completion)
+1. Read `docs/PHASE-1-WORKFLOW.md` (10 min) - complete checklist and pipeline reference
+2. Check `docs/PROJECT-OVERVIEW.md` for overall vision and architecture context
+3. Verify backend is healthy: `curl http://localhost:8081/health`
+4. Verify Docker services running: `docker compose ps`
+5. Have a genuine therapeutic question ready to explore
 
 ### During Your Session
 
-1. Work on one focused task at a time
-2. Commit frequently (every 30-60 min): `git commit -m "..."`
-3. At session end, update `docs/session-notes.md` with what you did
+**Follow the complete pipeline in `docs/PHASE-1-WORKFLOW.md`:**
+1. Run therapy exploration: `python scripts/run-session.py --topic "Your question"`
+2. Engage authentically (5-10 exchanges, 20-30 minutes typical)
+3. Type "done" when complete; transcript auto-saves
+4. Extract entities from transcript using backend API
+5. Review extracted entities and decide which to formalize
+6. Create concept documents for solid/developing concepts
+7. Update CONNECTIONS.md to document relationships
+8. Commit: `git add ... && git commit -m "docs: session N - extracted concepts..."`
 
 ### After Your Session
 
-1. Run: `git status` (verify everything is committed)
-2. Append entry to `docs/session-notes.md` with:
-   - What you accomplished
-   - What you learned
+1. Update progress tracking in session notes (X/10 sessions, Y/20-30 concepts)
+2. Run: `git status` (verify everything is committed)
+3. Append entry to `docs/session-notes.md` with:
+   - What you accomplished (sessions run, concepts extracted)
+   - What you learned (insights, thinking patterns)
    - Blockers you hit
    - What next session should focus on
-   - Any decisions made affecting system design
+   - How your thinking patterns influenced discoveries
 
-**Workflow Note:** Git history is now the source of truth for what changed. Session notes are for reflection, decisions, and handoff context. Together they create a complete project memory.
+**Workflow Note:** `docs/PHASE-1-WORKFLOW.md` is your day-to-day operational guide. Git history tracks code changes. Session notes track reflection and learning. Together they create complete project memory.
 
 ## Project Structure
 
@@ -134,13 +145,21 @@ brain_explore/
 
 ## Key Resources
 
-**Primary Reference (Start Here):**
-- `docs/PROJECT-OVERVIEW.md` — Complete project overview: vision, architecture, what's built, Phase 1 plan, workflows. Single source of truth.
+**Primary References (Start Here):**
+- `docs/PHASE-1-WORKFLOW.md` — Complete operational guide: session pipeline, extraction, formalization, connections, troubleshooting. DAY-TO-DAY REFERENCE.
+- `docs/PROJECT-OVERVIEW.md` — Complete project overview: vision, architecture, what's built, Phase 1 plan. Single source of truth.
 
-**For Phase 1 (Right Now):**
-- `docs/phase-1-getting-started.md` — Quick start guide to begin therapy exploration sessions
-- `docs/phase-1-action-plan.md` — Daily workflow, topics, documentation approach
+**For Phase 1 Execution (Right Now):**
+- `docs/PHASE-1-WORKFLOW.md` — Complete pipeline with checklists and examples (session → extraction → formalization → connections → git)
+  - Step 1: Run therapy exploration sessions
+  - Step 2: Extract entities using backend service
+  - Step 3: Interpret extracted entities (decision criteria)
+  - Step 4: Formalize concepts into documents
+  - Step 5: Document connections between concepts
+  - Step 6: Commit to git
+  - Includes complete workflow checklist for each session
 - `scripts/run-session.py` — Session runner script (use to quickly start therapy sessions)
+- `therapy/Track_1_Human_Mind/` — Concept documents and CONNECTIONS.md
 - `docs/session-notes.md` — Reflection log (append-only, after each session)
 
 **For Deep Understanding:**
