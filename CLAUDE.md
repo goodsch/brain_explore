@@ -103,7 +103,9 @@ brain_explore/
 ## Key Resources
 
 **For Phase 1 (Right Now):**
+- `docs/phase-1-getting-started.md` — Quick start guide to begin therapy exploration sessions
 - `docs/phase-1-action-plan.md` — Daily workflow, topics, documentation approach
+- `scripts/run-session.py` — Session runner script (use to quickly start therapy sessions)
 - `docs/session-notes.md` — Log of what's happening each session
 
 **To Understand Why We're Here:**
