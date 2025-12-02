@@ -22,25 +22,29 @@ A system for exploring therapeutic worldviews through three interconnected capab
 
 ## Current Status
 
-**Phase 0: Configuration Stabilization** ✅ COMPLETE
+**Phase 1: Prove Core Hypothesis** 🚀 STARTED (Dec 2)
 
-All success criteria met:
-- IES backend: ✅ Production-ready (4,496 lines Python, 61 tests)
-- IES plugin: ✅ Functional (14,092 lines TypeScript/Svelte)
-- Core infrastructure: ✅ Complete (Neo4j with 48,987 entities)
-- Configuration system: ✅ Cleaned up (40% overhead → <5%)
+**What's Working (Verified Today):**
+- ✅ IES backend running on :8081 (54/61 tests passing)
+- ✅ Therapy dialogue system functional (adaptive questions working)
+- ✅ Profile system capturing user state
+- ✅ Neo4j + Qdrant running with full data
+- ✅ SiYuan plugin builds and connects to backend
+- ✅ First therapy session completed successfully
 
-**Phase 0 Completion Summary:**
-- Git repository initialized with all 732 files committed
-- CLAUDE.md consolidated from 4 files (459+ lines) into 1 authoritative file (166 lines)
-- Session notes system established (docs/session-notes.md for append-only reflection)
-- Progress files archived (docs/archive/) to preserve history without cluttering active workspace
-- Configuration overhead eliminated: removed .active-project tracking system
-- Serena memories consolidated (11 → 4 essential files) for focus
-- Parking lot created to enforce Phase 1 discipline (nothing new until core hypothesis is proven)
-- 11 commits establishing clean git history for project tracking
+**Current Focus:**
+Run 10 therapy exploration sessions to extract entities and create 20-30 therapeutic concepts. See `docs/phase-1-action-plan.md` for daily workflow.
 
-**Next:** Phase 1 - Prove core hypothesis works through therapy exploration
+**Success Looks Like:**
+- 10 documented therapy sessions
+- 20-30 therapeutic concepts created and connected
+- Clear therapeutic worldview articulated
+- Profile adapts based on exploration patterns
+- Complete feedback loop: profile → question → exploration → updated profile → next question
+
+**Phase 0 (COMPLETE):** Configuration stabilization removed 40% meta-work overhead
+**Phase 1 (RUNNING):** Prove core hypothesis works (7-10 days)
+**Phase 2+:** Build understanding and additional capabilities based on Phase 1 learning
 
 ## How to Work Here
 
@@ -98,17 +102,19 @@ brain_explore/
 
 ## Key Resources
 
-**Start Here:**
+**For Phase 1 (Right Now):**
+- `docs/phase-1-action-plan.md` — Daily workflow, topics, documentation approach
+- `docs/session-notes.md` — Log of what's happening each session
+
+**To Understand Why We're Here:**
 - `docs/five-agent-synthesis.md` — Complete analysis with vision, gaps, lessons, phased path
 
 **Reference:**
-- `docs/true-vision-document.md` — Vision extraction (why this system makes sense)
-- `docs/timeline-analysis.md` — How project evolved (understand the journey)
 - `docs/parking-lot.md` — Future features (what NOT to work on yet)
+- `docs/true-vision-document.md` — Vision extraction (why this system makes sense)
 
 **Technical:**
 - `ies/backend/README.md` — Backend setup and API
-- `ies/plugin/README.md` — Plugin development
 - `docker-compose.yml` — Infrastructure setup
 
 ## The Parking Lot
