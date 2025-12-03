@@ -4,6 +4,46 @@
 
 ---
 
+## Session: [Dec 2, 2025] Phase 2b Step 1 - Backend Graph API Endpoints
+
+**What I Worked On:**
+- ✅ Created 6 graph API endpoints for Layer 3 exploration
+- ✅ Built GraphService for async Neo4j queries
+- ✅ Implemented Pydantic schemas for all request/response types
+- ✅ Tested all endpoints with curl - all working
+- ✅ Verified existing tests still pass (54/61)
+
+**New Endpoints:**
+| Endpoint | Purpose | Status |
+|----------|---------|--------|
+| `GET /graph/explore/{concept}` | Related concepts + relationships | ✅ Working |
+| `GET /graph/search?q=<query>` | Concept search by name | ✅ Working |
+| `GET /graph/sources/{concept}` | Supporting text chunks | ✅ Working (content empty - data issue) |
+| `GET /graph/stats` | Graph statistics | ✅ Working (49k entities, 125k rels) |
+| `GET /graph/suggestions` | Dashboard topics | ✅ Working |
+| `POST /graph/thinking-partner` | AI reflection questions | ✅ Working |
+
+**Files Created:**
+- `ies/backend/src/ies_backend/api/graph.py` - Router with 6 endpoints
+- `ies/backend/src/ies_backend/schemas/graph.py` - Pydantic models
+- `ies/backend/src/ies_backend/services/graph_service.py` - Neo4j service
+
+**Technical Decisions:**
+- Used async Neo4j client (existing in backend) instead of sync library/KnowledgeGraph
+- Avoided importing library/ to prevent dependency issues (tiktoken, etc.)
+- Thinking partner uses Anthropic API with fallback for missing API key
+- Created .env file with Neo4j password for backend
+
+**Blockers:** None
+
+**Next Steps (Phase 2b):**
+1. Plugin restructure - Create views/ directory, Dashboard shell
+2. Dashboard component - Stats, suggestions, mode buttons
+3. Flow mode - ConceptSearch, RadialGraph, navigation
+4. Polish - Thinking partner integration, save exploration
+
+---
+
 ## Session: [Dec 2, 2025] Phase 2 Complete - Layer 3 Exploration Validated & Phase 2a Success
 
 **What I Worked On:**
