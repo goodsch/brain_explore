@@ -138,11 +138,21 @@ brain_explore/
 │   └── plugin/                    # SiYuan plugin - document interface (14,092 lines TS/Svelte)
 │                                  # (precursor to Layer 3 Flow/Flo interface)
 │
-├── therapy/                       # Therapy Domain Application (current focus)
+├── therapy/                       # Therapy Domain Application (complete Phase 1)
 │   ├── Track_1_Human_Mind/        # How humans perceive, think, and construct meaning
-│   │   ├── 01-narrow-window-of-awareness.md  # Foundational concept (1/20-30)
-│   │   └── (related concepts: meaning-making, unnecessary pain, personhood)
-│   └── (more tracks and research concepts being extracted)
+│   │   ├── 01-narrow-window-of-awareness.md  # Foundational (universal constraint → meaning)
+│   │   ├── 02-acceptance-vs-resignation.md   # Core distinction (aliveness vs numbness)
+│   │   ├── 03-nervous-system-sensing-possibility.md  # Engagement mechanism
+│   │   ├── 04-grief-as-acceptance.md         # Application to loss
+│   │   ├── 05-metabolization-of-difficulty.md # Process model (pain → capacity)
+│   │   ├── 06-shame-as-non-acceptance.md     # Blocker identification
+│   │   ├── 07-authentic-presence.md          # Outcome of shame metabolization
+│   │   ├── 08-nervous-system-configurations.md # Three states model
+│   │   ├── 09-capacity-and-nervous-system-access.md # Reframe
+│   │   ├── 10-superpower-in-weakness.md      # Integration
+│   │   ├── 11-window-as-condition-for-depth.md # Final vision (full circle)
+│   │   └── CONNECTIONS.md                    # Hierarchical framework map
+│   └── (ready for Phase 2 exploration or domain generalization)
 │
 ├── library/                       # Shared: GraphRAG modules, ingest pipeline (Python)
 ├── scripts/                       # Shared: CLI tools, session runners
@@ -174,21 +184,18 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/PROJECT-OVERVIEW.md` — Single source of truth for the complete vision: three-layer architecture, what's built vs. deferred, why design decisions were made, Phase 1 success criteria, and roadmap
 - `docs/five-agent-synthesis.md` — Deep analysis: architectural vision, identified gaps, why configuration was blocking, lessons learned, phased path forward
 
-**Level 2: Operational Execution (Your Day-to-Day)**
-- `docs/PHASE-1-WORKFLOW.md` — Daily reference guide with complete pipeline, step-by-step instructions, checklists, examples, and troubleshooting
-  - Step 1: Run therapy exploration sessions
-  - Step 2: Extract entities using backend service
-  - Step 3: Interpret extracted entities (decision criteria)
-  - Step 4: Formalize concepts into documents
-  - Step 5: Document connections between concepts
-  - Step 6: Commit to git
-  - Complete workflow checklist for each session
-  - What success looks like after Session 1, 5, and 10
+**Level 2: Operational Execution (Phase 1 Complete)**
+- `docs/PHASE-1-WORKFLOW.md` — Complete operational guide for running sessions (proven, reusable for Phase 2+ exploration)
+- `docs/PHASE-2-PLAN.md` — Layer 3 architecture options and design principles for next phase
+  - Option A: Extend SiYuan plugin (30-40 hours)
+  - Option B: Standalone web app (clean slate)
+  - Design recommendations based on Phase 1 learnings
+  - Architecture patterns from proven approach
 
 **Level 3: Implementation & Reflection**
-- `scripts/run-session.py` — Session runner (use this to start therapy exploration)
-- `therapy/Track_1_Human_Mind/` — Extracted concept documents and CONNECTIONS.md (output of sessions)
-- `docs/session-notes.md` — Reflection log: what you accomplished, learned, and blocked on (append-only, after each session)
+- `therapy/Track_1_Human_Mind/` — 11 extracted concept documents with CONNECTIONS.md (complete Phase 1 output)
+- `docs/session-notes.md` — Complete session history with Phase 1 completion summary and learnings
+- Git history — Commits show progression from session 1 through Phase 1 completion and Phase 2 planning
 
 ### Supporting References
 
@@ -301,6 +308,15 @@ This means:
 - Layer 1 can be retargeted to any knowledge domain (scientific, legal, creative, etc.)
 - Post-Phase 1, the system can be applied to other domains with new knowledge graphs
 - The three-layer cycle works for any domain where personalized thinking partnership has value
+
+## Working Style
+
+**Claude acts as project manager.** Always choose the optimal next step in development rather than asking what to do next. Present the decision and proceed; user will confirm or redirect if needed.
+
+- Don't ask "what would you like to work on?"
+- Do identify the highest-value next action and take it
+- Explain briefly why this is the optimal next step
+- Proceed unless redirected
 
 ## Questions?
 
