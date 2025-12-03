@@ -2,149 +2,312 @@
 
 Track 1: How Humans Think (The Human Mind)
 
-This document maps relationships between therapeutic concepts extracted from exploration sessions.
+This document maps relationships between therapeutic concepts extracted from 10 exploration sessions.
+
+---
+
+## Therapeutic Framework Overview
+
+A complete therapeutic vision emerged through 10 sessions: **how humans construct meaning within constraints, and what enables authentic presence within those constraints.**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    THE NARROW WINDOW (01)                       │
+│         Universal human constraint • Creates meaning            │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+           ┌───────────────┴───────────────┐
+           ▼                               ▼
+    ┌─────────────┐                 ┌─────────────┐
+    │ ACCEPTANCE  │                 │ RESIGNATION │
+    │    (02)     │                 │    (02)     │
+    │  Aliveness  │                 │   Numbness  │
+    └──────┬──────┘                 └──────┬──────┘
+           │                               │
+           ▼                               ▼
+    ┌─────────────┐                 ┌─────────────┐
+    │   GRIEF AS  │                 │  SHUTDOWN   │
+    │ CONNECTION  │                 │    (08)     │
+    │    (04)     │                 │ No access   │
+    └──────┬──────┘                 └─────────────┘
+           │
+           ▼
+    ┌─────────────────────────────────────┐
+    │   NERVOUS SYSTEM SENSING (03)       │
+    │   Possibility → Engagement          │
+    └──────────────────┬──────────────────┘
+                       │
+           ┌───────────┴───────────┐
+           ▼                       ▼
+    ┌─────────────┐         ┌─────────────┐
+    │ METABOLIZA- │         │   SHAME     │
+    │   TION (05) │         │    (06)     │
+    │ Pain→Capac. │         │  Blocks it  │
+    └──────┬──────┘         └──────┬──────┘
+           │                       │
+           │    ┌──────────────────┘
+           ▼    ▼
+    ┌─────────────────────────────────────┐
+    │   AUTHENTIC PRESENCE (07)           │
+    │   Outcome of shame metabolization   │
+    └──────────────────┬──────────────────┘
+                       │
+           ┌───────────┴───────────┐
+           ▼                       ▼
+    ┌─────────────┐         ┌─────────────┐
+    │   THREE     │         │  CAPACITY   │
+    │   STATES    │         │  AS ACCESS  │
+    │    (08)     │         │    (09)     │
+    └──────┬──────┘         └──────┬──────┘
+           │                       │
+           └───────────┬───────────┘
+                       ▼
+    ┌─────────────────────────────────────┐
+    │   SUPERPOWER IN WEAKNESS (10)       │
+    │   Damage becomes gift               │
+    └──────────────────┬──────────────────┘
+                       │
+                       ▼
+    ┌─────────────────────────────────────┐
+    │   WINDOW AS CONDITION FOR DEPTH (11)│
+    │   Constraint enables meaning        │
+    │   FULL CIRCLE → back to (01)        │
+    └─────────────────────────────────────┘
+```
 
 ---
 
 ## Concept Overview
 
 | # | Concept | Status | Session | Key Insight |
-|---|---------|--------|---------|------------|
-| 01 | Narrow Window of Awareness | Foundational | Session 01 | The narrow window is both limitation and gift |
-| 02 | Acceptance vs. Resignation | Developing | Session 02 | Distinction lies in aliveness/energy, not external form |
-| 03 | Grief as Acceptance | Developing | Session 03 | Loss reveals love; grief-as-acceptance keeps connection alive |
+|---|---------|--------|---------|-------------|
+| 01 | Narrow Window of Awareness | Foundational | S01 | The window is universal, not pathology; constraint enables meaning |
+| 02 | Acceptance vs. Resignation | Foundational | S02 | Distinction is aliveness/energy, not external form |
+| 03 | Nervous System Sensing of Possibility | Developing | S03 | Engagement depends on sensing that something is possible |
+| 04 | Grief as Acceptance | Developing | S03 | Loss reveals love; grief-with-presence preserves connection |
+| 05 | Metabolization of Difficulty | Core | S04 | Process by which pain becomes capacity (not elimination) |
+| 06 | Shame as Non-Acceptance | Core | S05 | Blocker to metabolization; prevents movement toward presence |
+| 07 | Authentic Presence | Core | S06 | Outcome of shame metabolization and nervous system re-regulation |
+| 08 | Nervous System Configurations | Developing | S07 | Three states (hypervigilance, shutdown, regulated aliveness) |
+| 09 | Capacity as Nervous System Access | Developing | S08 | Capacities exist but are gated by nervous system state |
+| 10 | Superpower in Weakness | Developing | S09 | Adaptive trauma response becomes strength when metabolized |
+| 11 | Window as Condition for Depth | Integrative | S10 | Constraint itself enables meaning, beauty, presence |
 
 ---
 
-## Connection Map
+## Primary Connection Map
 
-### Narrow Window of Awareness (01) ↔ Acceptance vs. Resignation (02)
+### 01 → 02: Narrow Window → Acceptance/Resignation
 
-**Relationship Type:** Foundational → Application
+**Relationship:** Foundation → Response Options
 
-**How they connect:**
+The narrow window is a given. How we respond to it determines everything that follows:
+- **Acceptance:** Moving toward what-is with aliveness
+- **Resignation:** Turning away into numbness
 
-1. **Window of awareness determines what's possible to accept**
-   - We operate within a narrow window; this is not a flaw
-   - Acceptance in therapy works *within* this window, not by expanding it
-   - Resignation is a response to accepting the window's limitations
-
-2. **Both acceptance and resignation are forms of meaning-making**
-   - Both are valid responses within the narrow window
-   - The distinction is in how the person relates to their limitation
-   - Aliveness vs. numbness reflects different nervous system configurations
-
-3. **Necessary vs. Unnecessary Pain (01) → Acceptance as Response (02)**
-   - Concept 01 distinguishes pain from false beliefs vs. pain from being limited
-   - Concept 02 shows that acceptance (with aliveness) is the therapeutic movement toward necessary pain
-   - Resignation is turning away; acceptance is turning toward with available energy
-
-**Clinical Application:**
-Help clients understand that:
-- The narrow window is universal (not pathological)
-- Acceptance means attending to what-is-within-the-window with available energy
-- Resignation means turning away and shutting down
-- The therapeutic stance supports acceptance, not resignation
+This is the first therapeutic choice point.
 
 ---
 
-### Acceptance vs. Resignation (02) ↔ Grief as Acceptance (03)
+### 02 → 03/04: Acceptance/Resignation → Nervous System & Grief
 
-**Relationship Type:** Abstract principle → Concrete application in grief
+**Relationship:** Response → Mechanism
 
-**How they connect:**
+**Path A (02 → 03):** Acceptance requires the nervous system to sense possibility. Without that sensing, the system shifts to shutdown (resignation).
 
-1. **Same distinction, applied to loss**
-   - The acceptance/resignation distinction from Concept 02 directly applies to how we meet grief
-   - Grief-as-acceptance: tender presence with loss; nervous system engaged; relationship maintained
-   - Grief-as-resignation: flat numbness; nervous system shutdown; connection severed
-
-2. **The marker is the same: aliveness vs. numbness**
-   - In Concept 02, aliveness indicates genuine acceptance
-   - In Concept 03, tender grief (with tears, presence, engagement) indicates grief-as-acceptance
-   - Flat grief (numbness, disconnection) indicates grief-as-resignation in both contexts
-
-3. **Loss as meaning-making**
-   - The narrow window (Concept 01) means loss is inevitable
-   - Acceptance (Concept 02) is the response that preserves meaning-making
-   - Grief-as-acceptance (Concept 03) shows us that loss can deepen understanding of love
-
-**Clinical Application:**
-- Help clients recognize when they're in grief-as-resignation ("moving on" as disconnection)
-- Support movement toward grief-as-acceptance (tender presence with the loss)
-- Understand that maintaining the connection (through continued grief) is compatible with continuing life
-- Track nervous system aliveness as the marker of genuine acceptance vs. resignation
+**Path B (02 → 04):** Grief is the application of acceptance/resignation to loss. Grief-as-acceptance maintains connection; grief-as-resignation severs it.
 
 ---
 
-## Threads Connecting Concepts
+### 03 → 05: Possibility Sensing → Metabolization
 
-### Thread 1: The Role of Attention
+**Relationship:** Condition → Process
 
-- **Concept 01** (Narrow Window): Attention is constrained by the window; we perceive through limited data
-- **Concept 02** (Acceptance): Direction of attention (toward vs. away from reality) distinguishes acceptance from resignation
-- **Concept 03** (Grief): Tender grief requires attending toward the loss; flat grief requires turning attention away
-- **Thread Connection**: The narrow window explains *why* we must choose how to attend; accepting the window means consciously directing attention toward what-is
-
-### Thread 2: Nervous System and Aliveness
-
-- **Concept 01** (Narrow Window): The narrow window includes the gift of passion, beauty, meaning—all tied to nervous system engagement
-- **Concept 02** (Acceptance): Aliveness and available energy are markers of genuine acceptance vs. shutdown resignation
-- **Concept 03** (Grief): Tender grief is nervous system engagement with loss; flat grief is dorsal vagal shutdown
-- **Thread Connection**: Aliveness is not just emotional; it's a nervous system signature that indicates genuine acceptance rather than avoidance/resignation. In grief, this signature distinguishes healing from traumatic shutdown
-
-### Thread 3: Meaning-Making vs. Numbness
-
-- **Concept 01** (Narrow Window): We create meaning; this false-meaning-making is actually the system working as designed
-- **Concept 02** (Acceptance): Genuine acceptance preserves the capacity for meaning-making and connection; resignation numbs meaning away
-- **Concept 03** (Grief): Loss reveals what love actually is; grief-as-acceptance deepens understanding of meaning and connection
-- **Thread Connection**: Acceptance enables continued meaning-making; resignation is disconnection from meaning. Grief-as-acceptance shows that loss can deepen rather than eliminate meaning
+When the nervous system senses possibility, it can stay engaged with difficulty long enough for metabolization to occur. Without possibility sensing, shutdown prevents metabolization.
 
 ---
 
-## Open Connections (Future Exploration)
+### 05 ↔ 06: Metabolization ↔ Shame
 
-### Toward Concept 03: What Enables Movement From Resignation to Acceptance?
+**Relationship:** Mutual Blockers
 
-**Hypothetical Connection:**
-- The gap between Sessions 02 (identifying the distinction) and Sessions 03+ (observing it in practice)
-- Questions: What conditions allow someone to move from resignation toward acceptance?
-- Research direction: Look for patterns in sessions where this movement occurs
-
-**Topics to explore:**
-- The role of therapeutic presence and attunement
-- The nervous system's capacity for re-engagement
-- Specific practices or relational moves that facilitate acceptance
-- How to distinguish protective shutdown (trauma) from resignation (avoidance)
-
-### Toward Concept 04: Individual Differences in Acceptance
-
-**Hypothetical Connection:**
-- Concept 02 assumes acceptance/resignation distinction is universal
-- But do different people/nervous systems/trauma histories experience these states differently?
-- Topics: Neurodiversity, trauma history, temperament, cultural context
+- **Metabolization** requires staying in relationship with difficulty
+- **Shame** prevents staying in relationship (triggers hiding/defense)
+- To metabolize, shame must first be addressed
+- Shame can itself be metabolized, but requires accepting that limitation ≠ unworthiness
 
 ---
 
-## How to Read This Map
+### 06 → 07: Shame → Authentic Presence
 
-1. **Use the Connection Map** to understand how concepts build on each other
-2. **Follow Threads** to see larger patterns emerging across concepts
-3. **Track Open Connections** to identify what needs exploration in future sessions
-4. **Update after each session** — New concepts may create new connections
+**Relationship:** Blocker Removed → Outcome
+
+When shame is metabolized (limitation accepted as given, not evidence of unworthiness), authentic presence becomes possible:
+- No need for impression management
+- Energy available for genuine connection
+- Nervous system settles into regulated aliveness
+
+---
+
+### 07 → 08: Authentic Presence → Three States
+
+**Relationship:** Outcome → Configuration Map
+
+Authentic presence corresponds to one of three nervous system configurations:
+1. **Hypervigilance** (shame-organized) → Defended, performing
+2. **Shutdown** (resignation-organized) → Numb, unavailable
+3. **Regulated Aliveness** (authentic presence) → Present, responsive
+
+---
+
+### 08 → 09: Configurations → Capacity Access
+
+**Relationship:** State → Availability
+
+The nervous system state determines which capacities are accessible:
+- **Hypervigilance:** Resources consumed by threat assessment
+- **Shutdown:** All capacities locked away
+- **Regulated Aliveness:** Full access to creativity, wisdom, integration
+
+Therapy doesn't build capacity; it restores access.
+
+---
+
+### 09 → 10: Capacity Access → Superpower Discovery
+
+**Relationship:** Access Restored → Gifts Emerge
+
+When capacities become accessible, people discover that what they thought was weakness is often their greatest strength:
+- Sensitivity → Deep seeing
+- Hypervigilance → Clinical attunement
+- Survival adaptations → Generative gifts
+
+---
+
+### 10 → 11: Superpower → Window as Condition
+
+**Relationship:** Integration → Full Circle
+
+The discovery that weakness contains strength leads to the final integration: the window itself is not the problem. The constraint is the condition that makes meaning, depth, and authentic presence possible.
+
+**Full Circle:** 11 → 01
+
+The journey completes: the narrow window (01) is not to be escaped but embraced. Meeting it with acceptance rather than resignation enables the entire therapeutic arc.
+
+---
+
+## Cross-Cutting Threads
+
+### Thread 1: The Aliveness Marker
+
+Runs through: 02, 03, 04, 05, 07, 08
+
+**Pattern:** Aliveness vs. numbness is the consistent marker distinguishing productive therapeutic states from stuck states.
+
+- Acceptance has aliveness; resignation has numbness
+- Possibility sensing maintains aliveness; shutdown extinguishes it
+- Tender grief has aliveness; flat grief has numbness
+- Metabolization requires aliveness; stuckness is numb
+- Authentic presence is alive; defended states are closed
+- Regulated aliveness vs. hypervigilance/shutdown
+
+**Clinical Use:** Track aliveness, not content. Where is energy? Where is engagement? Where has the system gone numb?
+
+---
+
+### Thread 2: The Nervous System as Gatekeeper
+
+Runs through: 03, 05, 06, 07, 08, 09
+
+**Pattern:** The nervous system determines what's possible therapeutically.
+
+- It gates whether metabolization can occur
+- It determines which capacities are accessible
+- It must sense possibility to stay engaged
+- Shame triggers its defensive configurations
+- Authentic presence requires its regulation
+
+**Clinical Use:** Attend to nervous system state before content. Help the system feel safe enough to engage before trying to process difficult material.
+
+---
+
+### Thread 3: Shame as Central Blocker
+
+Runs through: 05, 06, 07, 10
+
+**Pattern:** Shame is the primary obstacle to therapeutic movement.
+
+- It blocks metabolization (can't stay in relationship with difficulty)
+- It organizes the nervous system into hypervigilance
+- It prevents authentic presence (must manage perception)
+- It hides the gifts in perceived weakness
+
+**Clinical Use:** Address shame early. Help clients separate limitation (universal) from worth (unconditional). The "therefore" to "and" shift.
+
+---
+
+### Thread 4: The Acceptance Journey
+
+Runs through: 01, 02, 04, 11
+
+**Pattern:** Acceptance is not a single event but a journey with the narrow window.
+
+1. Recognize the window (01)
+2. Choose acceptance over resignation (02)
+3. Apply to grief/loss (04)
+4. Arrive at full embrace (11)
+
+**Clinical Use:** Acceptance isn't achieved once. It's practiced across contexts. Each application deepens the capacity.
+
+---
+
+## The Complete Therapeutic Vision
+
+**What therapy is:**
+- Helping people find authentic presence within universal human constraints
+- Metabolizing shame so limitations become gifts
+- Restoring nervous system access to existing capacities
+- Supporting the movement from resignation to acceptance
+
+**What therapy is not:**
+- Fixing the human condition
+- Expanding awareness beyond natural limits
+- Achieving transcendence of the window
+- Building new capacities from scratch
+
+**The core insight:**
+The narrow window is the condition for depth, meaning, and authentic presence—not an obstacle to overcome. Our response to the window, and what we become through that response, is everything.
+
+---
+
+## Open Questions for Phase 2
+
+### Intervention Design
+- What specifically helps someone shift from resignation to acceptance?
+- How do we help the nervous system sense possibility when it's decided nothing is possible?
+- What allows shame to be metabolized rather than managed?
+
+### Individual Differences
+- How do different nervous system configurations affect therapeutic pathways?
+- Does neurodiversity create different windows or different responses to the same window?
+- What role does trauma history play in which concepts are most relevant?
+
+### Generalization
+- Do these concepts apply across domains beyond therapy?
+- How would this framework inform coaching, education, or organizational development?
 
 ---
 
 ## Maintenance Notes
 
-- Updated after Session 02 (Dec 2, 2025) — Added Concepts 01 & 02
-- Updated after Session 03 (Dec 2, 2025) — Added Concept 03, connections 02↔03, updated all threads
-- Concept 03 shows how abstract principles (acceptance/resignation) apply to concrete experiences (grief)
-- Open questions from Session 02 are being answered by Session 03 findings
+- **Created:** Dec 2, 2025 (Sessions 1-3)
+- **Major Update:** Dec 2, 2025 (Sessions 4-10, full framework mapped)
+- **Status:** Phase 1 Complete — All 11 concepts documented and connected
+- **Next:** Phase 2 planning for Layer 3 development
 
 ---
 
 **Last Updated:** Dec 2, 2025
-**Session Count:** 3/10
-**Concept Count:** 3/30
-**Connection Density:** 2 primary connections (01↔02, 02↔03), 3 threads spanning all concepts
+**Session Count:** 10/10 ✅
+**Concept Count:** 11/30 (Phase 1 target met)
+**Connection Density:** 10 primary connections, 4 threads, complete framework mapped
