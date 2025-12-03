@@ -12,6 +12,7 @@ This document maps relationships between therapeutic concepts extracted from exp
 |---|---------|--------|---------|------------|
 | 01 | Narrow Window of Awareness | Foundational | Session 01 | The narrow window is both limitation and gift |
 | 02 | Acceptance vs. Resignation | Developing | Session 02 | Distinction lies in aliveness/energy, not external form |
+| 03 | Grief as Acceptance | Developing | Session 03 | Loss reveals love; grief-as-acceptance keeps connection alive |
 
 ---
 
@@ -47,25 +48,57 @@ Help clients understand that:
 
 ---
 
+### Acceptance vs. Resignation (02) ↔ Grief as Acceptance (03)
+
+**Relationship Type:** Abstract principle → Concrete application in grief
+
+**How they connect:**
+
+1. **Same distinction, applied to loss**
+   - The acceptance/resignation distinction from Concept 02 directly applies to how we meet grief
+   - Grief-as-acceptance: tender presence with loss; nervous system engaged; relationship maintained
+   - Grief-as-resignation: flat numbness; nervous system shutdown; connection severed
+
+2. **The marker is the same: aliveness vs. numbness**
+   - In Concept 02, aliveness indicates genuine acceptance
+   - In Concept 03, tender grief (with tears, presence, engagement) indicates grief-as-acceptance
+   - Flat grief (numbness, disconnection) indicates grief-as-resignation in both contexts
+
+3. **Loss as meaning-making**
+   - The narrow window (Concept 01) means loss is inevitable
+   - Acceptance (Concept 02) is the response that preserves meaning-making
+   - Grief-as-acceptance (Concept 03) shows us that loss can deepen understanding of love
+
+**Clinical Application:**
+- Help clients recognize when they're in grief-as-resignation ("moving on" as disconnection)
+- Support movement toward grief-as-acceptance (tender presence with the loss)
+- Understand that maintaining the connection (through continued grief) is compatible with continuing life
+- Track nervous system aliveness as the marker of genuine acceptance vs. resignation
+
+---
+
 ## Threads Connecting Concepts
 
 ### Thread 1: The Role of Attention
 
 - **Concept 01** (Narrow Window): Attention is constrained by the window; we perceive through limited data
 - **Concept 02** (Acceptance): Direction of attention (toward vs. away from reality) distinguishes acceptance from resignation
+- **Concept 03** (Grief): Tender grief requires attending toward the loss; flat grief requires turning attention away
 - **Thread Connection**: The narrow window explains *why* we must choose how to attend; accepting the window means consciously directing attention toward what-is
 
 ### Thread 2: Nervous System and Aliveness
 
 - **Concept 01** (Narrow Window): The narrow window includes the gift of passion, beauty, meaning—all tied to nervous system engagement
 - **Concept 02** (Acceptance): Aliveness and available energy are markers of genuine acceptance vs. shutdown resignation
-- **Thread Connection**: Aliveness is not just emotional; it's a nervous system signature that indicates genuine acceptance rather than avoidance/resignation
+- **Concept 03** (Grief): Tender grief is nervous system engagement with loss; flat grief is dorsal vagal shutdown
+- **Thread Connection**: Aliveness is not just emotional; it's a nervous system signature that indicates genuine acceptance rather than avoidance/resignation. In grief, this signature distinguishes healing from traumatic shutdown
 
 ### Thread 3: Meaning-Making vs. Numbness
 
 - **Concept 01** (Narrow Window): We create meaning; this false-meaning-making is actually the system working as designed
 - **Concept 02** (Acceptance): Genuine acceptance preserves the capacity for meaning-making and connection; resignation numbs meaning away
-- **Thread Connection**: Acceptance enables continued meaning-making; resignation is disconnection from meaning
+- **Concept 03** (Grief): Loss reveals what love actually is; grief-as-acceptance deepens understanding of meaning and connection
+- **Thread Connection**: Acceptance enables continued meaning-making; resignation is disconnection from meaning. Grief-as-acceptance shows that loss can deepen rather than eliminate meaning
 
 ---
 
@@ -104,12 +137,14 @@ Help clients understand that:
 
 ## Maintenance Notes
 
-- Updated after Session 02 (Dec 2, 2025)
-- Concept 02 document complete; waiting for Sessions 03+ before adding Concept 03
-- Open questions from Session 02 may generate new concepts in Sessions 03-10
+- Updated after Session 02 (Dec 2, 2025) — Added Concepts 01 & 02
+- Updated after Session 03 (Dec 2, 2025) — Added Concept 03, connections 02↔03, updated all threads
+- Concept 03 shows how abstract principles (acceptance/resignation) apply to concrete experiences (grief)
+- Open questions from Session 02 are being answered by Session 03 findings
 
 ---
 
 **Last Updated:** Dec 2, 2025
-**Session Count:** 2/10
-**Connection Density:** 1 primary connection (01↔02), 3 threads, 2 open connections
+**Session Count:** 3/10
+**Concept Count:** 3/30
+**Connection Density:** 2 primary connections (01↔02, 02↔03), 3 threads spanning all concepts
