@@ -128,17 +128,57 @@ Layer 1: KNOWLEDGE GRAPH      - Neo4j with 50k+ entities
 
 ---
 
+## Current Status
+
+**Commit:** `38ee800` - Dashboard, Structured Thinking, and Quick Capture complete
+
+**Phase:** Layer 3 Processing Hub IMPLEMENTED
+
+---
+
 ## Deliverables Checklist
 
-- [ ] Dashboard component with navigation
-- [ ] Recent explorations list (from journeys API)
-- [ ] Structured Thinking mode selector
-- [ ] Split view for Structured Thinking (conversation + note preview)
-- [ ] Implement 5 thinking modes with different AI behaviors
-- [ ] Quick Capture input and queue
-- [ ] Integrate capture processing API
-- [ ] Placement suggestion UI
-- [ ] Profile management improvements
+### Dashboard (Complete)
+- [x] Dashboard component with navigation (v0.3.0)
+- [x] Recent explorations list (from journeys API)
+- [x] Knowledge graph statistics display
+- [x] Entry point buttons for three modes
+
+### Structured Thinking (Complete)
+- [x] Structured Thinking mode selector (ForgeMode.svelte)
+- [x] 5 thinking modes implemented (Learning, Articulating, Planning, Ideating, Reflecting)
+- [x] Mode-specific AI behaviors configured
+- [x] Backend session API integration
+- [ ] Split view for Structured Thinking (conversation + note preview) - DEFERRED (works with single view)
+
+### Quick Capture (Complete)
+- [x] Quick Capture input and queue (QuickCapture.svelte)
+- [x] Integrate capture processing API
+- [x] Placement suggestion UI
+- [x] Entity extraction display
+
+### Graph Exploration (Complete)
+- [x] FlowMode with entity search and navigation
+- [x] Grouped relationship display by type
+- [x] Thinking partner questions integration
+- [x] Journey breadcrumb tracking
+
+### Profile Management (Existing)
+- [x] Profile management basics (already present from earlier work)
+
+---
+
+## Next Steps
+
+Now that the SiYuan plugin has all three main modes implemented:
+
+1. **User Testing** - Get feedback on Dashboard navigation, Structured Thinking modes, and Quick Capture workflow
+2. **Integration Testing** - Verify backend API integration works smoothly across all features
+3. **UI/UX Refinement** - Polish based on user feedback
+4. **Journey Resumption** - Implement full journey resumption from recent explorations list
+5. **Capture Processing** - Test full capture workflow from iOS Shortcut → Queue → Processing → Routing
+
+**Note:** Quick Capture design document at `docs/plans/2025-12-03-quick-capture-design.md` describes the iOS Shortcut setup. Current plugin implementation uses SiYuan APIs directly for capture queue management.
 
 ---
 
