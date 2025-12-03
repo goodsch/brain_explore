@@ -1,0 +1,35 @@
+{
+  "session_doc_id": "20251202192110-bnc44l8",
+  "entities_created": [
+    "reframing therapeutic hope"
+  ],
+  "entities_updated": [],
+  "literature_links": {
+    "reframing therapeutic hope": [
+      "Motivational_Interviewing_Helping_People_Change_an:Chapter 7 Planning \u201cHow Will You Get There?\u201d:13",
+      "Character_strengths_and_virtues_a_handbook_and_cla:25. Hope:14",
+      "The_Power_of_Character_Strengths_Appreciate_and_Ig:text/part0039.html:1",
+      "Existential_Psychotherapy:CHAPTER 7:59",
+      "Handbook_of_Psychotherapy_Integration:4:6"
+    ]
+  },
+  "summary": {
+    "key_insights": [
+      "The nervous system acts as a gatekeeper that controls access to cognitive and creative resources",
+      "Capacity may be about access rather than innate ability - intelligence and creativity can be locked away by dysregulation",
+      "Therapy shifts from creating new capacities to restoring access to existing ones",
+      "This reframes therapeutic hope from questioning if change is possible to identifying what conditions enable emergence"
+    ],
+    "open_questions": [
+      "What specific conditions unlock access to locked-away capacities?",
+      "How does the process of restoration actually unfold as regulation improves?",
+      "What determines timing and readiness for capacity to re-emerge?"
+    ],
+    "threads_explored": [
+      "The relationship between nervous system states and cognitive availability",
+      "How dysregulation specifically blocks different types of thinking",
+      "The implications of seeing capacity as access rather than fixed ability",
+      "A fundamental reframe of what therapy is trying to accomplish"
+    ]
+  }
+}
