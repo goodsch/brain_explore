@@ -9,12 +9,14 @@
     import { showMessage, fetchSyncPost } from 'siyuan';
 
     export let backendUrl: string;
+    export let journeyId: string | null = null;
 
     const dispatch = createEventDispatcher();
 
     // State
     let searchQuery = '';
     let isSearching = false;
+    let isLoadingJourney = false;
     let searchResults: Array<{name: string, type: string}> = [];
     let currentConcept: string | null = null;
     let nodes: Array<{name: string, type: string, labels: string[]}> = [];
@@ -212,6 +214,37 @@
             exploreConcept(concept);
         }
     }
+
+    async function loadJourney(id: string) {
+        isLoadingJourney = true;
+        try {
+            const journey = await apiGet(`/journeys/${id}`);
+
+            // Restore exploration path from journey's path
+            if (journey.path && journey.path.length > 0) {
+                explorationPath = journey.path.map((step: any) => step.entity_name);
+
+                // Navigate to the last concept in the path
+                const lastStep = journey.path[journey.path.length - 1];
+                if (lastStep && lastStep.entity_name) {
+                    await exploreConcept(lastStep.entity_name);
+                }
+
+                showMessage(`Resumed journey: ${journey.title || 'Untitled'}`, 3000);
+            }
+        } catch (err) {
+            console.error('[IES] Failed to load journey:', err);
+            showMessage(`Failed to resume journey: ${err.message}`, 5000, 'error');
+        } finally {
+            isLoadingJourney = false;
+        }
+    }
+
+    onMount(() => {
+        if (journeyId) {
+            loadJourney(journeyId);
+        }
+    });
 </script>
 
 <div class="flow-mode">
@@ -266,7 +299,11 @@
         </div>
     {/if}
 
-    {#if !currentConcept && searchResults.length === 0}
+    {#if isLoadingJourney}
+        <div class="flow-loading">
+            <p>Resuming journey...</p>
+        </div>
+    {:else if !currentConcept && searchResults.length === 0}
         <div class="flow-welcome">
             <p><strong>Flow</strong> is where you explore freely.</p>
             <p>Search for a concept to navigate the knowledge graph.</p>
@@ -475,6 +512,21 @@
         padding: 2px 6px;
         background: var(--b3-theme-surface);
         border-radius: 4px;
+    }
+
+    .flow-loading {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--b3-theme-on-surface-light);
+        padding: 24px;
+    }
+
+    .flow-loading p {
+        margin: 8px 0;
     }
 
     .flow-welcome {

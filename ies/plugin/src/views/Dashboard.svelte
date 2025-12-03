@@ -23,6 +23,7 @@
     // View state
     type ViewMode = 'dashboard' | 'structured-thinking' | 'flow' | 'capture';
     let currentView: ViewMode = 'dashboard';
+    let selectedJourneyId: string | null = null;
 
     // Dashboard data
     let stats: {
@@ -40,10 +41,10 @@
     // Journey/exploration data
     let recentJourneys: Array<{
         id: string;
-        title: string;
+        title: string | null;
         started_at: string;
-        status: string;
-        breadcrumb_count: number;
+        ended_at: string | null;
+        path: Array<{entity_name: string}>;
     }> = [];
 
     // Quick Capture queue
@@ -128,19 +129,24 @@
     });
 
     function navigateTo(view: ViewMode) {
+        // Clear journey selection when navigating to flow without a journey
+        if (view === 'flow') {
+            selectedJourneyId = null;
+        }
         currentView = view;
     }
 
     function handleBack() {
         currentView = 'dashboard';
+        selectedJourneyId = null;
         // Refresh stats when returning to dashboard
         loadDashboardData();
     }
 
     function resumeJourney(journeyId: string) {
         // Navigate to Flow mode with the journey context
-        // TODO: Pass journey ID to FlowMode for resumption
-        navigateTo('flow');
+        selectedJourneyId = journeyId;
+        currentView = 'flow';
     }
 
     function formatNumber(n: number): string {
@@ -223,9 +229,9 @@
                         <div class="journey-list">
                             {#each recentJourneys.slice(0, 3) as journey}
                                 <button class="journey-item" on:click={() => resumeJourney(journey.id)}>
-                                    <span class="journey-title">{journey.title}</span>
+                                    <span class="journey-title">{journey.title || journey.path[0]?.entity_name || 'Untitled'}</span>
                                     <span class="journey-meta">
-                                        <span class="journey-crumbs">{journey.breadcrumb_count} steps</span>
+                                        <span class="journey-crumbs">{journey.path.length} steps</span>
                                         <span class="journey-time">{formatRelativeTime(journey.started_at)}</span>
                                     </span>
                                 </button>
@@ -295,7 +301,7 @@
     {:else if currentView === 'structured-thinking'}
         <ForgeMode backendUrl={BACKEND_URL} on:back={handleBack} />
     {:else if currentView === 'flow'}
-        <FlowMode backendUrl={BACKEND_URL} on:back={handleBack} />
+        <FlowMode backendUrl={BACKEND_URL} journeyId={selectedJourneyId} on:back={handleBack} />
     {:else if currentView === 'capture'}
         <QuickCapture backendUrl={BACKEND_URL} on:back={handleBack} />
     {/if}
