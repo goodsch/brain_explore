@@ -1,0 +1,4405 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IES Backend",
+    "description": "Intelligent Exploration System - Entity extraction and knowledge management",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/profile/{user_id}": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Get Profile",
+        "description": "Get user profile by ID.",
+        "operationId": "get_profile_profile__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Create Profile",
+        "description": "Create a new user profile with defaults.",
+        "operationId": "create_profile_profile__user_id__post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "display_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Display Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Update Profile",
+        "description": "Update user profile dimensions.",
+        "operationId": "update_profile_profile__user_id__patch",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/{user_id}/capacity": {
+      "post": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Check In Capacity",
+        "description": "Record session capacity check-in.",
+        "operationId": "check_in_capacity_profile__user_id__capacity_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CapacityCheckIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/{user_id}/observe": {
+      "post": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Observe Session",
+        "description": "Update profile based on session observations.",
+        "operationId": "observe_session_profile__user_id__observe_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileObservation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/{user_id}/summary": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Get Profile Summary",
+        "description": "Get a condensed profile summary for session context.",
+        "operationId": "get_profile_summary_profile__user_id__summary_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Profile Summary Profile  User Id  Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/{user_id}/sync-siyuan": {
+      "post": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Sync To Siyuan",
+        "description": "Sync profile to SiYuan as a human-readable page.\n\nArgs:\n    user_id: User ID\n    notebook_id: Optional SiYuan notebook ID override",
+        "operationId": "sync_to_siyuan_profile__user_id__sync_siyuan_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "notebook_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Notebook Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Sync To Siyuan Profile  User Id  Sync Siyuan Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/start": {
+      "post": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Start Session",
+        "description": "Start a new IES session.\n\nLoads user profile, recent context, and generates a personalized greeting.\n\nArgs:\n    request: Session start request with user_id\n\nReturns:\n    SessionStartResponse with session_id, profile_summary, recent_context, greeting",
+        "operationId": "start_session_session_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/chat": {
+      "post": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Chat",
+        "description": "Chat with the IES guide.\n\nStreams the assistant's response using Server-Sent Events.\n\nArgs:\n    request: Chat request with session_id, message, and conversation history\n\nReturns:\n    StreamingResponse with SSE events",
+        "operationId": "chat_session_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/chat-sync": {
+      "post": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Chat Sync",
+        "description": "Chat with the IES guide (non-streaming).\n\nReturns the complete response in a single JSON response.\nUsed by plugin when streaming is not available.\n\nArgs:\n    request: Chat request with session_id, message, and conversation history\n\nReturns:\n    dict with 'response' field containing the full message",
+        "operationId": "chat_sync_session_chat_sync_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Chat Sync Session Chat Sync Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/end": {
+      "post": {
+        "tags": [
+          "session"
+        ],
+        "summary": "End Session",
+        "description": "End an IES session and process the transcript.\n\nExtracts entities, creates session document in SiYuan, stores in Neo4j.\n\nArgs:\n    request: Session end request with transcript\n\nReturns:\n    SessionEndResponse with doc_id, entities_extracted, summary",
+        "operationId": "end_session_session_end_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionEndRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionEndResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/process": {
+      "post": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Process Session",
+        "description": "Process a session transcript.\n\n1. Extract entities via Claude API\n2. Generate session document in SiYuan\n3. Store entities in Neo4j\n4. Return summary\n\nArgs:\n    request: Session processing request with transcript and metadata",
+        "operationId": "process_session_session_process_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionProcessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionProcessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/entities/{user_id}": {
+      "get": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Get User Entities",
+        "description": "Get all entities for a user.\n\nArgs:\n    user_id: User ID\n    limit: Maximum entities to return",
+        "operationId": "get_user_entities_session_entities__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get User Entities Session Entities  User Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/entities/{user_id}/{entity_name}/graph": {
+      "get": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Get Entity Graph",
+        "description": "Get an entity and its connected entities.\n\nArgs:\n    user_id: User ID\n    entity_name: Name of central entity\n    depth: How many hops to traverse (default 2)",
+        "operationId": "get_entity_graph_session_entities__user_id___entity_name__graph_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Name"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 2,
+              "title": "Depth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Entity Graph Session Entities  User Id   Entity Name  Graph Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/context/{user_id}": {
+      "get": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Get Session Context",
+        "description": "Get session context for session start.\n\nReturns profile summary, capacity, recent sessions, and active entities.\nUsed by /explore-session command to load context at session start.\n\nArgs:\n    user_id: User ID",
+        "operationId": "get_session_context_session_context__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionContext"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/entities/{user_id}/{entity_name}/page-data": {
+      "get": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Get Entity Page Data",
+        "description": "Get full entity data for rendering a SiYuan page.\n\nReturns entity details, connected entities, and literature links.\nUsed by plugin or Claude Code to create entity pages on-demand.\n\nArgs:\n    user_id: User ID\n    entity_name: Name of the entity",
+        "operationId": "get_entity_page_data_session_entities__user_id___entity_name__page_data_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityPageData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/question-engine/detect-state": {
+      "post": {
+        "tags": [
+          "question-engine"
+        ],
+        "summary": "Detect State",
+        "description": "Detect user's current cognitive/emotional state from recent messages.\n\nAnalyzes conversation patterns, language markers, and explicit signals\nto determine if user is flowing, stuck, overwhelmed, etc.\n\nArgs:\n    request: State detection request with messages and optional context\n\nReturns:\n    StateDetection with primary state, confidence, and observed signals",
+        "operationId": "detect_state_question_engine_detect_state_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DetectStateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StateDetection"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/question-engine/select-approach": {
+      "post": {
+        "tags": [
+          "question-engine"
+        ],
+        "summary": "Select Approach",
+        "description": "Select best inquiry approach based on detected state and user profile.\n\nFirst detects user state, then selects appropriate questioning approach\n(Socratic, Solution-Focused, Phenomenological, etc.) with profile-based\nadaptations for pacing, directness, abstraction, and structure.\n\nArgs:\n    request: Approach selection request with messages and context\n\nReturns:\n    ApproachSelection with chosen approach and adaptation parameters",
+        "operationId": "select_approach_question_engine_select_approach_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectApproachRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproachSelection"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/question-engine/templates/{approach}": {
+      "get": {
+        "tags": [
+          "question-engine"
+        ],
+        "summary": "Get Templates",
+        "description": "Get question templates for a specific inquiry approach.\n\nReturns template library with different question patterns, directness\nvariants, and usage guidance for the specified approach.\n\nArgs:\n    approach: The inquiry approach (socratic, solution_focused, etc.)\n    category: Optional category filter (clarifying, deepening, challenging, grounding)\n\nReturns:\n    List of question templates for the approach",
+        "operationId": "get_templates_question_engine_templates__approach__get",
+        "parameters": [
+          {
+            "name": "approach",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/InquiryApproach"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by category (e.g., 'clarifying', 'deepening')",
+              "title": "Category"
+            },
+            "description": "Filter by category (e.g., 'clarifying', 'deepening')"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionTemplate"
+                  },
+                  "title": "Response Get Templates Question Engine Templates  Approach  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/question-engine/generate-questions": {
+      "post": {
+        "tags": [
+          "question-engine"
+        ],
+        "summary": "Generate Questions",
+        "description": "Generate profile-adapted questions for current conversation context.\n\nCombines state detection, approach selection, and template adaptation\nto produce questions tailored to user's current state and cognitive profile.\n\nThis endpoint orchestrates the full Question Engine pipeline:\n1. Detect current user state\n2. Select appropriate inquiry approach\n3. Retrieve matching question templates\n4. Adapt questions based on profile (directness, pacing, etc.)\n\nArgs:\n    request: Question generation request with context and parameters\n\nReturns:\n    QuestionBatch with generated questions and metadata",
+        "operationId": "generate_questions_question_engine_generate_questions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateQuestionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionBatch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/question-engine/approaches": {
+      "get": {
+        "tags": [
+          "question-engine"
+        ],
+        "summary": "List Approaches",
+        "description": "List all available inquiry approaches and their recommended states.\n\nReturns a mapping of user states to recommended inquiry approaches,\nhelping understand the Question Engine's decision logic.\n\nReturns:\n    Dictionary mapping states to approach lists",
+        "operationId": "list_approaches_question_engine_approaches_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response List Approaches Question Engine Approaches Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/question-engine/categories": {
+      "get": {
+        "tags": [
+          "question-engine"
+        ],
+        "summary": "List Categories",
+        "description": "List all available question categories.\n\nArgs:\n    approach: Optional filter by approach\n\nReturns:\n    List of category names",
+        "operationId": "list_categories_question_engine_categories_get",
+        "parameters": [
+          {
+            "name": "approach",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/InquiryApproach"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by approach",
+              "title": "Approach"
+            },
+            "description": "Filter by approach"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response List Categories Question Engine Categories Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graph/explore/{concept}": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Explore Concept",
+        "description": "Explore a concept and its relationships in the knowledge graph.\n\nReturns the concept's related nodes and the relationships between them.",
+        "operationId": "explore_concept_graph_explore__concept__get",
+        "parameters": [
+          {
+            "name": "concept",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Concept"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 3,
+              "minimum": 1,
+              "description": "Exploration depth (1-3)",
+              "default": 1,
+              "title": "Depth"
+            },
+            "description": "Exploration depth (1-3)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graph/search": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Search Concepts",
+        "description": "Search for concepts matching a text query.\n\nUses substring matching on concept names.",
+        "operationId": "search_concepts_graph_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Search query",
+              "title": "Q"
+            },
+            "description": "Search query"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Maximum results",
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "Maximum results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graph/sources/{concept}": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Get Sources",
+        "description": "Get supporting text chunks for a concept.\n\nReturns passages from books that mention or discuss the concept.",
+        "operationId": "get_sources_graph_sources__concept__get",
+        "parameters": [
+          {
+            "name": "concept",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Concept"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "description": "Maximum sources",
+              "default": 5,
+              "title": "Limit"
+            },
+            "description": "Maximum sources"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graph/stats": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Get Stats",
+        "description": "Get knowledge graph statistics for the dashboard.",
+        "operationId": "get_stats_graph_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graph/suggestions": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Get Suggestions",
+        "description": "Get suggested topics for the dashboard.\n\nReturns:\n- recent: Recently explored topics (placeholder - needs session tracking)\n- connected: Most connected topics in the graph\n- new: Less explored or new topics",
+        "operationId": "get_suggestions_graph_suggestions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graph/thinking-partner": {
+      "post": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Thinking Partner",
+        "description": "Generate a thinking partner question based on exploration context.\n\nThe question helps the user reflect on their exploration path and\nconnect concepts to their own experience.",
+        "operationId": "thinking_partner_graph_thinking_partner_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThinkingPartnerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThinkingPartnerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/journeys": {
+      "post": {
+        "tags": [
+          "journeys",
+          "journeys"
+        ],
+        "summary": "Create Journey",
+        "description": "Create a new exploration journey.\n\nThis endpoint saves a breadcrumb journey from Readest or other exploration\ninterfaces. Journeys capture the path, marks, and thinking partner exchanges\nduring exploration.",
+        "operationId": "create_journey_journeys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JourneyCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/journeys/{journey_id}": {
+      "get": {
+        "tags": [
+          "journeys",
+          "journeys"
+        ],
+        "summary": "Get Journey",
+        "description": "Get a journey by ID.\n\nReturns the complete journey including path, marks, and thinking partner\nexchanges.",
+        "operationId": "get_journey_journeys__journey_id__get",
+        "parameters": [
+          {
+            "name": "journey_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Journey Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreadcrumbJourney"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "journeys",
+          "journeys"
+        ],
+        "summary": "Update Journey",
+        "description": "Update a journey.\n\nUse this to:\n- Append new steps to the path (continuing exploration)\n- Add marks (highlights, annotations)\n- Add thinking partner exchanges\n- Set end time when exploration completes\n- Update title, tags, or notes",
+        "operationId": "update_journey_journeys__journey_id__patch",
+        "parameters": [
+          {
+            "name": "journey_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Journey Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JourneyUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreadcrumbJourney"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "journeys",
+          "journeys"
+        ],
+        "summary": "Delete Journey",
+        "description": "Delete a journey.\n\nRemoves the journey and all associated steps, marks, and exchanges.",
+        "operationId": "delete_journey_journeys__journey_id__delete",
+        "parameters": [
+          {
+            "name": "journey_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Journey Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Journey Journeys  Journey Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/journeys/user/{user_id}": {
+      "get": {
+        "tags": [
+          "journeys",
+          "journeys"
+        ],
+        "summary": "List User Journeys",
+        "description": "List journeys for a user.\n\nReturns paginated list of journeys ordered by start time (newest first).",
+        "operationId": "list_user_journeys_journeys_user__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/capture/process": {
+      "post": {
+        "tags": [
+          "capture",
+          "capture"
+        ],
+        "summary": "Process Capture",
+        "description": "Process captured content for intelligent routing.\n\nThis endpoint analyzes unstructured content (text, voice transcription,\nimage OCR, or fetched URL) and:\n1. Extracts entities/concepts mentioned\n2. Generates a summary\n3. Suggests tags\n4. Recommends placements (existing notes, concepts, journeys, or new note)\n\nThe response provides placement suggestions ranked by confidence.\nUse the top suggestion or let the user choose.",
+        "operationId": "process_capture_capture_process_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureProcessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureProcessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Health check endpoint.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Check Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActiveEntity": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "kind"
+        ],
+        "title": "ActiveEntity",
+        "description": "Entity being actively developed."
+      },
+      "ApproachSelection": {
+        "properties": {
+          "selected_approach": {
+            "$ref": "#/components/schemas/InquiryApproach"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "reasoning": {
+            "type": "string",
+            "title": "Reasoning"
+          },
+          "pacing": {
+            "type": "string",
+            "title": "Pacing",
+            "description": "fast | moderate | slow"
+          },
+          "directness": {
+            "type": "string",
+            "title": "Directness",
+            "description": "direct | balanced | gentle"
+          },
+          "abstraction": {
+            "type": "string",
+            "title": "Abstraction",
+            "description": "concrete | mixed | abstract"
+          },
+          "structure": {
+            "type": "string",
+            "title": "Structure",
+            "description": "tight | moderate | loose"
+          },
+          "fallback_approaches": {
+            "items": {
+              "$ref": "#/components/schemas/InquiryApproach"
+            },
+            "type": "array",
+            "title": "Fallback Approaches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "selected_approach",
+          "confidence",
+          "reasoning",
+          "pacing",
+          "directness",
+          "abstraction",
+          "structure"
+        ],
+        "title": "ApproachSelection",
+        "description": "Result of approach selection based on state and profile."
+      },
+      "AttentionProfile": {
+        "properties": {
+          "hyperfocus_triggers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hyperfocus Triggers",
+            "description": "Topics/contexts that unlock flow state"
+          },
+          "distraction_vulnerabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Distraction Vulnerabilities",
+            "description": "What tends to derail focus"
+          },
+          "current_capacity": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Current Capacity",
+            "description": "Current energy level (session check-in)",
+            "default": 5
+          },
+          "recovery_patterns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recovery Patterns",
+            "description": "What restores energy"
+          },
+          "optimal_session_length": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 5.0,
+            "title": "Optimal Session Length",
+            "description": "Ideal session length in minutes",
+            "default": 30
+          }
+        },
+        "type": "object",
+        "title": "AttentionProfile",
+        "description": "Dimension 2: Attention and energy patterns."
+      },
+      "BreadcrumbJourney": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "entry_point": {
+            "$ref": "#/components/schemas/EntryPoint"
+          },
+          "path": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyStep"
+            },
+            "type": "array",
+            "title": "Path"
+          },
+          "marks": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyMark"
+            },
+            "type": "array",
+            "title": "Marks"
+          },
+          "thinking_partner_exchanges": {
+            "items": {
+              "$ref": "#/components/schemas/ThinkingPartnerExchange"
+            },
+            "type": "array",
+            "title": "Thinking Partner Exchanges"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "processed": {
+            "type": "boolean",
+            "title": "Processed",
+            "default": false
+          },
+          "siyuan_note_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Siyuan Note Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "entry_point"
+        ],
+        "title": "BreadcrumbJourney",
+        "description": "Complete record of an exploration journey.",
+        "example": {
+          "entry_point": {
+            "reference": "acceptance",
+            "type": "search"
+          },
+          "marks": [
+            {
+              "content": "Acceptance requires active engagement with reality",
+              "entity_id": "concept_123",
+              "type": "highlight"
+            }
+          ],
+          "path": [
+            {
+              "dwell_time_seconds": 45.2,
+              "entity_id": "concept_123",
+              "entity_name": "Acceptance"
+            },
+            {
+              "dwell_time_seconds": 30.0,
+              "entity_id": "concept_456",
+              "entity_name": "Resignation"
+            }
+          ],
+          "user_id": "chris"
+        }
+      },
+      "CapacityCheckIn": {
+        "properties": {
+          "current_capacity": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Current Capacity"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_capacity"
+        ],
+        "title": "CapacityCheckIn",
+        "description": "Session capacity check-in."
+      },
+      "CaptureProcessRequest": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CaptureType",
+            "default": "text"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "CaptureProcessRequest",
+        "description": "Request to process captured content.",
+        "example": {
+          "content": "Just realized acceptance isn't about giving up - it's about engaging with what is. This connects to the metabolization idea.",
+          "context": {
+            "current_journey_id": "journey_456",
+            "current_note_id": "note_123"
+          },
+          "type": "text"
+        }
+      },
+      "CaptureProcessResponse": {
+        "properties": {
+          "extracted_entities": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractedEntity"
+            },
+            "type": "array",
+            "title": "Extracted Entities"
+          },
+          "suggested_placements": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedPlacement"
+            },
+            "type": "array",
+            "title": "Suggested Placements"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "extracted_entities",
+          "suggested_placements"
+        ],
+        "title": "CaptureProcessResponse",
+        "description": "Response from processing captured content.",
+        "example": {
+          "extracted_entities": [
+            {
+              "confidence": 0.95,
+              "name": "Acceptance",
+              "type": "concept"
+            },
+            {
+              "confidence": 0.8,
+              "name": "Metabolization",
+              "type": "concept"
+            }
+          ],
+          "suggested_placements": [
+            {
+              "confidence": 0.85,
+              "preview": "...existing content...\n\n## New Insight\nJust realized acceptance isn't about giving up...",
+              "rationale": "Content relates directly to the acceptance concept in this note",
+              "target_id": "note_123",
+              "target_name": "Acceptance vs Resignation",
+              "target_type": "note"
+            }
+          ],
+          "summary": "Insight about acceptance as active engagement rather than resignation",
+          "tags": [
+            "acceptance",
+            "metabolization",
+            "insight"
+          ]
+        }
+      },
+      "CaptureType": {
+        "type": "string",
+        "enum": [
+          "text",
+          "voice",
+          "image",
+          "link"
+        ],
+        "title": "CaptureType",
+        "description": "Type of captured content."
+      },
+      "ChatMessage": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "'user' or 'assistant'"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatMessage",
+        "description": "A single chat message."
+      },
+      "CommunicationProfile": {
+        "properties": {
+          "verbal_fluency": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Verbal Fluency",
+            "description": "Ease of verbal expression (1=difficult, 10=effortless)",
+            "default": 5
+          },
+          "scripts_preference": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Scripts Preference",
+            "description": "Prefers scripts (1) vs spontaneity (10)",
+            "default": 5
+          },
+          "directness_preference": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Directness Preference",
+            "description": "Gentle (1) vs blunt (10)",
+            "default": 5
+          },
+          "pace": {
+            "$ref": "#/components/schemas/PacePreference",
+            "default": "adaptive"
+          },
+          "wait_time_needed": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Wait Time Needed",
+            "description": "Processing time needed before responding (1=none, 10=lots)",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "title": "CommunicationProfile",
+        "description": "Dimension 3: Communication preferences."
+      },
+      "DecisionStyle": {
+        "type": "string",
+        "enum": [
+          "deliberative",
+          "intuitive",
+          "mixed"
+        ],
+        "title": "DecisionStyle",
+        "description": "How user makes decisions."
+      },
+      "DetectStateRequest": {
+        "properties": {
+          "recent_messages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recent Messages",
+            "description": "Last 3-5 user messages from conversation"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id",
+            "description": "User ID to load profile context"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity",
+            "description": "Optional explicit capacity check-in (1-10)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recent_messages"
+        ],
+        "title": "DetectStateRequest",
+        "description": "Request for state detection."
+      },
+      "EntityConnection": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "relationship": {
+            "type": "string",
+            "title": "Relationship"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "relationship",
+          "kind",
+          "status",
+          "description"
+        ],
+        "title": "EntityConnection",
+        "description": "A connection to another entity."
+      },
+      "EntityDomain": {
+        "type": "string",
+        "enum": [
+          "therapy",
+          "personal",
+          "meta"
+        ],
+        "title": "EntityDomain",
+        "description": "Domain context for entity."
+      },
+      "EntityKind": {
+        "type": "string",
+        "enum": [
+          "idea",
+          "person",
+          "process",
+          "question",
+          "tension"
+        ],
+        "title": "EntityKind",
+        "description": "Type of entity."
+      },
+      "EntityPageData": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "domain": {
+            "$ref": "#/components/schemas/EntityDomain"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "quotes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Quotes"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "session_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Session Ids"
+          },
+          "connections": {
+            "items": {
+              "$ref": "#/components/schemas/EntityConnection"
+            },
+            "type": "array",
+            "title": "Connections"
+          },
+          "literature": {
+            "items": {
+              "$ref": "#/components/schemas/LiteratureLink"
+            },
+            "type": "array",
+            "title": "Literature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "domain",
+          "status",
+          "description"
+        ],
+        "title": "EntityPageData",
+        "description": "Full entity data for rendering a SiYuan page."
+      },
+      "EntityStatus": {
+        "type": "string",
+        "enum": [
+          "seed",
+          "developing",
+          "solid"
+        ],
+        "title": "EntityStatus",
+        "description": "Development status of entity."
+      },
+      "EntryPoint": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EntryPointType"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "reference"
+        ],
+        "title": "EntryPoint",
+        "description": "How a journey was initiated."
+      },
+      "EntryPointType": {
+        "type": "string",
+        "enum": [
+          "book",
+          "search",
+          "dashboard",
+          "entity",
+          "external"
+        ],
+        "title": "EntryPointType",
+        "description": "How a journey was started."
+      },
+      "ExecutiveProfile": {
+        "properties": {
+          "task_initiation": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Task Initiation",
+            "description": "Ease of starting tasks (1=very hard, 10=easy)",
+            "default": 5
+          },
+          "transition_cost": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Transition Cost",
+            "description": "Difficulty switching tasks (1=easy, 10=very hard)",
+            "default": 5
+          },
+          "time_perception": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Time Perception",
+            "description": "Time blindness (1=accurate, 10=very blind)",
+            "default": 5
+          },
+          "structure_need": {
+            "$ref": "#/components/schemas/StructureNeed",
+            "default": "moderate"
+          },
+          "working_memory": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Working Memory",
+            "description": "Working memory capacity (1=low, 10=high)",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "title": "ExecutiveProfile",
+        "description": "Dimension 4: Executive functioning patterns."
+      },
+      "ExploreResponse": {
+        "properties": {
+          "concept": {
+            "type": "string",
+            "title": "Concept"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "relationships": {
+            "items": {
+              "$ref": "#/components/schemas/GraphRelationship"
+            },
+            "type": "array",
+            "title": "Relationships"
+          }
+        },
+        "type": "object",
+        "required": [
+          "concept"
+        ],
+        "title": "ExploreResponse",
+        "description": "Response from exploring a concept."
+      },
+      "ExtractedEntity": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "confidence"
+        ],
+        "title": "ExtractedEntity",
+        "description": "An entity extracted from captured content."
+      },
+      "GenerateQuestionsRequest": {
+        "properties": {
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id",
+            "description": "User ID for profile adaptation"
+          },
+          "recent_messages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recent Messages",
+            "description": "Recent conversation for state detection"
+          },
+          "context": {
+            "type": "string",
+            "title": "Context",
+            "description": "Current topic/context for question generation"
+          },
+          "num_questions": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Num Questions",
+            "description": "Number of questions to generate",
+            "default": 3
+          }
+        },
+        "type": "object",
+        "required": [
+          "recent_messages",
+          "context"
+        ],
+        "title": "GenerateQuestionsRequest",
+        "description": "Request for question generation."
+      },
+      "GraphNode": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "Node type (Concept, Researcher, Theory, etc.)"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Labels",
+            "description": "All node labels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "GraphNode",
+        "description": "A node in the knowledge graph."
+      },
+      "GraphRelationship": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "title": "Start",
+            "description": "Source node name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "Relationship type (COMPONENT_OF, SUPPORTS, etc.)"
+          },
+          "end": {
+            "type": "string",
+            "title": "End",
+            "description": "Target node name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "type",
+          "end"
+        ],
+        "title": "GraphRelationship",
+        "description": "A relationship between nodes."
+      },
+      "GraphStats": {
+        "properties": {
+          "entities": {
+            "type": "integer",
+            "title": "Entities",
+            "description": "Total entity count"
+          },
+          "relationships": {
+            "type": "integer",
+            "title": "Relationships",
+            "description": "Total relationship count"
+          },
+          "books": {
+            "type": "integer",
+            "title": "Books",
+            "description": "Number of books indexed"
+          },
+          "node_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Node Counts",
+            "description": "Count by node type"
+          },
+          "relationship_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Relationship Counts",
+            "description": "Count by relationship type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entities",
+          "relationships",
+          "books"
+        ],
+        "title": "GraphStats",
+        "description": "Knowledge graph statistics."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InquiryApproach": {
+        "type": "string",
+        "enum": [
+          "socratic",
+          "solution_focused",
+          "phenomenological",
+          "systems",
+          "metacognitive",
+          "cbt",
+          "narrative",
+          "strategic",
+          "somatic",
+          "design"
+        ],
+        "title": "InquiryApproach",
+        "description": "Question approach types from the resource library."
+      },
+      "JourneyCreateRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "entry_point": {
+            "$ref": "#/components/schemas/EntryPoint"
+          },
+          "path": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyStep"
+            },
+            "type": "array",
+            "title": "Path"
+          },
+          "marks": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyMark"
+            },
+            "type": "array",
+            "title": "Marks"
+          },
+          "thinking_partner_exchanges": {
+            "items": {
+              "$ref": "#/components/schemas/ThinkingPartnerExchange"
+            },
+            "type": "array",
+            "title": "Thinking Partner Exchanges"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "entry_point"
+        ],
+        "title": "JourneyCreateRequest",
+        "description": "Request to create/save a journey."
+      },
+      "JourneyCreateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "siyuan_note_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Siyuan Note Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Journey saved successfully"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "JourneyCreateResponse",
+        "description": "Response after creating a journey."
+      },
+      "JourneyListResponse": {
+        "properties": {
+          "journeys": {
+            "items": {
+              "$ref": "#/components/schemas/BreadcrumbJourney"
+            },
+            "type": "array",
+            "title": "Journeys"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "default": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size",
+            "default": 20
+          }
+        },
+        "type": "object",
+        "required": [
+          "journeys",
+          "total"
+        ],
+        "title": "JourneyListResponse",
+        "description": "Response for listing journeys."
+      },
+      "JourneyMark": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/MarkType"
+          },
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "source_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Location"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "entity_id",
+          "content"
+        ],
+        "title": "JourneyMark",
+        "description": "A mark (highlight, annotation, etc.) made during exploration."
+      },
+      "JourneyStep": {
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id"
+          },
+          "entity_name": {
+            "type": "string",
+            "title": "Entity Name"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "source_passage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Passage"
+          },
+          "source_book_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Book Id"
+          },
+          "dwell_time_seconds": {
+            "type": "number",
+            "title": "Dwell Time Seconds",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_id",
+          "entity_name"
+        ],
+        "title": "JourneyStep",
+        "description": "A single step in an exploration journey."
+      },
+      "JourneyUpdateRequest": {
+        "properties": {
+          "path": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/JourneyStep"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "marks": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/JourneyMark"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marks"
+          },
+          "thinking_partner_exchanges": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ThinkingPartnerExchange"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thinking Partner Exchanges"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "title": "JourneyUpdateRequest",
+        "description": "Request to update a journey (add steps, marks, etc.)."
+      },
+      "LiteratureLink": {
+        "properties": {
+          "chunk_id": {
+            "type": "string",
+            "title": "Chunk Id"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "source_file": {
+            "type": "string",
+            "title": "Source File"
+          },
+          "chapter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chunk_id",
+          "content",
+          "source_file",
+          "score"
+        ],
+        "title": "LiteratureLink",
+        "description": "A link to source literature."
+      },
+      "MarkType": {
+        "type": "string",
+        "enum": [
+          "highlight",
+          "annotation",
+          "question",
+          "bookmark"
+        ],
+        "title": "MarkType",
+        "description": "Types of marks made during exploration."
+      },
+      "MaskingProfile": {
+        "properties": {
+          "traits_feel_unsafe": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Traits Feel Unsafe",
+            "description": "Traits that feel unsafe to show"
+          },
+          "high_cost_contexts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "High Cost Contexts",
+            "description": "Contexts with high masking energy cost"
+          },
+          "authentic_contexts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Authentic Contexts",
+            "description": "Contexts where masking is minimal"
+          }
+        },
+        "type": "object",
+        "title": "MaskingProfile",
+        "description": "Dimension 6: Masking awareness (optional/advanced)."
+      },
+      "PacePreference": {
+        "type": "string",
+        "enum": [
+          "fast",
+          "slow",
+          "adaptive"
+        ],
+        "title": "PacePreference",
+        "description": "Conversation pace preference."
+      },
+      "PlacementType": {
+        "type": "string",
+        "enum": [
+          "note",
+          "concept",
+          "journey",
+          "new_note"
+        ],
+        "title": "PlacementType",
+        "description": "Where to place the captured content."
+      },
+      "ProcessingProfile": {
+        "properties": {
+          "style": {
+            "$ref": "#/components/schemas/ProcessingStyle",
+            "default": "balanced"
+          },
+          "decision_style": {
+            "$ref": "#/components/schemas/DecisionStyle",
+            "default": "mixed"
+          },
+          "habituation_speed": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Habituation Speed",
+            "description": "How quickly 'new' becomes 'familiar' (1=slow, 10=fast)",
+            "default": 5
+          },
+          "abstraction_preference": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Abstraction Preference",
+            "description": "Concrete (1) vs theoretical (10)",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "title": "ProcessingProfile",
+        "description": "Dimension 1: How user processes information."
+      },
+      "ProcessingStyle": {
+        "type": "string",
+        "enum": [
+          "detail_first",
+          "pattern_first",
+          "balanced"
+        ],
+        "title": "ProcessingStyle",
+        "description": "How user processes information."
+      },
+      "ProfileObservation": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "session_length_minutes": {
+            "type": "integer",
+            "title": "Session Length Minutes"
+          },
+          "topics_explored": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Topics Explored"
+          },
+          "energy_signals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Energy Signals",
+            "description": "Observed energy changes during session"
+          },
+          "approach_effectiveness": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Approach Effectiveness",
+            "description": "Which questioning approaches worked well (1-10)"
+          },
+          "suggested_updates": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Suggested Updates",
+            "description": "AI-suggested profile updates based on session"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "session_length_minutes",
+          "topics_explored"
+        ],
+        "title": "ProfileObservation",
+        "description": "Observation from session to update profile."
+      },
+      "ProfileUpdate": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "processing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProcessingProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attention": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttentionProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "communication": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommunicationProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "executive": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutiveProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sensory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SensoryProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "masking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MaskingProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ProfileUpdate",
+        "description": "Partial profile update."
+      },
+      "QuestionBatch": {
+        "properties": {
+          "approach": {
+            "$ref": "#/components/schemas/InquiryApproach"
+          },
+          "state": {
+            "$ref": "#/components/schemas/UserState"
+          },
+          "questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Questions"
+          },
+          "context": {
+            "type": "string",
+            "title": "Context"
+          },
+          "profile_adaptations_applied": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Profile Adaptations Applied"
+          }
+        },
+        "type": "object",
+        "required": [
+          "approach",
+          "state",
+          "questions",
+          "context"
+        ],
+        "title": "QuestionBatch",
+        "description": "A batch of generated questions for a given state/approach."
+      },
+      "QuestionTemplate": {
+        "properties": {
+          "approach": {
+            "$ref": "#/components/schemas/InquiryApproach"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "template": {
+            "type": "string",
+            "title": "Template"
+          },
+          "when_to_use": {
+            "type": "string",
+            "title": "When To Use"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "directness_variants": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Directness Variants",
+            "description": "Alternative phrasings by directness level"
+          },
+          "pace_considerations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pace Considerations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "approach",
+          "category",
+          "template",
+          "when_to_use"
+        ],
+        "title": "QuestionTemplate",
+        "description": "A question template for a specific approach."
+      },
+      "RecentSession": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "entities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entities"
+          },
+          "hanging_question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hanging Question"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "topic"
+        ],
+        "title": "RecentSession",
+        "description": "Summary of a recent session for context loading."
+      },
+      "SearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "SearchResponse",
+        "description": "Response from searching concepts."
+      },
+      "SearchResult": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "description": "Relevance score (0-1)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "score"
+        ],
+        "title": "SearchResult",
+        "description": "A search result."
+      },
+      "SelectApproachRequest": {
+        "properties": {
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id",
+            "description": "User ID to load profile"
+          },
+          "recent_messages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recent Messages",
+            "description": "Recent conversation messages for state detection"
+          },
+          "previous_approach": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InquiryApproach"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Previously used approach to avoid repetition"
+          },
+          "session_duration_minutes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Session Duration Minutes",
+            "description": "How long the session has been running",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "recent_messages"
+        ],
+        "title": "SelectApproachRequest",
+        "description": "Request for approach selection."
+      },
+      "SensoryProfile": {
+        "properties": {
+          "environment_preference": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Environment Preference",
+            "description": "Quiet (1) vs stimulating (10) environment",
+            "default": 5
+          },
+          "overwhelm_signals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Overwhelm Signals",
+            "description": "Signs that indicate overwhelm"
+          },
+          "regulation_tools": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regulation Tools",
+            "description": "What helps regulate state"
+          }
+        },
+        "type": "object",
+        "title": "SensoryProfile",
+        "description": "Dimension 5: Sensory and environmental context."
+      },
+      "SessionChatRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "type": "array",
+            "title": "Messages",
+            "description": "Full conversation history"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "message"
+        ],
+        "title": "SessionChatRequest",
+        "description": "Request for a chat turn."
+      },
+      "SessionContext": {
+        "properties": {
+          "profile_summary": {
+            "type": "string",
+            "title": "Profile Summary"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "recent_sessions": {
+            "items": {
+              "$ref": "#/components/schemas/RecentSession"
+            },
+            "type": "array",
+            "title": "Recent Sessions"
+          },
+          "active_entities": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveEntity"
+            },
+            "type": "array",
+            "title": "Active Entities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "profile_summary"
+        ],
+        "title": "SessionContext",
+        "description": "Context loaded at session start."
+      },
+      "SessionEndRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "transcript": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "type": "array",
+            "title": "Transcript"
+          },
+          "session_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "user_id",
+          "transcript"
+        ],
+        "title": "SessionEndRequest",
+        "description": "Request to end a session."
+      },
+      "SessionEndResponse": {
+        "properties": {
+          "doc_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Id"
+          },
+          "entities_extracted": {
+            "type": "integer",
+            "title": "Entities Extracted",
+            "default": 0
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "title": "SessionEndResponse",
+        "description": "Response from ending a session."
+      },
+      "SessionProcessRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "transcript": {
+            "type": "string",
+            "title": "Transcript"
+          },
+          "session_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Title"
+          },
+          "session_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "transcript"
+        ],
+        "title": "SessionProcessRequest",
+        "description": "Request to process a session transcript."
+      },
+      "SessionProcessResponse": {
+        "properties": {
+          "session_doc_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Doc Id"
+          },
+          "entities_created": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entities Created"
+          },
+          "entities_updated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entities Updated"
+          },
+          "literature_links": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Literature Links",
+            "description": "Map of entity names to chunk IDs linked from literature"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SessionSummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary"
+        ],
+        "title": "SessionProcessResponse",
+        "description": "Response from session processing."
+      },
+      "SessionStartRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "SessionStartRequest",
+        "description": "Request to start a new session."
+      },
+      "SessionStartResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "profile_summary": {
+            "type": "string",
+            "title": "Profile Summary"
+          },
+          "recent_context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Context"
+          },
+          "greeting": {
+            "type": "string",
+            "title": "Greeting"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "profile_summary",
+          "greeting"
+        ],
+        "title": "SessionStartResponse",
+        "description": "Response from starting a session."
+      },
+      "SessionSummary": {
+        "properties": {
+          "key_insights": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Key Insights"
+          },
+          "open_questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Open Questions"
+          },
+          "threads_explored": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Threads Explored"
+          }
+        },
+        "type": "object",
+        "title": "SessionSummary",
+        "description": "Summary of session content."
+      },
+      "SourceChunk": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "book": {
+            "type": "string",
+            "title": "Book"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "chapter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "book"
+        ],
+        "title": "SourceChunk",
+        "description": "A source text chunk supporting a concept."
+      },
+      "SourcesResponse": {
+        "properties": {
+          "concept": {
+            "type": "string",
+            "title": "Concept"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceChunk"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "concept"
+        ],
+        "title": "SourcesResponse",
+        "description": "Response from getting sources for a concept."
+      },
+      "StateDetection": {
+        "properties": {
+          "primary_state": {
+            "$ref": "#/components/schemas/UserState"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "secondary_states": {
+            "items": {
+              "$ref": "#/components/schemas/UserState"
+            },
+            "type": "array",
+            "title": "Secondary States"
+          },
+          "signals_observed": {
+            "$ref": "#/components/schemas/StateSignal"
+          },
+          "reasoning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoning"
+          }
+        },
+        "type": "object",
+        "required": [
+          "primary_state",
+          "confidence"
+        ],
+        "title": "StateDetection",
+        "description": "Result of state detection analysis."
+      },
+      "StateSignal": {
+        "properties": {
+          "response_length": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "short | medium | long"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Length"
+          },
+          "response_speed": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "quick | normal | delayed"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Speed"
+          },
+          "certainty_language": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "description": "1=uncertain, 10=confident"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certainty Language"
+          },
+          "energy_words": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Energy Words",
+            "description": "Words indicating energy level"
+          },
+          "frustration_indicators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Frustration Indicators"
+          },
+          "engagement_indicators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Engagement Indicators"
+          },
+          "repetition_detected": {
+            "type": "boolean",
+            "title": "Repetition Detected",
+            "default": false
+          },
+          "tangent_frequency": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "low | medium | high"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tangent Frequency"
+          },
+          "abstraction_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "concrete | mixed | abstract"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abstraction Level"
+          },
+          "explicit_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicit State"
+          },
+          "capacity_reported": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Reported"
+          }
+        },
+        "type": "object",
+        "title": "StateSignal",
+        "description": "Signals used to detect user state."
+      },
+      "StructureNeed": {
+        "type": "string",
+        "enum": [
+          "rigid",
+          "flexible",
+          "moderate"
+        ],
+        "title": "StructureNeed",
+        "description": "How much structure user needs."
+      },
+      "SuggestedPlacement": {
+        "properties": {
+          "target_type": {
+            "$ref": "#/components/schemas/PlacementType"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "target_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Name"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "preview": {
+            "type": "string",
+            "title": "Preview"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_type",
+          "confidence",
+          "preview",
+          "rationale"
+        ],
+        "title": "SuggestedPlacement",
+        "description": "A suggested placement for the captured content."
+      },
+      "SuggestedTopic": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "Why suggested: recent, connected, or new"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score",
+            "description": "Relevance or connection score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "SuggestedTopic",
+        "description": "A suggested topic for exploration."
+      },
+      "SuggestionsResponse": {
+        "properties": {
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedTopic"
+            },
+            "type": "array",
+            "title": "Recent",
+            "description": "Recently explored topics"
+          },
+          "connected": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedTopic"
+            },
+            "type": "array",
+            "title": "Connected",
+            "description": "Most connected topics"
+          },
+          "new": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedTopic"
+            },
+            "type": "array",
+            "title": "New",
+            "description": "New or less explored topics"
+          }
+        },
+        "type": "object",
+        "title": "SuggestionsResponse",
+        "description": "Response with suggested exploration topics."
+      },
+      "ThinkingPartnerExchange": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "entity_context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "ThinkingPartnerExchange",
+        "description": "A question/response exchange with the thinking partner."
+      },
+      "ThinkingPartnerRequest": {
+        "properties": {
+          "concept": {
+            "type": "string",
+            "title": "Concept",
+            "description": "Current concept being explored"
+          },
+          "path": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Path",
+            "description": "Exploration path so far"
+          },
+          "related": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Related",
+            "description": "Related concepts visible"
+          }
+        },
+        "type": "object",
+        "required": [
+          "concept"
+        ],
+        "title": "ThinkingPartnerRequest",
+        "description": "Request for a thinking partner question."
+      },
+      "ThinkingPartnerResponse": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question",
+            "description": "Clarifying question to deepen exploration"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "ThinkingPartnerResponse",
+        "description": "Response with a thinking partner question."
+      },
+      "UserProfile": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "processing": {
+            "$ref": "#/components/schemas/ProcessingProfile"
+          },
+          "attention": {
+            "$ref": "#/components/schemas/AttentionProfile"
+          },
+          "communication": {
+            "$ref": "#/components/schemas/CommunicationProfile"
+          },
+          "executive": {
+            "$ref": "#/components/schemas/ExecutiveProfile"
+          },
+          "sensory": {
+            "$ref": "#/components/schemas/SensoryProfile"
+          },
+          "masking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MaskingProfile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "onboarding_complete": {
+            "type": "boolean",
+            "title": "Onboarding Complete",
+            "default": false
+          },
+          "sessions_completed": {
+            "type": "integer",
+            "title": "Sessions Completed",
+            "default": 0
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "UserProfile",
+        "description": "Complete user cognitive profile.",
+        "example": {
+          "attention": {
+            "current_capacity": 7,
+            "distraction_vulnerabilities": [
+              "notifications",
+              "tangential thoughts"
+            ],
+            "hyperfocus_triggers": [
+              "complex systems",
+              "novel ideas"
+            ],
+            "optimal_session_length": 45,
+            "recovery_patterns": [
+              "walking",
+              "music"
+            ]
+          },
+          "communication": {
+            "directness_preference": 8,
+            "pace": "fast",
+            "scripts_preference": 3,
+            "verbal_fluency": 7,
+            "wait_time_needed": 3
+          },
+          "display_name": "Chris",
+          "executive": {
+            "structure_need": "moderate",
+            "task_initiation": 4,
+            "time_perception": 8,
+            "transition_cost": 7,
+            "working_memory": 6
+          },
+          "onboarding_complete": true,
+          "processing": {
+            "abstraction_preference": 7,
+            "decision_style": "intuitive",
+            "habituation_speed": 8,
+            "style": "pattern_first"
+          },
+          "sensory": {
+            "environment_preference": 6,
+            "overwhelm_signals": [
+              "short responses",
+              "irritability"
+            ],
+            "regulation_tools": [
+              "movement",
+              "music"
+            ]
+          },
+          "sessions_completed": 12,
+          "user_id": "chris"
+        }
+      },
+      "UserState": {
+        "type": "string",
+        "enum": [
+          "flowing",
+          "stuck",
+          "overwhelmed",
+          "exploring",
+          "processing",
+          "uncertain",
+          "emotional",
+          "tired"
+        ],
+        "title": "UserState",
+        "description": "Detected user cognitive/emotional state during session."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
