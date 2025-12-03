@@ -4,6 +4,49 @@
 
 ---
 
+## Session: [Dec 2, 2025] Phase 2b Steps 1-3 - Backend + Plugin Complete
+
+**What I Worked On:**
+- ✅ Step 1: Created 6 backend graph API endpoints
+- ✅ Step 2: Restructured plugin with Dashboard, ForgeMode, FlowMode views
+- ✅ Step 3: Enhanced Flow mode with grouped relationship visualization
+
+**Phase 2b Architecture:**
+```
+Dashboard (landing)
+├── Stats: entities, relationships, books
+├── Suggestions: most connected, novel concepts
+├── Mode buttons: Forge / Flow
+    ├── Forge → Layer 2 dialogue (existing sidebar)
+    └── Flow → Layer 3 graph exploration (new)
+```
+
+**Flow Mode Features:**
+- Search concepts with results list (not auto-navigate)
+- Explore concept shows center node + grouped related nodes
+- Relationships grouped by type (component_of, supports, develops, etc.)
+- Direction arrows (→ outgoing, ← incoming)
+- Node type styling (Theory=green, Researcher=purple, Concept=blue)
+- Clickable path steps to navigate back
+- Thinking partner button with contextual questions
+
+**Files Created/Modified:**
+- `views/Dashboard.svelte` - Main landing with stats + mode buttons
+- `views/ForgeMode.svelte` - Layer 2 dialogue (adapted from sidebar)
+- `views/FlowMode.svelte` - Layer 3 graph exploration
+- `index.ts` - Updated to use Dashboard as main view
+
+**Commits This Session:**
+1. `feat(backend): Add 6 graph API endpoints for Layer 3 exploration`
+2. `feat(plugin): Add Dashboard with Forge/Flow mode navigation`
+3. `feat(plugin): Enhance Flow mode with grouped relationship display`
+
+**Blockers:** None
+
+**Status:** Phase 2b plugin UI complete. Ready for user testing in SiYuan.
+
+---
+
 ## Session: [Dec 2, 2025] Phase 2b Step 1 - Backend Graph API Endpoints
 
 **What I Worked On:**
