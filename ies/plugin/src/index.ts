@@ -10,7 +10,7 @@ import {
 import "@/index.scss";
 
 import { setPluginInstance, t } from "./utils/i18n";
-import IESSidebar from "./ies-sidebar-simple.svelte";
+import Dashboard from "./views/Dashboard.svelte";
 
 export const SETTINGS_FILE = "settings.json";
 
@@ -18,16 +18,22 @@ const IES_SIDEBAR_TYPE = "ies-explorer-sidebar";
 export const IES_TAB_TYPE = "ies-explorer-tab";
 
 export default class IESExplorerPlugin extends Plugin {
-    private iesSidebarApp: IESSidebar;
+    private dashboardApp: Dashboard;
 
     async onload() {
         // Set i18n plugin instance
         setPluginInstance(this);
 
-        // Add custom icon
+        // Add custom icons
         this.addIcons(`
     <symbol id="iconIESExplorer" viewBox="0 0 24 24">
         <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </symbol>
+    <symbol id="iconForge" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+    </symbol>
+    <symbol id="iconFlow" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
     </symbol>
     `);
 
@@ -40,8 +46,8 @@ export default class IESExplorerPlugin extends Plugin {
                 element.style.display = 'flex';
                 element.style.flexDirection = 'column';
                 element.style.height = '100%';
-                // Create IES sidebar in tab
-                new IESSidebar({
+                // Create Dashboard in tab
+                new Dashboard({
                     target: element,
                     props: {
                         plugin: pluginInstance
@@ -68,7 +74,7 @@ export default class IESExplorerPlugin extends Plugin {
             },
             type: IES_SIDEBAR_TYPE,
             init: (dock) => {
-                this.iesSidebarApp = new IESSidebar({
+                this.dashboardApp = new Dashboard({
                     target: dock.element,
                     props: {
                         plugin: this
@@ -76,8 +82,8 @@ export default class IESExplorerPlugin extends Plugin {
                 });
             },
             destroy: () => {
-                if (this.iesSidebarApp) {
-                    this.iesSidebarApp.$destroy();
+                if (this.dashboardApp) {
+                    this.dashboardApp.$destroy();
                 }
             }
         });
