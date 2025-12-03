@@ -23,6 +23,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from library.graph.neo4j_client import KnowledgeGraph
 from library.search.hybrid import HybridSearch
 
+# Optional: Anthropic for thinking partner questions
+try:
+    import anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+
 # Rich terminal formatting (optional, degrades gracefully)
 try:
     from rich.console import Console
@@ -36,12 +43,61 @@ except ImportError:
     console = None
 
 
+class ThinkingPartner:
+    """AI thinking partner that asks clarifying questions during exploration."""
+
+    SYSTEM_PROMPT = """You are a thinking partner helping someone explore therapeutic concepts.
+Your role is to ask one thoughtful, clarifying question that deepens their exploration.
+
+Guidelines:
+- Ask only ONE question
+- Make it specific to what they just explored
+- Help them connect to their own experience or thinking
+- Be curious, not directive
+- Keep it brief (1-2 sentences)
+
+Do NOT:
+- Explain concepts to them
+- Give advice
+- Ask multiple questions
+- Be lengthy"""
+
+    def __init__(self):
+        self.client = anthropic.Anthropic() if ANTHROPIC_AVAILABLE else None
+
+    def generate_question(self, concept: str, related: list, path: list) -> str:
+        """Generate a thinking partner question based on exploration context."""
+        if not self.client:
+            return ""
+
+        path_str = " → ".join([p['concept'] for p in path[-5:]]) if path else "just started"
+        related_str = ", ".join([n.get('name', '') for n in related[:5]]) if related else "none found"
+
+        prompt = f"""The person is exploring the concept "{concept}".
+Their exploration path: {path_str}
+Related concepts found: {related_str}
+
+Ask ONE thoughtful question to deepen their exploration."""
+
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=150,
+                system=self.SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text.strip()
+        except Exception as e:
+            return ""
+
+
 class ExplorationSession:
     """Tracks exploration path and provides navigation."""
 
-    def __init__(self, output_dir: str = "docs/explorations"):
+    def __init__(self, output_dir: str = "docs/explorations", enable_partner: bool = True):
         self.kg = KnowledgeGraph()
         self.search = HybridSearch()
+        self.partner = ThinkingPartner() if enable_partner and ANTHROPIC_AVAILABLE else None
         self.path = []  # List of (concept, depth, timestamp)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -62,11 +118,18 @@ class ExplorationSession:
         # Get supporting text chunks
         chunks = self.kg.find_supporting_chunks(concept, limit=3)
 
+        # Generate thinking partner question
+        nodes = related.get('nodes', []) if isinstance(related, dict) else []
+        question = ""
+        if self.partner:
+            question = self.partner.generate_question(concept, nodes, self.path)
+
         return {
             "concept": concept,
             "related": related,
             "sources": chunks,
-            "path_length": len(self.path)
+            "path_length": len(self.path),
+            "partner_question": question
         }
 
     def search_concepts(self, query: str, limit: int = 10) -> list:
@@ -150,6 +213,13 @@ def print_result(result: dict):
             for i, chunk in enumerate(result['sources'][:3], 1):
                 text = chunk.get('text', chunk.get('content', ''))[:200]
                 console.print(f"  {i}. {text}...")
+
+        if result.get('partner_question'):
+            console.print(Panel(
+                f"[italic]{result['partner_question']}[/italic]",
+                title="[bold magenta]Thinking Partner[/bold magenta]",
+                border_style="magenta"
+            ))
     else:
         print(f"\n=== {result['concept']} ===")
         print(f"Path depth: {result['path_length']}")
@@ -170,6 +240,10 @@ def print_result(result: dict):
             for i, chunk in enumerate(result['sources'][:3], 1):
                 text = chunk.get('text', chunk.get('content', ''))[:200]
                 print(f"  {i}. {text}...")
+
+        if result.get('partner_question'):
+            print(f"\n=== Thinking Partner ===")
+            print(f"  {result['partner_question']}")
 
 
 def interactive_mode(session: ExplorationSession):
