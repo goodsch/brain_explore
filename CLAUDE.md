@@ -1,4 +1,13 @@
 <!-- MANUAL -->
+# ⚠️ WORKTREE: Readest Integration (Phase 2)
+
+**READ FIRST: `TASK.md`** - Contains your specific objectives for this worktree.
+
+**Branch:** `feature/readest-integration`
+**Purpose:** Build Readest Flow mode for conceptual reading exploration
+
+---
+
 # brain_explore — Guided Knowledge Exploration System
 
 *A domain-agnostic architecture for personalized, AI-guided exploration of large knowledge domains*
