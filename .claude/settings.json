@@ -1,12 +1,12 @@
 {
   "hooks": {
-    "SessionStart": [
+    "PostToolUse": [
       {
-        "matcher": "startup|resume",
+        "matcher": "Edit|Write|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-context.sh",
+            "command": "python3 /home/chris/.claude/plugins/cache/auto-memory/scripts/post-tool-use.py",
             "timeout": 10
           }
         ]
@@ -14,13 +14,11 @@
     ],
     "Stop": [
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/smart-memory-update.sh",
-            "timeout": 30,
-            "exitCode": 0
+            "command": "python3 /home/chris/.claude/plugins/cache/auto-memory/scripts/stop.py",
+            "timeout": 5
           }
         ]
       }

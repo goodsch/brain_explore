@@ -40,12 +40,21 @@ A three-layer system that enables people to think WITH an AI partner who adapts 
 
 ## Current Status
 
-**Phase 2a: Validate Layer 3 Exploration** ✅ COMPLETE (Dec 2)
+**Phase 2b: Build Visual Interface for Layer 3** IN PROGRESS
 
 **All Three Layers Validated:**
 - ✅ Layer 1: Knowledge graph creation (50k therapy entities, ingestion pipeline proven)
 - ✅ Layer 2: Profile system + adaptive dialogue (dialogue sessions proven to generate novel concepts)
 - ✅ Layer 3: CLI exploration tool validated (5 focused explorations, thinking partner questions work)
+
+**Phase 2b Implementation (Readest Integration):**
+- ✅ **Flow Mode Store** — Complete Zustand state management with breadcrumb journey tracking
+- ✅ **Graph API Client** — Entity lookup, relationships, sources, thinking partner questions integration
+- ✅ **Journey Storage** — Local storage persistence for offline-safe exploration
+- ✅ **Flow Panel Components** — Modular UI: EntitySection, RelationshipsSection, SourcesSection, QuestionsSection
+- ✅ **Flow Mode Toggle** — Start/end journey lifecycle with backend sync
+- ✅ **Text Selection Hook** — useFlowEntity for entity lookup from selected text
+- IN PROGRESS: Complete integration testing and UI refinement
 
 **Phase 1 Achievement Summary:**
 - ✅ **10/10 therapy exploration sessions completed** — Complete therapeutic dialogue cycle validated
@@ -147,50 +156,67 @@ The Phase 1 pipeline is fully documented and proven. To run additional sessions:
 
 ## Project Structure
 
+### Main Project (brain_explore/)
+
 ```
 brain_explore/
 ├── ies/                           # Intelligent Exploration System (domain-agnostic layers)
-│   ├── backend/                   # FastAPI backend - Layers 1 & 2 (4,496 lines Python)
-│   │   ├── src/ies_backend/       # Knowledge graph API, dialogue, profile services
+│   ├── backend/                   # FastAPI backend - Layers 1-3 APIs (expanded Python services)
+│   │   ├── src/ies_backend/
+│   │   │   ├── api/               # API routers
+│   │   │   │   ├── graph.py       # Knowledge graph exploration (Layer 1)
+│   │   │   │   ├── journey.py     # Breadcrumb journey tracking (Layer 3)
+│   │   │   │   ├── capture.py     # Quick Capture processing (Layer 3)
+│   │   │   │   └── question_engine.py # Thinking partner questions (Layer 2)
+│   │   │   └── services/          # Business logic
 │   │   └── tests/                 # 61 unit tests
 │   └── plugin/                    # SiYuan plugin - document interface (14,092 lines TS/Svelte)
-│                                  # (precursor to Layer 3 Flow/Flo interface)
+│                                  # Layer 3 processing hub (Dashboard, Forge/Flow modes)
 │
 ├── therapy/                       # Therapy Domain Application (complete Phase 1)
-│   ├── Track_1_Human_Mind/        # How humans perceive, think, and construct meaning
-│   │   ├── 01-narrow-window-of-awareness.md  # Foundational (universal constraint → meaning)
-│   │   ├── 02-acceptance-vs-resignation.md   # Core distinction (aliveness vs numbness)
-│   │   ├── 03-nervous-system-sensing-possibility.md  # Engagement mechanism
-│   │   ├── 04-grief-as-acceptance.md         # Application to loss
-│   │   ├── 05-metabolization-of-difficulty.md # Process model (pain → capacity)
-│   │   ├── 06-shame-as-non-acceptance.md     # Blocker identification
-│   │   ├── 07-authentic-presence.md          # Outcome of shame metabolization
-│   │   ├── 08-nervous-system-configurations.md # Three states model
-│   │   ├── 09-capacity-and-nervous-system-access.md # Reframe
-│   │   ├── 10-superpower-in-weakness.md      # Integration
-│   │   ├── 11-window-as-condition-for-depth.md # Final vision (full circle)
-│   │   └── CONNECTIONS.md                    # Hierarchical framework map
-│   └── (ready for Phase 2 exploration or domain generalization)
+│   └── Track_1_Human_Mind/        # How humans perceive, think, and construct meaning (11 concepts + CONNECTIONS.md)
 │
 ├── library/                       # Shared: GraphRAG modules, ingest pipeline (Python)
 ├── scripts/                       # Shared: CLI tools, session runners
 ├── books/                         # Shared: 63 psychology/therapy books (ingested to Layer 1)
-│
 ├── docs/                          # Documentation
-│   ├── PROJECT-OVERVIEW.md        # Single source of truth (comprehensive project overview)
-│   ├── five-agent-synthesis.md    # Vision, gaps, lessons, phased path (analysis depth)
-│   ├── session-notes.md           # Session reflection (append-only)
-│   ├── parking-lot.md             # Future features (don't work on these)
-│   └── archive/                   # Old progress files, archived memories
-│
-└── docker-compose.yml             # Neo4j + Qdrant infrastructure (Layers 1 & 2 support)
+└── docker-compose.yml             # Neo4j + Qdrant infrastructure
+```
+
+### Readest Worktree (feature/readest-integration)
+
+```
+readest/
+└── apps/
+    └── readest-app/
+        └── src/
+            ├── app/reader/components/
+            │   ├── FlowToggler.tsx           # Flow mode activation button
+            │   ├── HeaderBar.tsx             # Reader header with Flow toggle
+            │   ├── ReaderContent.tsx         # Main reader layout with Flow panel
+            │   └── flowpanel/
+            │       ├── FlowPanel.tsx         # Main flow panel container, layout, resizing
+            │       ├── Header.tsx            # Panel header with pin/close controls
+            │       ├── EntitySection.tsx     # Current entity display
+            │       ├── RelationshipsSection.tsx   # Entity relationships
+            │       ├── SourcesSection.tsx    # Source books and passages
+            │       ├── QuestionsSection.tsx  # Thinking partner questions
+            │       └── index.ts              # Component exports
+            ├── hooks/
+            │   └── useFlowEntity.ts          # Entity lookup and API integration
+            ├── store/
+            │   └── flowModeStore.ts          # Zustand: Flow state, journey tracking
+            └── services/flow/
+                ├── graphClient.ts            # Brain_explore API client
+                ├── journeyStorage.ts         # Local storage persistence
+                └── index.ts                  # Service exports
 ```
 
 **Architecture Alignment:**
-- **Layer 1** = Knowledge graph + ingestion pipeline in `library/` and `books/`
-- **Layer 2** = Backend services (API, dialogue, profile) in `ies/backend/`
-- **Layer 3** = To be built (rich exploration interface, post-processing pipeline)
-- **Domain Application** = `therapy/` directory (current application domain)
+- **Layer 1** = Knowledge graph in main project `library/` and `books/`
+- **Layer 2** = Backend services in main project `ies/backend/api/`
+- **Layer 3** = Visual implementation in Readest worktree (Flow mode + Flow panel components)
+- **Domain Application** = `therapy/` directory in main project
 
 ## Key Resources
 
@@ -311,6 +337,53 @@ This is how the system creates value through personalized thinking partnership:
 - The cycle deepens: better profile → more personalized guidance → deeper generation
 
 **Phase 1 validates this complete cycle** by running sessions where dialogue reveals patterns, those patterns guide personalized exploration, and the thinking partnership generates extractable concepts.
+
+## Phase 2b Implementation Details
+
+### Flow Mode Architecture (Readest Integration)
+
+**State Management (flowModeStore.ts):**
+- Zustand store centralizes all Flow mode state
+- Tracks: current entity, relationships, sources, thinking partner questions
+- Journey tracking: start time, current step time, dwell time calculation
+- Panel state: width, pinned status, loading states
+
+**Data Flow:**
+1. User selects text in reader
+2. useFlowEntity hook searches for matching entities
+3. GraphAPIClient fetches entity details from brain_explore backend
+4. Store updated with entity, relationships, sources
+5. Thinking partner questions fetched asynchronously
+6. Journey step added to breadcrumb trail
+
+**Journey Persistence:**
+- journeyStorage.ts provides local storage fallback
+- On journey end: save to local storage first (offline-safe)
+- Then async sync to backend (non-blocking)
+- Handles graceful degradation if backend unavailable
+
+**UI Components:**
+- FlowPanel: Main container with resizable drag handle, pin/close controls
+- EntitySection: Current entity name, type, summary
+- RelationshipsSection: Shows related entities with relationship type
+- SourcesSection: Books and passages discussing the entity
+- QuestionsSection: Thinking partner questions to deepen exploration
+- Responsive design: Full-width on mobile, 20-50% width on desktop
+
+**Backend Integration:**
+- GraphAPIClient connects to brain_explore API (http://localhost:8081/api/v1)
+- Endpoints used: `/graph/entity/{id}`, `/graph/search`, `/graph/explore/{id}`, `/graph/sources/{id}`, `/question-engine/question`, `/journeys`
+- Timeout handling: 10s default timeout with graceful error handling
+- Configurable base URL for different environments
+
+### Key Implementation Decisions
+
+1. **Local Storage First** — Journeys saved locally before backend sync ensures no data loss in offline mode
+2. **Zustand for State** — Centralized, predictable state management; easy to add persistence
+3. **Modular Components** — Each section independently fetchable; easy to extend with new data types
+4. **Drag Resizing** — Users can adjust flow panel width; pinning allows keeping it visible while navigating
+5. **Async Questions** — Thinking partner questions fetched non-blocking, populated after entity loads
+6. **Dwell Time Tracking** — Measures engagement per entity; important for understanding exploration patterns
 
 ## Key Concept: Domain-Agnostic Architecture with Therapy Application
 
