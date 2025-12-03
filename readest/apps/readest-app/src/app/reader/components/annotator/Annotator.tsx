@@ -8,6 +8,7 @@ import { RiDeleteBinLine } from 'react-icons/ri';
 import { BsTranslate } from 'react-icons/bs';
 import { TbHexagonLetterD } from 'react-icons/tb';
 import { FaHeadphones } from 'react-icons/fa6';
+import { TbNetwork } from 'react-icons/tb';
 
 import * as CFI from 'foliate-js/epubcfi.js';
 import { Overlayer } from 'foliate-js/overlayer.js';
@@ -34,6 +35,8 @@ import WiktionaryPopup from './WiktionaryPopup';
 import WikipediaPopup from './WikipediaPopup';
 import TranslatorPopup from './TranslatorPopup';
 import useShortcuts from '@/hooks/useShortcuts';
+import { useFlowModeStore } from '@/store/flowModeStore';
+import { useFlowEntity } from '@/hooks/useFlowEntity';
 
 const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
   const _ = useTranslation();
@@ -42,6 +45,8 @@ const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
   const { getConfig, saveConfig, getBookData, updateBooknotes } = useBookDataStore();
   const { getProgress, getView, getViewsById, getViewSettings } = useReaderStore();
   const { setNotebookVisible, setNotebookNewAnnotation } = useNotebookStore();
+  const { isFlowModeActive, toggleFlowMode, startJourney } = useFlowModeStore();
+  const { lookupFromSelection } = useFlowEntity();
 
   useNotesSync(bookKey);
 
@@ -522,6 +527,18 @@ const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
     eventDispatcher.dispatch('tts-speak', { bookKey, range: selection.range });
   };
 
+  const handleFlowLookup = async () => {
+    if (!selection || !selection.text) return;
+    // Activate Flow mode if not already active
+    if (!isFlowModeActive) {
+      startJourney('default-user', { type: 'book', reference: bookKey.split('-')[0] || bookKey });
+      toggleFlowMode();
+    }
+    // Look up the selected text in the knowledge graph
+    await lookupFromSelection(selection.text);
+    handleDismissPopupAndSelection();
+  };
+
   // Keyboard shortcuts: trigger actions only if there's an active selection and popup hidden
   useShortcuts(
     {
@@ -665,6 +682,7 @@ const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
     { tooltipText: _('Dictionary'), Icon: TbHexagonLetterD, onClick: handleDictionary },
     { tooltipText: _('Wikipedia'), Icon: FaWikipediaW, onClick: handleWikipedia },
     { tooltipText: _('Translate'), Icon: BsTranslate, onClick: handleTranslation },
+    { tooltipText: _('Flow'), Icon: TbNetwork, onClick: handleFlowLookup },
     {
       tooltipText: _('Speak'),
       Icon: FaHeadphones,
