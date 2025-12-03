@@ -1,4 +1,13 @@
 <!-- MANUAL -->
+# ⚠️ WORKTREE: SiYuan Plugin Evolution (Phase 3)
+
+**READ FIRST: `TASK.md`** - Contains your specific objectives for this worktree.
+
+**Branch:** `feature/siyuan-evolution`
+**Purpose:** Evolve plugin with Dashboard, Structured Thinking, and Quick Capture
+
+---
+
 # brain_explore — Guided Knowledge Exploration System
 
 *A domain-agnostic architecture for personalized, AI-guided exploration of large knowledge domains*
