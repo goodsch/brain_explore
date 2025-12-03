@@ -11,8 +11,6 @@
     import ForgeMode from './ForgeMode.svelte';
     import FlowMode from './FlowMode.svelte';
 
-    export let plugin: any;
-
     // Backend configuration
     const BACKEND_HOST = '192.168.86.60';
     const BACKEND_URL = `http://${BACKEND_HOST}:8081`;
@@ -201,9 +199,9 @@
             {/if}
         </div>
     {:else if currentView === 'forge'}
-        <ForgeMode {plugin} backendUrl={BACKEND_URL} on:back={handleBack} />
+        <ForgeMode backendUrl={BACKEND_URL} on:back={handleBack} />
     {:else if currentView === 'flow'}
-        <FlowMode {plugin} backendUrl={BACKEND_URL} on:back={handleBack} />
+        <FlowMode backendUrl={BACKEND_URL} on:back={handleBack} />
     {/if}
 </div>
 

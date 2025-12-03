@@ -8,7 +8,6 @@
     import { onMount, createEventDispatcher } from 'svelte';
     import { showMessage, fetchSyncPost } from 'siyuan';
 
-    export let plugin: any;
     export let backendUrl: string;
 
     const dispatch = createEventDispatcher();

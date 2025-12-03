@@ -48,10 +48,7 @@ export default class IESExplorerPlugin extends Plugin {
                 element.style.height = '100%';
                 // Create Dashboard in tab
                 new Dashboard({
-                    target: element,
-                    props: {
-                        plugin: pluginInstance
-                    }
+                    target: element
                 });
             },
             destroy() {
@@ -75,10 +72,7 @@ export default class IESExplorerPlugin extends Plugin {
             type: IES_SIDEBAR_TYPE,
             init: (dock) => {
                 this.dashboardApp = new Dashboard({
-                    target: dock.element,
-                    props: {
-                        plugin: this
-                    }
+                    target: dock.element
                 });
             },
             destroy: () => {
