@@ -88,8 +88,21 @@ A complete therapeutic vision emerged through 10 sessions exploring how humans c
 - **Phase 0 (COMPLETE):** Configuration stabilization removed 40% meta-work overhead
 - **Phase 1 (COMPLETE):** Core hypothesis proven — Layers 1 & 2 work; 11 concepts extracted; therapeutic framework coherent
 - **Phase 2a (COMPLETE):** Layer 3 MVP validated — CLI exploration tool proven with 5 validation sessions; all layers working end-to-end
-- **Phase 2b (NEXT):** Build visual interface on Layer 3 foundation (web app or extended SiYuan plugin)
+- **Phase 2b (ACTIVE):** Build visual interface on Layer 3 foundation (parallel worktrees: Readest + SiYuan evolution)
 - **Phase 2c+:** Domain generalization and validation across multiple knowledge domains
+
+**Phase 2b Status:**
+- Backend API extended with Quick Capture and Journey endpoints (Phase 2b infrastructure)
+- Quick Capture design complete (`docs/plans/2025-12-03-quick-capture-design.md`):
+  - iOS Action Button → SiYuan capture queue → AI-assisted processing
+  - Apple Notes backup for offline fallback
+  - Uses SiYuan APIs directly (no backend changes needed for MVP)
+- Three parallel worktrees active for UI development:
+  - `feature/readest-integration` — Readest Flow mode (Layer 4 reading + exploration)
+  - `feature/siyuan-evolution` — SiYuan Dashboard + Structured Thinking (Layer 3 processing hub)
+  - `feature/quick-capture` — Quick Capture implementation (iOS Shortcut + SiYuan plugin capture queue with AI-assisted processing)
+- All worktrees connected to extended backend APIs
+- Quick Capture worktree task brief: `.worktrees/quick-capture/TASK.md`
 
 ## How to Work Here (Phase 2b+)
 
@@ -141,11 +154,19 @@ The Phase 1 pipeline is fully documented and proven. To run additional sessions:
 ```
 brain_explore/
 ├── ies/                           # Intelligent Exploration System (domain-agnostic layers)
-│   ├── backend/                   # FastAPI backend - Layers 1 & 2 (4,496 lines Python)
-│   │   ├── src/ies_backend/       # Knowledge graph API, dialogue, profile services
+│   ├── backend/                   # FastAPI backend - Layers 1-3 APIs (expanded Python services)
+│   │   ├── src/ies_backend/
+│   │   │   ├── api/               # API routers
+│   │   │   │   ├── session.py     # Structured thinking sessions (Layer 2)
+│   │   │   │   ├── graph.py       # Knowledge graph exploration (Layer 1)
+│   │   │   │   ├── profile.py     # User profile management (Layer 2)
+│   │   │   │   ├── journey.py     # Breadcrumb journey tracking (Layer 3)
+│   │   │   │   ├── capture.py     # Quick Capture processing (Layer 3)
+│   │   │   │   └── question_engine.py # Thinking partner questions (Layer 2)
+│   │   │   └── services/          # Business logic
 │   │   └── tests/                 # 61 unit tests
 │   └── plugin/                    # SiYuan plugin - document interface (14,092 lines TS/Svelte)
-│                                  # (precursor to Layer 3 Flow/Flo interface)
+│                                  # Layer 3 processing hub (Dashboard, Forge/Flow modes)
 │
 ├── therapy/                       # Therapy Domain Application (complete Phase 1)
 │   ├── Track_1_Human_Mind/        # How humans perceive, think, and construct meaning
@@ -163,6 +184,12 @@ brain_explore/
 │   │   └── CONNECTIONS.md                    # Hierarchical framework map
 │   └── (ready for Phase 2 exploration or domain generalization)
 │
+├── .worktrees/                    # Git worktrees for parallel Phase 2b development
+│   ├── readest/                   # feature/readest-integration (Layer 4)
+│   ├── siyuan/                    # feature/siyuan-evolution (Layer 3)
+│   └── quick-capture/             # feature/quick-capture (Quick Capture MVP)
+│       └── TASK.md                # Implementation task brief
+│
 ├── library/                       # Shared: GraphRAG modules, ingest pipeline (Python)
 ├── scripts/                       # Shared: CLI tools, session runners
 ├── books/                         # Shared: 63 psychology/therapy books (ingested to Layer 1)
@@ -172,6 +199,8 @@ brain_explore/
 │   ├── five-agent-synthesis.md    # Vision, gaps, lessons, phased path (analysis depth)
 │   ├── session-notes.md           # Session reflection (append-only)
 │   ├── parking-lot.md             # Future features (don't work on these)
+│   ├── plans/                     # Design documents
+│   │   └── 2025-12-03-quick-capture-design.md # Quick Capture feature design
 │   └── archive/                   # Old progress files, archived memories
 │
 └── docker-compose.yml             # Neo4j + Qdrant infrastructure (Layers 1 & 2 support)
@@ -179,9 +208,43 @@ brain_explore/
 
 **Architecture Alignment:**
 - **Layer 1** = Knowledge graph + ingestion pipeline in `library/` and `books/`
-- **Layer 2** = Backend services (API, dialogue, profile) in `ies/backend/`
-- **Layer 3** = To be built (rich exploration interface, post-processing pipeline)
+- **Layer 2** = Backend services (sessions, dialogue, profile) in `ies/backend/api/`
+- **Layer 3** = Visual interface + breadcrumb journey + quick capture (in progress):
+  - SiYuan plugin (`ies/plugin/`) — Dashboard, Structured Thinking modes, Quick Capture queue
+  - Backend support (`ies/backend/api/journey.py`, `capture.py`, schemas, services)
+- **Layer 4** = Reading interface (Readest) with Flow mode integration
 - **Domain Application** = `therapy/` directory (current application domain)
+
+## Phase 2b Backend Extensions
+
+The backend has been extended with Layer 3 and Layer 4 support APIs:
+
+### Quick Capture API (`POST /capture/process`)
+- **Purpose:** Process unstructured content (text, voice transcription, image OCR, fetched URLs)
+- **Extracts:**
+  - Named entities (concepts, people, theories, frameworks)
+  - Summary and suggested tags
+  - Suggested placements (existing note, concept, journey, or new note)
+  - Confidence scores for each suggestion
+- **Integration:** Forms foundation for SiYuan Quick Capture feature and Readest clipping
+- **Schema:** `schemas/capture.py` — CaptureType, PlacementType, ExtractedEntity, SuggestedPlacement
+- **Note:** Current Quick Capture MVP design (Dec 2025) uses SiYuan APIs directly for capture queue; backend API available for future AI-assisted processing enhancements
+
+### Journey API (`POST /journeys`, `GET /journeys/{id}`, `GET /journeys/user/{user_id}`)
+- **Purpose:** Store and retrieve breadcrumb journeys (exploration trails with thinking partner exchanges)
+- **Captures:**
+  - Entry point (book, search, dashboard, entity, external)
+  - Path steps with dwell time tracking
+  - Marks (highlights, annotations, questions, bookmarks)
+  - Thinking partner exchanges (Q&A during exploration)
+  - Metadata (title, tags, user reflection notes)
+- **Integration:** Tracks user exploration for both Readest Flow mode and SiYuan graph exploration
+- **Schema:** `schemas/journey.py` — BreadcrumbJourney, JourneyStep, JourneyMark, ThinkingPartnerExchange
+
+### Backend Modules
+- **`CaptureService`** — AI-powered entity extraction (Anthropic API when available, fallback simple extraction)
+- **`JourneyService`** — Neo4j storage and retrieval of exploration journeys
+- Both services integrate with existing GraphService for entity lookups and relationship discovery
 
 ## Key Resources
 
@@ -197,6 +260,7 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/PHASE-1-WORKFLOW.md` — Complete operational guide for running dialogue sessions (proven, reusable for Phase 2+ exploration)
 - `docs/PHASE-2A-VALIDATION.md` — Layer 3 CLI exploration tool validation plan with 5 focused explorations
 - `docs/PHASE-2A-VALIDATION-RESULTS.md` — Complete validation results; all criteria met; Layer 3 proven functional
+- `docs/plans/2025-12-03-quick-capture-design.md` — Quick Capture feature design (iOS Shortcut → SiYuan queue → AI processing)
 - Architecture guidance for Phase 2b based on validated Layer 3 patterns
 
 **Level 3: Implementation & Reflection**
@@ -214,6 +278,7 @@ The project maintains a three-level documentation structure for clarity:
 **Technical Setup:**
 - `ies/backend/README.md` — Backend API setup and configuration
 - `docker-compose.yml` — Infrastructure (Neo4j + Qdrant)
+- `docs/WORKTREE-GUIDE.md` — Quick reference for managing git worktrees across Phase 2b/2c parallel development
 
 ## The Parking Lot
 
