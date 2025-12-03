@@ -73,38 +73,53 @@ Run therapy exploration sessions (Layers 1 & 2) where personalized dialogue guid
 
 ## How to Work Here (Phase 1)
 
-### Before Starting a Therapy Exploration Session
+### Before Starting Your First Session
 
-1. Read `docs/PHASE-1-WORKFLOW.md` (10 min) - complete checklist and pipeline reference
-2. Check `docs/PROJECT-OVERVIEW.md` for overall vision and architecture context
-3. Verify backend is healthy: `curl http://localhost:8081/health`
-4. Verify Docker services running: `docker compose ps`
-5. Have a genuine therapeutic question ready to explore
+**Quick Onboarding (15 min):**
+1. Read this section (CLAUDE.md) — Understand the project structure and documentation hierarchy
+2. Review `docs/PHASE-1-WORKFLOW.md` — Skim the pipeline diagram and complete workflow checklist
+3. Read `docs/PROJECT-OVERVIEW.md` — Understand the vision and why Phase 1 matters
+4. Ready to start? Jump to "During Your Session" below
+
+**For architectural context (optional, deeper understanding):**
+- See `docs/five-agent-synthesis.md` for analysis of why design decisions were made
+
+### Before Starting Each Therapy Exploration Session
+
+1. Reference `docs/PHASE-1-WORKFLOW.md` (complete operational guide)
+2. Verify backend is healthy: `curl http://localhost:8081/health`
+3. Verify Docker services running: `docker compose ps`
+4. Have a genuine therapeutic question ready to explore
 
 ### During Your Session
 
-**Follow the complete pipeline in `docs/PHASE-1-WORKFLOW.md`:**
+**Follow the complete pipeline in `docs/PHASE-1-WORKFLOW.md`** (Step 1-6):
+
 1. Run therapy exploration: `python scripts/run-session.py --topic "Your question"`
 2. Engage authentically (5-10 exchanges, 20-30 minutes typical)
 3. Type "done" when complete; transcript auto-saves
 4. Extract entities from transcript using backend API
-5. Review extracted entities and decide which to formalize
-6. Create concept documents for solid/developing concepts
+5. Review extracted entities and decide which to formalize (solid/developing only)
+6. Create concept documents for formalized concepts
 7. Update CONNECTIONS.md to document relationships
 8. Commit: `git add ... && git commit -m "docs: session N - extracted concepts..."`
 
 ### After Your Session
 
-1. Update progress tracking in session notes (X/10 sessions, Y/20-30 concepts)
+1. Update progress tracking (X/10 sessions, Y/20-30 concepts extracted)
 2. Run: `git status` (verify everything is committed)
 3. Append entry to `docs/session-notes.md` with:
-   - What you accomplished (sessions run, concepts extracted)
-   - What you learned (insights, thinking patterns)
+   - What you accomplished (sessions run, concepts extracted, connections documented)
+   - What you learned (insights, how your thinking patterns shaped discoveries)
    - Blockers you hit
    - What next session should focus on
-   - How your thinking patterns influenced discoveries
 
-**Workflow Note:** `docs/PHASE-1-WORKFLOW.md` is your day-to-day operational guide. Git history tracks code changes. Session notes track reflection and learning. Together they create complete project memory.
+**Complete Project Memory:**
+- `docs/PHASE-1-WORKFLOW.md` = Your operational guide for each session (steps, checklists, examples, troubleshooting)
+- `docs/session-notes.md` = Your reflection log (what you learned, blockers, patterns)
+- `therapy/Track_1_Human_Mind/` = Output of sessions (formalized concepts and connections)
+- Git history = Code and documentation changes
+- Together these create complete, queryable project memory
 
 ## Project Structure
 
@@ -145,33 +160,39 @@ brain_explore/
 
 ## Key Resources
 
-**Primary References (Start Here):**
-- `docs/PHASE-1-WORKFLOW.md` — Complete operational guide: session pipeline, extraction, formalization, connections, troubleshooting. DAY-TO-DAY REFERENCE.
-- `docs/PROJECT-OVERVIEW.md` — Complete project overview: vision, architecture, what's built, Phase 1 plan. Single source of truth.
+### Documentation Hierarchy
 
-**For Phase 1 Execution (Right Now):**
-- `docs/PHASE-1-WORKFLOW.md` — Complete pipeline with checklists and examples (session → extraction → formalization → connections → git)
+The project maintains a three-level documentation structure for clarity:
+
+**Level 1: Strategic Vision (Project Context)**
+- `docs/PROJECT-OVERVIEW.md` — Single source of truth for the complete vision: three-layer architecture, what's built vs. deferred, why design decisions were made, Phase 1 success criteria, and roadmap
+- `docs/five-agent-synthesis.md` — Deep analysis: architectural vision, identified gaps, why configuration was blocking, lessons learned, phased path forward
+
+**Level 2: Operational Execution (Your Day-to-Day)**
+- `docs/PHASE-1-WORKFLOW.md` — Daily reference guide with complete pipeline, step-by-step instructions, checklists, examples, and troubleshooting
   - Step 1: Run therapy exploration sessions
   - Step 2: Extract entities using backend service
   - Step 3: Interpret extracted entities (decision criteria)
   - Step 4: Formalize concepts into documents
   - Step 5: Document connections between concepts
   - Step 6: Commit to git
-  - Includes complete workflow checklist for each session
-- `scripts/run-session.py` — Session runner script (use to quickly start therapy sessions)
-- `therapy/Track_1_Human_Mind/` — Concept documents and CONNECTIONS.md
-- `docs/session-notes.md` — Reflection log (append-only, after each session)
+  - Complete workflow checklist for each session
+  - What success looks like after Session 1, 5, and 10
 
-**For Deep Understanding:**
-- `docs/five-agent-synthesis.md` — Comprehensive analysis with vision, gaps, configuration problems, phased path
+**Level 3: Implementation & Reflection**
+- `scripts/run-session.py` — Session runner (use this to start therapy exploration)
+- `therapy/Track_1_Human_Mind/` — Extracted concept documents and CONNECTIONS.md (output of sessions)
+- `docs/session-notes.md` — Reflection log: what you accomplished, learned, and blocked on (append-only, after each session)
 
-**Reference & Constraints:**
-- `docs/parking-lot.md` — Future features (what NOT to work on yet)
-- `CLAUDE.md` (this file) — Quick reference guide
+### Supporting References
 
-**Technical:**
-- `ies/backend/README.md` — Backend setup and API
-- `docker-compose.yml` — Infrastructure setup
+**Constraints & Scope:**
+- `docs/parking-lot.md` — Future features (what NOT to work on in Phase 1)
+- `CLAUDE.md` (this file) — Quick reference and structure guide
+
+**Technical Setup:**
+- `ies/backend/README.md` — Backend API setup and configuration
+- `docker-compose.yml` — Infrastructure (Neo4j + Qdrant)
 
 ## The Parking Lot
 
