@@ -91,8 +91,17 @@ interface BreadcrumbJourney {
 
 ---
 
+## Current Status
+
+**Commit:** `9aff506` - Flow mode MVP complete with text selection integration
+
+**Phase:** Layer 4 Reading Interface COMPLETE (MVP)
+
+---
+
 ## Deliverables Checklist
 
+### Core Flow Mode (Complete)
 - [x] Fork Readest and set up development environment
 - [x] Add Flow mode toggle button to reader UI (FlowToggler.tsx in HeaderBar)
 - [x] Create split-panel view for Flow mode (FlowPanel.tsx - resizable, pinnable)
@@ -101,10 +110,44 @@ interface BreadcrumbJourney {
   - [x] Relationships section grouped by type (RelationshipsSection.tsx)
   - [x] Other Sources section (SourcesSection.tsx)
   - [x] Thinking Partner questions (QuestionsSection.tsx)
+
+### Backend Integration (Complete)
 - [x] Integrate with backend Graph API (graphClient.ts)
 - [x] Implement breadcrumb journey capture (journeyStorage.ts + flowModeStore)
 - [x] Add journey save to backend when Flow session ends (FlowToggler)
+- [x] Local storage fallback for offline journey persistence
+
+### Text Selection Integration (Complete)
 - [x] Text selection triggers Flow lookup (Flow button in AnnotationPopup)
+- [x] Entity search and matching from selected text (useFlowEntity hook)
+- [x] Automatic panel population with entity data
+
+---
+
+## Next Steps
+
+Now that the Readest Flow mode MVP is complete:
+
+1. **User Testing** - Get feedback on Flow mode experience during actual reading sessions
+2. **Performance Optimization** - Profile and optimize API calls and entity lookups
+3. **Enhanced Journey Features:**
+   - Mark highlights and annotations in journey breadcrumbs
+   - Capture user responses to thinking partner questions
+   - Export journeys for review and reflection
+4. **UI/UX Refinement:**
+   - Polish panel resizing and pinning behavior
+   - Improve relationship navigation (clickable relationships → jump to entity)
+   - Add keyboard shortcuts for Flow mode toggle
+5. **Integration with SiYuan:**
+   - Sync journeys between Readest and SiYuan Dashboard
+   - Export reading notes to SiYuan documents
+   - Link captured concepts back to source passages
+
+**Key Achievements:**
+- Complete Layer 4 (Reading Interface) implementation
+- Seamless integration with Layer 1 (Knowledge Graph) via backend APIs
+- Breadcrumb journey tracking creates foundation for personalized thinking patterns (Layer 2)
+- Text selection → entity lookup → exploration path is smooth and intuitive
 
 ---
 
