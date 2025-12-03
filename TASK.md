@@ -93,17 +93,18 @@ interface BreadcrumbJourney {
 
 ## Deliverables Checklist
 
-- [ ] Fork Readest and set up development environment
-- [ ] Add Flow mode toggle button to reader UI
-- [ ] Create split-panel view for Flow mode
-- [ ] Build Entity Panel component:
-  - [ ] Definition section
-  - [ ] Relationships section (grouped by type)
-  - [ ] Other Sources section
-  - [ ] Thinking Partner questions
-- [ ] Integrate with backend Graph API
-- [ ] Implement breadcrumb journey capture (local storage first)
-- [ ] Add journey save to backend when Flow session ends
+- [x] Fork Readest and set up development environment
+- [x] Add Flow mode toggle button to reader UI (FlowToggler.tsx in HeaderBar)
+- [x] Create split-panel view for Flow mode (FlowPanel.tsx - resizable, pinnable)
+- [x] Build Entity Panel component:
+  - [x] Definition section (EntitySection.tsx)
+  - [x] Relationships section grouped by type (RelationshipsSection.tsx)
+  - [x] Other Sources section (SourcesSection.tsx)
+  - [x] Thinking Partner questions (QuestionsSection.tsx)
+- [x] Integrate with backend Graph API (graphClient.ts)
+- [x] Implement breadcrumb journey capture (journeyStorage.ts + flowModeStore)
+- [x] Add journey save to backend when Flow session ends (FlowToggler)
+- [x] Text selection triggers Flow lookup (Flow button in AnnotationPopup)
 
 ---
 
@@ -116,17 +117,29 @@ interface BreadcrumbJourney {
 
 ---
 
-## Key Files to Create
+## Key Files Created
 
 ```
-readest/                       # Forked Readest or new package
-├── packages/
-│   └── flow-mode/             # New Flow mode components
-│       ├── EntityPanel.svelte
-│       ├── FlowView.svelte
-│       ├── JourneyTracker.ts
-│       └── api/
-│           └── graphClient.ts # Backend API client
+readest/apps/readest-app/src/
+├── store/
+│   └── flowModeStore.ts           # Zustand store for Flow mode state & journey tracking
+├── services/flow/
+│   ├── graphClient.ts             # Backend API client for knowledge graph
+│   └── journeyStorage.ts          # Local storage persistence for journeys
+├── hooks/
+│   └── useFlowEntity.ts           # Entity lookup hook integrating API + store
+└── app/reader/components/
+    ├── FlowToggler.tsx            # Toggle button for Flow mode in HeaderBar
+    ├── flowpanel/
+    │   ├── FlowPanel.tsx          # Main split-panel container (resizable, pinnable)
+    │   ├── Header.tsx             # Panel header with title and close button
+    │   ├── EntitySection.tsx      # Entity definition display
+    │   ├── RelationshipsSection.tsx # Grouped relationships with navigation
+    │   ├── SourcesSection.tsx     # Book sources discussing entity
+    │   ├── QuestionsSection.tsx   # Thinking partner questions
+    │   └── index.ts               # Exports
+    └── annotator/
+        └── Annotator.tsx          # Modified - Flow button added to selection popup
 ```
 
 ---
