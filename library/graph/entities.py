@@ -59,14 +59,14 @@ Also identify relationships between entities:
 
 Return JSON in this exact format:
 ```json
-{{
+{
   "entities": [
-    {{"name": "string", "type": "researcher|concept|theory|assessment", "description": "brief description", "aliases": ["optional", "aliases"]}}
+    {"name": "string", "type": "researcher|concept|theory|assessment", "description": "brief description", "aliases": ["optional", "aliases"]}
   ],
   "relationships": [
-    {{"source": "entity name", "target": "entity name", "relation_type": "cites|develops|supports|contradicts|operationalizes|component_of", "evidence": "brief quote or paraphrase"}}
+    {"source": "entity name", "target": "entity name", "relation_type": "cites|develops|supports|contradicts|operationalizes|component_of", "evidence": "brief quote or paraphrase"}
   ]
-}}
+}
 ```
 
 Be selective - only extract clearly stated entities and relationships, not vague references.

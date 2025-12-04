@@ -5,38 +5,46 @@
 
 ## What This Is
 
-A three-layer system that enables people to think WITH an AI partner who adapts to their unique thinking style while exploring complex knowledge domains:
+A four-layer system that enables people to think WITH an AI partner who adapts to their unique thinking style while exploring complex knowledge domains:
 
 1. **Layer 1: Knowledge Graph Creation** — Pre-processing and ingestion pipeline
    - Ingests domain materials (texts, research, conceptual frameworks)
-   - Creates a rich knowledge graph with 50k+ entities and relationships
-   - Currently applied to therapy domain (50k entities already processed)
+   - Creates a rich knowledge graph with 50k+ entities and 125k+ relationships
+   - Currently applied to therapy domain (63 books ingested)
    - Domain-agnostic: can ingest and structure any knowledge domain
 
-2. **Layer 2: Thinking Pattern Revelation & Personalized Dialogue** — Profile system + adaptive questioning
-   - Adaptive questioning reveals HOW a person thinks (their patterns, assumptions, perspective)
-   - Profile captures user's approach, preferences, and exploration patterns
-   - Dialogue adapts to their unique thinking style, not generic prompts
-   - Creates insight through understanding their distinctive perspective
-   - Foundation for personalized guidance in downstream interactions
+2. **Layer 2: Backend Services** — APIs for graph, dialogue, journey tracking, content capture
+   - Graph API: entity search, exploration, sources, relationship traversal
+   - Session API: structured thinking dialogue with mode-specific behaviors
+   - Journey API: breadcrumb tracking and persistence across sessions
+   - Profile system: 6-dimension cognitive profile for personalization
+   - Question engine: thinking partner questions at decision points
 
-3. **Layer 3: Thinking Partnership Exploration** — Flow/Flo interface where understanding AND generation happen together
-   - Interactive knowledge exploration where users engage with domain materials and knowledge graph
-   - AI acts as a thinking partner—asking clarifying questions, surfacing connections, challenging assumptions
-   - System documents the user's exploration path and thinking process as breadcrumbs
-   - DUAL OUTCOME: Both deepen understanding of existing knowledge AND generate novel conceptualizations
-   - User extracts and formalizes their own insights from the thinking partnership
+3. **Layer 3: SiYuan Plugin (Processing Hub)** — Dashboard and structured thinking modes
+   - Dashboard: stats, suggestions, recent journeys, capture queue
+   - 5 Thinking Modes: Learning, Articulating, Planning, Ideating, Reflecting
+   - Flow Mode: graph exploration with grouped relationship display
+   - Quick Capture: content processing with entity extraction
 
-**The Virtuous Cycle:** Layer 2 dialogue reveals thinking patterns that inform how Layer 3 personalizes exploration. Layer 3 exploration surfaces new concepts and connections the user generates. The thinking path becomes formalized concepts that enrich the knowledge graph and inform next sessions. Each cycle deepens both domain understanding and the personalization of the thinking partnership.
+4. **Layer 4: Readest Integration (Reading Interface)** — E-book reader with flow exploration
+   - Split-panel view: source text + entity panel
+   - Text selection → entity lookup → relationship exploration
+   - Breadcrumb journey capture during reading sessions
+   - Seamless toggle between reading mode and flow exploration
+
+**The Virtuous Cycle:** Layer 2 dialogue reveals thinking patterns that personalize Layer 3/4 exploration. Exploration surfaces new concepts and connections. The thinking path becomes formalized concepts that enrich Layer 1. Each cycle deepens both domain understanding and personalization.
 
 ## Current Status
 
-**Phase 2a: Validate Layer 3 Exploration** ✅ COMPLETE (Dec 2)
+**Phase 2b: Visual Interface Implementation** ✅ COMPLETE (Dec 3)
 
-**All Three Layers Validated:**
-- ✅ Layer 1: Knowledge graph creation (50k therapy entities, ingestion pipeline proven)
-- ✅ Layer 2: Profile system + adaptive dialogue (dialogue sessions proven to generate novel concepts)
-- ✅ Layer 3: CLI exploration tool validated (5 focused explorations, thinking partner questions work)
+**All Four Layers Built and Validated:**
+- ✅ Layer 1: Knowledge graph creation (50k therapy entities, 63 books ingested)
+- ✅ Layer 2: Backend APIs (graph, session, journey, capture services - 54/61 tests passing)
+- ✅ Layer 3: SiYuan Plugin MVP (dashboard, 5 thinking modes, flow exploration, quick capture)
+- ✅ Layer 4: Readest Integration MVP (reading interface with flow mode, entity panel, breadcrumb capture)
+
+**For complete project status, see:** `docs/COMPREHENSIVE-PROJECT-STATUS.md`
 
 **Phase 1 Achievement Summary:**
 - ✅ **10/10 therapy exploration sessions completed** — Complete therapeutic dialogue cycle validated
@@ -87,15 +95,38 @@ A complete therapeutic vision emerged through 10 sessions exploring how humans c
 **Roadmap:**
 - **Phase 0 (COMPLETE):** Configuration stabilization removed 40% meta-work overhead
 - **Phase 1 (COMPLETE):** Core hypothesis proven — Layers 1 & 2 work; 11 concepts extracted; therapeutic framework coherent
-- **Phase 2a (COMPLETE):** Layer 3 MVP validated — CLI exploration tool proven with 5 validation sessions; all layers working end-to-end
-- **Phase 2b (NEXT):** Build visual interface on Layer 3 foundation (web app or extended SiYuan plugin)
-- **Phase 2c+:** Domain generalization and validation across multiple knowledge domains
+- **Phase 2a (COMPLETE):** Layer 3 CLI validation — CLI exploration tool proven with 5 validation sessions
+- **Phase 2b (COMPLETE):** Visual interfaces — Readest reading interface + SiYuan plugin dashboard (both MVPs complete)
+- **Phase 2c (NEXT):** User testing and refinement based on real-world usage
+- **Phase 3+:** Domain generalization and validation across multiple knowledge domains
 
-## How to Work Here (Phase 2b+)
+## How to Work Here (Phase 2c+)
 
-Phase 1 is complete. All success criteria achieved. The core hypothesis is proven. Layers 1 & 2 work flawlessly.
+**Phase 2b is complete.** All four architectural layers are built and validated. The system is ready for user testing.
+
+### Worktree Organization
+
+**The master branch contains shared backend and documentation only.** Feature work happens in separate worktrees with their own TASK.md files:
+
+| Worktree Location | Branch | Purpose | Task File |
+|------------------|--------|---------|-----------|
+| `.` (root) | `master` | Backend APIs, Layer 1/2, shared docs | None (master has no TASK.md) |
+| `.worktrees/readest/` | `feature/readest-integration` | Layer 4 Reading Interface | `TASK.md` in worktree |
+| `.worktrees/siyuan/` | `feature/siyuan-evolution` | Layer 3 Processing Hub | `TASK.md` in worktree |
+| `.worktrees/quick-capture/` | `feature/quick-capture` | Quick Capture iOS/SiYuan | `TASK.md` in worktree |
+
+**Working in Worktrees:**
+- Each worktree is a separate directory with its own branch checked out
+- Use `cd` to switch between worktrees, NOT `git checkout`
+- Each worktree has its own `TASK.md` with specific objectives for that feature
+- The root (master branch) intentionally has NO `TASK.md` - it's backend/docs only
+- See `docs/WORKTREE-GUIDE.md` for complete reference
 
 ### Where to Start
+
+**For New Session (Read First):**
+1. `docs/SYSTEM-DESIGN.md` — How the system works end-to-end (operational reference)
+2. Check git status and recent commits to understand current state
 
 **Understand What Was Accomplished:**
 1. Read `docs/session-notes.md` — Top section summarizes all 10 sessions and Phase 1 completion
@@ -104,18 +135,24 @@ Phase 1 is complete. All success criteria achieved. The core hypothesis is prove
 4. Check git log — `git log --oneline` shows progression of sessions and concept extraction
 
 **Key Resources:**
+- `docs/SYSTEM-DESIGN.md` — Operational reference: how all layers integrate, critical gaps
 - `docs/PROJECT-OVERVIEW.md` — Complete vision and design rationale
 - `docs/five-agent-synthesis.md` — Deep analysis of why architecture decisions were made
 - `docs/PHASE-1-WORKFLOW.md` — Phase 1 operational guide (for reference if running additional exploration sessions)
 
-### Phase 2 Focus
+### Phase 2c Focus
 
-Layer 3 (Flow/Flo interface) is the next priority once Layer 3 architecture is designed. See `docs/parking-lot.md` for roadmap.
+**Current State:**
+- All four layers operational (Layers 1-4)
+- Readest reading interface with Flow mode (Layer 4)
+- SiYuan plugin dashboard with 5 thinking modes (Layer 3)
+- Backend APIs serving all functionality (Layer 2)
+- Knowledge graph fully populated (Layer 1)
 
-**For Now:**
-- All core systems are operational (Layers 1 & 2)
-- All Phase 1 documentation complete
-- Ready for Phase 2 development or additional domain validation
+**Next Priority:**
+- User testing of complete four-layer system
+- Refinement based on real-world usage patterns
+- See `docs/COMPREHENSIVE-PROJECT-STATUS.md` for complete technical details
 
 ### If Running Additional Exploration Sessions
 
@@ -163,6 +200,10 @@ brain_explore/
 │   │   └── CONNECTIONS.md                    # Hierarchical framework map
 │   └── (ready for Phase 2 exploration or domain generalization)
 │
+├── .interleaved-thinking/         # Research artifacts (ADHD-friendly ontology design)
+│   ├── final-answer.md            # Research-backed ontology recommendations
+│   └── tooling-inventory.md       # Available research tools assessment
+│
 ├── library/                       # Shared: GraphRAG modules, ingest pipeline (Python)
 ├── scripts/                       # Shared: CLI tools, session runners
 ├── books/                         # Shared: 63 psychology/therapy books (ingested to Layer 1)
@@ -180,7 +221,8 @@ brain_explore/
 **Architecture Alignment:**
 - **Layer 1** = Knowledge graph + ingestion pipeline in `library/` and `books/`
 - **Layer 2** = Backend services (API, dialogue, profile) in `ies/backend/`
-- **Layer 3** = To be built (rich exploration interface, post-processing pipeline)
+- **Layer 3** = SiYuan plugin in `.worktrees/siyuan/` (processing hub, dashboard)
+- **Layer 4** = Readest integration in `.worktrees/readest/` (reading interface)
 - **Domain Application** = `therapy/` directory (current application domain)
 
 ## Key Resources
@@ -194,15 +236,17 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/five-agent-synthesis.md` — Deep analysis: architectural vision, identified gaps, why configuration was blocking, lessons learned, phased path forward
 
 **Level 2: Operational & Validation Documentation**
+- `docs/SYSTEM-DESIGN.md` — **Operational reference**: How the system works end-to-end, data structures, user workflows, integration points, critical gaps (read at session start)
+- `docs/COMPREHENSIVE-PROJECT-STATUS.md` — Complete project status: all 4 layers, phase completion, worktree organization
 - `docs/PHASE-1-WORKFLOW.md` — Complete operational guide for running dialogue sessions (proven, reusable for Phase 2+ exploration)
-- `docs/PHASE-2A-VALIDATION.md` — Layer 3 CLI exploration tool validation plan with 5 focused explorations
-- `docs/PHASE-2A-VALIDATION-RESULTS.md` — Complete validation results; all criteria met; Layer 3 proven functional
-- Architecture guidance for Phase 2b based on validated Layer 3 patterns
+- `docs/PHASE-2A-VALIDATION-RESULTS.md` — Layer 3 CLI validation results; all criteria met
+- `docs/plans/2025-12-03-integrated-reading-knowledge-system.md` — Four-layer architecture design
 
 **Level 3: Implementation & Reflection**
 - `therapy/Track_1_Human_Mind/` — 11 extracted concept documents with CONNECTIONS.md (complete Phase 1 output)
 - `scripts/explore.py` — Layer 3 CLI tool for knowledge graph navigation with thinking partner questions
 - `docs/session-notes.md` — Complete session history: Phase 1 (10 sessions), Phase 2a (5 validation explorations), and learnings
+- `.interleaved-thinking/final-answer.md` — ADHD-friendly ontology design research (Dec 3)
 - Git history — Commits show progression: Phase 1 sessions → Phase 1 completion → Phase 2a validation → ready for Phase 2b
 
 ### Supporting References
@@ -226,12 +270,34 @@ The project maintains a three-level documentation structure for clarity:
 - **n8n integration** — Workflow automation for concept extraction and formalization
 - **Synapse component ports** — Migrate components to alternative front-end frameworks
 
-**Current Phase 2b Focus:**
-- Layer 3 validation proved the CLI exploration works well
-- Next: Build visual interface (web app or extended SiYuan plugin) to show relationships, allow note capture
-- Then: Evaluate if Phase 1 concepts should enrich the knowledge graph with bidirectional linking
+**Phase 2b Complete:**
+- ✅ Readest reading interface (Layer 4) - Flow mode, entity panel, breadcrumb capture
+- ✅ SiYuan plugin dashboard (Layer 3) - 5 thinking modes, flow exploration, quick capture
 
-**Rule:** Phase 2b focuses on building the visual interface for Layer 3. Domain generalization waits until after visual validation. Nothing enters development until visual interface is tested with users.
+**Phase 2c Focus:**
+- User testing of complete four-layer system
+- Refinement based on real-world usage
+- ADHD-friendly ontology design (research complete in `.interleaved-thinking/`)
+- Then: Evaluate if Phase 1 concepts should enrich the knowledge graph
+
+**Rule:** Domain generalization (Phase 3+) waits until after user validation with therapy domain.
+
+**ADHD-Focused Research:**
+Research completed (Dec 3) on ADHD-friendly ontology design, drawing from:
+- Russell Barkley (executive function deficits)
+- Tamara Rosier (interest-based nervous system)
+- Gabor Maté (emotional resonance as retrieval cue)
+- Tiago Forte (capture what resonates, 12 favorite problems)
+- Cognitive architecture literature (conceptual spaces, spreading activation)
+
+Key recommendations in `.interleaved-thinking/final-answer.md`:
+- **Resonance over importance** — Capture emotional engagement, not just taxonomic accuracy
+- **Multiple entry points** — Mood-based, question-based, serendipitous discovery
+- **Visible progress** — Breadcrumb trails as treasure maps, not audit logs
+- **Low friction capture** — `spark` type for unprocessed resonance
+- **Non-judgmental lifecycle** — Growth metaphor (`captured → exploring → anchored`)
+- **New entity types:** `spark`, `favorite_problem`, `thread`, `insight`
+- **New relationships:** `sparked_by`, `led_to_discovery`, `addresses_problem`
 
 ## Development Workflow
 
@@ -281,43 +347,44 @@ docker compose up -d             # Start Neo4j + Qdrant
 docker compose down              # Stop services
 ```
 
-## The Three-Layer Thinking Partnership Cycle
+## The Four-Layer Thinking Partnership Cycle
 
 This is how the system creates value through personalized thinking partnership:
 
-**Layer 2 → Layer 3 Feedback:**
-- Layer 2 dialogue reveals HOW someone thinks (their patterns, what they're drawn to, what they avoid)
-- This personalization profile directly informs Layer 3 exploration guidance
-- Questions in Layer 3 aren't generic—they're shaped by patterns revealed in Layer 2
+**Layer 2 → Layers 3/4 Personalization:**
+- Backend dialogue services reveal HOW someone thinks (patterns, preferences, perspectives)
+- This personalization profile informs Layer 3/4 exploration guidance
+- Questions aren't generic—they're shaped by revealed patterns
 
-**Layer 3 Exploration → Concept Extraction:**
-- In Layer 3, the thinking partner asks clarifying questions and surfaces connections
-- The user generates novel conceptualizations through this guided thinking
-- The exploration path and thinking artifacts are documented as breadcrumbs
-- Those breadcrumbs become the raw material for extracting formalized concepts
+**Layers 3/4 Exploration → Concept Discovery:**
+- Reading (Layer 4) or dashboard exploration (Layer 3) with thinking partner questions
+- User generates novel conceptualizations through guided thinking
+- Exploration path and thinking artifacts documented as breadcrumbs
+- Breadcrumbs become raw material for extracting formalized concepts
 
 **Concept Formalization → Layer 1 Enrichment:**
-- Extracted concepts are formalized and added to the knowledge graph (Layer 1)
-- The next session starts with enriched knowledge and refined personalization
+- Extracted concepts formalized and added to knowledge graph (Layer 1)
+- Next session starts with enriched knowledge and refined personalization
 - The cycle deepens: better profile → more personalized guidance → deeper generation
 
-**Phase 1 validates this complete cycle** by running sessions where dialogue reveals patterns, those patterns guide personalized exploration, and the thinking partnership generates extractable concepts.
+**Phase 1 validated this cycle** with 10 dialogue sessions generating 11 therapeutic concepts. **Phase 2b built the complete interface** for reading and exploration.
 
 ## Key Concept: Domain-Agnostic Architecture with Therapy Application
 
-This project builds a **general thinking partnership system** (Layers 1-3) applied to the **therapy domain** in Phase 1.
+This project builds a **general thinking partnership system** (Layers 1-4) applied to the **therapy domain** for initial validation.
 
 - **Layer 1** (Knowledge Graph) — Domain-agnostic ingestion and graph creation
-- **Layer 2** (Profile & Dialogue) — Domain-agnostic personalization and thinking pattern recognition
-- **Layer 3** (Flow/Flo) — Domain-agnostic thinking partnership interface (Phase 2+)
+- **Layer 2** (Backend Services) — Domain-agnostic APIs for graph, dialogue, journey, capture
+- **Layer 3** (SiYuan Plugin) — Domain-agnostic processing hub and structured thinking
+- **Layer 4** (Readest) — Domain-agnostic reading interface with flow exploration
 - **Therapy** — Current instantiation domain for proof-of-concept and validation
 
 This means:
-- The architecture should never make therapy-specific assumptions in core systems
+- The architecture makes no therapy-specific assumptions in core systems
 - Therapy is a test domain for proving the thinking partnership approach works
 - Layer 1 can be retargeted to any knowledge domain (scientific, legal, creative, etc.)
-- Post-Phase 1, the system can be applied to other domains with new knowledge graphs
-- The three-layer cycle works for any domain where personalized thinking partnership has value
+- Post-Phase 2c, the system can be applied to other domains with new knowledge graphs
+- The four-layer cycle works for any domain where personalized thinking partnership has value
 
 ## Working Style
 
@@ -330,15 +397,12 @@ This means:
 
 ## Questions?
 
-See `docs/PROJECT-OVERVIEW.md` for comprehensive understanding of:
-- The complete vision (three-layer architecture + domain-agnostic design)
-- What's built vs. deferred (Layers 1 & 2 done, Layer 3 in parking lot)
-- Why configuration was blocking work
-- Architecture and data flow
-- Phase 1 plan and success criteria
-- Known limitations and open questions
+**For complete current status:** See `docs/COMPREHENSIVE-PROJECT-STATUS.md`
 
-For deeper context on the five-agent analysis, see `docs/five-agent-synthesis.md`.
+**For original vision and rationale:**
+- `docs/PROJECT-OVERVIEW.md` — Original three-layer vision and Phase 1 plan
+- `docs/plans/2025-12-03-integrated-reading-knowledge-system.md` — Four-layer architecture design
+- `docs/five-agent-synthesis.md` — Deep analysis of architectural decisions
 <!-- END MANUAL -->
 
 <!-- AUTO-MANAGED: build-commands -->
@@ -346,7 +410,98 @@ For deeper context on the five-agent analysis, see `docs/five-agent-synthesis.md
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: architecture -->
-<!-- This section will be automatically updated by auto-memory plugin -->
+## Architecture: ADHD-Friendly Personal Knowledge Layer
+
+**Recent Changes (Dec 4):**
+Updated `library/graph/__init__.py` to export unified graph API with ADHD-friendly ontology implementation for personal knowledge capture.
+
+### Two Knowledge Graph Systems
+
+The project maintains two parallel graph systems accessible through unified `library.graph` module:
+
+**1. Domain Knowledge Graph (Books/Research - Layer 1)**
+- **Location:** `library/graph/entities.py`, `library/graph/neo4j_client.py`
+- **Purpose:** Structured knowledge from ingested books (63 therapy books, 50k+ entities)
+- **Entity Types:** `concept`, `framework`, `theory`, `mechanism`, `phenomenon`, `pattern`, `distinction`, `person`, `book`, `assessment`
+- **Relationships:** Standard academic relationships (`cites`, `supports`, `contradicts`, `operationalizes`, `component_of`, `develops`)
+- **Access:** Via `KnowledgeGraph` client and backend GraphService API
+
+**2. Personal Knowledge Graph (ADHD-Friendly - Layers 3/4)**
+- **Location:** `library/graph/adhd_ontology.py`, `library/graph/adhd_graph_client.py`
+- **Purpose:** Personal thinking artifacts captured during exploration/reading
+- **Entity Types:** `spark` (raw resonance), `insight` (processed meaning), `thread` (exploration path), `favorite_problem` (anchor question)
+- **Metadata:** Resonance signals (emotional retrieval cues), energy levels (mood-appropriate access), status lifecycle (`captured → exploring → anchored`)
+- **Relationships:** Discovery flow (`sparked_by`, `led_to_discovery`, `addresses_problem`), energy mapping (`energy_toward`, `energy_away`)
+- **Schema Versioning:** All nodes tagged with `schema_version` (currently `0.1.0`) for future migration support
+- **Access:** Via `ADHDKnowledgeGraph` client with schema management capabilities
+
+### Design Rationale
+
+Based on ADHD cognition research (`.interleaved-thinking/final-answer.md`):
+- **Capture what resonates** (Tiago Forte) - `spark` entities for low-friction capture without forced classification
+- **Interest-based nervous system** (Tamara Rosier) - Energy levels enable mood-appropriate navigation
+- **Emotional retrieval cues** (Gabor Maté) - Resonance signals (`curious`, `excited`, `surprised`, `moved`, `disturbed`, `unclear`, `connected`, `validated`) support ADHD memory retrieval
+- **Non-judgmental lifecycle** - Growth metaphor avoids shame (`captured → exploring → anchored` not "incomplete")
+- **Favorite problems as anchors** (Feynman) - Stable navigation points for wandering minds
+- **Visit tracking** - Exploration visits tracked on entities to support recency-based navigation
+
+### Integration Points
+
+- **Layers 3/4 (SiYuan/Readest)** use `ADHDKnowledgeGraph` for personal capture during exploration
+- **Layer 1 domain graph** remains canonical source for ingested book knowledge
+- **Cross-linking:** Personal insights can reference domain concepts via `source_id` property; exploration breadcrumbs preserve journey context
+- **The virtuous cycle:** Personal artifacts (sparks/insights) can be formalized and added to domain graph
+
+### Key Files & Module Structure
+
+```
+library/graph/
+├── entities.py              # Domain knowledge extraction (books)
+├── neo4j_client.py         # Domain knowledge graph client
+├── adhd_ontology.py        # ADHD-friendly entity/relationship types
+├── adhd_graph_client.py    # Personal knowledge graph client with schema versioning
+└── __init__.py             # Unified export: both systems accessible from library.graph
+```
+
+**Exported from `library.graph`:**
+- Domain: `Entity`, `Relationship`, `ExtractionResult`, `EntityExtractor`, `deduplicate_entities`, `KnowledgeGraph`
+- ADHD: `EntityType`, `ResonanceSignal`, `EnergyLevel`, `EntityStatus`, `ADHDEntity`, `ADHDRelationship`, `RelationshipType`, `FavoriteProblem`, `Thread`, `ADHDKnowledgeGraph`, `SCHEMA_VERSION`
+
+### Usage Example
+
+```python
+from library.graph import (
+    KnowledgeGraph,           # Domain knowledge
+    ADHDKnowledgeGraph,       # Personal knowledge
+    ResonanceSignal,
+    EnergyLevel
+)
+
+# Domain knowledge (books)
+kg = KnowledgeGraph()
+concepts = kg.search_entities("executive function")
+
+# Personal knowledge (sparks/insights)
+adhd_kg = ADHDKnowledgeGraph()
+spark_id = adhd_kg.capture_spark(
+    title="Connection between EF and shame",
+    content="Reading Barkley - realized shame blocks EF access",
+    resonance_signal=ResonanceSignal.SURPRISED,
+    energy_level=EnergyLevel.MEDIUM,
+    source_id="concept_123"  # Link to domain concept
+)
+
+# Visit tracking for recency-based navigation
+adhd_kg.visit_spark(spark_id)
+```
+
+### Schema Management
+
+The `ADHDKnowledgeGraph` client includes schema versioning to support future migrations:
+- All nodes created with `schema_version` property (currently `0.1.0`)
+- Use `get_schema_info()` to check version and node counts
+- Use `migrate_schema()` when upgrading (migrations defined in `MIGRATIONS` dict)
+- Indexes created for status, resonance, energy, recency queries
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: conventions -->
