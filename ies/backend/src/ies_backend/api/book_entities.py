@@ -48,3 +48,32 @@ async def get_book_entities(
         entities=[BookEntity(**e) for e in entities],
         total=len(entities),
     )
+
+
+class CalibreEntitiesResponse(BaseModel):
+    """Response for calibre-id based entity lookup."""
+    calibre_id: int
+    entities: list[BookEntity]
+    total: int
+
+
+@router.get("/entities/by-calibre-id/{calibre_id}", response_model=CalibreEntitiesResponse)
+async def get_entities_by_calibre_id(
+    calibre_id: int,
+    types: list[str] | None = Query(default=None, description="Filter by entity types"),
+    limit: int = Query(default=500, ge=1, le=1000, description="Maximum entities"),
+) -> CalibreEntitiesResponse:
+    """Get all entities mentioned in a book by its Calibre ID.
+
+    Primary endpoint for entity overlay when using Calibre as book source.
+    Returns entities sorted by mention frequency.
+    """
+    entities = await GraphService.get_entities_by_calibre_id(
+        calibre_id, types=types, limit=limit
+    )
+
+    return CalibreEntitiesResponse(
+        calibre_id=calibre_id,
+        entities=[BookEntity(**e) for e in entities],
+        total=len(entities),
+    )
