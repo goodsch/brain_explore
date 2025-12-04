@@ -475,3 +475,43 @@ foliate-fxl {
 .no-transitions * {
   transition: none !important;
 }
+
+/* Entity overlay styles - for entity transformer in reading flow */
+.entity-link {
+  cursor: pointer;
+  border-bottom: 2px dotted;
+  border-radius: 2px;
+  padding: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.entity-link:hover {
+  border-bottom-style: solid;
+  background-color: rgba(37, 99, 235, 0.1);
+}
+
+.entity-concept {
+  color: #2563eb;
+  border-color: #93c5fd;
+}
+
+.entity-person {
+  color: #16a34a;
+  border-color: #86efac;
+}
+
+.entity-theory,
+.entity-framework {
+  color: #9333ea;
+  border-color: #c4b5fd;
+}
+
+.entity-assessment {
+  color: #ea580c;
+  border-color: #fdba74;
+}
+
+.entity-default {
+  color: #6b7280;
+  border-color: #d1d5db;
+}
