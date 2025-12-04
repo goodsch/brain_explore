@@ -10,6 +10,7 @@ import { useBookDataStore } from '@/store/bookDataStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useCustomFontStore } from '@/store/customFontStore';
 import { useParallelViewStore } from '@/store/parallelViewStore';
+import { useFlowModeStore } from '@/store/flowModeStore';
 import { useMouseEvent, useTouchEvent } from '../hooks/useIframeEvents';
 import { usePagination } from '../hooks/usePagination';
 import { useFoliateEvents } from '../hooks/useFoliateEvents';
@@ -85,6 +86,7 @@ const FoliateViewer: React.FC<{
   const { getBookData } = useBookDataStore();
   const { applyBackgroundTexture } = useBackgroundTexture();
   const { applyEinkMode } = useEinkMode();
+  const { entityOverlay, fetchEntitiesForBook } = useFlowModeStore();
   const viewState = getViewState(bookKey);
   const viewSettings = getViewSettings(bookKey);
 
@@ -95,6 +97,7 @@ const FoliateViewer: React.FC<{
   const [toastMessage, setToastMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const docLoaded = useRef(false);
+  const hasLoadedEntitiesRef = useRef(false);
 
   useAutoFocus<HTMLDivElement>({ ref: containerRef });
 
@@ -109,6 +112,18 @@ const FoliateViewer: React.FC<{
   useBookCoverAutoSave(bookKey);
   const { syncState, conflictDetails, resolveWithLocal, resolveWithRemote } = useKOSync(bookKey);
   useTextTranslation(bookKey, viewRef.current);
+
+  // Fetch entities when book loads
+  useEffect(() => {
+    if (!hasLoadedEntitiesRef.current && bookDoc.metadata?.identifier) {
+      hasLoadedEntitiesRef.current = true;
+      // Use the book identifier as the hash
+      const bookHash = bookDoc.metadata.identifier;
+      fetchEntitiesForBook(bookHash).catch((error) => {
+        console.warn('Failed to fetch entities for book:', error);
+      });
+    }
+  }, [bookDoc.metadata?.identifier, fetchEntitiesForBook]);
 
   const progressRelocateHandler = (event: Event) => {
     const detail = (event as CustomEvent).detail;
@@ -149,7 +164,14 @@ const FoliateViewer: React.FC<{
                 'language',
                 'sanitizer',
                 'simplecc',
+                'entity', // Entity transformer is always in the pipeline
               ],
+              // Pass entity overlay state to transformer context
+              entityOverlay: {
+                enabled: entityOverlay.enabled,
+                entities: entityOverlay.entities,
+                visibleTypes: entityOverlay.visibleTypes,
+              },
             };
             return Promise.resolve(transformContent(ctx));
           }
@@ -411,6 +433,18 @@ const FoliateViewer: React.FC<{
       viewRef.current?.renderer.setAttribute('flow', 'scrolled');
     }
   };
+
+  // Re-render content when entity overlay settings change
+  useEffect(() => {
+    if (viewRef.current && viewRef.current.renderer && docLoaded.current) {
+      // Force re-render of all loaded documents to apply entity overlay changes
+      // The renderer may have a reload method depending on implementation
+      const renderer = viewRef.current.renderer as unknown as { reload?: () => void };
+      if (typeof renderer.reload === 'function') {
+        renderer.reload();
+      }
+    }
+  }, [entityOverlay.enabled, entityOverlay.visibleTypes]);
 
   useEffect(() => {
     if (viewRef.current && viewRef.current.renderer) {
