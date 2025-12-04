@@ -184,6 +184,7 @@ class GraphService:
     @staticmethod
     async def get_entities_by_book(
         book_hash: str,
+        title: str | None = None,
         types: list[str] | None = None,
         limit: int = 500
     ) -> list[dict]:
@@ -191,6 +192,7 @@ class GraphService:
 
         Args:
             book_hash: The book's file hash (used as identifier)
+            title: Optional book title for fallback matching
             types: Optional list of entity types to filter by
             limit: Maximum entities to return
 
@@ -203,8 +205,17 @@ class GraphService:
             type_labels = " OR ".join([f"e:{t}" for t in types])
             type_filter = f"AND ({type_labels})"
 
+        # Try to match by hash, path, or title
+        # Books in Neo4j use 'path' and 'title' as identifiers, Readest uses file hash
+        title_match = "OR toLower(b.title) CONTAINS toLower($title)" if title else ""
         query = f"""
-        MATCH (b:Book {{hash: $book_hash}})<-[:FROM_BOOK]-(c:Chunk)-[:MENTIONS]->(e)
+        MATCH (b:Book)
+        WHERE b.hash = $book_hash
+           OR b.path CONTAINS $book_hash
+           OR b.file_hash = $book_hash
+           {title_match}
+        WITH b
+        MATCH (b)<-[:FROM_BOOK]-(c:Chunk)-[:MENTIONS]->(e)
         WHERE e.name IS NOT NULL {type_filter}
         WITH e, count(c) as mention_count
         RETURN DISTINCT e.name as name, labels(e)[0] as type, mention_count
@@ -214,7 +225,7 @@ class GraphService:
 
         try:
             results = await Neo4jClient.execute_query(
-                query, {"book_hash": book_hash, "limit": limit}
+                query, {"book_hash": book_hash, "title": title or "", "limit": limit}
             )
             return [
                 {

@@ -20,6 +20,8 @@ from library.graph.adhd_ontology import (
     EntityStatus,
     EntityType,
     FavoriteProblem,
+    Reframe,
+    ReframeType,
     RelationshipType,
     ResonanceSignal,
     Thread,
@@ -46,6 +48,8 @@ __all__ = [
     "RelationshipType",
     "FavoriteProblem",
     "Thread",
+    "ReframeType",
+    "Reframe",
     "ADHDKnowledgeGraph",
     "SCHEMA_VERSION",
 ]

@@ -680,18 +680,15 @@ Three integrated backend services addressing critical gaps #1 and #2, all regist
 
 **4. Entity Overlay API** (`/graph/entities/by-book`) — Real-time entity highlighting for reading interface
 
-**Endpoint:**
+**Current Implementation (Temporary):**
 - `GET /graph/entities/by-book/{book_hash}` - Retrieve all entities mentioned in a specific book
+- Query parameters: `title` (optional fallback), `types` (optional filter), `limit` (default 500, max 1000)
+- Matching strategy: Primary by `hash` property, fallback to title substring match
 
-**Query Parameters:**
-- `title` (optional): Book title for fallback matching when hash lookup fails
-- `types` (optional): Filter by entity types (e.g., `Concept`, `Person`, `Theory`, `Framework`, `Assessment`)
-- `limit` (default 500, max 1000): Maximum entities to return
-
-**Matching Strategy:**
-- Primary: Match books by `hash` property in Neo4j
-- Fallback: Case-insensitive title substring match if hash fails
-- This dual approach handles cases where books lack hash properties
+**Migration to Calibre Integration (Dec 4):**
+- **New endpoint:** `GET /graph/entities/by-book/{calibre_id}` - Direct lookup by Calibre book ID
+- Eliminates hash/title matching fragility by using Calibre as single source of truth
+- See Calibre Integration section below for complete architecture
 
 **Response Format:**
 ```json
@@ -743,6 +740,78 @@ Three integrated backend services addressing critical gaps #1 and #2, all regist
 5. Entity transformer processes HTML content, wrapping entity names in styled spans
 6. User toggles overlay on/off and filters visible entity types via EntityTypeFilter component
 7. Entities highlighted inline in text according to type (color-coded)
+
+---
+
+### Calibre Integration: Single Source of Truth (Design Complete - Dec 4)
+
+**Problem Solved:** Books exist with different identifiers (Calibre integer ID, Neo4j file path, Readest UUID), causing entity overlay failures when identifiers don't match.
+
+**Solution:** Calibre library as canonical book source with `calibre_id` as universal identifier across all systems.
+
+**Architecture:**
+
+```
+Calibre (Source of Truth)
+├── metadata.db (SQLite catalog)
+└── Author/Book folders (epub/pdf files)
+         │
+         ├─→ Ingestion Pipeline → Neo4j (Book nodes with calibre_id)
+         ├─→ IES Backend → Book catalog API + entity lookup by calibre_id
+         └─→ Readest → Browse books, open files, entity overlay
+```
+
+**Docker Service:**
+- Container: `crocodilestick/calibre-web-automated:latest`
+- Port: 8084 (web UI)
+- Volumes: `./calibre/config`, `./calibre/ingest`, `./calibre/library`
+
+**Multi-Pass Ingestion Pipeline:**
+1. **Pass 1 (Structure):** Create Book node with `calibre_id`, chunk text, extract entities (Concept, Person, Theory, Framework), create MENTIONS relationships → status: `entities_extracted`
+2. **Pass 2 (Relationships):** Extract causal (CAUSES, ENABLES), component (PART_OF), contrast (CONTRASTS_WITH) relationships → status: `relationships_mapped`
+3. **Pass 3 (Enrichment - LLM):** Generate reframes, extract mechanisms, identify patterns → status: `enriched`
+
+**Status Lifecycle:** `pending → chunked → entities_extracted → relationships_mapped → enriched`
+
+**New Backend Endpoints:**
+- `GET /books` - List all books from Calibre
+- `GET /books?search=ADHD` - Search books by title/author
+- `GET /books/{calibre_id}` - Get book metadata
+- `GET /books/{calibre_id}/cover` - Fetch book cover image
+- `GET /graph/entities/by-book/{calibre_id}` - Entity lookup by Calibre ID (replaces hash/title matching)
+
+**Neo4j Schema Update:**
+```cypher
+(:Book {
+  calibre_id: 42,           # Primary identifier (replaces hash/path)
+  title: "...",
+  author: "...",
+  path: "/calibre-library/Author/Title (42)/book.epub",
+  processing_status: "enriched",
+  has_entities: true
+})
+```
+
+**Readest Integration:**
+1. New Library view fetches `GET /books` to display catalog
+2. User selects book → opens directly from Calibre file path
+3. `calibre_id` stored in book state (replaces fragile hash matching)
+4. Entity overlay calls `/graph/entities/by-book/{calibre_id}` for reliable lookup
+
+**Implementation Phases:**
+- **Phase 1:** Docker infrastructure + Calibre service setup
+- **Phase 2:** Backend APIs (`/books`, `/books/{id}/cover`, updated entity endpoint)
+- **Phase 3:** Ingestion pipeline (metadata.db polling, Pass 1 entity extraction)
+- **Phase 4:** Readest Library view + calibre_id integration
+- **Phase 5:** Enrichment passes (relationships, reframes, mechanisms)
+
+**Complete Design:** `docs/plans/2025-12-04-calibre-integration-design.md`
+
+**Related:**
+- Reframe API (Phase 2c) will be used by Pass 3 enrichment
+- Ingestion pipeline integrates with existing `library/graph/entities.py` extraction logic
+- Serena memory: `calibre-integration-design-dec4.md`
+
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: conventions -->

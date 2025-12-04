@@ -98,6 +98,16 @@ class EntityStatus(str, Enum):
     ANCHORED = "anchored"    # Rooted - integrated into understanding
 
 
+class ReframeType(str, Enum):
+    """Creative pattern used to re-explain a concept for ADHD-friendly reframing."""
+
+    METAPHOR = "metaphor"      # Uses vivid imagery to illuminate the concept
+    ANALOGY = "analogy"        # Maps the concept onto a familiar situation
+    STORY = "story"            # Wraps the concept in narrative context
+    PATTERN = "pattern"        # Highlights recurring structure or rhythm
+    CONTRAST = "contrast"      # Shows how the concept differs from a foil
+
+
 # =============================================================================
 # Enhanced Entity Model
 # =============================================================================
@@ -345,3 +355,19 @@ class Thread:
     def length(self) -> int:
         """Number of stops in this journey."""
         return len(self.breadcrumbs)
+
+
+@dataclass
+class Reframe:
+    """Domain-specific reframe that translates a concept into ADHD-friendly language."""
+
+    id: str
+    concept_id: str                      # Links to the domain concept being reframed
+    type: ReframeType                    # Narrative pattern used in the reframe
+    domain: str                          # Source domain (e.g., relationships, sports)
+    text: str                            # The actual reframe content
+    created_by: str                      # "user" or "ai"
+    strength: float = 0.5                # Quality score for retrieval ranking
+    helpful_votes: int = 0               # Community votes for usefulness
+    confusing_votes: int = 0             # Votes indicating the reframe was unclear
+    created_at: datetime = field(default_factory=datetime.now)

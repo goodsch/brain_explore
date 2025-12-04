@@ -29,6 +29,7 @@ router = APIRouter()
 @router.get("/entities/by-book/{book_hash}", response_model=BookEntitiesResponse)
 async def get_book_entities(
     book_hash: str,
+    title: str | None = Query(default=None, description="Book title for fallback matching"),
     types: list[str] | None = Query(default=None, description="Filter by entity types"),
     limit: int = Query(default=500, ge=1, le=1000, description="Maximum entities"),
 ) -> BookEntitiesResponse:
@@ -36,9 +37,10 @@ async def get_book_entities(
 
     Use this to populate entity overlay highlighting in the reader.
     Returns entities sorted by mention frequency.
+    Tries matching by hash first, then falls back to title if provided.
     """
     entities = await GraphService.get_entities_by_book(
-        book_hash, types=types, limit=limit
+        book_hash, title=title, types=types, limit=limit
     )
 
     return BookEntitiesResponse(

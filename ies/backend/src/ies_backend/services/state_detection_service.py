@@ -23,6 +23,11 @@ class MessageAnalysis:
     frustration_markers: list[str]
     energy_markers: list[str]
     emotional_markers: list[str]
+    exploration_markers: list[str] = None  # type: ignore
+
+    def __post_init__(self) -> None:
+        if self.exploration_markers is None:
+            self.exploration_markers = []
 
 
 # Marker word lists for signal detection
@@ -56,6 +61,19 @@ EMOTIONAL_MARKERS = [
     "sad", "happy", "angry", "hurt", "afraid", "hopeful", "grief"
 ]
 
+EXPLORATION_MARKERS = [
+    "tell me more", "how does", "what about", "explain",
+    "I wonder", "curious about", "want to know", "learn more",
+    "explore", "dig into", "look at", "think about"
+]
+
+
+def _match_marker(marker: str, text: str) -> bool:
+    """Check if marker appears in text with word boundaries (not as substring)."""
+    # Use word boundary matching to prevent "workflow" matching "flow"
+    pattern = r'\b' + re.escape(marker) + r'\b'
+    return bool(re.search(pattern, text, re.IGNORECASE))
+
 
 def analyze_message(text: str) -> MessageAnalysis:
     """Analyze a single message for state signals."""
@@ -69,16 +87,17 @@ def analyze_message(text: str) -> MessageAnalysis:
         word_count=word_count,
         avg_word_length=avg_word_length,
         question_count=text.count("?"),
-        certainty_markers=[m for m in CERTAINTY_MARKERS if m in text_lower],
-        uncertainty_markers=[m for m in UNCERTAINTY_MARKERS if m in text_lower],
-        frustration_markers=[m for m in FRUSTRATION_MARKERS if m in text_lower],
-        energy_markers=[m for m in HIGH_ENERGY_MARKERS if m in text_lower]
-        + [m for m in LOW_ENERGY_MARKERS if m in text_lower],
-        emotional_markers=[m for m in EMOTIONAL_MARKERS if m in text_lower],
+        certainty_markers=[m for m in CERTAINTY_MARKERS if _match_marker(m, text_lower)],
+        uncertainty_markers=[m for m in UNCERTAINTY_MARKERS if _match_marker(m, text_lower)],
+        frustration_markers=[m for m in FRUSTRATION_MARKERS if _match_marker(m, text_lower)],
+        energy_markers=[m for m in HIGH_ENERGY_MARKERS if _match_marker(m, text_lower)]
+        + [m for m in LOW_ENERGY_MARKERS if _match_marker(m, text_lower)],
+        emotional_markers=[m for m in EMOTIONAL_MARKERS if _match_marker(m, text_lower)],
+        exploration_markers=[m for m in EXPLORATION_MARKERS if m in text_lower],
     )
 
 
-def detect_repetition(messages: list[str], threshold: float = 0.5) -> bool:
+def detect_repetition(messages: list[str], threshold: float = 0.35) -> bool:
     """Detect if user is repeating similar content (indicating stuck state)."""
     if len(messages) < 3:
         return False
@@ -173,12 +192,19 @@ class StateDetectionService:
         latest = recent_messages[-1]
         analysis = analyze_message(latest)
 
+        # Aggregate frustration indicators from all recent messages
+        # (someone saying "stuck" earlier is still relevant)
+        all_frustration: set[str] = set()
+        for msg in recent_messages[-3:]:  # Check last 3 messages
+            msg_analysis = analyze_message(msg)
+            all_frustration.update(msg_analysis.frustration_markers)
+
         # Build signal object
         signals = StateSignal(
             response_length=classify_response_length(analysis.word_count),
             certainty_language=self._score_certainty(analysis),
             energy_words=analysis.energy_markers,
-            frustration_indicators=analysis.frustration_markers,
+            frustration_indicators=list(all_frustration),
             engagement_indicators=analysis.certainty_markers,
             repetition_detected=detect_repetition(recent_messages),
             abstraction_level=classify_abstraction(latest),
@@ -239,7 +265,7 @@ class StateDetectionService:
                 f"Low energy markers detected: {signals.energy_words}",
             )
 
-        # Check for stuck (repetition + frustration)
+        # Check for stuck (repetition OR explicit stuck language + frustration)
         if signals.repetition_detected:
             if signals.frustration_indicators:
                 return (
@@ -251,6 +277,16 @@ class StateDetectionService:
                 UserState.STUCK,
                 0.7,
                 "Repetition detected without progress",
+            )
+
+        # Also check for explicit "stuck" language even without repetition
+        if "stuck" in signals.frustration_indicators:
+            # Higher confidence if multiple frustration indicators present
+            confidence = 0.85 if len(signals.frustration_indicators) >= 3 else 0.75
+            return (
+                UserState.STUCK,
+                confidence,
+                "Explicit 'stuck' language detected",
             )
 
         # Check for emotional
@@ -269,15 +305,7 @@ class StateDetectionService:
                 "Multiple questions with uncertainty language",
             )
 
-        # Check for processing (short responses, asking for time)
-        if signals.response_length == "short" and analysis.question_count == 0:
-            return (
-                UserState.PROCESSING,
-                0.6,
-                "Short responses suggest processing/reflecting",
-            )
-
-        # Check for flowing (high engagement signals)
+        # Check for flowing BEFORE processing (high engagement signals)
         if any(w in HIGH_ENERGY_MARKERS for w in signals.energy_words):
             return (
                 UserState.FLOWING,
@@ -285,11 +313,37 @@ class StateDetectionService:
                 f"High engagement markers: {signals.energy_words}",
             )
 
-        if signals.response_length == "long" and (signals.certainty_language or 5) >= 6:
+        # Long OR medium responses with high certainty suggest flow
+        if signals.response_length in ["long", "medium"] and (signals.certainty_language or 5) >= 6:
+            confidence = 0.7 if signals.response_length == "long" else 0.65
             return (
                 UserState.FLOWING,
-                0.7,
+                confidence,
                 "Detailed, confident responses suggest flow",
+            )
+
+        # Check for exploration markers (before processing)
+        if analysis.exploration_markers:
+            return (
+                UserState.EXPLORING,
+                0.65,
+                f"Exploration language detected: {analysis.exploration_markers}",
+            )
+
+        # Check for exploration language patterns via questions
+        if analysis.question_count > 0:
+            return (
+                UserState.EXPLORING,
+                0.6,
+                "Questions suggest exploration mode",
+            )
+
+        # Check for processing (short responses, no questions, no engagement)
+        if signals.response_length == "short" and analysis.question_count == 0:
+            return (
+                UserState.PROCESSING,
+                0.6,
+                "Short responses suggest processing/reflecting",
             )
 
         # Default to exploring
