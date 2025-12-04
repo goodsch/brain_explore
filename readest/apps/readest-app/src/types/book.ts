@@ -26,6 +26,8 @@ export interface Book {
   groupName?: string;
   tags?: string[];
   coverImageUrl?: string | null;
+  // Calibre library ID for entity overlay integration
+  calibreId?: number;
 
   createdAt: number;
   updatedAt: number;

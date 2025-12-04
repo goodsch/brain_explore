@@ -50,6 +50,7 @@ import { AboutWindow } from '@/components/AboutWindow';
 import { BookDetailModal } from '@/components/metadata';
 import { UpdaterWindow } from '@/components/UpdaterWindow';
 import { CatalogDialog } from './components/OPDSDialog';
+import CalibreDialog from './components/CalibreDialog';
 import { MigrateDataWindow } from './components/MigrateDataWindow';
 import { useDragDropImport } from './hooks/useDragDropImport';
 import { Toast } from '@/components/Toast';
@@ -90,6 +91,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
   const { settings, setSettings, saveSettings } = useSettingsStore();
   const { isSettingsDialogOpen, setSettingsDialogOpen } = useSettingsStore();
   const [showCatalogManager, setShowCatalogManager] = useState(false);
+  const [showCalibreDialog, setShowCalibreDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
@@ -655,6 +657,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
           isSelectAll={isSelectAll}
           onImportBooks={handleImportBooks}
           onOpenCatalogManager={() => setShowCatalogManager(true)}
+          onOpenCalibreLibrary={() => setShowCalibreDialog(true)}
           onToggleSelectMode={() => handleSetSelectMode(!isSelectMode)}
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
@@ -786,6 +789,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
       <MigrateDataWindow />
       {isSettingsDialogOpen && <SettingsDialog bookKey={''} />}
       {showCatalogManager && <CatalogDialog onClose={() => setShowCatalogManager(false)} />}
+      <CalibreDialog isOpen={showCalibreDialog} onClose={() => setShowCalibreDialog(false)} />
       <Toast />
     </div>
   );

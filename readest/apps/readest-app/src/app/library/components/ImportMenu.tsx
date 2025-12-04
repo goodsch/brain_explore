@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useEnv } from '@/context/EnvContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import { IoFileTray } from 'react-icons/io5';
+import { IoFileTray, IoLibrary } from 'react-icons/io5';
 import { MdRssFeed } from 'react-icons/md';
 
 import MenuItem from '@/components/MenuItem';
@@ -11,12 +11,14 @@ interface ImportMenuProps {
   setIsDropdownOpen?: (open: boolean) => void;
   onImportBooks: () => void;
   onOpenCatalogManager: () => void;
+  onOpenCalibreLibrary?: () => void;
 }
 
 const ImportMenu: React.FC<ImportMenuProps> = ({
   setIsDropdownOpen,
   onImportBooks,
   onOpenCatalogManager,
+  onOpenCalibreLibrary,
 }) => {
   const _ = useTranslation();
   const { appService } = useEnv();
@@ -28,6 +30,11 @@ const ImportMenu: React.FC<ImportMenuProps> = ({
 
   const handleOpenCatalogManager = () => {
     onOpenCatalogManager();
+    setIsDropdownOpen?.(false);
+  };
+
+  const handleOpenCalibreLibrary = () => {
+    onOpenCalibreLibrary?.();
     setIsDropdownOpen?.(false);
   };
 
@@ -49,6 +56,13 @@ const ImportMenu: React.FC<ImportMenuProps> = ({
         Icon={<MdRssFeed className='h-5 w-5' />}
         onClick={handleOpenCatalogManager}
       />
+      {onOpenCalibreLibrary && (
+        <MenuItem
+          label={_('Calibre Library')}
+          Icon={<IoLibrary className='h-5 w-5' />}
+          onClick={handleOpenCalibreLibrary}
+        />
+      )}
     </Menu>
   );
 };

@@ -123,7 +123,7 @@ interface FlowModeState {
   setEntityOverlayEntities: (entities: EntityOverlay[]) => void;
   setVisibleTypes: (types: string[]) => void;
   toggleEntityType: (type: string) => void;
-  fetchEntitiesForBook: (bookHash: string, title?: string) => Promise<void>;
+  fetchEntitiesForBook: (bookHash: string, title?: string, calibreId?: number) => Promise<void>;
 }
 
 export const useFlowModeStore = create<FlowModeState>((set, get) => ({
@@ -334,7 +334,7 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
     });
   },
 
-  fetchEntitiesForBook: async (bookHash: string, title?: string) => {
+  fetchEntitiesForBook: async (bookHash: string, title?: string, calibreId?: number) => {
     set((state) => ({
       entityOverlay: {
         ...state.entityOverlay,
@@ -348,11 +348,19 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
       const apiHost = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
         ? `http://${window.location.hostname}:8081`
         : 'http://localhost:8081';
-      const url = title
-        ? `${apiHost}/graph/entities/by-book/${bookHash}?title=${encodeURIComponent(title)}`
-        : `${apiHost}/graph/entities/by-book/${bookHash}`;
 
-      console.log('[FlowMode] Fetching entities for book:', { bookHash, title, url });
+      // Prefer calibreId for more reliable lookup
+      let url: string;
+      if (calibreId !== undefined) {
+        url = `${apiHost}/graph/entities/by-calibre-id/${calibreId}`;
+        console.log('[FlowMode] Fetching entities by calibreId:', { calibreId, url });
+      } else {
+        url = title
+          ? `${apiHost}/graph/entities/by-book/${bookHash}?title=${encodeURIComponent(title)}`
+          : `${apiHost}/graph/entities/by-book/${bookHash}`;
+        console.log('[FlowMode] Fetching entities by hash/title:', { bookHash, title, url });
+      }
+
       const response = await fetch(url);
 
       if (!response.ok) {
