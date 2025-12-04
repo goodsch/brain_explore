@@ -180,3 +180,49 @@ class GraphService:
             ]
         except Exception:
             return []
+
+    @staticmethod
+    async def get_entities_by_book(
+        book_hash: str,
+        types: list[str] | None = None,
+        limit: int = 500
+    ) -> list[dict]:
+        """Get all entities mentioned in a book.
+
+        Args:
+            book_hash: The book's file hash (used as identifier)
+            types: Optional list of entity types to filter by
+            limit: Maximum entities to return
+
+        Returns:
+            List of entities with name, type, and mention_count
+        """
+        # Build type filter clause
+        type_filter = ""
+        if types:
+            type_labels = " OR ".join([f"e:{t}" for t in types])
+            type_filter = f"AND ({type_labels})"
+
+        query = f"""
+        MATCH (b:Book {{hash: $book_hash}})<-[:FROM_BOOK]-(c:Chunk)-[:MENTIONS]->(e)
+        WHERE e.name IS NOT NULL {type_filter}
+        WITH e, count(c) as mention_count
+        RETURN DISTINCT e.name as name, labels(e)[0] as type, mention_count
+        ORDER BY mention_count DESC
+        LIMIT $limit
+        """
+
+        try:
+            results = await Neo4jClient.execute_query(
+                query, {"book_hash": book_hash, "limit": limit}
+            )
+            return [
+                {
+                    "name": r["name"],
+                    "type": r["type"] or "Concept",
+                    "mention_count": r["mention_count"],
+                }
+                for r in results
+            ]
+        except Exception:
+            return []
