@@ -1,17 +1,63 @@
 <script lang="ts">
     /**
-     * ForgeMode - Layer 2 Dialogue Interface
+     * ForgeMode - Structured Thinking Interface (Layer 2)
      *
-     * AI-guided questioning for thinking pattern revelation.
-     * Renamed from "Dialogue" to "Forge" (shaping ideas through dialogue).
+     * AI-guided questioning with 5 specialized thinking modes:
+     * - Learning: Understand new concepts (Socratic questioning)
+     * - Articulating: Clarify vague intuitions (Mirroring, precise language)
+     * - Planning: Develop action strategies (Goal clarification)
+     * - Ideating: Generate creative options (Divergent prompts)
+     * - Reflecting: Personal insight (Phenomenological questions)
+     *
+     * Features split view: conversation (left) + live note preview (right)
      */
     import { onMount, createEventDispatcher } from 'svelte';
     import { showMessage, getFrontend, fetchSyncPost } from 'siyuan';
 
-    export let plugin: any;
     export let backendUrl: string;
 
     const dispatch = createEventDispatcher();
+
+    // Thinking modes with descriptions and AI behavior hints
+    type ThinkingMode = 'learning' | 'articulating' | 'planning' | 'ideating' | 'reflecting';
+
+    const THINKING_MODES: Record<ThinkingMode, {
+        name: string;
+        description: string;
+        aiPrompt: string;
+        icon: string;
+    }> = {
+        learning: {
+            name: 'Learning',
+            description: 'Understand a new concept',
+            aiPrompt: 'Use Socratic questioning to help explore and understand this concept deeply. Ask probing questions that reveal assumptions and connections.',
+            icon: '📚'
+        },
+        articulating: {
+            name: 'Articulating',
+            description: 'Clarify a vague intuition',
+            aiPrompt: 'Help articulate vague thoughts precisely. Mirror back what you hear, use precise language, and help crystallize unclear ideas.',
+            icon: '💭'
+        },
+        planning: {
+            name: 'Planning',
+            description: 'Develop an action strategy',
+            aiPrompt: 'Help develop a clear action plan. Clarify goals, identify obstacles, break down steps, and ensure the plan is actionable.',
+            icon: '🎯'
+        },
+        ideating: {
+            name: 'Ideating',
+            description: 'Generate creative options',
+            aiPrompt: 'Encourage divergent thinking. Generate many possibilities, explore unconventional options, and help expand the solution space.',
+            icon: '💡'
+        },
+        reflecting: {
+            name: 'Reflecting',
+            description: 'Gain personal insight',
+            aiPrompt: 'Use phenomenological questioning to explore personal experience. Focus on feelings, meanings, and self-understanding.',
+            icon: '🪞'
+        }
+    };
 
     // State
     let sessionId: string | null = null;
@@ -21,6 +67,14 @@
     let inputText = '';
     let isLoading = false;
     let isMobile = false;
+
+    // Thinking mode state
+    let selectedMode: ThinkingMode = 'learning';
+    let sessionTopic = '';
+
+    // Note preview state (for split view)
+    let notePreview = '';
+    let showNotePreview = false;
 
     const USER_ID = 'chris';
 
@@ -60,17 +114,36 @@
     });
 
     async function handleStart() {
+        if (!sessionTopic.trim()) {
+            showMessage('Please enter a topic or question to explore', 3000, 'error');
+            return;
+        }
+
         status = 'starting';
         errorMsg = '';
 
-        apiPost('/session/start', { user_id: USER_ID })
+        const modeConfig = THINKING_MODES[selectedMode];
+
+        apiPost('/session/start', {
+            user_id: USER_ID,
+            mode: selectedMode,
+            topic: sessionTopic,
+            system_prompt: modeConfig.aiPrompt
+        })
             .then(data => {
                 sessionId = data.session_id;
                 status = 'active';
+
+                // Customize greeting based on mode
+                const modeGreeting = `Let's ${modeConfig.description.toLowerCase()}. ${data.greeting || 'What would you like to explore?'}`;
+
                 messages = [{
                     role: 'assistant',
-                    content: data.greeting
+                    content: modeGreeting
                 }];
+
+                // Initialize note preview
+                updateNotePreview();
             })
             .catch(err => {
                 console.error('[IES] Start error:', err);
@@ -78,6 +151,36 @@
                 errorMsg = err.message || String(err);
                 showMessage(`Error: ${errorMsg}`, 5000, 'error');
             });
+    }
+
+    function updateNotePreview() {
+        // Generate a markdown note from the conversation
+        if (messages.length === 0) {
+            notePreview = '';
+            return;
+        }
+
+        const modeConfig = THINKING_MODES[selectedMode];
+        let note = `# ${sessionTopic}\n\n`;
+        note += `*Mode: ${modeConfig.name} ${modeConfig.icon}*\n\n`;
+
+        // Extract key insights from assistant messages
+        const insights = messages
+            .filter(m => m.role === 'assistant' && m.content !== '...')
+            .map((m, i) => {
+                // Truncate long messages for preview
+                const content = m.content.length > 200
+                    ? m.content.substring(0, 200) + '...'
+                    : m.content;
+                return `**Insight ${i + 1}:** ${content}`;
+            });
+
+        if (insights.length > 0) {
+            note += '## Key Points\n\n';
+            note += insights.join('\n\n');
+        }
+
+        notePreview = note;
     }
 
     function handleSend() {
@@ -89,15 +192,20 @@
         messages = [...messages, { role: 'assistant', content: '...' }];
         isLoading = true;
 
+        const modeConfig = THINKING_MODES[selectedMode];
+
         apiPost('/session/chat-sync', {
             session_id: sessionId,
             message: userMsg,
-            messages: messages.slice(0, -1)
+            messages: messages.slice(0, -1),
+            mode: selectedMode,
+            mode_prompt: modeConfig.aiPrompt
         })
             .then(data => {
                 messages[messages.length - 1].content = data.response || '';
                 messages = messages;
                 isLoading = false;
+                updateNotePreview();
             })
             .catch(err => {
                 console.error('[IES] Chat error:', err);
@@ -142,69 +250,121 @@
     }
 </script>
 
-<div class="forge-mode">
+<div class="forge-mode" class:forge-mode--split={showNotePreview && status === 'active'}>
     <div class="forge-header">
         <button class="back-btn" on:click={handleBack} title="Back to Dashboard">
             <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
             </svg>
         </button>
-        <span class="forge-title">Forge</span>
+        <span class="forge-title">Structured Thinking</span>
         {#if status === 'active'}
-            <span class="forge-badge">Active</span>
-        {/if}
-    </div>
-
-    <div class="forge-controls">
-        {#if status === 'idle'}
-            <button class="b3-button b3-button--primary" on:click={handleStart}>
-                Start Session
-            </button>
-        {:else if status === 'starting'}
-            <div class="forge-loading">Starting...</div>
-        {:else if status === 'active'}
-            <button class="b3-button" on:click={handleEnd}>
-                End Session
-            </button>
-        {:else if status === 'error'}
-            <div class="forge-error">{errorMsg}</div>
-            <button class="b3-button" on:click={handleStart}>Retry</button>
-        {/if}
-    </div>
-
-    <div class="forge-messages">
-        {#if messages.length === 0 && status === 'idle'}
-            <div class="forge-welcome">
-                <p><strong>Forge</strong> is where ideas take shape.</p>
-                <p>Start a session to explore your thinking with AI-guided questions.</p>
-            </div>
-        {:else}
-            {#each messages as msg}
-                <div class="forge-msg" class:forge-msg--user={msg.role === 'user'}>
-                    {msg.content}
-                </div>
-            {/each}
-        {/if}
-    </div>
-
-    {#if status === 'active'}
-        <div class="forge-input">
-            <textarea
-                bind:value={inputText}
-                on:keydown={handleKeydown}
-                placeholder="Type your message..."
-                rows="2"
-                disabled={isLoading}
-            ></textarea>
+            <span class="forge-badge">{THINKING_MODES[selectedMode].icon} {THINKING_MODES[selectedMode].name}</span>
             <button
-                class="b3-button b3-button--primary"
-                on:click={handleSend}
-                disabled={isLoading || !inputText.trim()}
+                class="note-toggle"
+                on:click={() => showNotePreview = !showNotePreview}
+                title={showNotePreview ? 'Hide note preview' : 'Show note preview'}
             >
-                {isLoading ? '...' : 'Send'}
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                </svg>
             </button>
+        {/if}
+    </div>
+
+    <div class="forge-main">
+        <div class="forge-conversation">
+            {#if status === 'idle'}
+                <!-- Mode Selection -->
+                <div class="forge-setup">
+                    <div class="setup-section">
+                        <label class="setup-label">Thinking Mode</label>
+                        <div class="mode-selector">
+                            {#each Object.entries(THINKING_MODES) as [key, mode]}
+                                <button
+                                    class="mode-option"
+                                    class:mode-option--selected={selectedMode === key}
+                                    on:click={() => selectedMode = key}
+                                >
+                                    <span class="mode-option-icon">{mode.icon}</span>
+                                    <span class="mode-option-name">{mode.name}</span>
+                                    <span class="mode-option-desc">{mode.description}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <label class="setup-label">What do you want to explore?</label>
+                        <textarea
+                            class="topic-input"
+                            bind:value={sessionTopic}
+                            placeholder="Enter your topic, question, or idea..."
+                            rows="2"
+                        ></textarea>
+                    </div>
+
+                    <button
+                        class="b3-button b3-button--primary start-btn"
+                        on:click={handleStart}
+                        disabled={!sessionTopic.trim()}
+                    >
+                        Start {THINKING_MODES[selectedMode].name} Session
+                    </button>
+                </div>
+
+            {:else if status === 'starting'}
+                <div class="forge-loading">Starting {THINKING_MODES[selectedMode].name} session...</div>
+
+            {:else if status === 'error'}
+                <div class="forge-error">{errorMsg}</div>
+                <button class="b3-button" on:click={() => status = 'idle'}>Try Again</button>
+
+            {:else}
+                <!-- Active Session -->
+                <div class="forge-messages">
+                    {#each messages as msg}
+                        <div class="forge-msg" class:forge-msg--user={msg.role === 'user'}>
+                            {msg.content}
+                        </div>
+                    {/each}
+                </div>
+
+                <div class="forge-input">
+                    <textarea
+                        bind:value={inputText}
+                        on:keydown={handleKeydown}
+                        placeholder="Type your response..."
+                        rows="2"
+                        disabled={isLoading}
+                    ></textarea>
+                    <div class="forge-actions">
+                        <button
+                            class="b3-button b3-button--primary"
+                            on:click={handleSend}
+                            disabled={isLoading || !inputText.trim()}
+                        >
+                            {isLoading ? '...' : 'Send'}
+                        </button>
+                        <button class="b3-button" on:click={handleEnd}>
+                            End
+                        </button>
+                    </div>
+                </div>
+            {/if}
         </div>
-    {/if}
+
+        {#if showNotePreview && status === 'active'}
+            <div class="forge-preview">
+                <div class="preview-header">
+                    <span class="preview-title">Note Preview</span>
+                </div>
+                <div class="preview-content">
+                    <pre>{notePreview}</pre>
+                </div>
+            </div>
+        {/if}
+    </div>
 </div>
 
 <style>
@@ -244,30 +404,167 @@
         color: var(--b3-theme-primary);
         border-radius: 4px;
     }
-    .forge-controls {
-        padding-bottom: 12px;
+    .note-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        color: var(--b3-theme-on-surface-light);
+        display: flex;
+        align-items: center;
+    }
+    .note-toggle:hover {
+        background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-surface);
+    }
+
+    /* Main layout - conversation and preview side by side */
+    .forge-main {
+        flex: 1;
+        display: flex;
+        gap: 12px;
+        overflow: hidden;
+    }
+    .forge-conversation {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .forge-mode--split .forge-conversation {
+        flex: 1;
+    }
+    .forge-preview {
+        width: 280px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--b3-border-color);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .preview-header {
+        padding: 8px 12px;
+        background: var(--b3-theme-surface);
         border-bottom: 1px solid var(--b3-border-color);
     }
-    .forge-loading {
-        text-align: center;
+    .preview-title {
+        font-size: 12px;
+        font-weight: 600;
         color: var(--b3-theme-on-surface-light);
+        text-transform: uppercase;
     }
-    .forge-error {
-        color: var(--b3-theme-error);
-        font-size: 13px;
-        margin-bottom: 8px;
-    }
-    .forge-messages {
+    .preview-content {
         flex: 1;
         overflow-y: auto;
+        padding: 12px;
+        font-size: 12px;
+        background: var(--b3-theme-background);
     }
-    .forge-welcome {
+    .preview-content pre {
+        margin: 0;
+        white-space: pre-wrap;
+        font-family: inherit;
+        color: var(--b3-theme-on-surface);
+    }
+
+    /* Setup section (mode selection + topic) */
+    .forge-setup {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 12px 0;
+    }
+    .setup-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .setup-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--b3-theme-on-surface-light);
+        text-transform: uppercase;
+    }
+
+    /* Mode selector */
+    .mode-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .mode-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--b3-theme-surface);
+        border: 2px solid var(--b3-border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: left;
+    }
+    .mode-option:hover {
+        border-color: var(--b3-theme-primary-light);
+        background: var(--b3-theme-primary-lightest);
+    }
+    .mode-option--selected {
+        border-color: var(--b3-theme-primary);
+        background: var(--b3-theme-primary-lightest);
+    }
+    .mode-option-icon {
+        font-size: 18px;
+    }
+    .mode-option-name {
+        font-weight: 600;
+        font-size: 13px;
+        min-width: 80px;
+    }
+    .mode-option-desc {
+        font-size: 12px;
+        color: var(--b3-theme-on-surface-light);
+    }
+
+    /* Topic input */
+    .topic-input {
+        width: 100%;
+        resize: none;
+        border: 1px solid var(--b3-border-color);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+        background: var(--b3-theme-background);
+        color: var(--b3-theme-on-background);
+        font-family: inherit;
+    }
+    .topic-input:focus {
+        outline: none;
+        border-color: var(--b3-theme-primary);
+    }
+    .start-btn {
+        align-self: flex-start;
+        padding: 10px 20px;
+    }
+
+    /* Loading and error states */
+    .forge-loading {
         text-align: center;
         color: var(--b3-theme-on-surface-light);
         padding: 24px;
     }
-    .forge-welcome p {
-        margin: 8px 0;
+    .forge-error {
+        color: var(--b3-theme-error);
+        font-size: 13px;
+        padding: 12px;
+        text-align: center;
+    }
+
+    /* Messages */
+    .forge-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 12px;
     }
     .forge-msg {
         padding: 10px 12px;
@@ -282,14 +579,17 @@
         background: var(--b3-theme-primary-lightest);
         margin-left: 20px;
     }
+
+    /* Input area */
     .forge-input {
         display: flex;
+        flex-direction: column;
         gap: 8px;
         padding-top: 12px;
         border-top: 1px solid var(--b3-border-color);
     }
     .forge-input textarea {
-        flex: 1;
+        width: 100%;
         resize: none;
         border: 1px solid var(--b3-border-color);
         border-radius: 6px;
@@ -297,8 +597,15 @@
         font-size: 14px;
         background: var(--b3-theme-background);
         color: var(--b3-theme-on-background);
+        font-family: inherit;
     }
-    .forge-input button {
-        align-self: flex-end;
+    .forge-input textarea:focus {
+        outline: none;
+        border-color: var(--b3-theme-primary);
+    }
+    .forge-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
     }
 </style>
