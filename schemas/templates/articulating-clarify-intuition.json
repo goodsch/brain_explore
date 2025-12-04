@@ -1,0 +1,45 @@
+{
+  "id": "articulating-clarify-intuition",
+  "mode": "articulating",
+  "name": "Clarify Intuition",
+  "description": "Transform a vague sense into clear understanding",
+  "sections": [
+    {
+      "id": "intuition",
+      "prompt": "Describe the intuition or hunch you want to clarify.",
+      "input_type": "freeform",
+      "required": true
+    },
+    {
+      "id": "resonance",
+      "prompt": "What experiences or signals make this intuition resonate?",
+      "input_type": "freeform"
+    },
+    {
+      "id": "examples",
+      "prompt": "Capture examples, metaphors, or counterpoints that illustrate the intuition.",
+      "input_type": "freeform"
+    },
+    {
+      "id": "articulation",
+      "prompt": "State the clarified intuition or claim in concrete terms.",
+      "input_type": "freeform"
+    }
+  ],
+  "graph_mapping": {
+    "on_complete": [
+      {
+        "action": "create_or_link",
+        "entity_type": "insight",
+        "source_section": "articulation",
+        "metadata": {
+          "resonance_from": "resonance"
+        }
+      },
+      {
+        "action": "update_journey",
+        "add_exchange": true
+      }
+    ]
+  }
+}
