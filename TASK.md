@@ -175,7 +175,7 @@ Now that the SiYuan plugin has all three main modes implemented:
 1. **User Testing** - Get feedback on Dashboard navigation, Structured Thinking modes, and Quick Capture workflow
 2. **Integration Testing** - Verify backend API integration works smoothly across all features
 3. **UI/UX Refinement** - Polish based on user feedback
-4. **Journey Resumption** - Implement full journey resumption from recent explorations list
+4. ~~**Journey Resumption** - Implement full journey resumption from recent explorations list~~ ✅ DONE (commit 7060541)
 5. **Capture Processing** - Test full capture workflow from iOS Shortcut → Queue → Processing → Routing
 
 **Note:** Quick Capture design document at `docs/plans/2025-12-03-quick-capture-design.md` describes the iOS Shortcut setup. Current plugin implementation uses SiYuan APIs directly for capture queue management.

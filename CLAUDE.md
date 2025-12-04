@@ -40,12 +40,20 @@ A three-layer system that enables people to think WITH an AI partner who adapts 
 
 ## Current Status
 
-**Phase 2a: Validate Layer 3 Exploration** ✅ COMPLETE (Dec 2)
+**Phase 2b: Build Visual Interface for Layer 3** IN PROGRESS
 
-**All Three Layers Validated:**
-- ✅ Layer 1: Knowledge graph creation (50k therapy entities, ingestion pipeline proven)
-- ✅ Layer 2: Profile system + adaptive dialogue (dialogue sessions proven to generate novel concepts)
-- ✅ Layer 3: CLI exploration tool validated (5 focused explorations, thinking partner questions work)
+**Previous Phases Complete:**
+- ✅ Phase 2a: Layer 3 CLI exploration tool validated (5 focused explorations, thinking partner questions work)
+- ✅ All Three Layers Validated: Layer 1 (50k therapy entities), Layer 2 (profile + dialogue), Layer 3 (CLI exploration)
+
+**Phase 2b Progress (SiYuan Plugin Evolution):**
+- ✅ Dashboard redesigned as Layer 3 Processing Hub (v0.3.0)
+- ✅ Three main modes implemented: Structured Thinking, Flow (graph exploration), Quick Capture
+- ✅ Recent journeys display with breadcrumb tracking
+- ✅ Journey resumption implemented (commit 7060541) - Click journey in Dashboard to resume in Flow mode
+- ✅ Quick Capture queue status preview
+- ✅ Backend integration: Journey API and Capture API connected
+- In Progress: Full capture processing workflow testing
 
 **Phase 1 Achievement Summary:**
 - ✅ **10/10 therapy exploration sessions completed** — Complete therapeutic dialogue cycle validated
@@ -150,11 +158,23 @@ The Phase 1 pipeline is fully documented and proven. To run additional sessions:
 ```
 brain_explore/
 ├── ies/                           # Intelligent Exploration System (domain-agnostic layers)
-│   ├── backend/                   # FastAPI backend - Layers 1 & 2 (4,496 lines Python)
-│   │   ├── src/ies_backend/       # Knowledge graph API, dialogue, profile services
+│   ├── backend/                   # FastAPI backend - Layers 1-3 APIs (Python)
+│   │   ├── src/ies_backend/
+│   │   │   ├── api/               # API routers
+│   │   │   │   ├── graph.py       # Knowledge graph exploration
+│   │   │   │   ├── session.py     # Structured thinking sessions
+│   │   │   │   ├── journey.py     # Breadcrumb journey tracking
+│   │   │   │   ├── capture.py     # Quick Capture processing
+│   │   │   │   └── profile.py     # User profile management
+│   │   │   └── services/          # Business logic
 │   │   └── tests/                 # 61 unit tests
-│   └── plugin/                    # SiYuan plugin - document interface (14,092 lines TS/Svelte)
-│                                  # (precursor to Layer 3 Flow/Flo interface)
+│   └── plugin/                    # SiYuan plugin - Layer 3 visual interface (v0.3.0)
+│       ├── src/index.ts           # Plugin lifecycle (Dashboard sidebar + tab)
+│       └── src/views/
+│           ├── Dashboard.svelte   # Layer 3 Processing Hub (entry point)
+│           ├── ForgeMode.svelte   # Structured Thinking (Layer 2 dialogue modes)
+│           ├── FlowMode.svelte    # Graph exploration with thinking questions
+│           └── QuickCapture.svelte # Content processing and entity extraction
 │
 ├── therapy/                       # Therapy Domain Application (complete Phase 1)
 │   ├── Track_1_Human_Mind/        # How humans perceive, think, and construct meaning
@@ -183,14 +203,69 @@ brain_explore/
 │   ├── parking-lot.md             # Future features (don't work on these)
 │   └── archive/                   # Old progress files, archived memories
 │
-└── docker-compose.yml             # Neo4j + Qdrant infrastructure (Layers 1 & 2 support)
+└── docker-compose.yml             # Neo4j + Qdrant infrastructure (Layers 1-3 support)
 ```
 
 **Architecture Alignment:**
 - **Layer 1** = Knowledge graph + ingestion pipeline in `library/` and `books/`
-- **Layer 2** = Backend services (API, dialogue, profile) in `ies/backend/`
-- **Layer 3** = To be built (rich exploration interface, post-processing pipeline)
+- **Layer 2** = Backend dialogue services in `ies/backend/api/session.py` and `question_engine.py`
+- **Layer 3** = SiYuan plugin (Dashboard, ForgeMode, FlowMode, QuickCapture) + backend journey/capture APIs
 - **Domain Application** = `therapy/` directory (current application domain)
+
+## Plugin Development (Phase 2b)
+
+**Current Version:** v0.3.0 - Layer 3 Processing Hub
+
+**Plugin Architecture:**
+
+The SiYuan plugin serves as the visual interface for Layer 3, providing three integrated thinking partnership modes:
+
+1. **Dashboard (Sidebar/Tab)** — Layer 3 Processing Hub
+   - Displays knowledge graph statistics (entities, relationships, books)
+   - Shows suggested exploration topics (recent, connected, new)
+   - Lists recent journeys with breadcrumb counts and timestamps
+   - Quick Capture queue status
+   - Navigation buttons to three main modes
+
+2. **Structured Thinking (ForgeMode)** — Layer 2 Dialogue Adapted for Visual Interface
+   - 5 thinking modes: Learning, Articulating, Planning, Ideating, Reflecting
+   - Each mode has specialized AI behavior (Socratic, mirroring, goal clarification, divergent, phenomenological)
+   - Split view: conversation thread (left) + live note preview (right)
+   - Integrates with backend session API for dialogue state management
+   - Saves thinking artifacts as SiYuan notes
+
+3. **Graph Exploration (FlowMode)** — Layer 3 Visual Navigation
+   - Search or navigate to concepts in the knowledge graph
+   - Grouped relationship display by relationship type and direction
+   - Thinking partner questions generated during exploration
+   - Tracks exploration path as breadcrumbs
+   - Integrates with backend journey API for path persistence
+
+4. **Quick Capture (QuickCapture)** — Content Processing Entry Point
+   - Accept unstructured content (text, voice transcription, OCR, URLs)
+   - Display extraction results (entities, summary, suggested tags)
+   - Show suggested placements and confidence scores
+   - Integrates with backend capture API for AI-powered extraction
+
+**Backend Integration:**
+
+The plugin uses SiYuan's `forwardProxy` API to reach the backend at `http://192.168.86.60:8081`:
+- `/graph/*` — Knowledge graph exploration (stats, suggestions, relationships)
+- `/sessions/*` — Structured thinking dialogue sessions
+- `/journeys/*` — Journey tracking and breadcrumb persistence
+- `/capture/process` — Quick Capture content extraction and analysis
+- User context: `chris` (configurable, currently hardcoded for development)
+
+**Key Files:**
+- `ies/plugin/src/index.ts` — Plugin lifecycle (onload, onLayoutReady, unload)
+- `ies/plugin/src/views/Dashboard.svelte` — Main hub with mode navigation, journey resumption
+- `ies/plugin/src/views/ForgeMode.svelte` — Structured thinking interface (Layer 2)
+- `ies/plugin/src/views/FlowMode.svelte` — Graph exploration with grouped relationships, journey state management
+- `ies/plugin/src/views/QuickCapture.svelte` — Content capture and processing
+- `ies/plugin/src/styles/design-system.scss` — "Contemplative Knowledge Space" design system with light/dark themes
+
+**Deployment Note:**
+Changes to the plugin need to be mirrored in the Docker deployed directory: `/home/chris/dev/docker/compose/appdata/siyuan/workspace/data/plugins/ies-explorer`
 
 ## Key Resources
 
@@ -359,5 +434,30 @@ For deeper context on the five-agent analysis, see `docs/five-agent-synthesis.md
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: conventions -->
-<!-- This section will be automatically updated by auto-memory plugin -->
+## UI Design System
+
+**Design Philosophy: "Contemplative Knowledge Space"**
+- Aesthetic: Quiet library meets neural network
+- Typography: Display (Crimson Pro serif), Body (Nunito sans-serif), Mono (JetBrains Mono)
+- Color palette: Warm neutrals with amber/gold accent (illumination, insight)
+- Responsive spacing scale (--ies-space-1 through --ies-space-10)
+- Smooth animations: fade-in, slide-up, scale-in, pulse-soft, glow-pulse
+- Dark theme support via `[data-theme-mode="dark"]`
+
+**Design System Location:** `/ies/plugin/src/styles/design-system.scss`
+
+**Key CSS Variables:**
+- `--ies-accent`: #c9872e (amber/gold for primary actions)
+- `--ies-secondary`: #5a8a7a (sage/teal for growth, knowledge)
+- `--ies-tertiary`: #8b7aa0 (soft violet for reflection, depth)
+- Semantic colors: success, warning, error, info
+- Shadow system: xs, sm, md, lg, glow (layered for depth)
+- Border radius: sm (6px), md (10px), lg (16px), xl (24px)
+- Transitions: fast (120ms), base (200ms), slow (350ms), bounce (400ms cubic-bezier)
+
+**Component Architecture:**
+- Dashboard: Central hub with stats, suggestions, recent journeys, capture queue
+- FlowMode: Graph exploration with relationship grouping (outgoing/incoming), breadcrumb path tracking
+- Journey resumption: Click journey in Dashboard → loads in FlowMode with preserved state
 <!-- END AUTO-MANAGED -->
+- any changes with plugin development needs to be mirrored in the docker deployed data directory as well at /home/chris/dev/docker/compose/appdata/siyuan/workspace/data/plugins/ies-explorer
