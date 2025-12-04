@@ -1,7 +1,7 @@
 <!-- MANUAL -->
-# brain_explore — Guided Knowledge Exploration System
+# brain_explore — Intelligent Exploration System
 
-*A domain-agnostic architecture for personalized, AI-guided exploration of large knowledge domains*
+*A domain-agnostic tool for structured thinking, understanding, connecting, and researching across any knowledge domain*
 
 ## What This Is
 
@@ -9,9 +9,9 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 1. **Layer 1: Knowledge Graph Creation** — Pre-processing and ingestion pipeline
    - Ingests domain materials (texts, research, conceptual frameworks)
-   - Creates a rich knowledge graph with 50k+ entities and 125k+ relationships
-   - Currently applied to therapy domain (63 books ingested)
+   - Creates rich knowledge graphs with entities and relationships
    - Domain-agnostic: can ingest and structure any knowledge domain
+   - *Current corpus:* Psychology/therapy (63 books, 50k+ entities) — used for system validation
 
 2. **Layer 2: Backend Services** — APIs for graph, dialogue, journey tracking, content capture
    - Graph API: entity search, exploration, sources, relationship traversal
@@ -39,7 +39,7 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 **Phase 2b: Visual Interface Implementation** ✅ COMPLETE (Dec 3)
 
 **All Four Layers Built and Validated:**
-- ✅ Layer 1: Knowledge graph creation (50k therapy entities, 63 books ingested)
+- ✅ Layer 1: Knowledge graph creation (validated with psychology/therapy corpus: 50k entities, 63 books)
 - ✅ Layer 2: Backend APIs (graph, session, journey, capture services - 54/61 tests passing)
 - ✅ Layer 3: SiYuan Plugin MVP (dashboard, 5 thinking modes, flow exploration, quick capture)
 - ✅ Layer 4: Readest Integration MVP (reading interface with flow mode, entity panel, breadcrumb capture)
@@ -47,13 +47,13 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 **For complete project status, see:** `docs/COMPREHENSIVE-PROJECT-STATUS.md`
 
 **Phase 1 Achievement Summary:**
-- ✅ **10/10 therapy exploration sessions completed** — Complete therapeutic dialogue cycle validated
-- ✅ **11+ therapeutic concepts extracted and formalized** — Comprehensive framework discovered
+- ✅ **10/10 validation sessions completed** — System validated using personal therapy/growth exploration
+- ✅ **11+ concepts extracted and formalized** — Demonstrated the full thinking → extraction pipeline
 - ✅ **Complete concept connection map** — Hierarchical relationships documented in CONNECTIONS.md
 - ✅ **Extraction pipeline proven end-to-end** — Session → Transcript → Extraction → Formalization → Commit
 - ✅ **Core hypothesis validated** — Personalized dialogue patterns directly affect concept discovery
 - ✅ **IES backend (54/61 tests passing)** — Layers 1 & 2 working flawlessly
-- ✅ **Therapy domain knowledge graph fully populated** — Neo4j with 50k entities, 63 books ingested
+- ✅ **Test corpus fully ingested** — Neo4j with 50k entities from 63 psychology/therapy books
 
 **Phase 2a Validation Summary:**
 - ✅ **5/5 exploration sessions completed** — CLI tool navigates knowledge graph reliably
@@ -65,8 +65,10 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 **Phase 1 Results:**
 
-**Therapy Framework Discovered:**
-A complete therapeutic vision emerged through 10 sessions exploring how humans construct meaning within constraints:
+**Active Application: Personal Growth Framework**
+*(Ongoing personal project using this system — demonstrates capability, not system purpose)*
+
+Through 10 validation sessions, a personal framework emerged exploring how humans construct meaning within constraints:
 1. **Narrow Window** — The window is universal, not pathology; constraint enables meaning
 2. **Acceptance vs. Resignation** — Distinction is aliveness/energy, not external form
 3. **Grief as Acceptance** — Loss reveals love; grief-with-presence preserves connection
@@ -89,16 +91,16 @@ A complete therapeutic vision emerged through 10 sessions exploring how humans c
 - The IES system (Layers 1 & 2) successfully creates genuine thinking partnership
 - Personalized dialogue (informed by profile system) surfaces valuable conceptualizations
 - The extraction → formalization pipeline works end-to-end
-- One person's thinking patterns, explored with adaptive questions, generates profound therapeutic insights
-- Concepts that emerge are testable, relatable, and therapeutically applicable
+- One person's thinking patterns, explored with adaptive questions, generates meaningful insights
+- Concepts that emerge are testable, relatable, and applicable to real decisions
 
 **Roadmap:**
 - **Phase 0 (COMPLETE):** Configuration stabilization removed 40% meta-work overhead
-- **Phase 1 (COMPLETE):** Core hypothesis proven — Layers 1 & 2 work; 11 concepts extracted; therapeutic framework coherent
+- **Phase 1 (COMPLETE):** Core hypothesis proven — Layers 1 & 2 work; extraction pipeline validated with 11 concepts
 - **Phase 2a (COMPLETE):** Layer 3 CLI validation — CLI exploration tool proven with 5 validation sessions
 - **Phase 2b (COMPLETE):** Visual interfaces — Readest reading interface + SiYuan plugin dashboard (both MVPs complete)
 - **Phase 2c (NEXT):** User testing and refinement based on real-world usage
-- **Phase 3+:** Domain generalization and validation across multiple knowledge domains
+- **Phase 3+:** Additional knowledge domains and continued refinement
 
 ## How to Work Here (Phase 2c+)
 
@@ -149,10 +151,23 @@ A complete therapeutic vision emerged through 10 sessions exploring how humans c
 - Backend APIs serving all functionality (Layer 2)
 - Knowledge graph fully populated (Layer 1)
 
-**Next Priority:**
-- User testing of complete four-layer system
-- Refinement based on real-world usage patterns
-- See `docs/COMPREHENSIVE-PROJECT-STATUS.md` for complete technical details
+**Critical Gaps Blocking Real Usage:**
+
+Five critical gaps have been identified that prevent the system from functioning end-to-end in real usage:
+
+1. **SiYuan Document Structure Undefined** — No defined location for personal knowledge artifacts (sparks, insights, threads, favorite_problems). Quick Capture UI exists but doesn't know where to save captured items.
+
+2. **Personal Graph API Not Connected** — ADHD ontology exists in code but isn't wired to any frontend. Backend APIs for personal graph CRUD don't exist.
+
+3. **Book Library Inaccessible** — 63 books ingested to Neo4j but users have no way to browse or open them. No deep-linking to specific passages.
+
+4. **Cross-App Continuity Missing** — Readest and SiYuan don't share state. Can't resume reading session from SiYuan or resume exploration from Readest.
+
+5. **Journey Value Loop Not Closed** — Journeys are captured but never analyzed for patterns. Patterns not used to personalize suggestions or improve thinking partner questions.
+
+**For Complete Analysis:**
+- `docs/PLANNING-GAPS-AND-QUESTIONS.md` — Comprehensive gap analysis, technical stack review, API inventory, SiYuan/Readest architecture review, component interaction map, and 20 probing questions needing answers
+- `docs/COMPREHENSIVE-PROJECT-STATUS.md` — Complete technical status of all four layers
 
 ### If Running Additional Exploration Sessions
 
@@ -184,8 +199,8 @@ brain_explore/
 │   └── plugin/                    # SiYuan plugin - document interface (14,092 lines TS/Svelte)
 │                                  # (precursor to Layer 3 Flow/Flo interface)
 │
-├── therapy/                       # Therapy Domain Application (complete Phase 1)
-│   ├── Track_1_Human_Mind/        # How humans perceive, think, and construct meaning
+├── therapy/                       # Personal Growth Application (active project using this system)
+│   ├── Track_1_Human_Mind/        # Personal framework: meaning, acceptance, presence
 │   │   ├── 01-narrow-window-of-awareness.md  # Foundational (universal constraint → meaning)
 │   │   ├── 02-acceptance-vs-resignation.md   # Core distinction (aliveness vs numbness)
 │   │   ├── 03-nervous-system-sensing-possibility.md  # Engagement mechanism
@@ -198,7 +213,7 @@ brain_explore/
 │   │   ├── 10-superpower-in-weakness.md      # Integration
 │   │   ├── 11-window-as-condition-for-depth.md # Final vision (full circle)
 │   │   └── CONNECTIONS.md                    # Hierarchical framework map
-│   └── (ready for Phase 2 exploration or domain generalization)
+│   └── (active development — ongoing personal application)
 │
 ├── .interleaved-thinking/         # Research artifacts (ADHD-friendly ontology design)
 │   ├── final-answer.md            # Research-backed ontology recommendations
@@ -223,7 +238,7 @@ brain_explore/
 - **Layer 2** = Backend services (API, dialogue, profile) in `ies/backend/`
 - **Layer 3** = SiYuan plugin in `.worktrees/siyuan/` (processing hub, dashboard)
 - **Layer 4** = Readest integration in `.worktrees/readest/` (reading interface)
-- **Domain Application** = `therapy/` directory (current application domain)
+- **Active Application** = `therapy/` directory (personal growth framework — ongoing project)
 
 ## Key Resources
 
@@ -248,6 +263,18 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/session-notes.md` — Complete session history: Phase 1 (10 sessions), Phase 2a (5 validation explorations), and learnings
 - `.interleaved-thinking/final-answer.md` — ADHD-friendly ontology design research (Dec 3)
 - Git history — Commits show progression: Phase 1 sessions → Phase 1 completion → Phase 2a validation → ready for Phase 2b
+
+**Visual Documentation (SiYuan Exports):**
+- `docs/siyuan-exports/01-development-tracker.md` — Real-time sprint board, test coverage, git status (Phase 2c: 15% complete)
+- `docs/siyuan-exports/02-roadmap-and-gaps.md` — Feature matrix by layer, gap prioritization, critical blockers
+- `docs/siyuan-exports/03-therapy-framework-map.md` — Personal growth framework: visual hierarchy of 11 concepts (active application)
+- `docs/siyuan-exports/04-project-visualizations.md` — Architecture diagrams, phase timeline, thinking partnership cycle
+- `docs/siyuan-exports/05-system-design-visual.md` — Four-layer architecture flow, data paths, entity type diagrams
+- `docs/siyuan-exports/06-adhd-friendly-ontology-design.md` — Entity types, status lifecycle, relationship types (implemented)
+- `docs/siyuan-exports/07-adhd-ontology-real-examples.md` — Concrete examples: spark capture, insight emergence, journey flow
+- `docs/siyuan-exports/08-adhd-ontology-example-flow.md` — Step-by-step walkthrough from spark to anchored knowledge
+
+These visual documents are exported from SiYuan and provide mermaid diagrams, tables, and visual representations of project status, architecture, and the ADHD-friendly ontology design. Updated Dec 4, 2025.
 
 ### Supporting References
 
@@ -278,9 +305,9 @@ The project maintains a three-level documentation structure for clarity:
 - User testing of complete four-layer system
 - Refinement based on real-world usage
 - ADHD-friendly ontology design (research complete in `.interleaved-thinking/`)
-- Then: Evaluate if Phase 1 concepts should enrich the knowledge graph
+- Personal growth framework development (ongoing application)
 
-**Rule:** Domain generalization (Phase 3+) waits until after user validation with therapy domain.
+**Rule:** Additional domains (Phase 3+) wait until core system is refined through real usage.
 
 **ADHD-Focused Research:**
 Research completed (Dec 3) on ADHD-friendly ontology design, drawing from:
@@ -367,24 +394,31 @@ This is how the system creates value through personalized thinking partnership:
 - Next session starts with enriched knowledge and refined personalization
 - The cycle deepens: better profile → more personalized guidance → deeper generation
 
-**Phase 1 validated this cycle** with 10 dialogue sessions generating 11 therapeutic concepts. **Phase 2b built the complete interface** for reading and exploration.
+**Phase 1 validated this cycle** with 10 dialogue sessions demonstrating the full extraction pipeline. **Phase 2b built the complete interface** for reading and exploration.
 
-## Key Concept: Domain-Agnostic Architecture with Therapy Application
+## Key Concept: Domain-Agnostic Thinking Tool
 
-This project builds a **general thinking partnership system** (Layers 1-4) applied to the **therapy domain** for initial validation.
+This project builds a **general intelligent exploration system** (Layers 1-4) for structured thinking, understanding, connecting, and researching across ANY knowledge domain.
 
 - **Layer 1** (Knowledge Graph) — Domain-agnostic ingestion and graph creation
 - **Layer 2** (Backend Services) — Domain-agnostic APIs for graph, dialogue, journey, capture
 - **Layer 3** (SiYuan Plugin) — Domain-agnostic processing hub and structured thinking
 - **Layer 4** (Readest) — Domain-agnostic reading interface with flow exploration
-- **Therapy** — Current instantiation domain for proof-of-concept and validation
 
-This means:
-- The architecture makes no therapy-specific assumptions in core systems
-- Therapy is a test domain for proving the thinking partnership approach works
-- Layer 1 can be retargeted to any knowledge domain (scientific, legal, creative, etc.)
-- Post-Phase 2c, the system can be applied to other domains with new knowledge graphs
-- The four-layer cycle works for any domain where personalized thinking partnership has value
+**Current Application Domains:**
+- **Psychology/Therapy corpus** — 63 books ingested; used for system validation
+- **Personal growth framework** — Active ongoing project (the 11 concepts); demonstrates extraction pipeline
+
+**The system is NOT:**
+- A therapy tool
+- A psychology-specific application
+- Limited to any single domain
+
+**The system IS:**
+- A thinking partnership tool for any knowledge domain
+- An intelligent exploration system for structured research
+- A personal knowledge capture and connection system
+- Applicable to: scientific research, legal analysis, creative projects, business strategy, learning any subject
 
 ## Working Style
 
