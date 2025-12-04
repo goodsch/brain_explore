@@ -16,6 +16,8 @@ import EntitySection from './EntitySection';
 import RelationshipsSection from './RelationshipsSection';
 import SourcesSection from './SourcesSection';
 import QuestionsSection from './QuestionsSection';
+import ReframesSection from './ReframesSection';
+import { EntityTypeFilter } from '../EntityTypeFilter';
 
 const MIN_FLOW_PANEL_WIDTH = 0.2;
 const MAX_FLOW_PANEL_WIDTH = 0.5;
@@ -150,6 +152,11 @@ const FlowPanel: React.FC = () => {
         </div>
 
         <div className='flex-grow overflow-y-auto px-4 py-2'>
+          {/* Entity Overlay Filter - Always visible at top */}
+          <div className='mb-4'>
+            <EntityTypeFilter />
+          </div>
+
           {isLoadingEntity ? (
             <div className='flex h-32 items-center justify-center'>
               <span className='loading loading-spinner loading-md'></span>
@@ -160,6 +167,7 @@ const FlowPanel: React.FC = () => {
               <RelationshipsSection relationships={relationships} />
               <SourcesSection sources={bookSources} />
               <QuestionsSection questions={thinkingPartnerQuestions} />
+              {currentEntity?.id && <ReframesSection conceptId={currentEntity.id} />}
             </div>
           ) : (
             <div className='flex h-full flex-col items-center justify-center text-center'>

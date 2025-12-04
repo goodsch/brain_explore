@@ -139,7 +139,9 @@ export function useFlowEntity(options: UseFlowEntityOptions = {}) {
    */
   const lookupFromSelection = useCallback(
     async (selectedText: string) => {
-      if (!selectedText.trim()) return null;
+      if (!selectedText.trim()) {
+        return null;
+      }
 
       try {
         // Search for matching entities

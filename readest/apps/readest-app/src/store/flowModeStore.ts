@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { EntityOverlay } from '../services/transformers/types';
 
 // Types for entity data from the knowledge graph
 export interface GraphEntity {
@@ -80,6 +81,15 @@ interface FlowModeState {
   journeyStartTime: number | null;
   currentStepStartTime: number | null;
 
+  // Entity overlay state
+  entityOverlay: {
+    enabled: boolean;
+    entities: EntityOverlay[];
+    visibleTypes: string[];
+    loading: boolean;
+    error: string | null;
+  };
+
   // Loading states
   isLoadingEntity: boolean;
   isLoadingQuestions: boolean;
@@ -107,6 +117,13 @@ interface FlowModeState {
   addThinkingPartnerExchange: (question: string, response?: string) => void;
   endJourney: () => BreadcrumbJourney | null;
   getCurrentJourney: () => BreadcrumbJourney | null;
+
+  // Actions - Entity Overlay
+  setEntityOverlayEnabled: (enabled: boolean) => void;
+  setEntityOverlayEntities: (entities: EntityOverlay[]) => void;
+  setVisibleTypes: (types: string[]) => void;
+  toggleEntityType: (type: string) => void;
+  fetchEntitiesForBook: (bookHash: string, title?: string) => Promise<void>;
 }
 
 export const useFlowModeStore = create<FlowModeState>((set, get) => ({
@@ -123,6 +140,15 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   currentStepStartTime: null,
   isLoadingEntity: false,
   isLoadingQuestions: false,
+
+  // Entity overlay initial state
+  entityOverlay: {
+    enabled: false,
+    entities: [],
+    visibleTypes: ['Concept', 'Person', 'Theory', 'Framework', 'Assessment'],
+    loading: false,
+    error: null,
+  },
 
   // Panel actions
   getFlowPanelWidth: () => get().flowPanelWidth,
@@ -263,4 +289,96 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   },
 
   getCurrentJourney: () => get().currentJourney,
+
+  // Entity Overlay actions
+  setEntityOverlayEnabled: (enabled: boolean) => {
+    set((state) => ({
+      entityOverlay: {
+        ...state.entityOverlay,
+        enabled,
+      },
+    }));
+  },
+
+  setEntityOverlayEntities: (entities: EntityOverlay[]) => {
+    set((state) => ({
+      entityOverlay: {
+        ...state.entityOverlay,
+        entities,
+      },
+    }));
+  },
+
+  setVisibleTypes: (types: string[]) => {
+    set((state) => ({
+      entityOverlay: {
+        ...state.entityOverlay,
+        visibleTypes: types,
+      },
+    }));
+  },
+
+  toggleEntityType: (type: string) => {
+    set((state) => {
+      const currentTypes = state.entityOverlay.visibleTypes;
+      const isVisible = currentTypes.includes(type);
+
+      return {
+        entityOverlay: {
+          ...state.entityOverlay,
+          visibleTypes: isVisible
+            ? currentTypes.filter((t) => t !== type)
+            : [...currentTypes, type],
+        },
+      };
+    });
+  },
+
+  fetchEntitiesForBook: async (bookHash: string, title?: string) => {
+    set((state) => ({
+      entityOverlay: {
+        ...state.entityOverlay,
+        loading: true,
+        error: null,
+      },
+    }));
+
+    try {
+      // Use same host as page to support remote access
+      const apiHost = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? `http://${window.location.hostname}:8081`
+        : 'http://localhost:8081';
+      const url = title
+        ? `${apiHost}/graph/entities/by-book/${bookHash}?title=${encodeURIComponent(title)}`
+        : `${apiHost}/graph/entities/by-book/${bookHash}`;
+
+      console.log('[FlowMode] Fetching entities for book:', { bookHash, title, url });
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch entities: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const entities: EntityOverlay[] = data.entities || [];
+      console.log('[FlowMode] Fetched entities:', { count: entities.length, total: data.total });
+
+      set((state) => ({
+        entityOverlay: {
+          ...state.entityOverlay,
+          entities,
+          loading: false,
+        },
+      }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      set((state) => ({
+        entityOverlay: {
+          ...state.entityOverlay,
+          loading: false,
+          error: errorMessage,
+        },
+      }));
+    }
+  },
 }));
