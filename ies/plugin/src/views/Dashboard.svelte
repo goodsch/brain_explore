@@ -5,7 +5,7 @@
      * Central hub for knowledge exploration with:
      * - Recent explorations (journeys)
      * - Quick Capture queue status
-     * - Entry points: Explore Concept, Structured Thinking, Read
+     * - Entry points: Explore Concept, Structured Thinking, Capture
      */
     import { onMount } from 'svelte';
     import { showMessage, fetchSyncPost } from 'siyuan';
@@ -17,7 +17,7 @@
     // Backend configuration
     const BACKEND_HOST = '192.168.86.60';
     const BACKEND_URL = `http://${BACKEND_HOST}:8081`;
-    const VERSION = '0.3.0';
+    const VERSION = '0.3.1';
     const USER_ID = 'chris';
 
     // View state
@@ -57,6 +57,7 @@
 
     let isLoading = true;
     let error: string | null = null;
+    let mounted = false;
 
     // API helper
     async function apiGet(endpoint: string): Promise<any> {
@@ -87,7 +88,6 @@
         error = null;
 
         try {
-            // Load all data in parallel
             const [statsData, suggestionsData, journeysData] = await Promise.all([
                 apiGet('/graph/stats'),
                 apiGet('/graph/suggestions'),
@@ -97,9 +97,6 @@
             stats = statsData;
             suggestions = suggestionsData;
             recentJourneys = journeysData.journeys || [];
-
-            // Quick Capture queue would come from a future endpoint
-            // For now, show empty queue
             captureQueue = [];
         } catch (err) {
             error = err.message;
@@ -125,11 +122,11 @@
     }
 
     onMount(() => {
+        mounted = true;
         loadDashboardData();
     });
 
     function navigateTo(view: ViewMode) {
-        // Clear journey selection when navigating to flow without a journey
         if (view === 'flow') {
             selectedJourneyId = null;
         }
@@ -139,12 +136,10 @@
     function handleBack() {
         currentView = 'dashboard';
         selectedJourneyId = null;
-        // Refresh stats when returning to dashboard
         loadDashboardData();
     }
 
     function resumeJourney(journeyId: string) {
-        // Navigate to Flow mode with the journey context
         selectedJourneyId = journeyId;
         currentView = 'flow';
     }
@@ -157,120 +152,165 @@
     }
 </script>
 
-<div class="ies-container">
+<div class="ies-root">
     {#if currentView === 'dashboard'}
-        <div class="dashboard">
-            <div class="dashboard-header">
-                <span class="dashboard-title">IES Explorer</span>
-                <span class="dashboard-version">v{VERSION}</span>
-            </div>
+        <div class="dashboard" class:mounted>
+            <!-- Header -->
+            <header class="header">
+                <div class="header-brand">
+                    <div class="logo">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.9"/>
+                            <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+                            <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">IES Explorer</span>
+                        <span class="brand-version">v{VERSION}</span>
+                    </div>
+                </div>
+            </header>
 
             {#if isLoading}
-                <div class="dashboard-loading">Loading...</div>
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <span>Loading knowledge graph...</span>
+                </div>
             {:else if error}
-                <div class="dashboard-error">
+                <div class="error-state">
+                    <svg viewBox="0 0 24 24" width="32" height="32">
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
                     <p>{error}</p>
-                    <button class="b3-button" on:click={loadDashboardData}>Retry</button>
+                    <button class="btn btn--primary" on:click={loadDashboardData}>
+                        Try Again
+                    </button>
                 </div>
             {:else}
-                <!-- Stats -->
+                <!-- Stats Bar -->
                 {#if stats}
-                    <div class="dashboard-stats">
+                    <div class="stats-bar">
                         <div class="stat">
                             <span class="stat-value">{formatNumber(stats.entities)}</span>
                             <span class="stat-label">Entities</span>
                         </div>
+                        <div class="stat-divider"></div>
                         <div class="stat">
                             <span class="stat-value">{formatNumber(stats.relationships)}</span>
-                            <span class="stat-label">Relationships</span>
+                            <span class="stat-label">Relations</span>
                         </div>
+                        <div class="stat-divider"></div>
                         <div class="stat">
                             <span class="stat-value">{stats.books}</span>
-                            <span class="stat-label">Books</span>
+                            <span class="stat-label">Sources</span>
                         </div>
                     </div>
                 {/if}
 
-                <!-- Mode Buttons -->
-                <div class="dashboard-modes">
-                    <button class="mode-btn mode-btn--thinking" on:click={() => navigateTo('structured-thinking')}>
-                        <span class="mode-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                <!-- Mode Cards -->
+                <div class="mode-grid">
+                    <button class="mode-card mode-card--think" on:click={() => navigateTo('structured-thinking')}>
+                        <div class="mode-glow"></div>
+                        <div class="mode-icon">
+                            <svg viewBox="0 0 24 24" width="28" height="28">
+                                <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/>
+                                <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
                             </svg>
-                        </span>
-                        <span class="mode-name">Think</span>
-                        <span class="mode-desc">Structured thinking modes</span>
+                        </div>
+                        <span class="mode-title">Think</span>
+                        <span class="mode-subtitle">Structured dialogue</span>
                     </button>
-                    <button class="mode-btn mode-btn--flow" on:click={() => navigateTo('flow')}>
-                        <span class="mode-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+
+                    <button class="mode-card mode-card--explore" on:click={() => navigateTo('flow')}>
+                        <div class="mode-glow"></div>
+                        <div class="mode-icon">
+                            <svg viewBox="0 0 24 24" width="28" height="28">
+                                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                                <circle cx="6" cy="8" r="1.5" fill="currentColor" opacity="0.6"/>
+                                <circle cx="18" cy="8" r="1.5" fill="currentColor" opacity="0.6"/>
+                                <circle cx="6" cy="16" r="1.5" fill="currentColor" opacity="0.6"/>
+                                <circle cx="18" cy="16" r="1.5" fill="currentColor" opacity="0.6"/>
+                                <path fill="none" stroke="currentColor" stroke-width="1" opacity="0.4"
+                                    d="M12 12L6 8M12 12L18 8M12 12L6 16M12 12L18 16"/>
                             </svg>
-                        </span>
-                        <span class="mode-name">Explore</span>
-                        <span class="mode-desc">Navigate the knowledge graph</span>
+                        </div>
+                        <span class="mode-title">Explore</span>
+                        <span class="mode-subtitle">Navigate concepts</span>
                     </button>
-                    <button class="mode-btn mode-btn--capture" on:click={() => navigateTo('capture')}>
-                        <span class="mode-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+
+                    <button class="mode-card mode-card--capture" on:click={() => navigateTo('capture')}>
+                        <div class="mode-glow"></div>
+                        <div class="mode-icon">
+                            <svg viewBox="0 0 24 24" width="28" height="28">
+                                <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    d="M12 5v14M5 12h14"/>
+                                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
                             </svg>
-                        </span>
-                        <span class="mode-name">Capture</span>
-                        <span class="mode-desc">Quick thought capture</span>
+                        </div>
+                        <span class="mode-title">Capture</span>
+                        <span class="mode-subtitle">Quick thoughts</span>
                     </button>
                 </div>
 
                 <!-- Recent Journeys -->
                 {#if recentJourneys.length > 0}
-                    <div class="dashboard-section">
-                        <span class="section-label">Recent Explorations</span>
+                    <section class="section">
+                        <h3 class="section-title">Recent Explorations</h3>
                         <div class="journey-list">
-                            {#each recentJourneys.slice(0, 3) as journey}
-                                <button class="journey-item" on:click={() => resumeJourney(journey.id)}>
-                                    <span class="journey-title">{journey.title || journey.path[0]?.entity_name || 'Untitled'}</span>
-                                    <span class="journey-meta">
-                                        <span class="journey-crumbs">{journey.path.length} steps</span>
-                                        <span class="journey-time">{formatRelativeTime(journey.started_at)}</span>
-                                    </span>
+                            {#each recentJourneys.slice(0, 3) as journey, i}
+                                <button
+                                    class="journey-card"
+                                    style="animation-delay: {i * 60}ms"
+                                    on:click={() => resumeJourney(journey.id)}
+                                >
+                                    <div class="journey-indicator"></div>
+                                    <div class="journey-content">
+                                        <span class="journey-title">
+                                            {journey.title || journey.path[0]?.entity_name || 'Untitled'}
+                                        </span>
+                                        <span class="journey-meta">
+                                            {journey.path.length} steps · {formatRelativeTime(journey.started_at)}
+                                        </span>
+                                    </div>
+                                    <svg class="journey-arrow" viewBox="0 0 24 24" width="16" height="16">
+                                        <path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                                    </svg>
                                 </button>
                             {/each}
                         </div>
-                    </div>
+                    </section>
                 {/if}
 
-                <!-- Quick Capture Queue -->
+                <!-- Capture Queue -->
                 {#if captureQueue.length > 0}
-                    <div class="dashboard-section">
-                        <span class="section-label">
+                    <section class="section">
+                        <h3 class="section-title">
                             Capture Queue
                             <span class="queue-badge">{captureQueue.length}</span>
-                        </span>
-                        <div class="capture-queue">
+                        </h3>
+                        <div class="capture-list">
                             {#each captureQueue.slice(0, 3) as item}
-                                <div class="capture-item">
+                                <div class="capture-card">
                                     <span class="capture-preview">{item.content_preview}</span>
                                     <span class="capture-time">{formatRelativeTime(item.captured_at)}</span>
                                 </div>
                             {/each}
                         </div>
-                    </div>
+                    </section>
                 {/if}
 
-                <!-- Suggestions -->
-                {#if suggestions}
-                    <div class="dashboard-suggestions">
+                <!-- Concept Suggestions -->
+                {#if suggestions && (suggestions.connected.length > 0 || suggestions.new.length > 0)}
+                    <section class="section suggestions-section">
                         {#if suggestions.connected.length > 0}
                             <div class="suggestion-group">
-                                <span class="suggestion-label">Most Connected</span>
-                                <div class="suggestion-items">
+                                <h4 class="suggestion-label">Most Connected</h4>
+                                <div class="chip-grid">
                                     {#each suggestions.connected.slice(0, 4) as topic}
-                                        <button
-                                            class="suggestion-chip"
-                                            on:click={() => { navigateTo('flow'); }}
-                                            title="Explore in Flow"
-                                        >
+                                        <button class="chip" on:click={() => navigateTo('flow')}>
                                             {topic.name}
                                         </button>
                                     {/each}
@@ -280,21 +320,18 @@
 
                         {#if suggestions.new.length > 0}
                             <div class="suggestion-group">
-                                <span class="suggestion-label">Novel Concepts</span>
-                                <div class="suggestion-items">
+                                <h4 class="suggestion-label">Novel Concepts</h4>
+                                <div class="chip-grid">
                                     {#each suggestions.new as topic}
-                                        <button
-                                            class="suggestion-chip suggestion-chip--new"
-                                            on:click={() => { navigateTo('flow'); }}
-                                            title="Phase 1 concept - explore in Flow"
-                                        >
+                                        <button class="chip chip--accent" on:click={() => navigateTo('flow')}>
+                                            <span class="chip-dot"></span>
                                             {topic.name}
                                         </button>
                                     {/each}
                                 </div>
                             </div>
                         {/if}
-                    </div>
+                    </section>
                 {/if}
             {/if}
         </div>
@@ -308,247 +345,551 @@
 </div>
 
 <style>
-    .ies-container {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap');
+
+    /* Design tokens */
+    .ies-root {
+        --font-display: 'Crimson Pro', Georgia, serif;
+        --font-body: 'Nunito', system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+
+        --space-1: 0.25rem;
+        --space-2: 0.5rem;
+        --space-3: 0.75rem;
+        --space-4: 1rem;
+        --space-5: 1.25rem;
+        --space-6: 1.5rem;
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-full: 9999px;
+
+        /* Light theme (default) */
+        --bg-deep: #f7f5f2;
+        --bg-base: #fffefa;
+        --bg-elevated: #ffffff;
+        --bg-overlay: rgba(255, 254, 250, 0.95);
+
+        --text-primary: #1a1816;
+        --text-secondary: #4a4641;
+        --text-muted: #7a756e;
+        --text-subtle: #a9a29a;
+
+        --border-subtle: rgba(26, 24, 22, 0.06);
+        --border-light: rgba(26, 24, 22, 0.1);
+        --border-medium: rgba(26, 24, 22, 0.15);
+
+        --accent: #c98b2f;
+        --accent-light: #f5ddb8;
+        --accent-lighter: #fdf4e6;
+        --accent-dark: #9a6820;
+
+        --secondary: #5a8a7a;
+        --secondary-light: #c4ddd5;
+        --secondary-lighter: #eef5f3;
+
+        --tertiary: #8b7aa0;
+        --tertiary-light: #ddd6e8;
+
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+        --shadow-lg: 0 8px 24px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
     }
+
+    /* Dark theme detection */
+    :global([data-theme-mode="dark"]) .ies-root {
+        --bg-deep: #141312;
+        --bg-base: #1c1a18;
+        --bg-elevated: #242220;
+        --bg-overlay: rgba(28, 26, 24, 0.95);
+
+        --text-primary: #f4f2ef;
+        --text-secondary: #c9c5bf;
+        --text-muted: #8a857e;
+        --text-subtle: #5a5650;
+
+        --border-subtle: rgba(244, 242, 239, 0.04);
+        --border-light: rgba(244, 242, 239, 0.08);
+        --border-medium: rgba(244, 242, 239, 0.12);
+
+        --accent-light: #4a3a20;
+        --accent-lighter: #2a2218;
+
+        --secondary-light: #2a3a35;
+        --secondary-lighter: #1a2522;
+
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+        --shadow-lg: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .ies-root {
+        height: 100%;
+        font-family: var(--font-body);
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text-primary);
+        background: var(--bg-deep);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Dashboard Layout */
     .dashboard {
         display: flex;
         flex-direction: column;
         height: 100%;
-        padding: 12px;
-        gap: 16px;
+        padding: var(--space-4);
+        gap: var(--space-5);
+        overflow-y: auto;
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
     }
-    .dashboard-header {
+
+    .dashboard.mounted {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Header */
+    .header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
     }
-    .dashboard-title {
-        font-weight: 600;
-        font-size: 16px;
+
+    .header-brand {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
     }
-    .dashboard-version {
-        font-size: 10px;
-        padding: 2px 6px;
-        background: var(--b3-theme-surface);
-        color: var(--b3-theme-on-surface-light);
-        border-radius: 3px;
-        border: 1px solid var(--b3-border-color);
-        font-family: monospace;
-    }
-    .dashboard-loading {
-        flex: 1;
+
+    .logo {
+        width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--b3-theme-on-surface-light);
+        color: var(--accent);
+        background: var(--accent-lighter);
+        border-radius: var(--radius-md);
     }
-    .dashboard-error {
+
+    .brand-text {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+    }
+
+    .brand-name {
+        font-family: var(--font-display);
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+    }
+
+    .brand-version {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
+    }
+
+    /* Loading & Error States */
+    .loading-state, .error-state {
         flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 12px;
-        color: var(--b3-theme-error);
+        gap: var(--space-4);
+        color: var(--text-muted);
+        text-align: center;
+        padding: var(--space-6);
     }
-    .dashboard-stats {
+
+    .loading-spinner {
+        width: 32px;
+        height: 32px;
+        border: 2px solid var(--border-light);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .error-state svg {
+        color: var(--text-muted);
+    }
+
+    /* Stats Bar */
+    .stats-bar {
         display: flex;
-        justify-content: space-around;
-        padding: 12px;
-        background: var(--b3-theme-surface);
-        border-radius: 8px;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-4);
+        padding: var(--space-4) var(--space-5);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
     }
+
     .stat {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
+        gap: 2px;
+        padding: 0 var(--space-3);
     }
+
     .stat-value {
-        font-size: 20px;
+        font-family: var(--font-display);
+        font-size: 22px;
         font-weight: 600;
-        color: var(--b3-theme-primary);
+        color: var(--accent);
+        letter-spacing: -0.02em;
     }
+
     .stat-label {
-        font-size: 11px;
-        color: var(--b3-theme-on-surface-light);
+        font-size: 10px;
+        font-weight: 600;
         text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
     }
-    .dashboard-modes {
-        display: flex;
-        gap: 12px;
+
+    .stat-divider {
+        width: 1px;
+        height: 28px;
+        background: var(--border-light);
     }
-    .mode-btn {
-        flex: 1;
+
+    /* Mode Cards */
+    .mode-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-3);
+    }
+
+    .mode-card {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
-        padding: 16px 12px;
-        background: var(--b3-theme-surface);
-        border: 2px solid var(--b3-border-color);
-        border-radius: 12px;
+        gap: var(--space-2);
+        padding: var(--space-5) var(--space-3);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
         cursor: pointer;
-        transition: all 0.15s;
+        transition: all 0.2s ease;
+        overflow: hidden;
     }
-    .mode-btn:hover {
-        border-color: var(--b3-theme-primary);
-        background: var(--b3-theme-primary-lightest);
+
+    .mode-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--border-light);
     }
-    .mode-btn--thinking:hover {
-        border-color: var(--b3-theme-secondary);
+
+    .mode-card:active {
+        transform: translateY(0);
     }
-    .mode-btn--flow:hover {
-        border-color: var(--b3-theme-primary);
+
+    .mode-glow {
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at center, var(--accent-lighter) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
     }
-    .mode-btn--capture:hover {
-        border-color: #10b981;
+
+    .mode-card:hover .mode-glow {
+        opacity: 0.5;
     }
+
+    .mode-card--think:hover { border-color: var(--accent); }
+    .mode-card--think:hover .mode-glow { background: radial-gradient(circle at center, var(--accent-lighter) 0%, transparent 70%); }
+
+    .mode-card--explore:hover { border-color: var(--secondary); }
+    .mode-card--explore:hover .mode-glow { background: radial-gradient(circle at center, var(--secondary-lighter) 0%, transparent 70%); }
+
+    .mode-card--capture:hover { border-color: var(--tertiary); }
+    .mode-card--capture:hover .mode-glow { background: radial-gradient(circle at center, var(--tertiary-light) 0%, transparent 70%); }
+
     .mode-icon {
-        color: var(--b3-theme-on-surface);
+        position: relative;
+        z-index: 1;
+        color: var(--text-secondary);
+        transition: color 0.2s ease;
     }
-    .mode-name {
+
+    .mode-card--think:hover .mode-icon { color: var(--accent); }
+    .mode-card--explore:hover .mode-icon { color: var(--secondary); }
+    .mode-card--capture:hover .mode-icon { color: var(--tertiary); }
+
+    .mode-title {
+        position: relative;
+        z-index: 1;
+        font-family: var(--font-display);
+        font-size: 15px;
         font-weight: 600;
-        font-size: 14px;
+        color: var(--text-primary);
     }
-    .mode-desc {
+
+    .mode-subtitle {
+        position: relative;
+        z-index: 1;
         font-size: 11px;
-        color: var(--b3-theme-on-surface-light);
-        text-align: center;
+        color: var(--text-muted);
     }
-    .dashboard-suggestions {
+
+    /* Sections */
+    .section {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: var(--space-3);
     }
+
+    .section-title {
+        font-family: var(--font-display);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .queue-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 6px;
+        font-size: 10px;
+        font-weight: 700;
+        color: white;
+        background: var(--secondary);
+        border-radius: var(--radius-full);
+    }
+
+    /* Journey Cards */
+    .journey-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .journey-card {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-align: left;
+        animation: slideUp 0.3s ease backwards;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+    }
+
+    .journey-card:hover {
+        border-color: var(--accent);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .journey-indicator {
+        width: 3px;
+        height: 24px;
+        background: var(--accent);
+        border-radius: 2px;
+        opacity: 0.6;
+        transition: opacity 0.15s ease;
+    }
+
+    .journey-card:hover .journey-indicator {
+        opacity: 1;
+    }
+
+    .journey-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .journey-title {
+        font-weight: 500;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .journey-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .journey-arrow {
+        color: var(--text-subtle);
+        opacity: 0;
+        transform: translateX(-4px);
+        transition: all 0.15s ease;
+    }
+
+    .journey-card:hover .journey-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* Capture Cards */
+    .capture-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .capture-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-3) var(--space-4);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+    }
+
+    .capture-preview {
+        font-size: 13px;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+
+    .capture-time {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    /* Suggestions */
+    .suggestions-section {
+        padding-top: var(--space-2);
+        border-top: 1px solid var(--border-subtle);
+    }
+
     .suggestion-group {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: var(--space-2);
     }
+
     .suggestion-label {
         font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
-        color: var(--b3-theme-on-surface-light);
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin: 0;
     }
-    .suggestion-items {
+
+    .chip-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: var(--space-2);
     }
-    .suggestion-chip {
-        padding: 4px 10px;
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: 5px 12px;
         font-size: 12px;
-        background: var(--b3-theme-surface);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.15s;
-        color: var(--b3-theme-on-surface);
-    }
-    .suggestion-chip:hover {
-        background: var(--b3-theme-primary-lightest);
-        border-color: var(--b3-theme-primary);
-    }
-    .suggestion-chip--new {
-        background: var(--b3-theme-primary-lightest);
-        border-color: var(--b3-theme-primary-light);
-    }
-
-    /* Dashboard sections */
-    .dashboard-section {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .section-label {
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        color: var(--b3-theme-on-surface-light);
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    /* Journey list */
-    .journey-list {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-    .journey-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 12px;
-        background: var(--b3-theme-surface);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.15s;
-        text-align: left;
-    }
-    .journey-item:hover {
-        border-color: var(--b3-theme-primary);
-        background: var(--b3-theme-primary-lightest);
-    }
-    .journey-title {
-        font-size: 13px;
         font-weight: 500;
-        color: var(--b3-theme-on-surface);
-    }
-    .journey-meta {
-        display: flex;
-        gap: 8px;
-        font-size: 11px;
-        color: var(--b3-theme-on-surface-light);
-    }
-    .journey-crumbs {
-        opacity: 0.7;
-    }
-    .journey-time {
-        opacity: 0.7;
+        color: var(--text-secondary);
+        background: var(--bg-base);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        transition: all 0.15s ease;
     }
 
-    /* Capture queue */
-    .queue-badge {
-        background: #10b981;
-        color: white;
-        font-size: 10px;
-        padding: 1px 6px;
-        border-radius: 10px;
-        font-weight: 600;
+    .chip:hover {
+        background: var(--accent-lighter);
+        border-color: var(--accent-light);
+        color: var(--accent-dark);
     }
-    .capture-queue {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
+
+    .chip--accent {
+        background: var(--accent-lighter);
+        border-color: var(--accent-light);
+        color: var(--accent-dark);
     }
-    .capture-item {
-        display: flex;
-        justify-content: space-between;
+
+    .chip-dot {
+        width: 5px;
+        height: 5px;
+        background: var(--accent);
+        border-radius: 50%;
+    }
+
+    /* Button */
+    .btn {
+        display: inline-flex;
         align-items: center;
-        padding: 8px 12px;
-        background: var(--b3-theme-surface);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 6px;
-    }
-    .capture-preview {
-        font-size: 12px;
-        color: var(--b3-theme-on-surface);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 200px;
-    }
-    .capture-time {
-        font-size: 11px;
-        color: var(--b3-theme-on-surface-light);
+        justify-content: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-4);
+        font-family: var(--font-body);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
     }
 
+    .btn:hover {
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn--primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+
+    .btn--primary:hover {
+        background: var(--accent-dark);
+        border-color: var(--accent-dark);
+    }
 </style>

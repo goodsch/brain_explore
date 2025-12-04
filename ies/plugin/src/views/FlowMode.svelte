@@ -2,11 +2,14 @@
     /**
      * FlowMode - Layer 3 Visual Graph Exploration
      *
+     * "Contemplative Knowledge Space" Design
      * Navigate the knowledge graph visually with grouped concept display.
      * "Flow" = navigate freely through the concept space.
      */
     import { onMount, createEventDispatcher } from 'svelte';
     import { showMessage, fetchSyncPost } from 'siyuan';
+
+    import ReframesTab from '../components/ReframesTab.svelte';
 
     export let backendUrl: string;
     export let journeyId: string | null = null;
@@ -25,6 +28,19 @@
     let thinkingQuestion: string | null = null;
     let isLoadingQuestion = false;
     let isExploring = false;
+    let mounted = false;
+    let conceptDetailTab: 'connections' | 'reframes' = 'connections';
+
+    onMount(() => {
+        mounted = true;
+        if (journeyId) {
+            loadJourney(journeyId);
+        }
+    });
+
+    $: if (!currentConcept) {
+        conceptDetailTab = 'connections';
+    }
 
     // Group nodes by relationship type
     $: groupedNodes = groupNodesByRelationship(nodes, relationships, currentConcept);
@@ -206,6 +222,7 @@
         thinkingQuestion = null;
         searchQuery = '';
         searchResults = [];
+        conceptDetailTab = 'connections';
     }
 
     function navigateToPathStep(index: number) {
@@ -240,57 +257,97 @@
         }
     }
 
-    onMount(() => {
-        if (journeyId) {
-            loadJourney(journeyId);
+    // Get entity type color
+    function getTypeColor(type: string): string {
+        switch (type) {
+            case 'Theory': return 'var(--ies-secondary)';
+            case 'Researcher': return 'var(--ies-tertiary)';
+            case 'Concept': return 'var(--ies-accent)';
+            default: return 'var(--ies-text-muted)';
         }
-    });
+    }
 </script>
 
-<div class="flow-mode">
-    <div class="flow-header">
+<div class="flow-mode" class:mounted>
+    <!-- Header -->
+    <header class="flow-header">
         <button class="back-btn" on:click={handleBack} title="Back to Dashboard">
-            <svg viewBox="0 0 24 24" width="16" height="16">
+            <svg viewBox="0 0 24 24" width="18" height="18">
                 <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
             </svg>
         </button>
-        <span class="flow-title">Flow</span>
+        <div class="header-title">
+            <svg class="flow-icon" viewBox="0 0 32 32" width="24" height="24">
+                <!-- Network/flow icon -->
+                <circle cx="16" cy="8" r="3" fill="currentColor" opacity="0.9"/>
+                <circle cx="8" cy="20" r="3" fill="currentColor" opacity="0.7"/>
+                <circle cx="24" cy="20" r="3" fill="currentColor" opacity="0.7"/>
+                <circle cx="16" cy="26" r="2" fill="currentColor" opacity="0.5"/>
+                <line x1="16" y1="11" x2="10" y2="18" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                <line x1="16" y1="11" x2="22" y2="18" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                <line x1="10" y1="22" x2="16" y2="25" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                <line x1="22" y1="22" x2="16" y2="25" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+            </svg>
+            <h1>Flow</h1>
+        </div>
         {#if explorationPath.length > 0}
-            <button class="clear-btn" on:click={clearExploration} title="Clear exploration">
+            <button class="clear-btn" on:click={clearExploration}>
+                <svg viewBox="0 0 24 24" width="14" height="14">
+                    <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
                 Clear
             </button>
         {/if}
-    </div>
+    </header>
 
-    <div class="flow-search">
-        <input
-            type="text"
-            bind:value={searchQuery}
-            on:keydown={handleKeydown}
-            placeholder="Search concepts..."
-            disabled={isSearching}
-        />
+    <!-- Search -->
+    <div class="search-container">
+        <div class="search-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18">
+                <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input
+                type="text"
+                bind:value={searchQuery}
+                on:keydown={handleKeydown}
+                placeholder="Search the knowledge graph..."
+                disabled={isSearching}
+            />
+            {#if searchQuery}
+                <button class="search-clear" on:click={() => { searchQuery = ''; searchResults = []; }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            {/if}
+        </div>
         <button
-            class="b3-button b3-button--primary"
+            class="search-btn"
             on:click={handleSearch}
             disabled={isSearching || !searchQuery.trim()}
         >
-            {isSearching ? '...' : 'Go'}
+            {#if isSearching}
+                <span class="spinner"></span>
+            {:else}
+                Explore
+            {/if}
         </button>
     </div>
 
     <!-- Search Results -->
     {#if searchResults.length > 0}
-        <div class="search-results">
-            <div class="search-results-label">Results ({searchResults.length})</div>
-            <div class="search-results-list">
-                {#each searchResults as result}
+        <div class="results-panel">
+            <div class="results-header">
+                <span class="results-label">Found {searchResults.length} concept{searchResults.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="results-list">
+                {#each searchResults as result, i}
                     <button
-                        class="search-result"
-                        class:search-result--theory={result.type === 'Theory'}
-                        class:search-result--researcher={result.type === 'Researcher'}
+                        class="result-card"
+                        style="--delay: {i * 40}ms; --type-color: {getTypeColor(result.type)}"
                         on:click={() => exploreConcept(result.name)}
                     >
+                        <span class="result-indicator"></span>
                         <span class="result-name">{result.name}</span>
                         <span class="result-type">{result.type}</span>
                     </button>
@@ -299,459 +356,902 @@
         </div>
     {/if}
 
-    {#if isLoadingJourney}
-        <div class="flow-loading">
-            <p>Resuming journey...</p>
-        </div>
-    {:else if !currentConcept && searchResults.length === 0}
-        <div class="flow-welcome">
-            <p><strong>Flow</strong> is where you explore freely.</p>
-            <p>Search for a concept to navigate the knowledge graph.</p>
-        </div>
-    {:else if currentConcept}
-        <div class="flow-graph">
-            <!-- Current concept -->
-            <div class="flow-center">
-                <span class="center-concept" class:loading={isExploring}>
-                    {isExploring ? '...' : currentConcept}
-                </span>
+    <!-- Main Content Area -->
+    <div class="flow-content">
+        {#if isLoadingJourney}
+            <div class="flow-state">
+                <div class="state-icon loading">
+                    <svg viewBox="0 0 32 32" width="48" height="48">
+                        <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity="0.2"/>
+                        <path d="M16 4 A12 12 0 0 1 28 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <p class="state-text">Resuming your journey...</p>
+            </div>
+        {:else if !currentConcept && searchResults.length === 0}
+            <div class="flow-state welcome">
+                <div class="state-icon">
+                    <svg viewBox="0 0 64 64" width="64" height="64">
+                        <!-- Constellation/network welcome icon -->
+                        <circle cx="32" cy="16" r="4" fill="currentColor" opacity="0.8"/>
+                        <circle cx="16" cy="32" r="3" fill="currentColor" opacity="0.6"/>
+                        <circle cx="48" cy="32" r="3" fill="currentColor" opacity="0.6"/>
+                        <circle cx="24" cy="48" r="3" fill="currentColor" opacity="0.5"/>
+                        <circle cx="40" cy="48" r="3" fill="currentColor" opacity="0.5"/>
+                        <circle cx="32" cy="36" r="5" fill="currentColor" opacity="0.9"/>
+                        <line x1="32" y1="20" x2="32" y2="31" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                        <line x1="19" y1="32" x2="27" y2="34" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                        <line x1="45" y1="32" x2="37" y2="34" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                        <line x1="26" y1="46" x2="29" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                        <line x1="38" y1="46" x2="35" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                    </svg>
+                </div>
+                <h2 class="state-title">Navigate Knowledge</h2>
+                <p class="state-text">Search for a concept to begin exploring connections in the knowledge graph.</p>
+                <p class="state-hint">Each concept reveals its relationships, creating paths of understanding.</p>
+            </div>
+        {:else if currentConcept}
+            <!-- Central Concept -->
+            <div class="concept-center" class:exploring={isExploring}>
+                <div class="concept-glow"></div>
+                <div class="concept-core">
+                    <span class="concept-label">Exploring</span>
+                    <h2 class="concept-name">{currentConcept}</h2>
+                    <span class="concept-connections">{nodes.length} connection{nodes.length !== 1 ? 's' : ''}</span>
+                </div>
             </div>
 
-            <!-- Grouped relationships -->
-            {#if groupedNodes.size > 0}
-                <div class="flow-groups">
-                    {#each [...groupedNodes.entries()] as [relType, relNodes]}
-                        <div class="flow-group">
-                            <div class="group-header">
-                                <span class="group-arrow">{relNodes[0]?.direction === 'outgoing' ? '→' : '←'}</span>
-                                <span class="group-label">{formatRelType(relType)}</span>
-                                <span class="group-count">({relNodes.length})</span>
-                            </div>
-                            <div class="group-nodes">
-                                {#each relNodes as node}
-                                    <button
-                                        class="flow-node"
-                                        class:flow-node--theory={node.type === 'Theory'}
-                                        class:flow-node--researcher={node.type === 'Researcher'}
-                                        class:flow-node--concept={node.type === 'Concept'}
-                                        on:click={() => exploreConcept(node.name)}
-                                        title={node.type}
-                                    >
-                                        {node.name}
-                                    </button>
-                                {/each}
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            {:else if !isExploring}
-                <div class="flow-empty">
-                    <p>No connections found for this concept.</p>
-                    <p>Try the Thinking Partner for guidance.</p>
-                </div>
-            {/if}
-        </div>
+            <div class="concept-tabs">
+                <button
+                    class="tab-btn"
+                    class:active={conceptDetailTab === 'connections'}
+                    on:click={() => conceptDetailTab = 'connections'}
+                >
+                    Connections
+                </button>
+                <button
+                    class="tab-btn"
+                    class:active={conceptDetailTab === 'reframes'}
+                    on:click={() => conceptDetailTab = 'reframes'}
+                >
+                    Reframes
+                </button>
+            </div>
 
-        <!-- Exploration path -->
-        {#if explorationPath.length > 1}
-            <div class="flow-path">
-                <span class="path-label">Path:</span>
+            {#if conceptDetailTab === 'connections'}
+                {#if groupedNodes.size > 0}
+                    <div class="relationships">
+                        {#each [...groupedNodes.entries()] as [relType, relNodes], groupIndex}
+                            <div class="rel-group" style="--delay: {groupIndex * 60}ms">
+                                <div class="rel-header">
+                                    <span class="rel-direction" class:outgoing={relNodes[0]?.direction === 'outgoing'}>
+                                        {relNodes[0]?.direction === 'outgoing' ? '→' : '←'}
+                                    </span>
+                                    <span class="rel-type">{formatRelType(relType)}</span>
+                                    <span class="rel-count">{relNodes.length}</span>
+                                </div>
+                                <div class="rel-nodes">
+                                    {#each relNodes as node, nodeIndex}
+                                        <button
+                                            class="node-chip"
+                                            style="--delay: {(groupIndex * 60) + (nodeIndex * 30)}ms; --type-color: {getTypeColor(node.type)}"
+                                            on:click={() => exploreConcept(node.name)}
+                                            title="{node.type}: {node.name}"
+                                        >
+                                            <span class="node-indicator"></span>
+                                            <span class="node-name">{node.name}</span>
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {:else if !isExploring}
+                    <div class="no-connections">
+                        <p>No connections found for this concept.</p>
+                        <p class="hint">Try the Thinking Partner for guidance.</p>
+                    </div>
+                {/if}
+            {:else}
+                <ReframesTab conceptId={currentConcept} backendUrl={backendUrl} />
+            {/if}
+        {/if}
+    </div>
+
+    <!-- Exploration Path -->
+    {#if explorationPath.length > 1}
+        <div class="path-trail">
+            <span class="path-label">Journey</span>
+            <div class="path-steps">
                 {#each explorationPath as step, i}
                     <button
                         class="path-step"
-                        class:path-step--current={i === explorationPath.length - 1}
+                        class:current={i === explorationPath.length - 1}
                         on:click={() => navigateToPathStep(i)}
                         disabled={i === explorationPath.length - 1}
                     >
                         {step}
                     </button>
                     {#if i < explorationPath.length - 1}
-                        <span class="path-arrow">→</span>
+                        <span class="path-connector">
+                            <svg viewBox="0 0 16 16" width="12" height="12">
+                                <path fill="currentColor" d="M8 4l4 4-4 4V4z"/>
+                            </svg>
+                        </span>
                     {/if}
                 {/each}
             </div>
-        {/if}
-
-        <!-- Thinking Partner -->
-        <div class="flow-actions">
-            <button
-                class="thinking-btn"
-                on:click={requestThinkingPartner}
-                disabled={isLoadingQuestion}
-            >
-                <svg viewBox="0 0 24 24" width="16" height="16">
-                    <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-                </svg>
-                {isLoadingQuestion ? 'Thinking...' : 'Ask Thinking Partner'}
-            </button>
         </div>
+    {/if}
 
-        {#if thinkingQuestion}
-            <div class="flow-question">
-                <div class="question-label">Thinking Partner</div>
-                <div class="question-text">{thinkingQuestion}</div>
-            </div>
-        {/if}
+    <!-- Thinking Partner Section -->
+    {#if currentConcept}
+        <div class="thinking-section">
+            {#if thinkingQuestion}
+                <div class="thinking-card">
+                    <div class="thinking-header">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-4h2v2h-2zm1.61-9.96c-2.06-.3-3.88.97-4.43 2.79-.18.58.26 1.17.87 1.17h.2c.41 0 .74-.29.88-.67.32-.89 1.27-1.5 2.3-1.28.95.2 1.65 1.13 1.57 2.1-.1 1.34-1.62 1.63-2.45 2.88 0 .01-.01.01-.01.02-.01.02-.02.03-.03.05-.09.15-.18.32-.25.5-.01.03-.03.05-.04.08-.01.02-.01.04-.02.07-.12.34-.2.75-.2 1.25h2c0-.42.11-.77.28-1.07.02-.03.03-.06.05-.09.08-.14.18-.27.28-.39.01-.01.02-.03.03-.04.1-.12.21-.23.33-.34.96-.91 2.26-1.65 1.99-3.56-.24-1.74-1.61-3.21-3.35-3.47z"/>
+                        </svg>
+                        <span>Thinking Partner</span>
+                    </div>
+                    <p class="thinking-question">{thinkingQuestion}</p>
+                </div>
+            {:else}
+                <button
+                    class="thinking-btn"
+                    on:click={requestThinkingPartner}
+                    disabled={isLoadingQuestion}
+                >
+                    {#if isLoadingQuestion}
+                        <span class="spinner small"></span>
+                        <span>Contemplating...</span>
+                    {:else}
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                        </svg>
+                        <span>Ask Thinking Partner</span>
+                    {/if}
+                </button>
+            {/if}
+        </div>
     {/if}
 </div>
 
 <style>
+    /* Import design system */
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap');
+
     .flow-mode {
+        --ies-accent: #c9872e;
+        --ies-accent-rgb: 201, 135, 46;
+        --ies-accent-light: #f5ddb8;
+        --ies-accent-lighter: #fdf4e6;
+        --ies-accent-dark: #9a6820;
+        --ies-secondary: #5a8a7a;
+        --ies-secondary-light: #c4ddd5;
+        --ies-tertiary: #8b7aa0;
+        --ies-tertiary-light: #ddd6e8;
+        --ies-bg-deep: #f8f6f3;
+        --ies-bg-base: #fffef9;
+        --ies-bg-elevated: #ffffff;
+        --ies-text-primary: #1a1816;
+        --ies-text-secondary: #4a4641;
+        --ies-text-muted: #7a756e;
+        --ies-text-subtle: #a9a29a;
+        --ies-border-subtle: rgba(26, 24, 22, 0.06);
+        --ies-border-light: rgba(26, 24, 22, 0.1);
+        --ies-border-medium: rgba(26, 24, 22, 0.15);
+        --ies-radius-sm: 6px;
+        --ies-radius-md: 10px;
+        --ies-radius-lg: 16px;
+        --ies-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        --ies-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+
         display: flex;
         flex-direction: column;
         height: 100%;
-        padding: 12px;
-        gap: 12px;
+        padding: 16px;
+        gap: 16px;
+        background: var(--ies-bg-deep);
+        font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+        color: var(--ies-text-primary);
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
     }
 
+    .flow-mode.mounted {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Dark theme */
+    :global([data-theme-mode="dark"]) .flow-mode {
+        --ies-bg-deep: #141312;
+        --ies-bg-base: #1c1a18;
+        --ies-bg-elevated: #242220;
+        --ies-text-primary: #f4f2ef;
+        --ies-text-secondary: #c9c5bf;
+        --ies-text-muted: #8a857e;
+        --ies-text-subtle: #5a5650;
+        --ies-border-subtle: rgba(244, 242, 239, 0.04);
+        --ies-border-light: rgba(244, 242, 239, 0.08);
+        --ies-border-medium: rgba(244, 242, 239, 0.12);
+        --ies-accent-light: #4a3a20;
+        --ies-accent-lighter: #2a2218;
+        --ies-secondary-light: #2a3a35;
+        --ies-tertiary-light: #3a3545;
+        --ies-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
+        --ies-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Header */
     .flow-header {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
     }
 
     .back-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        color: var(--b3-theme-on-surface);
         display: flex;
         align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-light);
+        border-radius: var(--ies-radius-sm);
+        cursor: pointer;
+        color: var(--ies-text-secondary);
+        transition: all 0.15s ease-out;
     }
 
     .back-btn:hover {
-        background: var(--b3-theme-surface);
+        background: var(--ies-bg-base);
+        border-color: var(--ies-accent);
+        color: var(--ies-accent);
     }
 
-    .flow-title {
-        font-weight: 600;
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
         flex: 1;
+    }
+
+    .flow-icon {
+        color: var(--ies-accent);
+    }
+
+    .header-title h1 {
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: -0.01em;
     }
 
     .clear-btn {
-        font-size: 12px;
-        padding: 4px 8px;
-        background: var(--b3-theme-surface);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 4px;
-        cursor: pointer;
-        color: var(--b3-theme-on-surface);
-    }
-
-    .flow-search {
         display: flex;
-        gap: 8px;
-    }
-
-    .flow-search input {
-        flex: 1;
+        align-items: center;
+        gap: 6px;
         padding: 8px 12px;
-        border: 1px solid var(--b3-border-color);
-        border-radius: 6px;
-        font-size: 14px;
-        background: var(--b3-theme-background);
-        color: var(--b3-theme-on-background);
-    }
-
-    /* Search Results */
-    .search-results {
-        background: var(--b3-theme-surface);
-        border-radius: 8px;
-        padding: 8px;
-    }
-
-    .search-results-label {
-        font-size: 11px;
+        font-size: 0.8125rem;
         font-weight: 600;
-        color: var(--b3-theme-on-surface-light);
-        margin-bottom: 8px;
-        text-transform: uppercase;
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-light);
+        border-radius: var(--ies-radius-sm);
+        cursor: pointer;
+        color: var(--ies-text-muted);
+        transition: all 0.15s ease-out;
     }
 
-    .search-results-list {
+    .clear-btn:hover {
+        background: var(--ies-bg-base);
+        border-color: var(--ies-border-medium);
+        color: var(--ies-text-secondary);
+    }
+
+    /* Search */
+    .search-container {
+        display: flex;
+        gap: 10px;
+    }
+
+    .search-wrapper {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 14px;
+        color: var(--ies-text-subtle);
+        pointer-events: none;
+    }
+
+    .search-wrapper input {
+        width: 100%;
+        padding: 12px 40px 12px 44px;
+        font-family: inherit;
+        font-size: 0.9375rem;
+        color: var(--ies-text-primary);
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-light);
+        border-radius: var(--ies-radius-md);
+        outline: none;
+        transition: all 0.15s ease-out;
+    }
+
+    .search-wrapper input::placeholder {
+        color: var(--ies-text-subtle);
+    }
+
+    .search-wrapper input:focus {
+        border-color: var(--ies-accent);
+        box-shadow: 0 0 0 3px var(--ies-accent-lighter);
+    }
+
+    .search-clear {
+        position: absolute;
+        right: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--ies-text-subtle);
+        opacity: 0.7;
+        transition: opacity 0.15s;
+    }
+
+    .search-clear:hover {
+        opacity: 1;
+    }
+
+    .search-btn {
+        padding: 12px 20px;
+        font-family: inherit;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: white;
+        background: var(--ies-accent);
+        border: none;
+        border-radius: var(--ies-radius-md);
+        cursor: pointer;
+        transition: all 0.15s ease-out;
+        min-width: 90px;
+    }
+
+    .search-btn:hover:not(:disabled) {
+        background: var(--ies-accent-dark);
+    }
+
+    .search-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Results Panel */
+    .results-panel {
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-subtle);
+        border-radius: var(--ies-radius-md);
+        padding: 12px;
+        box-shadow: var(--ies-shadow-sm);
+    }
+
+    .results-header {
+        margin-bottom: 10px;
+    }
+
+    .results-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ies-text-muted);
+    }
+
+    .results-list {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
     }
 
-    .search-result {
+    .result-card {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 8px 12px;
-        background: var(--b3-theme-background);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 6px;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--ies-bg-base);
+        border: 1px solid var(--ies-border-subtle);
+        border-radius: var(--ies-radius-sm);
         cursor: pointer;
-        transition: all 0.15s;
+        transition: all 0.15s ease-out;
+        animation: slideIn 0.25s ease-out backwards;
+        animation-delay: var(--delay);
     }
 
-    .search-result:hover {
-        border-color: var(--b3-theme-primary);
-        background: var(--b3-theme-primary-lightest);
+    .result-card:hover {
+        background: var(--ies-accent-lighter);
+        border-color: var(--ies-accent-light);
+        transform: translateX(4px);
     }
 
-    .search-result--theory {
-        border-left: 3px solid var(--b3-theme-success);
-    }
-
-    .search-result--researcher {
-        border-left: 3px solid var(--b3-theme-secondary);
+    .result-indicator {
+        width: 4px;
+        height: 20px;
+        background: var(--type-color);
+        border-radius: 2px;
+        flex-shrink: 0;
     }
 
     .result-name {
-        font-size: 14px;
+        flex: 1;
+        font-size: 0.9375rem;
         font-weight: 500;
+        color: var(--ies-text-primary);
     }
 
     .result-type {
-        font-size: 11px;
-        color: var(--b3-theme-on-surface-light);
-        padding: 2px 6px;
-        background: var(--b3-theme-surface);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--ies-text-muted);
+        padding: 3px 8px;
+        background: var(--ies-bg-elevated);
         border-radius: 4px;
     }
 
-    .flow-loading {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        color: var(--b3-theme-on-surface-light);
-        padding: 24px;
-    }
-
-    .flow-loading p {
-        margin: 8px 0;
-    }
-
-    .flow-welcome {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        color: var(--b3-theme-on-surface-light);
-        padding: 24px;
-    }
-
-    .flow-welcome p {
-        margin: 8px 0;
-    }
-
-    .flow-graph {
+    /* Flow Content */
+    .flow-content {
         flex: 1;
         display: flex;
         flex-direction: column;
         gap: 16px;
         overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--ies-border-medium) transparent;
     }
 
-    .flow-center {
+    .flow-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .flow-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .flow-content::-webkit-scrollbar-thumb {
+        background: var(--ies-border-medium);
+        border-radius: 3px;
+    }
+
+    /* Flow States */
+    .flow-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         text-align: center;
-        padding: 12px;
+        padding: 32px;
     }
 
-    .center-concept {
-        display: inline-block;
-        font-size: 18px;
+    .state-icon {
+        color: var(--ies-accent);
+        margin-bottom: 16px;
+        opacity: 0.8;
+    }
+
+    .state-icon.loading svg {
+        animation: spin 1s linear infinite;
+    }
+
+    .state-title {
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 1.375rem;
         font-weight: 600;
-        padding: 10px 20px;
-        background: var(--b3-theme-primary);
-        color: var(--b3-theme-on-primary);
-        border-radius: 24px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        color: var(--ies-text-primary);
+        margin: 0 0 8px 0;
     }
 
-    .center-concept.loading {
-        opacity: 0.6;
+    .state-text {
+        font-size: 0.9375rem;
+        color: var(--ies-text-secondary);
+        margin: 0 0 4px 0;
+        max-width: 280px;
+        line-height: 1.5;
     }
 
-    /* Grouped relationships */
-    .flow-groups {
+    .state-hint {
+        font-size: 0.8125rem;
+        color: var(--ies-text-muted);
+        margin: 0;
+        font-style: italic;
+    }
+
+    /* Central Concept */
+    .concept-center {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .concept-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(var(--ies-accent-rgb), 0.12) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        animation: pulse 3s ease-in-out infinite;
+    }
+
+    .concept-core {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 20px 32px;
+        background: var(--ies-bg-elevated);
+        border: 2px solid var(--ies-accent);
+        border-radius: var(--ies-radius-lg);
+        box-shadow: var(--ies-shadow-md), 0 0 20px rgba(var(--ies-accent-rgb), 0.1);
+        transition: all 0.3s ease-out;
+    }
+
+    .concept-center.exploring .concept-core {
+        opacity: 0.7;
+    }
+
+    .concept-label {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ies-accent);
+    }
+
+    .concept-name {
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 1.375rem;
+        font-weight: 600;
+        color: var(--ies-text-primary);
+        margin: 0;
+        text-align: center;
+    }
+
+    .concept-connections {
+        font-size: 0.8125rem;
+        color: var(--ies-text-muted);
+    }
+
+    .concept-tabs {
+        display: inline-flex;
+        gap: 8px;
+        margin: 16px auto 8px;
+        border-radius: var(--ies-radius-sm);
+        padding: 4px;
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-light);
+    }
+
+    .tab-btn {
+        padding: 6px 14px;
+        border-radius: var(--ies-radius-sm);
+        border: none;
+        background: transparent;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--ies-text-muted);
+        cursor: pointer;
+        transition: all 0.15s ease-out;
+    }
+
+    .tab-btn.active {
+        background: var(--ies-accent-lighter);
+        color: var(--ies-accent);
+    }
+
+    /* Relationships */
+    .relationships {
         display: flex;
         flex-direction: column;
         gap: 12px;
     }
 
-    .flow-group {
-        background: var(--b3-theme-surface);
-        border-radius: 8px;
-        padding: 10px;
+    .rel-group {
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-subtle);
+        border-radius: var(--ies-radius-md);
+        padding: 12px;
+        animation: slideIn 0.25s ease-out backwards;
+        animation-delay: var(--delay);
     }
 
-    .group-header {
+    .rel-header {
         display: flex;
         align-items: center;
-        gap: 6px;
-        margin-bottom: 8px;
-        padding-bottom: 6px;
-        border-bottom: 1px solid var(--b3-border-color);
+        gap: 8px;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid var(--ies-border-subtle);
     }
 
-    .group-arrow {
-        font-size: 14px;
-        color: var(--b3-theme-primary);
-        font-weight: bold;
+    .rel-direction {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--ies-secondary);
+        background: var(--ies-secondary-light);
+        border-radius: 50%;
     }
 
-    .group-label {
-        font-size: 12px;
+    .rel-direction.outgoing {
+        color: var(--ies-accent);
+        background: var(--ies-accent-lighter);
+    }
+
+    .rel-type {
+        flex: 1;
+        font-size: 0.8125rem;
         font-weight: 600;
-        color: var(--b3-theme-on-surface);
+        color: var(--ies-text-secondary);
         text-transform: capitalize;
     }
 
-    .group-count {
-        font-size: 11px;
-        color: var(--b3-theme-on-surface-light);
+    .rel-count {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--ies-text-muted);
+        padding: 2px 8px;
+        background: var(--ies-bg-base);
+        border-radius: var(--ies-radius-sm);
     }
 
-    .group-nodes {
+    .rel-nodes {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
     }
 
-    .flow-node {
-        padding: 5px 10px;
-        background: var(--b3-theme-background);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 6px;
+    .node-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--ies-bg-base);
+        border: 1px solid var(--ies-border-light);
+        border-radius: var(--ies-radius-sm);
         cursor: pointer;
-        font-size: 13px;
-        color: var(--b3-theme-on-surface);
-        transition: all 0.15s;
+        transition: all 0.15s ease-out;
+        animation: fadeIn 0.2s ease-out backwards;
+        animation-delay: var(--delay);
     }
 
-    .flow-node:hover {
-        background: var(--b3-theme-primary-lightest);
-        border-color: var(--b3-theme-primary);
+    .node-chip:hover {
+        background: var(--ies-accent-lighter);
+        border-color: var(--ies-accent-light);
+        transform: translateY(-1px);
+        box-shadow: var(--ies-shadow-sm);
     }
 
-    .flow-node--theory {
-        border-left: 3px solid var(--b3-theme-success);
+    .node-indicator {
+        width: 6px;
+        height: 6px;
+        background: var(--type-color);
+        border-radius: 50%;
+        flex-shrink: 0;
     }
 
-    .flow-node--researcher {
-        border-left: 3px solid var(--b3-theme-secondary);
+    .node-name {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--ies-text-primary);
     }
 
-    .flow-node--concept {
-        border-left: 3px solid var(--b3-theme-primary-light);
-    }
-
-    .flow-empty {
+    .no-connections {
         text-align: center;
         padding: 24px;
-        color: var(--b3-theme-on-surface-light);
+        color: var(--ies-text-muted);
     }
 
-    .flow-empty p {
+    .no-connections p {
         margin: 4px 0;
     }
 
-    /* Path */
-    .flow-path {
+    .no-connections .hint {
+        font-style: italic;
+        font-size: 0.875rem;
+    }
+
+    /* Path Trail */
+    .path-trail {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
-        gap: 4px;
-        font-size: 12px;
-        padding: 8px;
-        background: var(--b3-theme-surface);
-        border-radius: 6px;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-subtle);
+        border-radius: var(--ies-radius-md);
+        overflow-x: auto;
     }
 
     .path-label {
-        font-weight: 600;
-        color: var(--b3-theme-on-surface-light);
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ies-text-muted);
+        flex-shrink: 0;
+    }
+
+    .path-steps {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
     }
 
     .path-step {
-        padding: 3px 8px;
-        background: var(--b3-theme-background);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 4px;
+        padding: 4px 10px;
+        font-family: inherit;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--ies-text-secondary);
+        background: var(--ies-bg-base);
+        border: 1px solid var(--ies-border-light);
+        border-radius: var(--ies-radius-sm);
         cursor: pointer;
-        font-size: 12px;
-        color: var(--b3-theme-on-surface);
-        transition: all 0.15s;
+        transition: all 0.15s ease-out;
     }
 
     .path-step:hover:not(:disabled) {
-        background: var(--b3-theme-primary-lightest);
-        border-color: var(--b3-theme-primary);
+        background: var(--ies-accent-lighter);
+        border-color: var(--ies-accent-light);
     }
 
-    .path-step--current {
-        background: var(--b3-theme-primary-lightest);
-        border-color: var(--b3-theme-primary);
+    .path-step.current {
+        background: var(--ies-accent-lighter);
+        border-color: var(--ies-accent);
+        color: var(--ies-accent-dark);
         font-weight: 600;
         cursor: default;
     }
 
-    .path-step:disabled {
-        cursor: default;
+    .path-connector {
+        color: var(--ies-text-subtle);
+        display: flex;
+        align-items: center;
     }
 
-    .path-arrow {
-        color: var(--b3-theme-on-surface-light);
-    }
-
-    /* Actions */
-    .flow-actions {
-        padding-top: 8px;
-        border-top: 1px solid var(--b3-border-color);
+    /* Thinking Section */
+    .thinking-section {
+        padding-top: 12px;
+        border-top: 1px solid var(--ies-border-subtle);
     }
 
     .thinking-btn {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        background: var(--b3-theme-surface);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 6px;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 14px 20px;
+        font-family: inherit;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--ies-text-primary);
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-light);
+        border-radius: var(--ies-radius-md);
         cursor: pointer;
-        font-size: 13px;
-        color: var(--b3-theme-on-surface);
-        transition: all 0.15s;
+        transition: all 0.15s ease-out;
     }
 
     .thinking-btn:hover:not(:disabled) {
-        background: var(--b3-theme-primary-lightest);
-        border-color: var(--b3-theme-primary);
+        background: var(--ies-tertiary-light);
+        border-color: var(--ies-tertiary);
+        color: var(--ies-tertiary);
     }
 
     .thinking-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
+        opacity: 0.7;
+        cursor: wait;
     }
 
-    .flow-question {
-        padding: 12px;
-        background: var(--b3-theme-primary-lightest);
-        border-radius: 8px;
-        border-left: 3px solid var(--b3-theme-primary);
+    .thinking-card {
+        padding: 16px;
+        background: var(--ies-tertiary-light);
+        border: 1px solid var(--ies-tertiary);
+        border-radius: var(--ies-radius-md);
+        animation: slideIn 0.25s ease-out;
     }
 
-    .question-label {
-        font-size: 11px;
-        font-weight: 600;
+    .thinking-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--ies-tertiary);
+        margin-bottom: 10px;
+    }
+
+    .thinking-header span {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: var(--b3-theme-primary);
-        margin-bottom: 6px;
     }
 
-    .question-text {
-        font-size: 14px;
-        line-height: 1.5;
+    .thinking-question {
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 1.0625rem;
         font-style: italic;
+        line-height: 1.6;
+        color: var(--ies-text-primary);
+        margin: 0;
+    }
+
+    /* Spinner */
+    .spinner {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .spinner.small {
+        width: 14px;
+        height: 14px;
+        border-width: 2px;
+        border-color: var(--ies-text-muted);
+        border-top-color: var(--ies-tertiary);
+    }
+
+    /* Animations */
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+        50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
     }
 </style>
