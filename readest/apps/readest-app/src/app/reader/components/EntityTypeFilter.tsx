@@ -125,10 +125,18 @@ export const EntityTypeFilter: React.FC = () => {
         </div>
       )}
 
-      {/* Entity count */}
+      {/* Entity count or "not found" message */}
       {entityOverlay.enabled && !entityOverlay.loading && !entityOverlay.error && (
-        <div className="mt-4 text-xs text-base-content/60 text-center">
-          {entityOverlay.entities.length} entities loaded
+        <div className="mt-4 text-xs text-center">
+          {entityOverlay.entities.length > 0 ? (
+            <span className="text-base-content/60">
+              {entityOverlay.entities.length} entities loaded
+            </span>
+          ) : (
+            <span className="text-warning">
+              Book not in knowledge graph
+            </span>
+          )}
         </div>
       )}
     </div>

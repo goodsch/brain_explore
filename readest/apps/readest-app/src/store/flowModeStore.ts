@@ -123,7 +123,7 @@ interface FlowModeState {
   setEntityOverlayEntities: (entities: EntityOverlay[]) => void;
   setVisibleTypes: (types: string[]) => void;
   toggleEntityType: (type: string) => void;
-  fetchEntitiesForBook: (bookHash: string) => Promise<void>;
+  fetchEntitiesForBook: (bookHash: string, title?: string) => Promise<void>;
 }
 
 export const useFlowModeStore = create<FlowModeState>((set, get) => ({
@@ -334,7 +334,7 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
     });
   },
 
-  fetchEntitiesForBook: async (bookHash: string) => {
+  fetchEntitiesForBook: async (bookHash: string, title?: string) => {
     set((state) => ({
       entityOverlay: {
         ...state.entityOverlay,
@@ -344,9 +344,16 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
     }));
 
     try {
-      const response = await fetch(
-        `http://localhost:8081/api/v1/graph/entities/by-book/${bookHash}`
-      );
+      // Use same host as page to support remote access
+      const apiHost = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? `http://${window.location.hostname}:8081`
+        : 'http://localhost:8081';
+      const url = title
+        ? `${apiHost}/graph/entities/by-book/${bookHash}?title=${encodeURIComponent(title)}`
+        : `${apiHost}/graph/entities/by-book/${bookHash}`;
+
+      console.log('[FlowMode] Fetching entities for book:', { bookHash, title, url });
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch entities: ${response.statusText}`);
@@ -354,6 +361,7 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
 
       const data = await response.json();
       const entities: EntityOverlay[] = data.entities || [];
+      console.log('[FlowMode] Fetched entities:', { count: entities.length, total: data.total });
 
       set((state) => ({
         entityOverlay: {

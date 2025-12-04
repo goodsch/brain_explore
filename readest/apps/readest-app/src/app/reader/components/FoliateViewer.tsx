@@ -117,13 +117,14 @@ const FoliateViewer: React.FC<{
   useEffect(() => {
     if (!hasLoadedEntitiesRef.current && bookDoc.metadata?.identifier) {
       hasLoadedEntitiesRef.current = true;
-      // Use the book identifier as the hash
+      // Use the book identifier as the hash, and pass title for fallback matching
       const bookHash = bookDoc.metadata.identifier;
-      fetchEntitiesForBook(bookHash).catch((error) => {
+      const bookTitle = bookDoc.metadata?.title;
+      fetchEntitiesForBook(bookHash, bookTitle).catch((error) => {
         console.warn('Failed to fetch entities for book:', error);
       });
     }
-  }, [bookDoc.metadata?.identifier, fetchEntitiesForBook]);
+  }, [bookDoc.metadata?.identifier, bookDoc.metadata?.title, fetchEntitiesForBook]);
 
   const progressRelocateHandler = (event: Event) => {
     const detail = (event as CustomEvent).detail;
