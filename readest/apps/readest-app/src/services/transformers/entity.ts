@@ -21,7 +21,19 @@ const ENTITY_TYPE_CLASSES: Record<string, string> = {
  * Escape special regex characters in entity name.
  */
 function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&');
+}
+
+/**
+ * Escape HTML special characters for safe attribute values.
+ */
+function escapeHtmlAttr(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 /**
@@ -93,7 +105,7 @@ export const entityTransformer: Transformer = {
 
         const typeClass = ENTITY_TYPE_CLASSES[entity.type] || 'entity-default';
 
-        return `<span class="entity-link ${typeClass}" data-entity-name="${entity.name}" data-entity-type="${entity.type}">${match}</span>`;
+        return `<span class="entity-link ${typeClass}" data-entity-name="${escapeHtmlAttr(entity.name)}" data-entity-type="${escapeHtmlAttr(entity.type)}">${match}</span>`;
       });
     });
 

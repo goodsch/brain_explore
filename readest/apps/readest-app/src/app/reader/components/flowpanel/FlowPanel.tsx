@@ -16,6 +16,7 @@ import EntitySection from './EntitySection';
 import RelationshipsSection from './RelationshipsSection';
 import SourcesSection from './SourcesSection';
 import QuestionsSection from './QuestionsSection';
+import ReframesSection from './ReframesSection';
 
 const MIN_FLOW_PANEL_WIDTH = 0.2;
 const MAX_FLOW_PANEL_WIDTH = 0.5;
@@ -160,6 +161,7 @@ const FlowPanel: React.FC = () => {
               <RelationshipsSection relationships={relationships} />
               <SourcesSection sources={bookSources} />
               <QuestionsSection questions={thinkingPartnerQuestions} />
+              {currentEntity?.id && <ReframesSection conceptId={currentEntity.id} />}
             </div>
           ) : (
             <div className='flex h-full flex-col items-center justify-center text-center'>

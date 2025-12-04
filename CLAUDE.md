@@ -40,21 +40,23 @@ A three-layer system that enables people to think WITH an AI partner who adapts 
 
 ## Current Status
 
-**Phase 2b: Build Visual Interface for Layer 3** IN PROGRESS
+**Phase 2b: Build Visual Interface for Layer 3** MVP COMPLETE
 
 **All Three Layers Validated:**
 - ✅ Layer 1: Knowledge graph creation (50k therapy entities, ingestion pipeline proven)
 - ✅ Layer 2: Profile system + adaptive dialogue (dialogue sessions proven to generate novel concepts)
 - ✅ Layer 3: CLI exploration tool validated (5 focused explorations, thinking partner questions work)
 
-**Phase 2b Implementation (Readest Integration):**
+**Phase 2b Implementation (Readest Integration):** MVP DELIVERED
+- ✅ **Readest forked and integrated** — Tauri-based e-book reader with Rust backend + TypeScript/Svelte frontend
 - ✅ **Flow Mode Store** — Complete Zustand state management with breadcrumb journey tracking
 - ✅ **Graph API Client** — Entity lookup, relationships, sources, thinking partner questions integration
 - ✅ **Journey Storage** — Local storage persistence for offline-safe exploration
 - ✅ **Flow Panel Components** — Modular UI: EntitySection, RelationshipsSection, SourcesSection, QuestionsSection
 - ✅ **Flow Mode Toggle** — Start/end journey lifecycle with backend sync
 - ✅ **Text Selection Hook** — useFlowEntity for entity lookup from selected text
-- IN PROGRESS: Complete integration testing and UI refinement
+- ✅ **Text Selection Popup Integration** — Flow button added to text selection annotation popup (Annotator.tsx)
+- ✅ **All Deliverables Complete** — See TASK.md for full checklist
 
 **Phase 1 Achievement Summary:**
 - ✅ **10/10 therapy exploration sessions completed** — Complete therapeutic dialogue cycle validated
@@ -106,8 +108,11 @@ A complete therapeutic vision emerged through 10 sessions exploring how humans c
 - **Phase 0 (COMPLETE):** Configuration stabilization removed 40% meta-work overhead
 - **Phase 1 (COMPLETE):** Core hypothesis proven — Layers 1 & 2 work; 11 concepts extracted; therapeutic framework coherent
 - **Phase 2a (COMPLETE):** Layer 3 MVP validated — CLI exploration tool proven with 5 validation sessions; all layers working end-to-end
-- **Phase 2b (NEXT):** Build visual interface on Layer 3 foundation (web app or extended SiYuan plugin)
-- **Phase 2c+:** Domain generalization and validation across multiple knowledge domains
+- **Phase 2b (MVP COMPLETE):** Readest Flow mode MVP delivered with full integration
+  - Readest worktree (this): Flow mode interface, entity panel, journey tracking, text selection popup
+  - SiYuan worktree (parallel): Processing hub development (Dashboard, Structured Thinking, Quick Capture)
+- **Phase 2c:** User testing, refinement, and full integration between Readest + SiYuan + Backend
+- **Phase 3+:** Domain generalization and validation across multiple knowledge domains
 
 ## How to Work Here (Phase 2b+)
 
@@ -126,14 +131,22 @@ Phase 1 is complete. All success criteria achieved. The core hypothesis is prove
 - `docs/five-agent-synthesis.md` — Deep analysis of why architecture decisions were made
 - `docs/PHASE-1-WORKFLOW.md` — Phase 1 operational guide (for reference if running additional exploration sessions)
 
-### Phase 2 Focus
+### Phase 2b Focus (Readest Worktree)
 
-Layer 3 (Flow/Flo interface) is the next priority once Layer 3 architecture is designed. See `docs/parking-lot.md` for roadmap.
+This worktree focuses specifically on **Layer 4: Reading + Flow Exploration Interface** in Readest.
 
-**For Now:**
-- All core systems are operational (Layers 1 & 2)
-- All Phase 1 documentation complete
-- Ready for Phase 2 development or additional domain validation
+**Completed:**
+- Readest repository integrated as submodule
+- Flow Mode MVP implemented with all core features
+- Entity lookup, relationship navigation, breadcrumb journey capture
+- Text selection popup with Flow button integration
+- See TASK.md for complete deliverables checklist
+
+**Next Priority (Phase 2c):**
+- User testing of Flow mode in reading context
+- UI/UX refinement based on user feedback
+- Integration with SiYuan plugin (running in parallel worktree)
+- Backend API optimization for journey persistence
 
 ### If Running Additional Exploration Sessions
 
@@ -242,13 +255,18 @@ The project maintains a three-level documentation structure for clarity:
 
 ### Supporting References
 
-**Constraints & Scope:**
-- `docs/parking-lot.md` — Future features (what NOT to work on in Phase 1)
-- `CLAUDE.md` (this file) — Quick reference and structure guide
+**For This Worktree:**
+- `TASK.md` — Complete task briefing and deliverables for this worktree
+- `readest/README.md` — Readest project documentation
+- `readest/apps/readest-app/` — Main application code
+
+**For Main Project Context:**
+- `../docs/parking-lot.md` — Future features roadmap
+- `../CLAUDE.md` (main project) — Overall project instructions
 
 **Technical Setup:**
-- `ies/backend/README.md` — Backend API setup and configuration
-- `docker-compose.yml` — Infrastructure (Neo4j + Qdrant)
+- `../ies/backend/README.md` — Backend API setup (from main project)
+- `../docker-compose.yml` — Infrastructure (Neo4j + Qdrant) in main project
 
 ## The Parking Lot
 

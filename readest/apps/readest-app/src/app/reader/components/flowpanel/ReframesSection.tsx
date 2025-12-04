@@ -155,7 +155,7 @@ const ReframesSection: React.FC<ReframesSectionProps> = ({ conceptId }) => {
           onClick={() => handleFeedback(reframe.id, 'up')}
           disabled={isPending}
         >
-          {isPending && status !== 'down' && status !== 'up' ? (
+          {isPending ? (
             <span className='loading loading-spinner loading-xs'></span>
           ) : (
             <LuThumbsUp size={14} />
@@ -166,7 +166,7 @@ const ReframesSection: React.FC<ReframesSectionProps> = ({ conceptId }) => {
           onClick={() => handleFeedback(reframe.id, 'down')}
           disabled={isPending}
         >
-          {isPending && status !== 'down' && status !== 'up' ? (
+          {isPending ? (
             <span className='loading loading-spinner loading-xs'></span>
           ) : (
             <LuThumbsDown size={14} />
