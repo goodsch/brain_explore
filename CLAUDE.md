@@ -182,9 +182,21 @@ Addressing critical gaps #1 and #2 with three integrated capabilities:
 - Both components integrate with backend `/reframes` API for concept reframe retrieval, generation, and feedback voting
 - Features: Type-grouped reframe display (metaphor, analogy, story, experiment, question), on-demand generation, thumbs up/down feedback
 
+**Entity Overlay Flow Mode (Dec 4)** — Next Phase 2c workstream: Auto-annotated entity highlighting in book text
+- Backend: `GET /graph/entities/by-book/{hash}` endpoint returns all entities mentioned in a book (sorted by frequency)
+- Frontend: Content transformer wraps entity names in styled `<span>` elements for type-based highlighting
+- UI: Entity type filter controls show/hide Concept/Person/Theory/Framework/Assessment
+- Click interaction: Clicking highlighted entity opens flow panel with entity connections
+- Full implementation plan: `docs/plans/2025-12-04-entity-overlay-flow-mode.md` (6-task TDD plan with code examples)
+
 **Remaining Critical Gaps (Deferred):**
 
-3. **Book Library Inaccessible** — 63 books ingested to Neo4j but users have no way to browse or open them. No deep-linking to specific passages.
+3. **Book Library Now Accessible** (Gap addressed Dec 4) — Calibre integration design provides single source of truth for book catalog
+   - Solution: Calibre library as canonical book source with calibre_id as universal identifier
+   - Backend: Book catalog API, entity lookup by calibre_id, book cover fetching
+   - Frontend: Readest library browser with book selection
+   - Ingestion: Multi-pass pipeline (structure → relationships → enrichment) with status tracking
+   - See: `docs/plans/2025-12-04-calibre-integration-design.md` for complete architecture
 
 4. **Cross-App Continuity Missing** — Readest and SiYuan don't share state. Can't resume reading session from SiYuan or resume exploration from Readest.
 
@@ -193,6 +205,7 @@ Addressing critical gaps #1 and #2 with three integrated capabilities:
 **For Gap Analysis:**
 - `docs/PLANNING-GAPS-AND-QUESTIONS.md` — Comprehensive gap analysis with detailed technical review
 - `docs/COMPREHENSIVE-PROJECT-STATUS.md` — Complete technical status of all four layers
+- `docs/plans/2025-12-04-calibre-integration-design.md` — Calibre integration: single source of truth for book catalog and entity indexing
 
 ### If Running Additional Exploration Sessions
 
@@ -223,6 +236,11 @@ brain_explore/
 │   │   └── tests/                 # 61 unit tests
 │   └── plugin/                    # SiYuan plugin - document interface (14,092 lines TS/Svelte)
 │                                  # (precursor to Layer 3 Flow/Flo interface)
+│
+├── calibre/                       # Calibre book library (Layer 1 source of truth)
+│   ├── config/                    # Calibre Web configuration
+│   ├── library/                   # SQLite metadata + book files (epub/pdf)
+│   └── ingest/                    # Incoming books directory for processing
 │
 ├── therapy/                       # Personal Growth Application (active project using this system)
 │   ├── Track_1_Human_Mind/        # Personal framework: meaning, acceptance, presence
@@ -255,10 +273,11 @@ brain_explore/
 │   ├── session-notes.md           # Session reflection (append-only)
 │   ├── parking-lot.md             # Future features (don't work on these)
 │   ├── plans/                     # Implementation design documents
-│   │   └── 2025-12-04-reframe-template-integration-design.md  # Active Phase 2c plan
+│   │   ├── 2025-12-04-reframe-template-integration-design.md  # Active Phase 2c plan
+│   │   └── 2025-12-04-calibre-integration-design.md  # Next Phase 2c: book library
 │   └── archive/                   # Old progress files, archived memories
 │
-└── docker-compose.yml             # Neo4j + Qdrant infrastructure (Layers 1 & 2 support)
+└── docker-compose.yml             # Neo4j + Qdrant + Calibre infrastructure (Layers 1 & 2 support)
 ```
 
 **Architecture Alignment:**
@@ -283,6 +302,7 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/COMPREHENSIVE-PROJECT-STATUS.md` — Complete project status: all 4 layers, phase completion, worktree organization
 - `docs/PLANNING-GAPS-AND-QUESTIONS.md` — Comprehensive Phase 2c planning: critical gaps, technical stack review, API inventory, integration questions
 - `docs/plans/2025-12-04-reframe-template-integration-design.md` — **Active implementation plan**: Reframe Layer + Thinking Templates + SiYuan document structure (Phase 2c)
+- `docs/plans/2025-12-04-calibre-integration-design.md` — **Next implementation plan**: Calibre library integration; single source of truth for book catalog with universal calibre_id identifier; multi-pass ingestion pipeline (structure → relationships → enrichment); new backend APIs for book browsing, entity lookup, cover fetching (Dec 4)
 - `docs/plans/2025-12-03-integrated-reading-knowledge-system.md` — Four-layer architecture design
 - `docs/PHASE-1-WORKFLOW.md` — Complete operational guide for running dialogue sessions (proven, reusable for Phase 2+ exploration)
 - `docs/PHASE-2A-VALIDATION-RESULTS.md` — Layer 3 CLI validation results; all criteria met
@@ -479,9 +499,19 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 4):**
+- **Entity Overlay Feature Complete** (commit 3a513b2) — Real-time entity highlighting in Readest reading interface:
+  - Backend: GET `/graph/entities/by-book/{book_hash}` endpoint returns entities sorted by mention frequency
+  - GraphService: `get_entities_by_book()` method with entity type filtering support
+  - Frontend: Entity overlay transformer wraps entity mentions in styled spans for inline highlighting
+  - UI: EntityTypeFilter component with master toggle and per-type visibility controls (Concept, Person, Theory, Framework, Assessment)
+  - State: flowModeStore manages overlay state, entity fetching, and type filtering
+  - Integration: FoliateViewer auto-fetches entities on book load, transforms HTML content with entity highlights
+  - Tests: 70/70 backend tests passing (3 new tests for book_entities endpoint)
+- **Phase 2c Backend Complete** (commit 46bc30b) — Three integrated backend services addressing critical gaps #1 and #2:
+  - Reframe API (`/reframes`) — Concept reframes via Claude Sonnet 4 with caching and feedback voting
+  - Personal Graph API (`/personal`) — ADHD-friendly spark/insight capture with resonance and energy-based retrieval
+  - Template Service — JSON-based thinking templates with validation and graph mapping execution
 - Updated `library/graph/__init__.py` to export unified graph API with ADHD-friendly ontology implementation for personal knowledge capture.
-- Implemented Reframe API (`ies/backend/src/ies_backend/api/reframe.py`) - Layer 2 backend service for generating concept reframes via Claude Sonnet 4, with caching and feedback voting (Phase 2c: addresses critical gap #1).
-- Implemented Personal Graph API (`ies/backend/src/ies_backend/api/personal.py`) - Layer 2 backend service for ADHD-friendly personal knowledge capture (sparks, insights, resonance-based retrieval).
 
 ### Two Knowledge Graph Systems
 
@@ -572,61 +602,147 @@ The `ADHDKnowledgeGraph` client includes schema versioning to support future mig
 - Use `migrate_schema()` when upgrading (migrations defined in `MIGRATIONS` dict)
 - Indexes created for status, resonance, energy, recency queries
 
-### Layer 2: Reframe API (Phase 2c Implementation)
+### Layer 2: Phase 2c Backend APIs (COMPLETE - Dec 4)
 
-**Backend Service:** `ies/backend/src/ies_backend/api/reframe.py`
+Three integrated backend services addressing critical gaps #1 and #2, all registered in `ies/backend/src/ies_backend/main.py`:
 
-Makes domain concepts accessible via metaphors, analogies, stories, patterns, and contrasts. Generates reframes on-demand using Claude Sonnet 4 with caching and feedback voting.
+**1. Reframe API** (`/reframes`) — Makes domain concepts accessible via metaphors, analogies, stories, patterns, and contrasts
 
 **Endpoints:**
-- `GET /concepts/{concept_id}/reframes` - Retrieve cached reframes for a concept
-- `POST /concepts/{concept_id}/reframes/generate` - Generate new reframes via LLM (1-10 count)
-- `POST /reframes/{reframe_id}/feedback` - Submit helpful/confusing vote
+- `GET /concepts/{concept_id}/reframes` - Retrieve cached reframes
+- `POST /concepts/{concept_id}/reframes/generate` - Generate 1-10 reframes via Claude Sonnet 4
+- `POST /reframes/{reframe_id}/feedback` - Vote helpful/confusing
 
-**Entity Type:** `Reframe` (stored in Neo4j, linked to concepts via `HAS_REFRAME` relationship)
+**Entity Type:** `Reframe` (Neo4j, linked to concepts via `HAS_REFRAME`)
 
 **Reframe Types:** `metaphor`, `analogy`, `story`, `pattern`, `contrast`
 
-**Implementation Files:**
+**Implementation:**
 - `ies/backend/src/ies_backend/api/reframe.py` - FastAPI router (55 lines)
-- `ies/backend/src/ies_backend/services/reframe_service.py` - Service layer with Claude Sonnet 4 integration
-- `ies/backend/src/ies_backend/schemas/reframe.py` - Pydantic schemas for API contracts
+- `ies/backend/src/ies_backend/services/reframe_service.py` - Service with Claude Sonnet 4 integration
+- `ies/backend/src/ies_backend/schemas/reframe.py` - Pydantic schemas
+- `ies/backend/tests/test_reframe_service.py` - Unit tests
 
 **Frontend Integration:**
-- SiYuan plugin: `.worktrees/siyuan/ies/plugin/src/components/ReframesTab.svelte`
-- Readest reader: `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/ReframesSection.tsx`
+- SiYuan: `.worktrees/siyuan/ies/plugin/src/components/ReframesTab.svelte`
+- Readest: `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/ReframesSection.tsx`
 
-### Layer 2: Personal Graph API (Phase 2c Implementation)
+---
 
-**Backend Service:** `ies/backend/src/ies_backend/api/personal.py`
-
-Provides ADHD-friendly personal knowledge capture and retrieval via sparks and insights with emotional resonance tracking.
+**2. Personal Graph API** (`/personal`) — ADHD-friendly personal knowledge capture with emotional resonance and energy tracking
 
 **Core Endpoints:**
-- `POST /personal/sparks` - Create new spark (raw resonance capture with optional SiYuan block linking)
+- `POST /personal/sparks` - Create spark (raw resonance capture with optional SiYuan block linking)
 - `GET /personal/sparks/{spark_id}` - Retrieve spark by ID
 - `POST /personal/sparks/{spark_id}/visit` - Record visit for recency tracking
 - `POST /personal/sparks/{spark_id}/promote` - Promote spark to insight (status: captured → anchored)
 
 **ADHD-Friendly Retrieval:**
-- `GET /personal/sparks/by-resonance/{signal}` - Find by emotional state (curious, excited, surprised, moved, disturbed, unclear, connected, validated)
+- `GET /personal/sparks/by-resonance/{signal}` - Find by emotional state (8 signals: curious, excited, surprised, moved, disturbed, unclear, connected, validated)
 - `GET /personal/sparks/by-energy/{level}` - Find by energy level (low/medium/high) for mood-appropriate navigation
 - `GET /personal/sparks/unvisited` - Surface forgotten captures
 
 **Statistics:**
-- `GET /personal/stats` - Personal knowledge graph stats (spark count, insight count, resonance distribution)
+- `GET /personal/stats` - Personal graph stats (spark count, insight count, resonance distribution)
 
-**Entity Types:** `Spark` (raw capture with resonance signal, energy level, status), `Insight` (promoted spark with anchored status)
+**Implementation:**
+- `ies/backend/src/ies_backend/api/personal.py` - FastAPI router (130 lines)
+- `ies/backend/src/ies_backend/services/personal_graph_service.py` - Service layer (leverages `library.graph.ADHDKnowledgeGraph`)
+- `ies/backend/src/ies_backend/schemas/personal.py` - Pydantic schemas
 
-**Implementation Files:**
-- `ies/backend/src/ies_backend/api/personal.py` - FastAPI router (109 lines)
-- `ies/backend/src/ies_backend/services/personal_graph_service.py` - Service layer with Neo4j integration for ADHD ontology
-- `ies/backend/src/ies_backend/schemas/personal.py` - Pydantic schemas (ResonanceSignal, EnergyLevel, EntityStatus enums)
+---
 
-**SiYuan Integration:**
-- `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` - SiYuan-backend sync utilities
-- Bidirectional linking: Sparks reference SiYuan blocks via `siyuan_block_id`, enabling document-graph sync
-- Backend URL configurable via localStorage (`ies.backendUrl`, default: `http://192.168.86.60:8081`)
+**3. Template Service** (internal) — JSON-based thinking templates with validation and graph mapping
+
+**Features:**
+- JSON Schema validation (`schemas/thinking-template.schema.json`)
+- Template loading with Pydantic validation fallback
+- Graph mapping execution (`create_or_link`, `update_journey` actions)
+- Two reference templates provided:
+  - `schemas/templates/learning-mechanism-map.json` - Learning mode: mechanism map
+  - `schemas/templates/articulating-clarify-intuition.json` - Articulating mode: clarify intuition
+
+**API Integration:**
+- Service methods callable from session/dialogue endpoints
+- Executes `on_complete` actions: create entities, link relationships, update journeys
+
+**Implementation:**
+- `ies/backend/src/ies_backend/services/template_service.py` - Template loading and execution (150 lines)
+- `ies/backend/src/ies_backend/schemas/template.py` - Template structure definitions
+- `ies/backend/tests/test_template_service.py` - Unit tests
+
+**JSON Schema:** `schemas/thinking-template.schema.json` defines:
+- 5 thinking modes: `learning`, `articulating`, `planning`, `ideating`, `reflecting`
+- Section structure: `id`, `prompt`, `input_type` (concept_search/freeform/selection), `ai_behavior`, `required`
+- Graph mapping actions: `create_or_link`, `update_journey` with metadata and relationship specs
+
+---
+
+**4. Entity Overlay API** (`/graph/entities/by-book`) — Real-time entity highlighting for reading interface
+
+**Endpoint:**
+- `GET /graph/entities/by-book/{book_hash}` - Retrieve all entities mentioned in a specific book
+
+**Query Parameters:**
+- `title` (optional): Book title for fallback matching when hash lookup fails
+- `types` (optional): Filter by entity types (e.g., `Concept`, `Person`, `Theory`, `Framework`, `Assessment`)
+- `limit` (default 500, max 1000): Maximum entities to return
+
+**Matching Strategy:**
+- Primary: Match books by `hash` property in Neo4j
+- Fallback: Case-insensitive title substring match if hash fails
+- This dual approach handles cases where books lack hash properties
+
+**Response Format:**
+```json
+{
+  "book_hash": "string",
+  "entities": [
+    {
+      "name": "Executive Function",
+      "type": "Concept",
+      "mention_count": 142
+    }
+  ],
+  "total": 500
+}
+```
+
+**Implementation:**
+- `ies/backend/src/ies_backend/api/book_entities.py` - FastAPI router (51 lines) with title query parameter
+- `ies/backend/src/ies_backend/services/graph_service.py` - `get_entities_by_book()` method with dual matching strategy (hash OR title)
+- `ies/backend/tests/test_book_entities.py` - 3 unit tests (all passing)
+
+**Frontend Integration (Readest):**
+- `.worktrees/readest/readest/apps/readest-app/src/services/transformers/entity.ts` - HTML transformer wraps entity names in styled `<span>` elements
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/EntityTypeFilter.tsx` - Complete UI component with master toggle, per-type filtering, loading/error states, entity count display (144 lines)
+  - Master toggle for overlay enable/disable
+  - Individual checkboxes for 5 entity types (Concept, Person, Theory, Framework, Assessment)
+  - Type-specific color indicators and background styling
+  - Loading spinner and error alerts
+  - Entity count display or "Book not in knowledge graph" warning
+- `.worktrees/readest/readest/apps/readest-app/src/store/flowModeStore.ts` - Comprehensive Zustand state management (380+ lines)
+  - Entity overlay state: enabled, entities array, visible types, loading, error
+  - Actions: setEntityOverlayEnabled, toggleEntityType, setVisibleTypes
+  - fetchEntitiesForBook() with dynamic API host resolution (localhost or network IP)
+  - Journey tracking integration (breadcrumb journey with dwell time)
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/FoliateViewer.tsx` - Auto-fetches entities on book load, applies transformer
+- `.worktrees/readest/readest/apps/readest-app/src/styles/globals.css` - Entity type styling classes (`.entity-concept`, `.entity-person`, etc.)
+
+**Network Access Support:**
+- `fetchEntitiesForBook()` dynamically determines API host based on `window.location.hostname`
+- When accessed via network IP (e.g., `192.168.86.60:3002`), uses same hostname for backend API (`192.168.86.60:8081`)
+- Localhost access continues to use `localhost:8081` for API calls
+- Enables entity overlay when accessing Readest from other devices on the network (e.g., iPad)
+
+**Usage Flow:**
+1. Book loads in Readest reader
+2. FoliateViewer fetches entities from backend using `book_hash` and `title` (dual identifier strategy)
+3. flowModeStore resolves API host dynamically (localhost or network IP)
+4. Backend attempts hash match first, falls back to title-based matching if needed
+5. Entity transformer processes HTML content, wrapping entity names in styled spans
+6. User toggles overlay on/off and filters visible entity types via EntityTypeFilter component
+7. Entities highlighted inline in text according to type (color-coded)
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: conventions -->
