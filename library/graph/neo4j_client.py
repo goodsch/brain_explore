@@ -71,13 +71,48 @@ class KnowledgeGraph:
                 except Exception:
                     pass
 
-    def add_book(self, title: str, author: Optional[str], path: str):
-        """Add a book node."""
+    def add_book(
+        self,
+        title: str,
+        author: Optional[str],
+        path: str,
+        calibre_id: Optional[int] = None,
+        processing_status: str = "pending"
+    ):
+        """Add a book node with optional calibre_id."""
+        with self.driver.session() as session:
+            if calibre_id is not None:
+                # Use calibre_id as primary identifier
+                session.run("""
+                    MERGE (b:Book {calibre_id: $calibre_id})
+                    SET b.title = $title, b.author = $author, b.path = $path,
+                        b.processing_status = $status
+                """, calibre_id=calibre_id, title=title, author=author,
+                    path=path, status=processing_status)
+            else:
+                session.run("""
+                    MERGE (b:Book {path: $path})
+                    SET b.title = $title, b.author = $author,
+                        b.processing_status = $status
+                """, title=title, author=author, path=path, status=processing_status)
+
+    def book_exists(self, calibre_id: int) -> bool:
+        """Check if a book with calibre_id already exists."""
+        with self.driver.session() as session:
+            result = session.run("""
+                MATCH (b:Book {calibre_id: $calibre_id})
+                RETURN count(b) > 0 as exists
+            """, calibre_id=calibre_id)
+            record = result.single()
+            return record["exists"] if record else False
+
+    def update_book_status(self, calibre_id: int, status: str):
+        """Update the processing status of a book."""
         with self.driver.session() as session:
             session.run("""
-                MERGE (b:Book {path: $path})
-                SET b.title = $title, b.author = $author
-            """, title=title, author=author, path=path)
+                MATCH (b:Book {calibre_id: $calibre_id})
+                SET b.processing_status = $status
+            """, calibre_id=calibre_id, status=status)
 
     def add_chunk(self, chunk_id: str, content: str, book_path: str):
         """Add a chunk and link to its book."""
