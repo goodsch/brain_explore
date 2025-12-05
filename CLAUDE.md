@@ -554,6 +554,20 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 5):**
+- **ForgeMode Interactive Question-Response CSS (Commit c68cd13)** — Complete styling system for question-response interaction UI:
+  - `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte`: Added 393 lines of CSS for interactive thinking partner questions
+  - **Question-response card styling:** `.question-response-card` with class-colored borders, elevated background, medium shadow
+  - **Header components:** `.qrc-header` with icon, question class label, "Thinking Partner" badge
+  - **Question display:** `.qrc-question` with left-border accent matching question class color, base background
+  - **Cognitive hints:** `.qrc-hint` section with secondary color background for guidance text
+  - **Response input:** `.qrc-input` textarea with focus state (class-colored border, 20% opacity shadow ring)
+  - **Action buttons:** `.qrc-starter` (response starters), `.qrc-skip`, `.qrc-respond` with hover/active/disabled states
+  - **History tracking:** `.qrc-history` displays session exchange count
+  - **Supporting styles:** Message bubbles, conversation container, input area, template progress bar, session summary
+  - **Design system integration:** Uses CSS custom properties (--accent, --secondary, --bg-elevated, --radius-md, --space-N, --shadow-md)
+  - **Interactive functionality:** Pairs with `handleQuestionResponse()` function (line 793) for full question-answer dialogue workflow
+  - **State management:** Question class tracking, response history, cognitive state detection, approach selection
+  - **Impact:** Moves ForgeMode from "questions displayed passively" (critical analysis finding) toward interactive dialogue capability
 - **IES AST Mode Documentation** (commit 3b347fc) — Comprehensive SiYuan notebook structure defining assisted structured thinking architecture:
   - `IES AST SiYuan structure.md`: Tracking document for 20 new SiYuan pages across 6 sections (Modes, Question Engine, Data Schemas, Specs, Templates, Workflows)
   - **Four thinking modes:** Discovery (schema surfacing), Dialogue (model building), Flow (associative exploration), AST (assisted structured thinking)
