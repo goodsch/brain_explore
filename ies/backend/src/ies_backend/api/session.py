@@ -20,17 +20,13 @@ from ies_backend.schemas.entity import (
 from ies_backend.schemas.entity import EntityKind, EntityDomain, EntityStatus
 from ies_backend.services.chat_service import chat_service
 from ies_backend.services.entity_storage_service import EntityStorageService
-from ies_backend.services.extraction_service import ExtractionService
-from ies_backend.services.literature_linking_service import LiteratureLinkingService
 from ies_backend.services.session_context_service import session_context_service
-from ies_backend.services.session_document_service import SessionDocumentService
+from ies_backend.services.session_service import SessionService
 
 router = APIRouter()
 
-extraction_service = ExtractionService()
-document_service = SessionDocumentService()
 storage_service = EntityStorageService()
-literature_service = LiteratureLinkingService()
+session_service = SessionService()
 
 
 # Plugin API Endpoints
@@ -152,6 +148,10 @@ async def end_session(request: SessionEndRequest) -> SessionEndResponse:
             user_id=request.user_id,
             transcript=transcript_text,
             session_title=request.session_title,
+            session_id=request.session_id,
+            template_id=request.template_id,
+            section_responses=request.section_responses,
+            journey_id=request.journey_id,
         )
 
         # Process via existing flow
@@ -186,70 +186,7 @@ async def process_session(request: SessionProcessRequest) -> SessionProcessRespo
         request: Session processing request with transcript and metadata
     """
     try:
-        # 1. Extract entities
-        extraction = await extraction_service.extract_entities(request.transcript)
-
-        # 2. Create session document in SiYuan
-        session_doc_id = None
-        try:
-            session_doc_id = await document_service.create_session_document(
-                user_id=request.user_id,
-                extraction=extraction,
-                session_title=request.session_title,
-                session_date=request.session_date,
-            )
-        except Exception as e:
-            # SiYuan might not be available, continue without it
-            session_doc_id = f"siyuan_unavailable: {str(e)}"
-
-        # 3. Store entities in Neo4j and link to literature
-        created, updated = [], []
-        literature_links: dict[str, list[str]] = {}
-        try:
-            result = await storage_service.store_entities(
-                user_id=request.user_id,
-                session_id=session_doc_id or "no_session_doc",
-                extraction=extraction,
-            )
-            created = result["created"]
-            updated = result["updated"]
-            literature_links = result.get("literature_links", {})
-        except Exception as e:
-            # Neo4j might not be available, continue without it
-            pass
-
-        # 4. Store session metadata for context loading (Phase 4)
-        try:
-            # Derive topic from session title or first thread explored
-            topic = request.session_title or (
-                extraction.session_summary.threads_explored[0]
-                if extraction.session_summary.threads_explored
-                else "Exploration session"
-            )
-            # Get hanging question (first open question if any)
-            hanging_question = (
-                extraction.session_summary.open_questions[0]
-                if extraction.session_summary.open_questions
-                else None
-            )
-            await storage_service.store_session_metadata(
-                user_id=request.user_id,
-                session_id=session_doc_id or "no_session_doc",
-                topic=topic,
-                entity_names=created + updated,
-                hanging_question=hanging_question,
-            )
-        except Exception:
-            # Session metadata storage is non-critical
-            pass
-
-        return SessionProcessResponse(
-            session_doc_id=session_doc_id,
-            entities_created=created,
-            entities_updated=updated,
-            literature_links=literature_links,
-            summary=extraction.session_summary,
-        )
+        return await session_service.process_session(request)
 
     except Exception as e:
         raise HTTPException(

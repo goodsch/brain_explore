@@ -21,3 +21,24 @@ services:
       NEO4J_AUTH: neo4j/brainexplore
       NEO4J_PLUGINS: '["apoc"]'
     restart: unless-stopped
+
+  calibre:
+    image: crocodilestick/calibre-web-automated:latest
+    container_name: brain_explore_calibre
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./calibre/config:/config
+      - ./calibre/library:/calibre-library
+      - ./calibre/ingest:/downloads
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: America/New_York
+      # Calibre-Web-Automated specific settings
+      DOCKER_MODS: linuxserver/mods:universal-calibre
+      OAUTHLIB_RELAX_TOKEN_SCOPE: 1
+      # Auto-import settings
+      AUTO_UPDATE: true
+      AUTO_IMPORT: true
+    restart: unless-stopped

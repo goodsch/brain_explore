@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain-explore.local/schemas/thinking-template.schema.json",
+  "title": "Thinking Template",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "mode", "name", "sections"],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "learning",
+        "articulating",
+        "planning",
+        "ideating",
+        "reflecting"
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "prompt"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "input_type": {
+            "type": "string",
+            "enum": [
+              "concept_search",
+              "freeform",
+              "selection"
+            ]
+          },
+          "ai_behavior": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "graph_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "on_complete": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action"],
+            "properties": {
+              "action": {
+                "type": "string"
+              },
+              "entity_type": {
+                "type": "string"
+              },
+              "from_section": {
+                "type": "string"
+              },
+              "source_section": {
+                "type": "string"
+              },
+              "link_to": {
+                "type": "string"
+              },
+              "relationship": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object"
+              },
+              "target": {
+                "type": "string"
+              },
+              "add_exchange": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

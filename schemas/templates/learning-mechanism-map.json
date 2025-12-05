@@ -1,0 +1,44 @@
+{
+  "id": "learning-mechanism-map",
+  "mode": "learning",
+  "name": "Mechanism Map",
+  "description": "Understand how something works by mapping its components",
+  "sections": [
+    {
+      "id": "focus",
+      "prompt": "What concept or system are you trying to understand?",
+      "input_type": "concept_search",
+      "required": true
+    },
+    {
+      "id": "components",
+      "prompt": "List the key components or actors involved.",
+      "input_type": "freeform"
+    },
+    {
+      "id": "connections",
+      "prompt": "Describe the relationships and flows between components.",
+      "input_type": "freeform"
+    },
+    {
+      "id": "synthesis",
+      "prompt": "Summarize how the mechanism operates end-to-end.",
+      "input_type": "freeform"
+    }
+  ],
+  "graph_mapping": {
+    "on_complete": [
+      {
+        "action": "create_or_link",
+        "entity_type": "spark",
+        "source_section": "synthesis",
+        "link_to": "focus.concept_id",
+        "relationship": "sparked_by"
+      },
+      {
+        "action": "update_journey",
+        "add_exchange": true
+      }
+    ]
+  }
+}

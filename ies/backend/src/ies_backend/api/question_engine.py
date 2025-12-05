@@ -4,9 +4,12 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from ies_backend.schemas.question_engine import (
+    APPROACH_TO_CLASSES,
     ApproachSelection,
+    ClassifiedQuestion,
     InquiryApproach,
     QuestionBatch,
+    QuestionClass,
     QuestionTemplate,
     StateDetection,
     UserState,
@@ -280,12 +283,28 @@ async def generate_questions(request: GenerateQuestionsRequest) -> QuestionBatch
         # Remove duplicates from adaptations
         adaptations_applied = list(set(adaptations_applied))
 
+        # Classify questions with question class tags
+        classified = []
+        approach_classes = APPROACH_TO_CLASSES.get(selection.selected_approach, [])
+        for i, q in enumerate(questions):
+            # Assign class based on approach mapping (rotate through available classes)
+            if approach_classes:
+                question_class = approach_classes[i % len(approach_classes)]
+            else:
+                question_class = QuestionClass.SCHEMA_PROBE  # Default
+            classified.append(ClassifiedQuestion(
+                question=q,
+                question_class=question_class,
+                approach=selection.selected_approach,
+            ))
+
         return QuestionBatch(
             approach=selection.selected_approach,
             state=state.primary_state,
             questions=questions,
             context=request.context,
             profile_adaptations_applied=adaptations_applied,
+            classified_questions=classified,
         )
 
     except HTTPException:
@@ -337,3 +356,45 @@ async def list_categories(
             status_code=500,
             detail=f"Failed to list categories: {str(e)}",
         )
+
+
+@router.get("/question-classes")
+async def list_question_classes() -> dict[str, dict]:
+    """
+    List all nine question classes with their descriptions and mode mappings.
+
+    The IES Question Engine uses nine distinct question classes, each with
+    a specific cognitive function that maps to thinking modes in AST.
+
+    Returns:
+        Dictionary mapping class name to description and mode mappings
+    """
+    from ies_backend.schemas.question_engine import (
+        CLASS_TO_MODES,
+        QUESTION_CLASS_DESCRIPTIONS,
+    )
+
+    return {
+        qc.value: {
+            "description": QUESTION_CLASS_DESCRIPTIONS.get(qc, ""),
+            "modes": CLASS_TO_MODES.get(qc, []),
+        }
+        for qc in QuestionClass
+    }
+
+
+@router.get("/approach-classes")
+async def list_approach_to_classes() -> dict[str, list[str]]:
+    """
+    List which question classes each inquiry approach typically generates.
+
+    Helps understand the relationship between inquiry approaches (HOW we ask)
+    and question classes (WHAT type of thinking we're prompting).
+
+    Returns:
+        Dictionary mapping approach name to list of question class names
+    """
+    return {
+        approach.value: [qc.value for qc in classes]
+        for approach, classes in APPROACH_TO_CLASSES.items()
+    }

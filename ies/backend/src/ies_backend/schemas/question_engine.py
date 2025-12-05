@@ -37,6 +37,95 @@ class InquiryApproach(str, Enum):
     DESIGN = "design"                       # Reframing, prototyping, iteration
 
 
+class QuestionClass(str, Enum):
+    """Nine question classes from the IES Question Engine expansion.
+
+    Each class has a distinct cognitive function and maps to specific
+    thinking modes in the AST (Assisted Structured Thinking) system.
+    """
+
+    # Structure surfacing
+    SCHEMA_PROBE = "schema_probe"           # Surfaces hidden structure (lists, buckets, taxonomies)
+    BOUNDARY = "boundary"                   # Clarifies edges/limits to avoid scope creep
+    DIMENSIONAL = "dimensional"             # Introduces spectra/coordinates for precise positioning
+
+    # Mechanism exploration
+    CAUSAL = "causal"                       # Pushes for mechanisms, prerequisites, sequences
+    COUNTERFACTUAL = "counterfactual"       # "What if" deviations to expose assumptions
+
+    # Grounding and perspective
+    ANCHOR = "anchor"                       # Grounds abstractions in concrete instances
+    PERSPECTIVE_SHIFT = "perspective_shift" # Forces viewpoint changes (roles, time, system level)
+
+    # Meta-level
+    META_COGNITIVE = "meta_cognitive"       # Checks thinking patterns (confidence, stuckness, energy)
+    REFLECTIVE_SYNTHESIS = "reflective_synthesis"  # Integration statements that tie threads together
+
+
+# Question class descriptions for prompts
+QUESTION_CLASS_DESCRIPTIONS: dict[QuestionClass, str] = {
+    QuestionClass.SCHEMA_PROBE: """Schema-Probe questions surface hidden structure by asking for
+lists, buckets, or taxonomies. Examples: 'What are the main categories here?',
+'Can you break this into components?', 'What's the underlying structure?'""",
+
+    QuestionClass.BOUNDARY: """Boundary questions clarify edges and limits to avoid vague scope creep.
+Examples: 'What's NOT included in this?', 'Where does this end?',
+'What distinguishes this from adjacent concepts?'""",
+
+    QuestionClass.DIMENSIONAL: """Dimensional questions introduce spectra or coordinates to position
+ideas precisely. Examples: 'On a spectrum from X to Y, where is this?',
+'What dimensions matter here?', 'How would you rate this on multiple axes?'""",
+
+    QuestionClass.CAUSAL: """Causal questions push for mechanisms, prerequisites, or sequences.
+Examples: 'What causes this?', 'What has to happen first?',
+'What's the chain of events?', 'How does A lead to B?'""",
+
+    QuestionClass.COUNTERFACTUAL: """Counterfactual questions invite "what if" deviations to expose
+assumptions. Examples: 'What if the opposite were true?',
+'What would change if X didn't exist?', 'Imagine this failed - why?'""",
+
+    QuestionClass.ANCHOR: """Anchor questions ground abstractions in concrete instances or lived
+experiences. Examples: 'Can you give me a specific example?',
+'When did you actually experience this?', 'What does this look like in practice?'""",
+
+    QuestionClass.PERSPECTIVE_SHIFT: """Perspective-Shift questions force viewpoint changes across
+roles, time horizons, or system levels. Examples: 'How would X see this?',
+'What would this look like in 5 years?', 'Zoom out - what's the bigger picture?'""",
+
+    QuestionClass.META_COGNITIVE: """Meta-Cognitive questions check thinking patterns directly.
+Examples: 'How confident are you in this?', 'Where do you feel stuck?',
+'What's your energy level right now?', 'What patterns do you notice in your thinking?'""",
+
+    QuestionClass.REFLECTIVE_SYNTHESIS: """Reflective-Synthesis questions ask for integration
+statements that tie threads together. Examples: 'What's the main insight here?',
+'How do these pieces connect?', 'What's the essence of what we've discovered?'""",
+}
+
+
+# Mapping question classes to thinking modes
+CLASS_TO_MODES: dict[QuestionClass, list[str]] = {
+    QuestionClass.SCHEMA_PROBE: ["discovery", "learning"],
+    QuestionClass.BOUNDARY: ["discovery", "articulating"],
+    QuestionClass.DIMENSIONAL: ["discovery", "planning"],
+    QuestionClass.CAUSAL: ["dialogue", "learning"],
+    QuestionClass.COUNTERFACTUAL: ["dialogue", "ideating"],
+    QuestionClass.ANCHOR: ["dialogue", "reflecting"],
+    QuestionClass.PERSPECTIVE_SHIFT: ["flow", "ideating"],
+    QuestionClass.META_COGNITIVE: ["ast", "reflecting"],
+    QuestionClass.REFLECTIVE_SYNTHESIS: ["ast", "articulating"],
+}
+
+
+# Mapping inquiry approaches to question classes (which classes they typically generate)
+APPROACH_TO_CLASSES: dict[InquiryApproach, list[QuestionClass]] = {
+    InquiryApproach.SOCRATIC: [QuestionClass.SCHEMA_PROBE, QuestionClass.BOUNDARY, QuestionClass.CAUSAL],
+    InquiryApproach.SOLUTION_FOCUSED: [QuestionClass.ANCHOR, QuestionClass.DIMENSIONAL],
+    InquiryApproach.PHENOMENOLOGICAL: [QuestionClass.ANCHOR, QuestionClass.META_COGNITIVE],
+    InquiryApproach.SYSTEMS: [QuestionClass.CAUSAL, QuestionClass.PERSPECTIVE_SHIFT, QuestionClass.DIMENSIONAL],
+    InquiryApproach.METACOGNITIVE: [QuestionClass.META_COGNITIVE, QuestionClass.REFLECTIVE_SYNTHESIS],
+}
+
+
 class StateSignal(BaseModel):
     """Signals used to detect user state."""
 
@@ -104,6 +193,14 @@ class QuestionTemplate(BaseModel):
     pace_considerations: str | None = None
 
 
+class ClassifiedQuestion(BaseModel):
+    """A question with its class tag for Mode Transition Engine tracking."""
+
+    question: str
+    question_class: QuestionClass
+    approach: InquiryApproach
+
+
 class QuestionBatch(BaseModel):
     """A batch of generated questions for a given state/approach."""
 
@@ -112,6 +209,9 @@ class QuestionBatch(BaseModel):
     questions: list[str]
     context: str  # What triggered this generation
     profile_adaptations_applied: list[str] = Field(default_factory=list)
+
+    # New: classified questions with class tags
+    classified_questions: list[ClassifiedQuestion] = Field(default_factory=list)
 
 
 # Selection rules mapping

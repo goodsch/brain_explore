@@ -52,3 +52,19 @@ Thumbs.db
 .worktrees/
 data/
 check/
+
+# Project-specific ignores
+books/
+calibre/
+claude-prompts/
+.codex/
+.interleaved-thinking/
+.serena/memories/
+AGENTS.md
+claudedoc.txt
+resources+.md
+
+# ChatGPT research exports (reference materials)
+IES Chat/
+*.chatgpt.md
+.research/

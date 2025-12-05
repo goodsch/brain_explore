@@ -1,0 +1,199 @@
+/**
+ * IES Design System - Colors
+ * Philosophy: "Hybrid Contemplative" - warm scholarly tones with modern refinement
+ *
+ * Combines Scholar's Library warmth + Cupertino refinement + ADHD-friendly hierarchy
+ */
+
+:root {
+  /* ==========================================================================
+     BACKGROUNDS - Warm paper tones for intellectual warmth
+     ========================================================================== */
+  --ies-bg-deep: #f5f2ed;          /* Deepest background layer (sidebars, wells) */
+  --ies-bg-base: #faf8f5;          /* Main content background */
+  --ies-bg-elevated: #ffffff;       /* Cards, panels, modals */
+  --ies-bg-overlay: rgba(250, 248, 245, 0.95);  /* Overlays with blur */
+
+  /* ==========================================================================
+     TEXT HIERARCHY - Clear visual hierarchy for reduced cognitive load
+     ========================================================================== */
+  --ies-text-primary: #2d2a26;      /* Main text - high contrast */
+  --ies-text-secondary: #5c5650;    /* Secondary text - supporting content */
+  --ies-text-muted: #8a847b;        /* Muted text - hints, metadata */
+  --ies-text-subtle: #b5aea3;       /* Subtle text - disabled, placeholders */
+  --ies-text-inverse: #ffffff;      /* Text on colored backgrounds */
+
+  /* ==========================================================================
+     ACCENT COLORS - IES signature palette
+     ========================================================================== */
+
+  /* Primary Accent - Amber/Gold (illumination, insight, warmth) */
+  --ies-accent: #c9872e;
+  --ies-accent-hover: #d4952f;
+  --ies-accent-active: #b87928;
+  --ies-accent-muted: rgba(201, 135, 46, 0.12);
+  --ies-accent-subtle: rgba(201, 135, 46, 0.06);
+
+  /* Secondary - Sage Green (growth, knowledge, nature) */
+  --ies-secondary: #5a8a7a;
+  --ies-secondary-hover: #649b8a;
+  --ies-secondary-active: #4f7a6c;
+  --ies-secondary-muted: rgba(90, 138, 122, 0.12);
+  --ies-secondary-subtle: rgba(90, 138, 122, 0.06);
+
+  /* Tertiary - Soft Violet (reflection, depth, creativity) */
+  --ies-tertiary: #8b7aa0;
+  --ies-tertiary-hover: #9a8aad;
+  --ies-tertiary-active: #7c6b91;
+  --ies-tertiary-muted: rgba(139, 122, 160, 0.12);
+  --ies-tertiary-subtle: rgba(139, 122, 160, 0.06);
+
+  /* ==========================================================================
+     SEMANTIC COLORS - Status and feedback
+     ========================================================================== */
+  --ies-success: #059669;
+  --ies-success-muted: rgba(5, 150, 105, 0.12);
+  --ies-success-subtle: rgba(5, 150, 105, 0.06);
+
+  --ies-warning: #d97706;
+  --ies-warning-muted: rgba(217, 119, 6, 0.12);
+  --ies-warning-subtle: rgba(217, 119, 6, 0.06);
+
+  --ies-error: #dc2626;
+  --ies-error-muted: rgba(220, 38, 38, 0.12);
+  --ies-error-subtle: rgba(220, 38, 38, 0.06);
+
+  --ies-info: #2563eb;
+  --ies-info-muted: rgba(37, 99, 235, 0.12);
+  --ies-info-subtle: rgba(37, 99, 235, 0.06);
+
+  /* ==========================================================================
+     ENTITY TYPE COLORS - Consistent across SiYuan and Readest
+     ========================================================================== */
+  --ies-entity-concept: #2563eb;
+  --ies-entity-concept-bg: rgba(37, 99, 235, 0.12);
+
+  --ies-entity-person: #059669;
+  --ies-entity-person-bg: rgba(5, 150, 105, 0.12);
+
+  --ies-entity-theory: #7c3aed;
+  --ies-entity-theory-bg: rgba(124, 58, 237, 0.12);
+
+  --ies-entity-framework: #ea580c;
+  --ies-entity-framework-bg: rgba(234, 88, 12, 0.12);
+
+  --ies-entity-assessment: #dc2626;
+  --ies-entity-assessment-bg: rgba(220, 38, 38, 0.12);
+
+  /* ==========================================================================
+     QUESTION CLASS COLORS - 9 cognitive function badges
+     ========================================================================== */
+  --ies-q-schema: #4a90d9;
+  --ies-q-schema-bg: rgba(74, 144, 217, 0.15);
+
+  --ies-q-boundary: #7b68ee;
+  --ies-q-boundary-bg: rgba(123, 104, 238, 0.15);
+
+  --ies-q-dimensional: #20b2aa;
+  --ies-q-dimensional-bg: rgba(32, 178, 170, 0.15);
+
+  --ies-q-causal: #d4874a;
+  --ies-q-causal-bg: rgba(244, 164, 96, 0.15);
+
+  --ies-q-counterfactual: #da70d6;
+  --ies-q-counterfactual-bg: rgba(218, 112, 214, 0.15);
+
+  --ies-q-anchor: #3cb371;
+  --ies-q-anchor-bg: rgba(60, 179, 113, 0.15);
+
+  --ies-q-perspective: #cd853f;
+  --ies-q-perspective-bg: rgba(205, 133, 63, 0.15);
+
+  --ies-q-meta: #778899;
+  --ies-q-meta-bg: rgba(119, 136, 153, 0.15);
+
+  --ies-q-synthesis: #6495ed;
+  --ies-q-synthesis-bg: rgba(100, 149, 237, 0.15);
+
+  /* ==========================================================================
+     ENERGY LEVELS - ADHD mood-based navigation
+     ========================================================================== */
+  --ies-energy-low: #6b8e9f;
+  --ies-energy-low-bg: rgba(107, 142, 159, 0.15);
+
+  --ies-energy-medium: #c98b2f;
+  --ies-energy-medium-bg: rgba(201, 139, 47, 0.15);
+
+  --ies-energy-high: #d94f5c;
+  --ies-energy-high-bg: rgba(217, 79, 92, 0.15);
+
+  /* ==========================================================================
+     BORDERS - Subtle definition without harsh lines
+     ========================================================================== */
+  --ies-border-subtle: rgba(45, 42, 38, 0.05);
+  --ies-border-light: rgba(45, 42, 38, 0.08);
+  --ies-border-medium: rgba(45, 42, 38, 0.12);
+  --ies-border-strong: rgba(45, 42, 38, 0.18);
+  --ies-border-focus: var(--ies-accent);
+}
+
+/* ==========================================================================
+   DARK THEME - Override for dark mode
+   ========================================================================== */
+[data-theme-mode="dark"],
+.dark {
+  /* Backgrounds - Deep warm tones */
+  --ies-bg-deep: #1a1816;
+  --ies-bg-base: #211f1c;
+  --ies-bg-elevated: #2a2724;
+  --ies-bg-overlay: rgba(33, 31, 28, 0.95);
+
+  /* Text - Inverted hierarchy */
+  --ies-text-primary: #f5f2ed;
+  --ies-text-secondary: #c9c4bc;
+  --ies-text-muted: #8a847b;
+  --ies-text-subtle: #5c5650;
+  --ies-text-inverse: #1a1816;
+
+  /* Accent colors - slightly brighter for dark backgrounds */
+  --ies-accent: #d4952f;
+  --ies-accent-hover: #e0a33a;
+  --ies-accent-active: #c9872e;
+  --ies-accent-muted: rgba(212, 149, 47, 0.15);
+  --ies-accent-subtle: rgba(212, 149, 47, 0.08);
+
+  /* Secondary - Sage green */
+  --ies-secondary: #6a9a8a;
+  --ies-secondary-hover: #7aaa9a;
+  --ies-secondary-muted: rgba(106, 154, 138, 0.15);
+  --ies-secondary-subtle: rgba(106, 154, 138, 0.08);
+
+  /* Tertiary - Soft violet */
+  --ies-tertiary: #9b8ab0;
+  --ies-tertiary-hover: #ab9ac0;
+  --ies-tertiary-muted: rgba(155, 138, 176, 0.15);
+  --ies-tertiary-subtle: rgba(155, 138, 176, 0.08);
+
+  /* Semantic colors - adjusted for dark mode visibility */
+  --ies-success: #10b981;
+  --ies-success-muted: rgba(16, 185, 129, 0.15);
+  --ies-success-subtle: rgba(16, 185, 129, 0.08);
+
+  --ies-warning: #f59e0b;
+  --ies-warning-muted: rgba(245, 158, 11, 0.15);
+  --ies-warning-subtle: rgba(245, 158, 11, 0.08);
+
+  --ies-error: #ef4444;
+  --ies-error-muted: rgba(239, 68, 68, 0.15);
+  --ies-error-subtle: rgba(239, 68, 68, 0.08);
+
+  --ies-info: #3b82f6;
+  --ies-info-muted: rgba(59, 130, 246, 0.15);
+  --ies-info-subtle: rgba(59, 130, 246, 0.08);
+
+  /* Borders - Lighter for dark backgrounds */
+  --ies-border-subtle: rgba(245, 242, 237, 0.05);
+  --ies-border-light: rgba(245, 242, 237, 0.08);
+  --ies-border-medium: rgba(245, 242, 237, 0.12);
+  --ies-border-strong: rgba(245, 242, 237, 0.18);
+}

@@ -1,7 +1,7 @@
 """Entity schemas for knowledge graph extraction."""
 
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
@@ -81,6 +81,10 @@ class SessionProcessRequest(BaseModel):
     transcript: str
     session_title: str | None = None
     session_date: str | None = None
+    session_id: str | None = None
+    template_id: str | None = None
+    section_responses: dict[str, Any] | None = None
+    journey_id: str | None = None
 
 
 class SessionProcessResponse(BaseModel):
@@ -92,6 +96,10 @@ class SessionProcessResponse(BaseModel):
     literature_links: dict[str, list[str]] = Field(
         default_factory=dict,
         description="Map of entity names to chunk IDs linked from literature",
+    )
+    template_entities: list[str] = Field(
+        default_factory=list,
+        description="Personal graph entities created from template mapping",
     )
     summary: SessionSummary
 
@@ -209,6 +217,9 @@ class SessionEndRequest(BaseModel):
     user_id: str
     transcript: list[ChatMessage]
     session_title: str | None = None
+    template_id: str | None = None
+    section_responses: dict[str, Any] | None = None
+    journey_id: str | None = None
 
 
 class SessionEndResponse(BaseModel):
