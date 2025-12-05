@@ -13,6 +13,7 @@
     import ForgeMode from './ForgeMode.svelte';
     import FlowMode from './FlowMode.svelte';
     import QuickCapture from './QuickCapture.svelte';
+    import { promoteToInsight } from '../utils/siyuan-structure';
 
     // Backend configuration
     const BACKEND_HOST = '192.168.86.60';
@@ -32,6 +33,12 @@
         books: number;
     } | null = null;
 
+    let personalStats: {
+        total_sparks: number;
+        total_insights: number;
+        sparks_by_status: Record<string, number>;
+    } | null = null;
+
     let suggestions: {
         recent: Array<{name: string, type: string, score: number | null}>;
         connected: Array<{name: string, type: string, score: number | null}>;
@@ -46,6 +53,21 @@
         ended_at: string | null;
         path: Array<{entity_name: string}>;
     }> = [];
+
+    // Sparks data
+    interface Spark {
+        id: string;
+        title: string;
+        content: string;
+        resonance_signal: string | null;
+        energy_level: string;
+        status: string;
+        siyuan_block_id: string | null;
+        created_at: string;
+    }
+
+    let recentSparks: Spark[] = [];
+    let promotingSparkId: string | null = null;
 
     // Quick Capture queue
     let captureQueue: Array<{
@@ -88,21 +110,51 @@
         error = null;
 
         try {
-            const [statsData, suggestionsData, journeysData] = await Promise.all([
+            const [statsData, suggestionsData, journeysData, personalStatsData, sparksData] = await Promise.all([
                 apiGet('/graph/stats'),
                 apiGet('/graph/suggestions'),
-                apiGet(`/journeys/user/${USER_ID}`).catch(() => ({ journeys: [] }))
+                apiGet(`/journeys/user/${USER_ID}`).catch(() => ({ journeys: [] })),
+                apiGet('/personal/stats').catch(() => null),
+                apiGet('/personal/sparks/unvisited?limit=5').catch(() => ({ sparks: [] }))
             ]);
 
             stats = statsData;
             suggestions = suggestionsData;
             recentJourneys = journeysData.journeys || [];
+            personalStats = personalStatsData;
+            recentSparks = sparksData.sparks || [];
             captureQueue = [];
         } catch (err) {
             error = err.message;
             console.error('[IES] Dashboard load error:', err);
         } finally {
             isLoading = false;
+        }
+    }
+
+    async function handlePromoteSpark(spark: Spark) {
+        if (!spark.siyuan_block_id) {
+            showMessage('This spark is not linked to a SiYuan block and cannot be promoted', 3000, 'error');
+            return;
+        }
+
+        promotingSparkId = spark.id;
+
+        try {
+            await promoteToInsight(spark.siyuan_block_id, {
+                backendSparkId: spark.id,
+                insightTitle: spark.title
+            });
+
+            showMessage(`"${spark.title}" promoted to Insights!`, 3000, 'info');
+
+            // Refresh dashboard data
+            await loadDashboardData();
+        } catch (err) {
+            console.error('[IES] Promotion error:', err);
+            showMessage(`Failed to promote: ${err.message}`, 3000, 'error');
+        } finally {
+            promotingSparkId = null;
         }
     }
 
@@ -119,6 +171,36 @@
         if (diffHours < 24) return `${diffHours}h ago`;
         if (diffDays < 7) return `${diffDays}d ago`;
         return date.toLocaleDateString();
+    }
+
+    function getResonanceEmoji(signal: string | null): string {
+        if (!signal) return '💭';
+        const map: Record<string, string> = {
+            curious: '🤔',
+            excited: '✨',
+            surprised: '😲',
+            moved: '❤️',
+            disturbed: '😟',
+            unclear: '🤷',
+            connected: '🔗',
+            validated: '✅'
+        };
+        return map[signal] || '💭';
+    }
+
+    function getResonanceColor(signal: string | null): string {
+        if (!signal) return 'var(--text-muted)';
+        const map: Record<string, string> = {
+            curious: '#8b7aa0',
+            excited: '#c9872e',
+            surprised: '#5a8a7a',
+            moved: '#d94f5c',
+            disturbed: '#8b4f4f',
+            unclear: '#7a756e',
+            connected: '#5a8a7a',
+            validated: '#5a8a7a'
+        };
+        return map[signal] || 'var(--text-muted)';
     }
 
     onMount(() => {
@@ -206,6 +288,18 @@
                             <span class="stat-value">{stats.books}</span>
                             <span class="stat-label">Sources</span>
                         </div>
+                        {#if personalStats}
+                            <div class="stat-divider"></div>
+                            <div class="stat stat--spark">
+                                <span class="stat-value">{personalStats.total_sparks}</span>
+                                <span class="stat-label">Sparks</span>
+                            </div>
+                            <div class="stat-divider"></div>
+                            <div class="stat stat--insight">
+                                <span class="stat-value">{personalStats.total_insights}</span>
+                                <span class="stat-label">Insights</span>
+                            </div>
+                        {/if}
                     </div>
                 {/if}
 
@@ -254,6 +348,53 @@
                         <span class="mode-subtitle">Quick thoughts</span>
                     </button>
                 </div>
+
+                <!-- Recent Sparks -->
+                {#if recentSparks.length > 0}
+                    <section class="section">
+                        <h3 class="section-title">
+                            Recent Sparks
+                            <span class="spark-badge">{recentSparks.length}</span>
+                        </h3>
+                        <div class="spark-list">
+                            {#each recentSparks as spark, i}
+                                <div class="spark-card" style="animation-delay: {i * 60}ms">
+                                    <div class="spark-indicator" style="background: {getResonanceColor(spark.resonance_signal)}"></div>
+                                    <div class="spark-content">
+                                        <div class="spark-header">
+                                            <span class="spark-emoji" style="color: {getResonanceColor(spark.resonance_signal)}">
+                                                {getResonanceEmoji(spark.resonance_signal)}
+                                            </span>
+                                            <span class="spark-title">{spark.title}</span>
+                                        </div>
+                                        <p class="spark-preview">{spark.content.substring(0, 80)}{spark.content.length > 80 ? '...' : ''}</p>
+                                        <div class="spark-meta">
+                                            <span class="spark-time">{formatRelativeTime(spark.created_at)}</span>
+                                            {#if spark.resonance_signal}
+                                                <span class="spark-resonance">{spark.resonance_signal}</span>
+                                            {/if}
+                                            <span class="spark-energy">{spark.energy_level} energy</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        class="btn-promote"
+                                        on:click={() => handlePromoteSpark(spark)}
+                                        disabled={promotingSparkId === spark.id || !spark.siyuan_block_id}
+                                        title={spark.siyuan_block_id ? 'Promote to Insight' : 'Not linked to SiYuan block'}
+                                    >
+                                        {#if promotingSparkId === spark.id}
+                                            <div class="btn-spinner"></div>
+                                        {:else}
+                                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                                <path fill="currentColor" d="M7 14l5-5 5 5z"/>
+                                            </svg>
+                                        {/if}
+                                    </button>
+                                </div>
+                            {/each}
+                        </div>
+                    </section>
+                {/if}
 
                 <!-- Recent Journeys -->
                 {#if recentJourneys.length > 0}
@@ -557,6 +698,14 @@
         letter-spacing: -0.02em;
     }
 
+    .stat--spark .stat-value {
+        color: #c98b2f;
+    }
+
+    .stat--insight .stat-value {
+        color: var(--secondary);
+    }
+
     .stat-label {
         font-size: 10px;
         font-weight: 600;
@@ -675,7 +824,7 @@
         gap: var(--space-2);
     }
 
-    .queue-badge {
+    .queue-badge, .spark-badge {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -685,8 +834,148 @@
         font-size: 10px;
         font-weight: 700;
         color: white;
-        background: var(--secondary);
         border-radius: var(--radius-full);
+    }
+
+    .queue-badge {
+        background: var(--secondary);
+    }
+
+    .spark-badge {
+        background: #c98b2f;
+    }
+
+    /* Spark Cards */
+    .spark-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .spark-card {
+        display: flex;
+        align-items: stretch;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-left: 3px solid #c98b2f;
+        border-radius: var(--radius-sm);
+        transition: all 0.15s ease;
+        animation: slideUp 0.3s ease backwards;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+    }
+
+    .spark-card:hover {
+        box-shadow: var(--shadow-sm);
+        border-left-color: #f5a623;
+    }
+
+    .spark-indicator {
+        width: 3px;
+        height: auto;
+        border-radius: 2px;
+        opacity: 0.8;
+    }
+
+    .spark-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        min-width: 0;
+    }
+
+    .spark-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .spark-emoji {
+        font-size: 16px;
+        line-height: 1;
+    }
+
+    .spark-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .spark-preview {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .spark-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .spark-time {
+        font-weight: 500;
+    }
+
+    .spark-resonance {
+        padding: 2px 6px;
+        background: var(--accent-lighter);
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .spark-energy {
+        opacity: 0.7;
+    }
+
+    .btn-promote {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        background: var(--secondary-lighter);
+        border: 1px solid var(--secondary-light);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        color: var(--secondary);
+    }
+
+    .btn-promote:hover:not(:disabled) {
+        background: var(--secondary);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-promote:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--border-light);
+        border-top-color: var(--secondary);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
     }
 
     /* Journey Cards */
@@ -708,13 +997,6 @@
         transition: all 0.15s ease;
         text-align: left;
         animation: slideUp 0.3s ease backwards;
-    }
-
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(8px);
-        }
     }
 
     .journey-card:hover {

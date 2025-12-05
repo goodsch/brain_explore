@@ -7,6 +7,7 @@
      */
     import { createEventDispatcher } from 'svelte';
     import { showMessage, fetchSyncPost } from 'siyuan';
+    import { createSparkWithBackend } from '../utils/siyuan-structure';
 
     export let backendUrl: string;
 
@@ -16,6 +17,7 @@
     let inputText = '';
     let captureType: 'text' | 'voice' | 'image' | 'link' = 'text';
     let isProcessing = false;
+    let isSaving = false;
     let processingResult: {
         summary: string;
         entities: Array<{
@@ -35,6 +37,28 @@
         }>;
     } | null = null;
     let error: string | null = null;
+
+    // Spark metadata selection
+    let selectedResonance: string = '';
+    let selectedEnergy: 'low' | 'medium' | 'high' = 'medium';
+
+    const resonanceOptions = [
+        { value: '', label: 'None' },
+        { value: 'curious', label: '🤔 Curious' },
+        { value: 'excited', label: '✨ Excited' },
+        { value: 'surprised', label: '😮 Surprised' },
+        { value: 'moved', label: '💚 Moved' },
+        { value: 'disturbed', label: '😟 Disturbed' },
+        { value: 'unclear', label: '🤷 Unclear' },
+        { value: 'connected', label: '🔗 Connected' },
+        { value: 'validated', label: '✓ Validated' },
+    ];
+
+    const energyOptions = [
+        { value: 'low', label: '🔋 Low Energy' },
+        { value: 'medium', label: '⚡ Medium Energy' },
+        { value: 'high', label: '🚀 High Energy' },
+    ];
 
     // API helper
     async function apiPost(endpoint: string, body: any): Promise<any> {
@@ -87,14 +111,46 @@
         }
     }
 
-    function handlePlacementSelect(placement: typeof processingResult.placements[0]) {
-        // For now, show message about what would happen
-        // Future: Actually route to the target
-        showMessage(`Would route to: ${placement.target_name} (${placement.action})`, 3000);
+    async function handlePlacementSelect(placement: typeof processingResult.placements[0]) {
+        if (!processingResult) return;
 
-        // Reset for next capture
-        inputText = '';
-        processingResult = null;
+        isSaving = true;
+        error = null;
+
+        try {
+            // Extract title from the first line of summary or use a default
+            const title = processingResult.summary.split('\n')[0].slice(0, 100) || 'Quick Capture';
+
+            // Build content from summary and original input
+            const content = `${processingResult.summary}\n\n---\n\n${inputText.trim()}`;
+
+            // Extract concept IDs from matched entities
+            const concept_ids = processingResult.entities
+                .filter(e => e.graph_match)
+                .map(e => e.name);
+
+            // Create spark in backend and SiYuan Daily log
+            const result = await createSparkWithBackend(title, content, {
+                resonance_signal: selectedResonance || undefined,
+                energy_level: selectedEnergy,
+                concept_ids,
+            });
+
+            if (result) {
+                showMessage(`✓ Spark created: ${result.sparkId.slice(0, 8)}... (block: ${result.blockId.slice(0, 8)}...)`, 4000, 'info');
+
+                // Reset form for next capture
+                handleClear();
+            } else {
+                throw new Error('Failed to create spark - no result returned');
+            }
+        } catch (err) {
+            error = err.message || String(err);
+            console.error('[QuickCapture] Save error:', err);
+            showMessage(`Error saving capture: ${error}`, 5000, 'error');
+        } finally {
+            isSaving = false;
+        }
     }
 
     function handleBack() {
@@ -105,6 +161,8 @@
         inputText = '';
         processingResult = null;
         error = null;
+        selectedResonance = '';
+        selectedEnergy = 'medium';
     }
 
     function getConfidenceColor(confidence: number): string {
@@ -226,6 +284,39 @@
                 </div>
             {/if}
 
+            <!-- Spark Metadata Selection -->
+            <div class="result-section">
+                <span class="result-label">Capture Metadata</span>
+                <div class="metadata-grid">
+                    <div class="metadata-field">
+                        <label for="resonance-select">Resonance Signal</label>
+                        <select
+                            id="resonance-select"
+                            class="metadata-select"
+                            bind:value={selectedResonance}
+                            disabled={isSaving}
+                        >
+                            {#each resonanceOptions as option}
+                                <option value={option.value}>{option.label}</option>
+                            {/each}
+                        </select>
+                    </div>
+                    <div class="metadata-field">
+                        <label for="energy-select">Energy Level</label>
+                        <select
+                            id="energy-select"
+                            class="metadata-select"
+                            bind:value={selectedEnergy}
+                            disabled={isSaving}
+                        >
+                            {#each energyOptions as option}
+                                <option value={option.value}>{option.label}</option>
+                            {/each}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <!-- Placement Suggestions -->
             <div class="result-section">
                 <span class="result-label">Route To</span>
@@ -235,6 +326,7 @@
                             class="placement-item"
                             class:placement-item--recommended={index === 0}
                             on:click={() => handlePlacementSelect(placement)}
+                            disabled={isSaving}
                         >
                             <span class="placement-icon">{getTypeIcon(placement.target_type)}</span>
                             <div class="placement-info">
@@ -254,8 +346,8 @@
 
             <!-- Actions -->
             <div class="result-actions">
-                <button class="b3-button" on:click={handleClear}>
-                    New Capture
+                <button class="b3-button" on:click={handleClear} disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'New Capture'}
                 </button>
             </div>
         </div>
@@ -430,6 +522,44 @@
         color: var(--b3-theme-secondary);
     }
 
+    .metadata-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .metadata-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .metadata-field label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--b3-theme-on-surface);
+    }
+
+    .metadata-select {
+        padding: 8px 10px;
+        border: 1px solid var(--b3-border-color);
+        border-radius: 6px;
+        background: var(--b3-theme-background);
+        color: var(--b3-theme-on-background);
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    .metadata-select:focus {
+        outline: none;
+        border-color: var(--b3-theme-primary);
+    }
+
+    .metadata-select:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
     .placement-list {
         display: flex;
         flex-direction: column;
@@ -449,9 +579,14 @@
         transition: all 0.15s;
     }
 
-    .placement-item:hover {
+    .placement-item:hover:not(:disabled) {
         border-color: var(--b3-theme-primary);
         background: var(--b3-theme-primary-lightest);
+    }
+
+    .placement-item:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .placement-item--recommended {

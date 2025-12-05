@@ -2,14 +2,14 @@
     /**
      * ForgeMode - Structured Thinking Interface (Layer 2)
      *
-     * AI-guided questioning with 5 specialized thinking modes:
-     * - Learning: Understand new concepts (Socratic questioning)
-     * - Articulating: Clarify vague intuitions (Mirroring, precise language)
-     * - Planning: Develop action strategies (Goal clarification)
-     * - Ideating: Generate creative options (Divergent prompts)
-     * - Reflecting: Personal insight (Phenomenological questions)
+     * Template-driven AI-guided questioning with 5 specialized thinking modes:
+     * - Learning: Understand new concepts (Mechanism Map)
+     * - Articulating: Clarify vague intuitions (Clarify Intuition)
+     * - Planning: Develop action strategies
+     * - Ideating: Generate creative options
+     * - Reflecting: Personal insight
      *
-     * Features split view: conversation (left) + live note preview (right)
+     * Features split view: conversation (left) + template progress (right)
      */
     import { onMount, createEventDispatcher } from 'svelte';
     import { showMessage, getFrontend, fetchSyncPost } from 'siyuan';
@@ -18,7 +18,7 @@
 
     const dispatch = createEventDispatcher();
 
-    // Thinking modes with descriptions and AI behavior hints
+    // Thinking modes with template mappings
     type ThinkingMode = 'learning' | 'articulating' | 'planning' | 'ideating' | 'reflecting';
 
     const THINKING_MODES: Record<ThinkingMode, {
@@ -26,18 +26,21 @@
         description: string;
         aiPrompt: string;
         icon: string;
+        templateId?: string;
     }> = {
         learning: {
             name: 'Learning',
             description: 'Understand a new concept',
             aiPrompt: 'Use Socratic questioning to help explore and understand this concept deeply. Ask probing questions that reveal assumptions and connections.',
-            icon: '📚'
+            icon: '📚',
+            templateId: 'learning-mechanism-map'
         },
         articulating: {
             name: 'Articulating',
             description: 'Clarify a vague intuition',
             aiPrompt: 'Help articulate vague thoughts precisely. Mirror back what you hear, use precise language, and help crystallize unclear ideas.',
-            icon: '💭'
+            icon: '💭',
+            templateId: 'articulating-clarify-intuition'
         },
         planning: {
             name: 'Planning',
@@ -59,6 +62,24 @@
         }
     };
 
+    // Template structure (fetched from backend)
+    interface TemplateSection {
+        id: string;
+        prompt: string;
+        input_type: string | null;
+        ai_behavior: string | null;
+        required: boolean;
+    }
+
+    interface Template {
+        id: string;
+        mode: string;
+        name: string;
+        description: string;
+        sections: TemplateSection[];
+        graph_mapping: any;
+    }
+
     // State
     let sessionId: string | null = null;
     let status: 'idle' | 'starting' | 'active' | 'error' = 'idle';
@@ -72,9 +93,11 @@
     let selectedMode: ThinkingMode = 'learning';
     let sessionTopic = '';
 
-    // Note preview state (for split view)
-    let notePreview = '';
-    let showNotePreview = false;
+    // Template-driven session state
+    let template: Template | null = null;
+    let currentSectionIndex = 0;
+    let sectionResponses: Record<string, string> = {};
+    let showProgress = false;
 
     const USER_ID = 'chris';
 
@@ -108,10 +131,51 @@
         return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
     }
 
+    async function apiGet(endpoint: string): Promise<any> {
+        const url = `${backendUrl}${endpoint}`;
+
+        const response = await fetchSyncPost('/api/network/forwardProxy', {
+            url: url,
+            method: 'GET',
+            timeout: 30000,
+            contentType: 'application/json',
+            headers: [],
+        });
+
+        if (response.code !== 0) {
+            throw new Error(`Proxy error: ${response.msg}`);
+        }
+
+        const proxyData = response.data;
+        if (!proxyData) {
+            throw new Error(`Proxy returned empty data`);
+        }
+
+        if (proxyData.status !== 200) {
+            const errorBody = typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
+            throw new Error(`Backend error ${proxyData.status}: ${JSON.stringify(errorBody)}`);
+        }
+
+        return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
+    }
+
     onMount(() => {
         const frontend = getFrontend();
         isMobile = frontend === 'mobile' || frontend === 'browser-mobile';
     });
+
+    async function loadTemplate(templateId: string) {
+        try {
+            template = await apiGet(`/templates/${templateId}`);
+            currentSectionIndex = 0;
+            sectionResponses = {};
+            showProgress = true;
+        } catch (err) {
+            console.warn('[IES] Template load failed, using default mode:', err);
+            template = null;
+            showProgress = false;
+        }
+    }
 
     async function handleStart() {
         if (!sessionTopic.trim()) {
@@ -124,6 +188,11 @@
 
         const modeConfig = THINKING_MODES[selectedMode];
 
+        // Load template if available
+        if (modeConfig.templateId) {
+            await loadTemplate(modeConfig.templateId);
+        }
+
         apiPost('/session/start', {
             user_id: USER_ID,
             mode: selectedMode,
@@ -134,16 +203,19 @@
                 sessionId = data.session_id;
                 status = 'active';
 
-                // Customize greeting based on mode
-                const modeGreeting = `Let's ${modeConfig.description.toLowerCase()}. ${data.greeting || 'What would you like to explore?'}`;
+                // Start with first section prompt if template-driven
+                let greeting = data.greeting || 'What would you like to explore?';
+                if (template && template.sections.length > 0) {
+                    const firstSection = template.sections[0];
+                    greeting = `Let's ${modeConfig.description.toLowerCase()} using the ${template.name} approach.\n\n${firstSection.prompt}`;
+                } else {
+                    greeting = `Let's ${modeConfig.description.toLowerCase()}. ${greeting}`;
+                }
 
                 messages = [{
                     role: 'assistant',
-                    content: modeGreeting
+                    content: greeting
                 }];
-
-                // Initialize note preview
-                updateNotePreview();
             })
             .catch(err => {
                 console.error('[IES] Start error:', err);
@@ -151,36 +223,6 @@
                 errorMsg = err.message || String(err);
                 showMessage(`Error: ${errorMsg}`, 5000, 'error');
             });
-    }
-
-    function updateNotePreview() {
-        // Generate a markdown note from the conversation
-        if (messages.length === 0) {
-            notePreview = '';
-            return;
-        }
-
-        const modeConfig = THINKING_MODES[selectedMode];
-        let note = `# ${sessionTopic}\n\n`;
-        note += `*Mode: ${modeConfig.name} ${modeConfig.icon}*\n\n`;
-
-        // Extract key insights from assistant messages
-        const insights = messages
-            .filter(m => m.role === 'assistant' && m.content !== '...')
-            .map((m, i) => {
-                // Truncate long messages for preview
-                const content = m.content.length > 200
-                    ? m.content.substring(0, 200) + '...'
-                    : m.content;
-                return `**Insight ${i + 1}:** ${content}`;
-            });
-
-        if (insights.length > 0) {
-            note += '## Key Points\n\n';
-            note += insights.join('\n\n');
-        }
-
-        notePreview = note;
     }
 
     function handleSend() {
@@ -192,20 +234,43 @@
         messages = [...messages, { role: 'assistant', content: '...' }];
         isLoading = true;
 
+        // Store section response if template-driven
+        if (template && currentSectionIndex < template.sections.length) {
+            const section = template.sections[currentSectionIndex];
+            sectionResponses[section.id] = userMsg;
+        }
+
         const modeConfig = THINKING_MODES[selectedMode];
+
+        // Build enhanced prompt with section context
+        let enhancedPrompt = userMsg;
+        if (template && currentSectionIndex < template.sections.length) {
+            const section = template.sections[currentSectionIndex];
+            if (section.ai_behavior) {
+                enhancedPrompt = `${section.ai_behavior}\n\nUser response: ${userMsg}`;
+            }
+        }
 
         apiPost('/session/chat-sync', {
             session_id: sessionId,
-            message: userMsg,
+            message: enhancedPrompt,
             messages: messages.slice(0, -1),
             mode: selectedMode,
             mode_prompt: modeConfig.aiPrompt
         })
             .then(data => {
-                messages[messages.length - 1].content = data.response || '';
+                let response = data.response || '';
+
+                // Advance to next section if template-driven
+                if (template && currentSectionIndex < template.sections.length - 1) {
+                    currentSectionIndex++;
+                    const nextSection = template.sections[currentSectionIndex];
+                    response += `\n\n${nextSection.prompt}`;
+                }
+
+                messages[messages.length - 1].content = response;
                 messages = messages;
                 isLoading = false;
-                updateNotePreview();
             })
             .catch(err => {
                 console.error('[IES] Chat error:', err);
@@ -219,16 +284,31 @@
         if (!sessionId) return;
         status = 'starting';
 
-        apiPost('/session/end', {
+        const endPayload: any = {
             session_id: sessionId,
             user_id: USER_ID,
             transcript: messages
-        })
+        };
+
+        // Add template data if available
+        if (template) {
+            endPayload.template_id = template.id;
+            endPayload.section_responses = sectionResponses;
+        }
+
+        apiPost('/session/end', endPayload)
             .then(data => {
-                showMessage(`Session saved. ${data.entities_extracted} entities extracted.`, 3000);
+                const msg = template
+                    ? `Session saved. Template mapping executed. ${data.entities_extracted} entities extracted.`
+                    : `Session saved. ${data.entities_extracted} entities extracted.`;
+                showMessage(msg, 3000);
                 sessionId = null;
                 status = 'idle';
                 messages = [];
+                template = null;
+                sectionResponses = {};
+                currentSectionIndex = 0;
+                showProgress = false;
             })
             .catch(err => {
                 console.error('[IES] End error:', err);
@@ -248,9 +328,16 @@
     function handleBack() {
         dispatch('back');
     }
+
+    // Helper to get section completion status
+    function getSectionStatus(sectionId: string, index: number): 'complete' | 'current' | 'pending' {
+        if (sectionId in sectionResponses) return 'complete';
+        if (index === currentSectionIndex) return 'current';
+        return 'pending';
+    }
 </script>
 
-<div class="forge-mode" class:forge-mode--split={showNotePreview && status === 'active'}>
+<div class="forge-mode" class:forge-mode--split={showProgress && status === 'active'}>
     <div class="forge-header">
         <button class="back-btn" on:click={handleBack} title="Back to Dashboard">
             <svg viewBox="0 0 24 24" width="16" height="16">
@@ -260,15 +347,9 @@
         <span class="forge-title">Structured Thinking</span>
         {#if status === 'active'}
             <span class="forge-badge">{THINKING_MODES[selectedMode].icon} {THINKING_MODES[selectedMode].name}</span>
-            <button
-                class="note-toggle"
-                on:click={() => showNotePreview = !showNotePreview}
-                title={showNotePreview ? 'Hide note preview' : 'Show note preview'}
-            >
-                <svg viewBox="0 0 24 24" width="16" height="16">
-                    <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                </svg>
-            </button>
+            {#if template}
+                <span class="template-badge">{template.name}</span>
+            {/if}
         {/if}
     </div>
 
@@ -289,6 +370,9 @@
                                     <span class="mode-option-icon">{mode.icon}</span>
                                     <span class="mode-option-name">{mode.name}</span>
                                     <span class="mode-option-desc">{mode.description}</span>
+                                    {#if mode.templateId}
+                                        <span class="template-indicator" title="Template-driven session">⚙️</span>
+                                    {/if}
                                 </button>
                             {/each}
                         </div>
@@ -354,14 +438,51 @@
             {/if}
         </div>
 
-        {#if showNotePreview && status === 'active'}
-            <div class="forge-preview">
-                <div class="preview-header">
-                    <span class="preview-title">Note Preview</span>
+        {#if showProgress && template && status === 'active'}
+            <div class="forge-progress">
+                <div class="progress-header">
+                    <span class="progress-title">{template.name}</span>
+                    <span class="progress-count">{Object.keys(sectionResponses).length}/{template.sections.length}</span>
                 </div>
-                <div class="preview-content">
-                    <pre>{notePreview}</pre>
+                <div class="progress-sections">
+                    {#each template.sections as section, index}
+                        {@const sectionStatus = getSectionStatus(section.id, index)}
+                        <div class="progress-section" class:progress-section--complete={sectionStatus === 'complete'} class:progress-section--current={sectionStatus === 'current'}>
+                            <div class="progress-section-header">
+                                <span class="progress-section-icon">
+                                    {#if sectionStatus === 'complete'}✓
+                                    {:else if sectionStatus === 'current'}▶
+                                    {:else}○
+                                    {/if}
+                                </span>
+                                <span class="progress-section-label">{section.prompt}</span>
+                            </div>
+                            {#if section.id in sectionResponses}
+                                <div class="progress-section-response">
+                                    {sectionResponses[section.id]}
+                                </div>
+                            {/if}
+                        </div>
+                    {/each}
                 </div>
+                {#if template.graph_mapping && template.graph_mapping.on_complete}
+                    <div class="progress-footer">
+                        <span class="progress-footer-label">On completion:</span>
+                        <ul class="progress-actions">
+                            {#each template.graph_mapping.on_complete as action}
+                                <li class="progress-action">
+                                    {#if action.action === 'create_or_link'}
+                                        Create {action.entity_type || 'spark'} entity
+                                    {:else if action.action === 'update_journey'}
+                                        Update journey
+                                    {:else}
+                                        {action.action}
+                                    {/if}
+                                </li>
+                            {/each}
+                        </ul>
+                    </div>
+                {/if}
             </div>
         {/if}
     </div>
@@ -404,22 +525,15 @@
         color: var(--b3-theme-primary);
         border-radius: 4px;
     }
-    .note-toggle {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
+    .template-badge {
+        font-size: 11px;
+        padding: 2px 6px;
+        background: var(--b3-theme-secondary-lightest, #e8f5e9);
+        color: var(--b3-theme-secondary, #4caf50);
         border-radius: 4px;
-        color: var(--b3-theme-on-surface-light);
-        display: flex;
-        align-items: center;
-    }
-    .note-toggle:hover {
-        background: var(--b3-theme-surface);
-        color: var(--b3-theme-on-surface);
     }
 
-    /* Main layout - conversation and preview side by side */
+    /* Main layout - conversation and progress side by side */
     .forge-main {
         flex: 1;
         display: flex;
@@ -435,37 +549,102 @@
     .forge-mode--split .forge-conversation {
         flex: 1;
     }
-    .forge-preview {
-        width: 280px;
+
+    /* Progress panel */
+    .forge-progress {
+        width: 300px;
         display: flex;
         flex-direction: column;
         border: 1px solid var(--b3-border-color);
         border-radius: 8px;
         overflow: hidden;
-    }
-    .preview-header {
-        padding: 8px 12px;
-        background: var(--b3-theme-surface);
-        border-bottom: 1px solid var(--b3-border-color);
-    }
-    .preview-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--b3-theme-on-surface-light);
-        text-transform: uppercase;
-    }
-    .preview-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 12px;
-        font-size: 12px;
         background: var(--b3-theme-background);
     }
-    .preview-content pre {
-        margin: 0;
-        white-space: pre-wrap;
-        font-family: inherit;
+    .progress-header {
+        padding: 10px 12px;
+        background: var(--b3-theme-surface);
+        border-bottom: 1px solid var(--b3-border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .progress-title {
+        font-size: 12px;
+        font-weight: 600;
         color: var(--b3-theme-on-surface);
+    }
+    .progress-count {
+        font-size: 11px;
+        padding: 2px 6px;
+        background: var(--b3-theme-primary-lightest);
+        color: var(--b3-theme-primary);
+        border-radius: 3px;
+    }
+    .progress-sections {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+    }
+    .progress-section {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 6px;
+        background: var(--b3-theme-surface);
+        border: 1px solid var(--b3-border-color);
+    }
+    .progress-section--current {
+        border-color: var(--b3-theme-primary);
+        background: var(--b3-theme-primary-lightest);
+    }
+    .progress-section--complete {
+        opacity: 0.7;
+    }
+    .progress-section-header {
+        display: flex;
+        gap: 6px;
+        align-items: flex-start;
+    }
+    .progress-section-icon {
+        font-size: 12px;
+        margin-top: 1px;
+    }
+    .progress-section-label {
+        flex: 1;
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--b3-theme-on-surface);
+    }
+    .progress-section-response {
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid var(--b3-border-color);
+        font-size: 11px;
+        color: var(--b3-theme-on-surface-light);
+        white-space: pre-wrap;
+        max-height: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .progress-footer {
+        padding: 8px 12px;
+        border-top: 1px solid var(--b3-border-color);
+        background: var(--b3-theme-surface-light, #fafafa);
+    }
+    .progress-footer-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--b3-theme-on-surface-light);
+    }
+    .progress-actions {
+        margin: 4px 0 0 0;
+        padding: 0 0 0 16px;
+        list-style: disc;
+    }
+    .progress-action {
+        font-size: 11px;
+        color: var(--b3-theme-on-surface);
+        margin: 2px 0;
     }
 
     /* Setup section (mode selection + topic) */
@@ -522,8 +701,13 @@
         min-width: 80px;
     }
     .mode-option-desc {
+        flex: 1;
         font-size: 12px;
         color: var(--b3-theme-on-surface-light);
+    }
+    .template-indicator {
+        font-size: 12px;
+        opacity: 0.6;
     }
 
     /* Topic input */
