@@ -1,18 +1,30 @@
-"""Service for Quick Capture processing."""
+"""Service for Quick Capture processing and Flow capture queue."""
 
+import json
 import os
 import re
+import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from ..schemas.capture import (
+    AutoExtracted,
+    CaptureCreateRequest,
+    CaptureItem,
+    CaptureListResponse,
     CaptureProcessRequest,
     CaptureProcessResponse,
+    CaptureSource,
+    CaptureStatus,
     CaptureType,
+    CaptureUpdateRequest,
     ExtractedEntity,
     PlacementType,
+    Spark,
     SuggestedPlacement,
 )
 from .graph_service import GraphService
+from .neo4j_client import Neo4jClient
 
 # Check for Anthropic availability
 ANTHROPIC_AVAILABLE = False
@@ -252,3 +264,235 @@ TAGS: [tag1, tag2, tag3, ...]"""
         placements.sort(key=lambda p: p.confidence, reverse=True)
 
         return placements[:5]  # Return top 5
+
+    # =========================================================================
+    # Flow Mode Capture Queue
+    # =========================================================================
+
+    @staticmethod
+    async def create_capture(request: CaptureCreateRequest) -> CaptureItem:
+        """Create a capture queue item and persist to Neo4j."""
+        await CaptureService._ensure_capture_schema()
+
+        capture_id = f"capture_{uuid.uuid4().hex[:12]}"
+        captured_at = datetime.now(timezone.utc)
+        auto_extracted = request.auto_extracted or CaptureService._auto_extract(request.raw_text)
+        spark_payload = request.spark.model_dump(by_alias=True) if request.spark else None
+
+        params = {
+            "id": capture_id,
+            "raw_text": request.raw_text,
+            "source": request.source.value,
+            "captured_at": captured_at.isoformat(),
+            "status": CaptureStatus.QUEUED.value,
+            "context_snippet": request.context_snippet,
+            "entities": auto_extracted.entities if auto_extracted else [],
+            "topics": auto_extracted.topics if auto_extracted else [],
+            "spark": json.dumps(spark_payload) if spark_payload else None,
+        }
+
+        create_query = """
+        MERGE (c:CaptureItem {id: $id})
+        SET c.raw_text = $raw_text,
+            c.source = $source,
+            c.captured_at = $captured_at,
+            c.status = $status,
+            c.context_snippet = $context_snippet,
+            c.entities = $entities,
+            c.topics = $topics,
+            c.spark = $spark
+        """
+        await Neo4jClient.execute_write(create_query, params)
+
+        if auto_extracted and auto_extracted.entities:
+            rel_query = """
+            MATCH (c:CaptureItem {id: $id})
+            UNWIND $entities AS entity_name
+            MERGE (e:Concept {name: entity_name})
+            MERGE (c)-[:MENTIONS]->(e)
+            """
+            await Neo4jClient.execute_write(rel_query, {"id": capture_id, "entities": auto_extracted.entities})
+
+        return await CaptureService.get_capture(capture_id)
+
+    @staticmethod
+    async def list_captures(status: CaptureStatus | None = None) -> CaptureListResponse:
+        """List capture queue items, optionally filtered by status."""
+        await CaptureService._ensure_capture_schema()
+
+        list_query = """
+        MATCH (c:CaptureItem)
+        WHERE $status IS NULL OR c.status = $status
+        OPTIONAL MATCH (c)-[:MENTIONS]->(e:Concept)
+        RETURN c AS capture, collect(DISTINCT e.name) AS entities
+        ORDER BY c.captured_at DESC
+        """
+        params = {"status": status.value if status else None}
+        results = await Neo4jClient.execute_query(list_query, params)
+        items: list[CaptureItem] = []
+        for record in results:
+            capture = CaptureService._record_to_capture(record)
+            if capture:
+                items.append(capture)
+
+        return CaptureListResponse(items=items, total=len(items))
+
+    @staticmethod
+    async def get_capture(capture_id: str) -> CaptureItem | None:
+        """Get a single capture item."""
+        await CaptureService._ensure_capture_schema()
+
+        query = """
+        MATCH (c:CaptureItem {id: $id})
+        OPTIONAL MATCH (c)-[:MENTIONS]->(e:Concept)
+        RETURN c AS capture, collect(DISTINCT e.name) AS entities
+        """
+        results = await Neo4jClient.execute_query(query, {"id": capture_id})
+        if not results:
+            return None
+        return CaptureService._record_to_capture(results[0])
+
+    @staticmethod
+    async def update_capture(capture_id: str, request: CaptureUpdateRequest) -> CaptureItem | None:
+        """Update capture status or auto-extracted metadata."""
+        await CaptureService._ensure_capture_schema()
+
+        auto = request.auto_extracted
+        params = {
+            "id": capture_id,
+            "status": request.status.value if request.status else None,
+            "entities": auto.entities if auto and auto.entities is not None else None,
+            "topics": auto.topics if auto and auto.topics is not None else None,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        update_query = """
+        MATCH (c:CaptureItem {id: $id})
+        SET c.status = COALESCE($status, c.status),
+            c.entities = CASE WHEN $entities IS NULL THEN c.entities ELSE $entities END,
+            c.topics = CASE WHEN $topics IS NULL THEN c.topics ELSE $topics END,
+            c.updated_at = $updated_at
+        """
+        await Neo4jClient.execute_write(update_query, params)
+
+        # Refresh mention relationships if entities provided
+        if auto and auto.entities is not None:
+            await Neo4jClient.execute_write(
+                """
+                MATCH (c:CaptureItem {id: $id})-[r:MENTIONS]->(e)
+                DELETE r
+                """,
+                {"id": capture_id},
+            )
+            if auto.entities:
+                await Neo4jClient.execute_write(
+                    """
+                    MATCH (c:CaptureItem {id: $id})
+                    UNWIND $entities AS entity_name
+                    MERGE (e:Concept {name: entity_name})
+                    MERGE (c)-[:MENTIONS]->(e)
+                    """,
+                    {"id": capture_id, "entities": auto.entities},
+                )
+
+        return await CaptureService.get_capture(capture_id)
+
+    @staticmethod
+    async def delete_capture(capture_id: str) -> bool:
+        """Delete a capture item."""
+        await CaptureService._ensure_capture_schema()
+
+        query = """
+        MATCH (c:CaptureItem {id: $id})
+        DETACH DELETE c
+        RETURN count(c) as deleted
+        """
+        results = await Neo4jClient.execute_write(query, {"id": capture_id})
+        if not results:
+            return False
+        deleted = results[0].get("deleted")
+        if isinstance(deleted, list):
+            # Neo4j driver can return lists for aggregates in mocks
+            deleted = deleted[0] if deleted else 0
+        return bool(deleted)
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    async def _ensure_capture_schema() -> None:
+        """Ensure constraints/indexes for capture nodes."""
+        constraints = [
+            "CREATE CONSTRAINT capture_id IF NOT EXISTS FOR (c:CaptureItem) REQUIRE c.id IS UNIQUE",
+            "CREATE INDEX capture_status IF NOT EXISTS FOR (c:CaptureItem) ON (c.status)",
+            "CREATE INDEX capture_captured_at IF NOT EXISTS FOR (c:CaptureItem) ON (c.captured_at)",
+        ]
+        for query in constraints:
+            try:
+                await Neo4jClient.execute_write(query)
+            except Exception:
+                continue
+
+    @staticmethod
+    def _auto_extract(raw_text: str) -> AutoExtracted:
+        """Lightweight auto extraction when LLM not explicitly provided."""
+        entities = [entity.name for entity in CaptureService._simple_extract(raw_text)]
+        topics = CaptureService._extract_tags(raw_text)
+        return AutoExtracted(entities=entities, topics=topics)
+
+    @staticmethod
+    def _record_to_capture(record: dict) -> CaptureItem | None:
+        """Convert Neo4j record to CaptureItem."""
+        node = record.get("capture") or record.get("c")
+        if node is None:
+            return None
+
+        data = dict(node)
+        status_value = data.get("status", CaptureStatus.QUEUED.value)
+        try:
+            status = CaptureStatus(status_value)
+        except ValueError:
+            status = CaptureStatus.QUEUED
+
+        captured_at_raw = data.get("captured_at") or data.get("capturedAt")
+        captured_at = CaptureService._parse_datetime(captured_at_raw)
+
+        entities = record.get("entities") or data.get("entities") or []
+        topics = record.get("topics") or data.get("topics") or []
+
+        spark = None
+        spark_raw = data.get("spark")
+        if spark_raw:
+            try:
+                spark_payload = spark_raw if isinstance(spark_raw, dict) else json.loads(str(spark_raw))
+                spark = Spark.model_validate(spark_payload)
+            except Exception:
+                spark = None
+
+        auto = None
+        if entities or topics:
+            auto = AutoExtracted(entities=list(entities), topics=list(topics))
+
+        return CaptureItem(
+            id=data.get("id", ""),
+            raw_text=data.get("raw_text") or data.get("rawText", ""),
+            source=data.get("source", CaptureSource.ASSISTANT_INTERRUPTION.value),
+            captured_at=captured_at,
+            status=status,
+            context_snippet=data.get("context_snippet"),
+            auto_extracted=auto,
+            spark=spark,
+        )
+
+    @staticmethod
+    def _parse_datetime(value: Any) -> datetime:
+        """Parse ISO datetime strings safely."""
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                pass
+        return datetime.now(timezone.utc)

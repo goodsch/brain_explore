@@ -1,5 +1,6 @@
-"""Schemas for Quick Capture processing."""
+"""Schemas for Quick Capture processing and capture queue management."""
 
+from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -107,3 +108,137 @@ class CaptureRouteResponse(BaseModel):
     success: bool
     target_id: str
     message: str
+
+
+# ============================================================================
+# Flow Mode Capture Queue Schemas
+# ============================================================================
+
+
+class CaptureStatus(str, Enum):
+    """Status of a captured item."""
+
+    QUEUED = "queued"
+    IN_THINKING = "in_thinking"
+    INTEGRATED = "integrated"
+
+
+class CaptureSource(str, Enum):
+    """Source of a captured spark."""
+
+    PHONE = "phone"
+    SIYUAN = "siyuan"
+    READEST = "readest"
+    ASSISTANT_INTERRUPTION = "assistant-interruption"
+
+
+class SparkType(str, Enum):
+    """Type of the spark that triggered capture."""
+
+    NOTE = "note"
+    SELECTION = "selection"
+    HIGHLIGHT = "highlight"
+    THOUGHT = "thought"
+
+
+class SparkSource(BaseModel):
+    """Origin metadata for a spark."""
+
+    type: str
+    note_id: str | None = Field(default=None, alias="noteId")
+    block_ids: list[str] | None = Field(default=None, alias="blockIds")
+    book_id: str | None = Field(default=None, alias="bookId")
+    location: str | None = None
+
+    model_config = {"populate_by_name": True}
+
+
+class Spark(BaseModel):
+    """A spark is the live piece of context Flow latches onto."""
+
+    id: str
+    type: SparkType
+    text: str
+    source: SparkSource
+    captured_at: datetime = Field(alias="capturedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class AutoExtracted(BaseModel):
+    """Automatically extracted metadata for a capture."""
+
+    entities: list[str] = Field(default_factory=list)
+    topics: list[str] = Field(default_factory=list)
+
+
+class CaptureItem(BaseModel):
+    """Capture queue item stored in Neo4j."""
+
+    id: str
+    raw_text: str = Field(alias="rawText")
+    source: CaptureSource
+    captured_at: datetime = Field(alias="capturedAt")
+    status: CaptureStatus = CaptureStatus.QUEUED
+    context_snippet: str | None = Field(default=None, alias="contextSnippet")
+    auto_extracted: AutoExtracted | None = Field(default=None, alias="autoExtracted")
+    spark: Spark | None = None
+
+    model_config = {
+        "populate_by_name": True,
+        "json_schema_extra": {
+            "example": {
+                "id": "capture_123",
+                "rawText": "Flow doesn't start from zero...",
+                "source": "assistant-interruption",
+                "capturedAt": "2025-12-05T10:30:00Z",
+                "status": "queued",
+                "contextSnippet": "During discussion about architecture",
+                "autoExtracted": {
+                    "entities": ["entry-point dependence"],
+                    "topics": ["ADHD", "tool-design"],
+                },
+            }
+        },
+    }
+
+
+class CaptureCreateRequest(BaseModel):
+    """Request to create a capture item."""
+
+    raw_text: str = Field(alias="rawText")
+    source: CaptureSource
+    context_snippet: str | None = Field(default=None, alias="contextSnippet")
+    auto_extracted: AutoExtracted | None = Field(default=None, alias="autoExtracted")
+    spark: Spark | None = None
+
+    model_config = {
+        "populate_by_name": True,
+        "json_schema_extra": {
+            "example": {
+                "rawText": "Flow doesn't start from zero...",
+                "source": "assistant-interruption",
+                "contextSnippet": "During discussion about architecture",
+                "autoExtracted": {
+                    "entities": ["entry-point dependence", "choice paralysis"],
+                    "topics": ["ADHD", "tool-design"],
+                },
+            }
+        },
+    }
+
+
+class CaptureUpdateRequest(BaseModel):
+    """Request to update a capture item."""
+
+    status: CaptureStatus | None = None
+    auto_extracted: AutoExtracted | None = Field(default=None, alias="autoExtracted")
+
+    model_config = {"populate_by_name": True}
+
+
+class CaptureListResponse(BaseModel):
+    """Response wrapper for a list of captures."""
+
+    items: list[CaptureItem]
+    total: int
