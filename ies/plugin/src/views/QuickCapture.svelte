@@ -9,6 +9,7 @@
      * - capture_status: AI processing state (raw → classified → processed)
      * - capture_channel: How content was captured (manual, web, etc.)
      * - capture_source: Source tool (manual, browser_extension, etc.)
+     * - idea_type: Seedling type selection for routing to subfolders
      */
     import { createEventDispatcher } from 'svelte';
     import { showMessage, fetchSyncPost } from 'siyuan';
@@ -18,9 +19,13 @@
         CaptureChannel,
         CaptureSource,
         QuickCaptureMeta,
+        IdeaType,
     } from '../types/blocks';
     import {
         CAPTURE_STATUS_LABELS,
+        IDEA_TYPE_LABELS,
+        IDEA_TYPE_ICONS,
+        SEEDLING_FOLDER_MAP,
     } from '../types/blocks';
 
     export let backendUrl: string;
@@ -56,6 +61,9 @@
     let captureStatus: CaptureStatus = 'raw';
     let captureChannel: CaptureChannel = 'web';
     let captureSource: CaptureSource = 'manual';
+
+    // Seedling type selection (Phase 3)
+    let selectedIdeaType: IdeaType | null = null;
 
     // ADHD metadata selection (existing fields)
     let selectedResonance: string = '';
@@ -96,6 +104,18 @@
         { value: 'low', label: '🔋 Low Energy' },
         { value: 'medium', label: '⚡ Medium Energy' },
         { value: 'high', label: '🚀 High Energy' },
+    ];
+
+    // Idea type options (Phase 3)
+    const ideaTypeOptions: Array<{ value: IdeaType; label: string; icon: string; description: string }> = [
+        { value: 'question', label: IDEA_TYPE_LABELS.question, icon: IDEA_TYPE_ICONS.question, description: 'Open inquiry or uncertainty' },
+        { value: 'insight', label: IDEA_TYPE_LABELS.insight, icon: IDEA_TYPE_ICONS.insight, description: 'Sudden realization or "aha" moment' },
+        { value: 'observation', label: IDEA_TYPE_LABELS.observation, icon: IDEA_TYPE_ICONS.observation, description: 'Noticed pattern or detail' },
+        { value: 'moment', label: IDEA_TYPE_LABELS.moment, icon: IDEA_TYPE_ICONS.moment, description: 'Significant experience or event' },
+        { value: 'schema', label: IDEA_TYPE_LABELS.schema, icon: IDEA_TYPE_ICONS.schema, description: 'Mental model or framework' },
+        { value: 'contradiction', label: IDEA_TYPE_LABELS.contradiction, icon: IDEA_TYPE_ICONS.contradiction, description: 'Conflicting ideas or tension' },
+        { value: 'what_if', label: IDEA_TYPE_LABELS.what_if, icon: IDEA_TYPE_ICONS.what_if, description: 'Speculation or counterfactual' },
+        { value: 'other', label: IDEA_TYPE_LABELS.other, icon: IDEA_TYPE_ICONS.other, description: 'Uncategorized or mixed type' },
     ];
 
     // API helper
@@ -154,6 +174,12 @@
     async function handlePlacementSelect(placement: typeof processingResult.placements[0]) {
         if (!processingResult) return;
 
+        // Require idea type selection when placing in Seedlings
+        if (!selectedIdeaType) {
+            showMessage('Please select an idea type before placing', 3000, 'info');
+            return;
+        }
+
         isSaving = true;
         error = null;
 
@@ -187,12 +213,16 @@
                 auto_summary: processingResult.summary,
                 auto_labels: processingResult.suggested_tags,
                 linked_concepts: concept_ids,
+                // Seedling metadata (Phase 3)
+                idea_type: selectedIdeaType,
+                target_folder: SEEDLING_FOLDER_MAP[selectedIdeaType],
             });
 
             if (result) {
                 // Transition status: classified → processed (user has decided placement)
                 captureStatus = 'processed';
-                showMessage(`✓ Spark created: ${result.sparkId.slice(0, 8)}... (block: ${result.blockId.slice(0, 8)}...)`, 4000, 'info');
+                const targetFolder = SEEDLING_FOLDER_MAP[selectedIdeaType];
+                showMessage(`✓ ${IDEA_TYPE_LABELS[selectedIdeaType]} created in ${targetFolder}`, 4000, 'info');
 
                 // Reset form for next capture
                 handleClear();
@@ -223,6 +253,8 @@
         captureStatus = 'raw';
         captureChannel = 'web';
         captureSource = 'manual';
+        // Reset idea type selection (Phase 3)
+        selectedIdeaType = null;
     }
 
     function getConfidenceColor(confidence: number): string {
@@ -356,13 +388,41 @@
                         {#if captureStatus === 'raw'}
                             Waiting for AI processing
                         {:else if captureStatus === 'classified'}
-                            AI has classified - choose placement
+                            AI has classified - choose idea type
                         {:else}
                             Ready to save
                         {/if}
                     </span>
                 </div>
             </div>
+
+            <!-- Idea Type Selection (Phase 3) -->
+            {#if captureStatus === 'classified'}
+                <div class="result-section">
+                    <span class="result-label">Seedling Type</span>
+                    <p class="result-hint">Choose the type of idea to determine where it will be placed</p>
+                    <div class="idea-type-grid">
+                        {#each ideaTypeOptions as ideaType}
+                            <button
+                                class="idea-type-pill"
+                                class:idea-type-pill--selected={selectedIdeaType === ideaType.value}
+                                on:click={() => selectedIdeaType = ideaType.value}
+                                disabled={isSaving}
+                                title={ideaType.description}
+                            >
+                                <span class="idea-type-icon">{ideaType.icon}</span>
+                                <span class="idea-type-label">{ideaType.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                    {#if selectedIdeaType}
+                        <div class="idea-type-info">
+                            <span class="idea-type-folder-icon">📁</span>
+                            <span class="idea-type-folder-path">{SEEDLING_FOLDER_MAP[selectedIdeaType]}</span>
+                        </div>
+                    {/if}
+                </div>
+            {/if}
 
             <!-- Capture Source Metadata -->
             <div class="result-section">
@@ -439,7 +499,7 @@
                             class="placement-item"
                             class:placement-item--recommended={index === 0}
                             on:click={() => handlePlacementSelect(placement)}
-                            disabled={isSaving}
+                            disabled={isSaving || !selectedIdeaType}
                         >
                             <span class="placement-icon">{getTypeIcon(placement.target_type)}</span>
                             <div class="placement-info">
@@ -455,6 +515,9 @@
                         </button>
                     {/each}
                 </div>
+                {#if !selectedIdeaType}
+                    <p class="placement-hint">Select a seedling type above to enable placement</p>
+                {/if}
             </div>
 
             <!-- Actions -->
@@ -686,6 +749,13 @@
         font-family: var(--font-display);
     }
 
+    .result-hint {
+        margin: 0;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
     .result-summary {
         margin: 0;
         font-size: 14px;
@@ -774,6 +844,77 @@
         font-size: 12px;
         color: var(--text-muted);
         font-style: italic;
+    }
+
+    /* Idea Type Selection (Phase 3) */
+    .idea-type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: var(--space-2);
+    }
+
+    .idea-type-pill {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: var(--space-3);
+        background: var(--bg-elevated);
+        border: 2px solid var(--border-light);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .idea-type-pill:hover:not(:disabled) {
+        border-color: var(--accent);
+        background: var(--accent-lighter);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .idea-type-pill--selected {
+        border-color: var(--accent);
+        background: var(--accent-lighter);
+        color: var(--accent);
+        box-shadow: var(--shadow-md);
+    }
+
+    .idea-type-pill:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .idea-type-icon {
+        font-size: 24px;
+        line-height: 1;
+    }
+
+    .idea-type-label {
+        font-weight: 600;
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .idea-type-info {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: var(--secondary-lighter);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        color: var(--secondary);
+    }
+
+    .idea-type-folder-icon {
+        font-size: 14px;
+    }
+
+    .idea-type-folder-path {
+        font-weight: 600;
     }
 
     .metadata-grid {
@@ -877,6 +1018,17 @@
         font-size: 13px;
         font-weight: 600;
         color: var(--accent);
+    }
+
+    .placement-hint {
+        margin: 0;
+        padding: var(--space-2) var(--space-3);
+        background: var(--accent-lighter);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        color: var(--accent);
+        text-align: center;
+        font-style: italic;
     }
 
     .result-actions {

@@ -14,7 +14,7 @@
     import FlowMode from './FlowMode.svelte';
     import QuickCapture from './QuickCapture.svelte';
     import SettingsPanel from '../components/SettingsPanel.svelte';
-    import { promoteToInsight, getConfiguredBackendUrl, checkBackendHealth } from '../utils/siyuan-structure';
+    import { promoteToInsight, getBackendUrl, checkBackendHealth } from '../utils/siyuan-structure';
     import { settingsStore, initializeSettings, getSettingsForSave, type IESSettings } from '../stores/settings';
     import type { CaptureStatus } from '../types/blocks';
     import { CAPTURE_STATUS_LABELS } from '../types/blocks';
@@ -23,7 +23,7 @@
     export let plugin: any = null;
 
     // Backend configuration
-    let backendUrl = getConfiguredBackendUrl();
+    let backendUrl = getBackendUrl();
     const VERSION = '0.3.2';
     const USER_ID = 'chris';
 
