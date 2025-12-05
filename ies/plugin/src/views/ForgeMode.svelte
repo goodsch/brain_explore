@@ -1347,5 +1347,397 @@
         border-radius: var(--radius-sm);
     }
 
-    /* ... continue with rest of styles from original file ... */
+    /* ============================================
+       INTERACTIVE QUESTION RESPONSE CARD
+       ============================================ */
+    .question-response-card {
+        background: var(--bg-elevated);
+        border: 2px solid var(--class-color, var(--accent));
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        margin: var(--space-3) 0;
+        box-shadow: var(--shadow-md);
+    }
+
+    .qrc-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-bottom: var(--space-3);
+    }
+
+    .qrc-icon {
+        font-size: 1.25rem;
+    }
+
+    .qrc-label {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--class-color, var(--accent));
+    }
+
+    .qrc-badge {
+        margin-left: auto;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        background: var(--accent-lighter);
+        color: var(--accent);
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .qrc-question {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+        padding: var(--space-3);
+        background: var(--bg-base);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid var(--class-color, var(--accent));
+    }
+
+    .qrc-hint {
+        background: var(--secondary-lighter);
+        border-radius: var(--radius-sm);
+        padding: var(--space-3);
+        margin-bottom: var(--space-3);
+    }
+
+    .qrc-hint-text {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin: 0 0 var(--space-2) 0;
+        line-height: 1.5;
+    }
+
+    .qrc-hint-prompt {
+        font-size: 0.85rem;
+        color: var(--secondary);
+        margin: 0;
+    }
+
+    .qrc-input {
+        width: 100%;
+        padding: var(--space-3);
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-sm);
+        background: var(--bg-base);
+        color: var(--text-primary);
+        font-family: var(--font-body);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        resize: vertical;
+        min-height: 80px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .qrc-input:focus {
+        outline: none;
+        border-color: var(--class-color, var(--accent));
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--class-color, var(--accent)) 20%, transparent);
+    }
+
+    .qrc-input::placeholder {
+        color: var(--text-subtle);
+    }
+
+    .qrc-input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .qrc-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        margin-top: var(--space-3);
+    }
+
+    .qrc-starter {
+        background: var(--bg-base);
+        border: 1px dashed var(--border-medium);
+        border-radius: var(--radius-sm);
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.15s ease;
+    }
+
+    .qrc-starter:hover:not(:disabled) {
+        background: var(--secondary-lighter);
+        border-color: var(--secondary);
+        color: var(--secondary);
+    }
+
+    .qrc-starter:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .qrc-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-2);
+    }
+
+    .qrc-skip {
+        background: transparent;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        padding: var(--space-2) var(--space-4);
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .qrc-skip:hover:not(:disabled) {
+        background: var(--bg-base);
+        color: var(--text-secondary);
+    }
+
+    .qrc-skip:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .qrc-respond {
+        background: var(--class-color, var(--accent));
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: var(--space-2) var(--space-5);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .qrc-respond:hover:not(:disabled) {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
+
+    .qrc-respond:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    .qrc-respond:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .qrc-history {
+        margin-top: var(--space-3);
+        padding-top: var(--space-2);
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    .qrc-history-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* ============================================
+       CONVERSATION MESSAGES
+       ============================================ */
+    .forge-messages {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        padding: var(--space-2);
+    }
+
+    .message {
+        padding: var(--space-3);
+        border-radius: var(--radius-md);
+        max-width: 85%;
+    }
+
+    .message.user {
+        align-self: flex-end;
+        background: var(--accent-lighter);
+        color: var(--text-primary);
+    }
+
+    .message.assistant {
+        align-self: flex-start;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+    }
+
+    /* ============================================
+       INPUT AREA
+       ============================================ */
+    .forge-input {
+        display: flex;
+        gap: var(--space-2);
+        padding: var(--space-2);
+        background: var(--bg-base);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-light);
+    }
+
+    .forge-input textarea {
+        flex: 1;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        font-family: var(--font-body);
+        font-size: 0.95rem;
+        resize: none;
+        padding: var(--space-2);
+    }
+
+    .forge-input textarea:focus {
+        outline: none;
+    }
+
+    .forge-input textarea::placeholder {
+        color: var(--text-subtle);
+    }
+
+    .forge-controls {
+        display: flex;
+        gap: var(--space-2);
+        align-items: flex-end;
+    }
+
+    .send-btn {
+        background: var(--accent);
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: var(--space-2) var(--space-4);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        transition: all 0.15s ease;
+    }
+
+    .send-btn:hover:not(:disabled) {
+        background: var(--accent-dark);
+    }
+
+    .send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .end-btn {
+        background: var(--secondary);
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: var(--space-2) var(--space-3);
+        color: white;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .end-btn:hover {
+        filter: brightness(1.1);
+    }
+
+    /* ============================================
+       TEMPLATE PROGRESS
+       ============================================ */
+    .template-progress {
+        padding: var(--space-3);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-2);
+    }
+
+    .progress-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .progress-count {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .progress-bar {
+        height: 4px;
+        background: var(--border-light);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 2px;
+        transition: width 0.3s ease;
+    }
+
+    .current-section {
+        margin-top: var(--space-2);
+        font-size: 0.8rem;
+        color: var(--accent);
+    }
+
+    /* ============================================
+       SESSION SUMMARY
+       ============================================ */
+    .session-summary {
+        padding: var(--space-4);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .summary-title {
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: var(--space-3);
+        color: var(--text-primary);
+    }
+
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: var(--space-3);
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: var(--space-2);
+        background: var(--bg-base);
+        border-radius: var(--radius-sm);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
 </style>
