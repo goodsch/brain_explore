@@ -42,3 +42,19 @@ services:
       AUTO_UPDATE: true
       AUTO_IMPORT: true
     restart: unless-stopped
+
+  siyuan:
+    image: b3log/siyuan
+    container_name: brain_explore_siyuan
+    command: ['--workspace=/siyuan/workspace/']
+    ports:
+      - "6806:6806"
+    volumes:
+      - ./data/siyuan/workspace:/siyuan/workspace
+    environment:
+      TZ: America/New_York
+      PUID: 1000
+      PGID: 1000
+      SIYUAN_ACCESS_AUTH_CODE_BYPASS: "true"
+    restart: unless-stopped
+

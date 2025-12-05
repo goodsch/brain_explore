@@ -73,6 +73,67 @@ Four-agent critical analysis revealed **catastrophic disconnect** between docume
 - ⚠️ Layer 4: Readest — **CRITICAL REMEDIATION NEEDED** (Grade: D+, 1.8/4.0) — 15 bugs, design disconnect, broken interactions
 
 **Latest (Dec 5):**
+- ✅ **SiYuan Architecture Implementation (Commit 4ce8b11)** — Merged IES Architecture Package structure with ADHD-friendly current implementation
+  - **Design Document:** `docs/plans/2025-12-05-siyuan-architecture-merge-design.md` — Complete merge strategy (301 lines)
+  - **Comparison Analysis:** `docs/ARCHITECTURE-COMPARISON.md` — Detailed gap analysis (556 lines) comparing architectures
+  - **Implementation Files:**
+    - `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` — STRUCTURE_FOLDERS array updated to 9-folder merged hierarchy (lines 32-71)
+    - `.worktrees/siyuan/ies/plugin/src/types/blocks.ts` — Complete TypeScript type system for block schemas (250 lines)
+    - `.worktrees/siyuan/ies/plugin/src/index.ts` — Plugin lifecycle unchanged (structure initialization on load)
+  - **Merged 9-Folder Structure (IMPLEMENTED):**
+    - `/Daily/` — Quick captures (Package's 00_Inbox)
+    - `/Seedlings/` — Atomic ideas with 7 subcategories (Questions, Observations, Moments, Schemas, Contradictions, What_Ifs, Insights)
+    - `/Sessions/` — Mode-specific thinking (Learning, Articulating, Planning, Ideating, Reflecting)
+    - `/Flow_Maps/` — Visual maps (Package's 03_Flow_Maps)
+    - `/Concepts/` — Canonical concepts (aligned)
+    - `/Insights/` — Promoted/validated insights (current)
+    - `/Favorite_Problems/` — ADHD anchor questions (current)
+    - `/Projects/` — Active work (Package's 05_Projects)
+    - `/Archive/` — Retired material (Package's 06_Archive)
+  - **Block Type System (IMPLEMENTED):**
+    - 6 formal block types: `seed`, `shaping`, `map`, `concept`, `decision`, `log_entry`
+    - 7 idea types for seedlings: `question`, `insight`, `observation`, `moment`, `schema`, `contradiction`, `what_if`
+    - TypeScript interfaces: `QuickCaptureMeta`, `SeedBlockMeta`, `ShapingBlockMeta`, `MapBlockMeta`, `ConceptBlockMeta`, `DecisionBlockMeta`, `LogEntryMeta`
+    - Seedling folder mapping: `SEEDLING_FOLDER_MAP` maps idea types to Seedlings subfolders
+  - **Two Status Systems (IMPLEMENTED):**
+    - `capture_status`: `raw` → `classified` → `processed` (AI processing state)
+    - `status`: `captured` → `exploring` → `anchored` (user engagement state)
+    - Enums: `CaptureStatus`, `UserStatus`, `ResonanceSignal`, `EnergyLevel`
+  - **Metadata Storage:** Both YAML frontmatter AND SiYuan attributes (design decision, implementation pending)
+  - **Dual Insights Folders:** Seedlings/Insights (raw "aha" moments) vs /Insights/ (promoted/validated)
+  - **Preserved ADHD Features:** energy_level, resonance_signal, exploration_visits, backend linking (be_id, be_type)
+  - **Repository Guidelines:** `AGENTS.md` created documenting IES SiYuan Architecture Package expert context for AI agents
+- ✅ **Architecture Comparison Analysis** — Comprehensive evaluation of IES SiYuan Architecture Package vs. current implementation
+  - `docs/ARCHITECTURE-COMPARISON.md`: 486-line detailed comparison across all architectural dimensions
+  - **Key Finding:** The two architectures are **complementary, not competing**
+  - Architecture Package provides the **SiYuan document structure** we've been missing (Gap #1 in SYSTEM-DESIGN.md)
+  - Current implementation provides the **backend intelligence and cross-app integration** the Package assumes but doesn't define
+  - **7-Layer Package Structure:** `/00_Inbox/` → `/01_Seedlings/` → `/02_Shaping/` → `/03_Flow_Maps/` → `/04_Concepts/` → `/05_Projects/` → `/06_Archive/` + `/07_System/`
+  - **Defining Feature:** Quick Capture system with status lifecycle (raw → classified → processed) and AI boundary clarification
+  - **6 Formal Block Schemas:** seed-block, shaping-block, map-block, concept-block, decision-block, log-entry-block
+  - **Hybrid Migration Strategy:** Preserve ADHD-friendly features (energy levels, resonance signals, backend APIs, Question Engine) while adopting Quick Capture lifecycle, Seedling types, formal block schemas, Project structure, Flow Maps, Archive system
+  - **Implementation Priority:** Foundation (STRUCTURE_FOLDERS, Quick Capture schema, status lifecycle) → UI Components (Queue sidebar, Process workflow, Seedling type selection) → Templates → Integration
+  - Reference implementation available in `IES_SiYuan_Architecture_Package_QuickCaptureUpdated/`
+- ✅ **UX Development Worktree Created** — New worktree for unified design system work
+  - `.worktrees/ux-dev/` on branch `feature/ux-development`
+  - **Purpose:** Create unified "IES Design System" across SiYuan Plugin (Svelte) and Readest (React/Next.js)
+  - **Problem:** Each interface built independently with different color palettes, typography, spacing, animations, component styles
+  - **Goal:** Consistent experience, ADHD-friendly visual patterns, clear hierarchy, reduced cognitive load
+  - **Priority 1:** Design system audit — extract current tokens, identify inconsistencies, define unified token set
+  - **Priority 2:** Implementation — unified color system, typography, spacing, animations, component library
+  - **Shared tokens:** CSS custom properties work in both Svelte and React ecosystems
+  - TASK.md documents complete design system audit and implementation plan
+- ✅ **Unified Design System Specification** — Complete design token system (801 lines)
+  - `docs/plans/UNIFIED-DESIGN-SYSTEM.md`: Comprehensive design system specification with "Contemplative Knowledge Space" philosophy
+  - **Aesthetic:** The Reading Room — intellectual warmth meeting focused clarity (quiet afternoon in well-curated library)
+  - **Typography:** 4-font system (Crimson Pro display, Nunito body, Inter UI, JetBrains Mono code) with Major Third scale (1.25 ratio, 15px base)
+  - **Colors:** Warm paper tones (#f8f6f3 deep, #fffef9 base), amber accent (#d4a574), sage secondary (#7a9987), soft violet tertiary (#9d8fb5)
+  - **Entity type colors:** Blue Concept (#2563eb), Green Person (#059669), Purple Theory (#7c3aed), Orange Framework (#ea580c), Red Assessment (#dc2626)
+  - **Spacing:** 8px base unit, 11-step scale (0.5x to 12x) for consistent rhythm
+  - **Shadows:** 6-level elevation system (xs to glow) for depth perception
+  - **Animations:** 4 durations (instant 100ms, fast 200ms, base 300ms, slow 500ms) with ease-out default
+  - **Component patterns:** Cards, buttons, badges, forms, modals with semantic states
+  - **Implementation:** CSS custom properties compatible with both Svelte and React, dark theme overrides, ADHD-friendly hierarchy
 - ✅ **IES Design System Integration** — Main plugin stylesheet now imports comprehensive design system
   - `.worktrees/siyuan/ies/plugin/src/index.scss`: Added `@import './styles/design-system.scss'` for unified styling
   - Integrates "Contemplative Knowledge Space" design philosophy across all plugin components
@@ -109,6 +170,13 @@ Four-agent critical analysis revealed **catastrophic disconnect** between docume
   - Mode Transition Engine specifications for automatic mode switching
   - ADHD-friendly folder structure: /Daily, /Insights, /Threads, /Favorite Problems, /Concepts
   - Complete data schemas: Seed Schema, Concept Schema, Block Attributes, Note Templates
+- 📋 **SiYuan Settings Panel Design** — Configuration UI specification for plugin preferences
+  - Ollama integration: Local AI with auto-discovered models for chat + embeddings
+  - Cloud provider support: OpenAI/Anthropic API key + model selection
+  - Connection management: Backend URL + Ollama URL configuration with status indicators
+  - Domain-agnostic notebook preferences: User-configurable preferred notebooks list
+  - Settings stored locally in SiYuan plugin data, API keys never sent to backend
+  - Design doc: `docs/plans/2025-12-05-siyuan-settings-panel-design.md` (177 lines)
 
 **For complete project status, see:** `docs/COMPREHENSIVE-PROJECT-STATUS.md`
 
@@ -182,7 +250,7 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 | `.worktrees/readest/` | `feature/readest-integration` | Layer 4 Reading Interface | `TASK.md` in worktree |
 | `.worktrees/siyuan/` | `feature/siyuan-evolution` | Layer 3 Processing Hub | `TASK.md` in worktree |
 | `.worktrees/readest-critique/` | `feature/readest-critique` | Readest Four-Agent Pressure Test | `TASK.md` in worktree |
-| `.worktrees/ux-dev/` | `feature/ux-development` | UX/Feature Development (Flow Mode, Entity Overlay, Journey Surfacing) | `TASK.md` in worktree |
+| `.worktrees/ux-dev/` | `feature/ux-development` | Unified Design System (SiYuan + Readest visual consistency) | `TASK.md` in worktree |
 
 **Working in Worktrees:**
 - Each worktree is a separate directory with its own branch checked out
@@ -361,7 +429,7 @@ brain_explore/
 │   │   └── 2025-12-04-readest-calibre-library-view.md  # Phase 4: Readest library browser (UI design)
 │   └── archive/                   # Old progress files, archived memories
 │
-└── docker-compose.yml             # Neo4j + Qdrant + Calibre infrastructure (Layers 1 & 2 support)
+└── docker-compose.yml             # Full infrastructure stack (5 services)
 ```
 
 **Architecture Alignment:**
@@ -370,6 +438,61 @@ brain_explore/
 - **Layer 3** = SiYuan plugin in `.worktrees/siyuan/` (processing hub, dashboard)
 - **Layer 4** = Readest integration in `.worktrees/readest/` (reading interface)
 - **Active Application** = `therapy/` directory (personal growth framework — ongoing project)
+
+**Docker Infrastructure Stack:**
+
+The `docker-compose.yml` orchestrates five services supporting all four layers:
+
+1. **Qdrant** (Vector Store - Layer 1)
+   - Container: `brain_explore_qdrant`
+   - Ports: 6333 (REST API), 6334 (gRPC)
+   - Purpose: Embedding storage for entity and concept search
+   - Data: `./data/qdrant`
+
+2. **Neo4j** (Graph Database - Layer 1)
+   - Container: `brain_explore_neo4j`
+   - Ports: 7474 (Browser), 7687 (Bolt protocol)
+   - Auth: neo4j/brainexplore
+   - APOC plugin enabled for advanced graph operations
+   - Data: `./data/neo4j`
+
+3. **Calibre Web** (Book Catalog - Layer 1)
+   - Container: `brain_explore_calibre`
+   - Port: 8083 (Web UI)
+   - Purpose: Single source of truth for book library (179 books)
+   - Features: Auto-import from `/downloads`, metadata management
+   - Library: `./calibre/library` (SQLite + epub/pdf files)
+   - Ingest: `./calibre/ingest` (incoming books directory)
+
+4. **SiYuan** (Processing Hub - Layer 3)
+   - Container: `brain_explore_siyuan`
+   - Port: 6806 (Web UI)
+   - Purpose: Personal knowledge management with IES plugin integration
+   - **Workspace:** `./data/siyuan/workspace`
+   - **Plugins:** `./data/siyuan/workspace/data/plugins/` (install IES plugin here)
+   - **Themes:** `./data/siyuan/workspace/data/themes/`
+   - **Notebooks:** `./data/siyuan/workspace/data/` (each notebook is a folder)
+   - Auth bypass enabled for development
+   - Note: Plugin runs client-side, communicates with backend via forwardProxy
+
+5. **Readest** (Reading Interface - Layer 4)
+   - Run locally: `cd .worktrees/readest/readest/apps/readest-app && pnpm dev`
+   - Port: 3000 (dev server)
+   - Purpose: E-book reader with entity overlay and flow exploration
+   - Note: Not containerized — Tauri desktop app runs better natively for development
+
+**Service Dependencies:**
+- Backend APIs (Layer 2) run on host at port 8081, connect to Qdrant + Neo4j
+- SiYuan plugin uses forwardProxy to call backend APIs from browser context
+- Readest calls backend APIs directly via HTTP (localhost:8081 or network IP)
+- Calibre integration uses `calibre_id` as universal book identifier across all systems
+
+**Quick Start:**
+```bash
+docker compose up -d             # Start all 5 services
+docker compose ps                # Check service status
+docker compose down              # Stop all services
+```
 
 ## Key Resources
 
@@ -384,6 +507,7 @@ The project maintains a three-level documentation structure for clarity:
 **Level 2: Operational & Validation Documentation**
 - `docs/SYSTEM-DESIGN.md` — **Operational reference**: How the system works end-to-end, data structures, user workflows, integration points, critical gaps (read at session start)
 - `docs/COMPREHENSIVE-PROJECT-STATUS.md` — Complete project status: all 4 layers, phase completion, worktree organization
+- `docs/ARCHITECTURE-COMPARISON.md` — **Architecture Analysis** (556 lines): Comprehensive comparison between IES SiYuan Architecture Package (7-layer structure with Quick Capture system) and current four-layer implementation; identifies complementary strengths and hybrid migration strategy
 - `docs/CRITICAL-ANALYSIS-2025-12-05.md` — **SiYuan Plugin Analysis** (Grade: D, 1.6/4.0): Infrastructure exists but core principles not delivered (questions displayed passively, no response capture, decorative question badges, missing ADHD navigation, incomplete virtuous cycle, domain hardcoding)
 - `docs/ANALYSIS-READEST-2025-12-05.md` — **Readest Integration Analysis** (Grade: D+, 1.8/4.0): Same catastrophic pattern as SiYuan; entity highlights non-interactive, journey tracking invisible, 15 bugs (2 critical), design system disconnect
 - `docs/PRESSURE-TEST-PLAN.md` — **Systematic evaluation plan**: Four-agent testing pattern for all components (Design Reviewer, Principle Evaluator, Bug Hunter, UX Analyst); Readest analysis complete, remaining queue: Backend Question Engine → Knowledge Graph → Personal Graph → Backend Services
@@ -391,6 +515,7 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/plans/2025-12-04-reframe-template-integration-design.md` — Phase 2c implementation: Reframe Layer + Thinking Templates + SiYuan document structure
 - `docs/plans/2025-12-04-calibre-integration-design.md` — Calibre integration architecture: single source of truth for book catalog with universal calibre_id identifier; multi-pass ingestion pipeline (structure → relationships → enrichment); backend APIs complete (Dec 4)
 - `docs/plans/2025-12-04-readest-calibre-library-view.md` — **Phase 4 UI design**: Readest library browser modal with search, entity badge filter, and direct book opening (Dec 4)
+- `docs/plans/UNIFIED-DESIGN-SYSTEM.md` — **Complete design system specification** (801 lines): "Contemplative Knowledge Space" aesthetic with typography system, color palette, spacing scale, shadows, animations, component patterns; CSS custom properties for Svelte/React compatibility
 - `docs/plans/2025-12-03-integrated-reading-knowledge-system.md` — Four-layer architecture design
 - `docs/PHASE-1-WORKFLOW.md` — Complete operational guide for running dialogue sessions (proven, reusable for Phase 2+ exploration)
 - `docs/PHASE-2A-VALIDATION-RESULTS.md` — Layer 3 CLI validation results; all criteria met
@@ -423,7 +548,7 @@ These visual documents are exported from SiYuan and provide mermaid diagrams, ta
 
 **Technical Setup:**
 - `ies/backend/README.md` — Backend API setup and configuration
-- `docker-compose.yml` — Infrastructure (Neo4j + Qdrant)
+- `docker-compose.yml` — Full infrastructure stack (5 services: Qdrant, Neo4j, Calibre, SiYuan, Readest)
 
 ## The Parking Lot
 
@@ -495,23 +620,39 @@ uv run pytest -v                 # Verbose output
 uv run pytest tests/file.py      # Run specific test file
 ```
 
-### Building Plugin
+### Building SiYuan Plugin
 
 ```bash
-cd ies/plugin
-npm install                      # Install dependencies
-npm run build                    # Build plugin
-npm run dev                      # Development mode
+cd .worktrees/siyuan/ies/plugin
+pnpm install                     # Install dependencies
+pnpm build                       # Build plugin
+pnpm dev                         # Development mode
+
+# Install built plugin to SiYuan workspace:
+cp -r dist/* ./data/siyuan/workspace/data/plugins/ies/
 ```
 
 ## Quick Commands
 
 ```bash
+# Git
 git log --oneline -20            # See recent commits
 git diff                         # See uncommitted changes
 git status                       # See current state
-docker compose up -d             # Start Neo4j + Qdrant
-docker compose down              # Stop services
+
+# Docker services (Qdrant, Neo4j, Calibre, SiYuan)
+docker compose up -d             # Start all services
+docker compose ps                # Check service status
+docker compose down              # Stop all services
+docker compose logs siyuan       # View SiYuan container logs
+
+# Readest (run locally, not in Docker)
+cd .worktrees/readest/readest/apps/readest-app && pnpm dev
+
+# SiYuan data paths (inside Docker volume)
+# Plugins: ./data/siyuan/workspace/data/plugins/
+# Themes:  ./data/siyuan/workspace/data/themes/
+# Notes:   ./data/siyuan/workspace/data/
 ```
 
 ## The Four-Layer Thinking Partnership Cycle
@@ -588,6 +729,118 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 5):**
+- **Flow Mode Backend Implementation** — Complete backend services for capture → thinking → flow visualization pipeline:
+  - **Implementation Plan:** `docs/plans/2025-12-05-flow-mode-implementation-plan.md` — Three-layer loop architecture (ephemeral capture → structured thinking → visual flow)
+  - **New API Endpoints:** `ies/backend/src/ies_backend/api/flow_session.py` (60 lines) — Flow session lifecycle management
+    - `POST /flow/openFromSession` — Open flow from thinking session with initial graph view
+    - `GET /flow/{session_id}` — Get current flow state
+    - `POST /flow/{session_id}/step` — Record exploration breadcrumb
+    - `POST /flow/{session_id}/synthesize` — Generate synthesis from journey
+    - `GET /flow/{session_id}/journey` — Get complete journey with breadcrumbs
+  - **FlowSessionService:** `ies/backend/src/ies_backend/services/flow_session_service.py` (342 lines) — Flow lifecycle and synthesis
+    - `open_from_thinking_session()` — Creates FlowSession node in Neo4j, fetches initial graph view, links to ThinkingSession
+    - `record_step()` — Updates breadcrumbs, visited_nodes, visited_edges during exploration
+    - `generate_synthesis()` — Uses Claude Sonnet 4 to synthesize insights from journey breadcrumbs
+    - Schema creation: `FlowSession` nodes with origin, visited tracking, breadcrumbs, insights
+    - Integration: Connects ThinkingSession → FlowSession via `FROM_THINKING` relationship
+  - **Schemas:** `ies/backend/src/ies_backend/schemas/flow_session.py` — FlowSession, FlowOrigin, FlowInitialView, GraphNode, GraphEdge, RecommendedPath (80+ lines)
+  - **Thinking Schemas:** `ies/backend/src/ies_backend/schemas/thinking.py` — ThinkingSession, Angle, Breadcrumb, ThinkingStatus (80+ lines)
+  - **Tests:** `ies/backend/tests/test_thinking_and_flow.py` (265 lines) — 5 tests for full capture → thinking → flow pipeline (all passing)
+  - **Main Router:** Updated `ies/backend/src/ies_backend/main.py` — Registered flow_session and thinking routers
+  - **Key Design:** Flow doesn't start from zero - it starts from a Spark (current context, highlight, thought) → structured processing → graph exploration
+  - **Three-Layer Loop:**
+    1. Ephemeral Capture — Quick spark capture without derailing current task
+    2. Structured Thinking Session — AI-prompted meaning extraction from captures
+    3. Visual Flow Exploration — Graph-based exploration from integrated captures
+  - **Data Flow:** CaptureItem (queued → in_thinking → integrated) → ThinkingSession (angles, breadcrumbs, entities) → FlowSession (origin, visited nodes/edges, synthesis)
+- **Architecture Merge Phase 1: Foundation Implementation (Commit 30df4d6)** — Merged architecture implemented in SiYuan plugin TypeScript layer:
+  - **New Block Schema Types:** `.worktrees/siyuan/ies/plugin/src/types/blocks.ts` — Complete TypeScript definitions (272 lines)
+    - **Two status systems:** `CaptureStatus` type (AI: raw→classified→processed) and `UserStatus` type (user: captured→exploring→anchored)
+    - **Six formal block types:** `BlockType` union (seed, shaping, map, concept, decision, log_entry)
+    - **Seven seedling idea types:** `IdeaType` union (question, insight, observation, moment, schema, contradiction, what_if, other)
+    - **ADHD extensions:** `ResonanceSignal` enum (8 signals: Spark, Curiosity, Delight, Concern, Tension, Dread, Clarity, Stuck), `EnergyLevel` enum (3 levels: Low, Medium, High)
+    - **Clarity/Confidence levels:** `ClarityLevel` (fuzzy, partial, clear), `ConfidenceLevel` (low, medium, high) for tracking idea maturity
+    - **Capture system types:** `CaptureChannel` (phone, readest, web, voice, other), `CaptureSource` (ios_shortcut, readest, browser_extension, mcp_tool, manual)
+    - **Metadata interfaces:** `BaseMeta` (shared fields), `QuickCaptureMeta` (captures), `SeedBlockMeta` (seedlings), `ShapingBlockMeta` (dialogue), `MapBlockMeta` (visual), `ConceptBlockMeta` (canonical), `DecisionBlockMeta` (projects), `LogEntryMeta` (activity)
+    - **Helper constants:** `IDEA_TYPE_LABELS` (human-readable), `IDEA_TYPE_ICONS` (emoji), `CAPTURE_STATUS_LABELS`, `USER_STATUS_LABELS`, `SEEDLING_FOLDER_MAP` (type → folder path)
+    - **Union type:** `BlockMeta` covers all possible metadata schemas for type safety
+  - **Merged Folder Structure:** `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` — Updated STRUCTURE_FOLDERS array (71 lines)
+    - **9 top-level folders implemented:** Daily, Seedlings (with 7 subcategories), Sessions (5 modes), Flow_Maps, Concepts, Insights, Favorite_Problems, Projects, Archive
+    - **Seedling subfolders:** Questions, Observations, Moments, Schemas, Contradictions, What_Ifs, Insights (raw "aha" moments)
+    - **Session mode folders:** Learning, Articulating, Planning, Ideating, Reflecting
+    - **Dual Insights design:** Seedlings/Insights (raw) vs /Insights/ (promoted/validated)
+    - **Domain-agnostic notebook preferences:** Maintained `getPreferredNotebookNames()` with settings store integration
+    - **Backend integration preserved:** `callBackendApi()`, health checking, personal graph functions all intact
+  - **Plugin Lifecycle Updated:** `.worktrees/siyuan/ies/plugin/src/index.ts` — Auto-folder creation temporarily disabled (line 76 comment)
+    - User requested pause for manual notebook reorganization before auto-creation runs
+    - Will re-enable via uncommenting `ensureNotebookStructure()` call after cleanup
+    - Plugin instance passing to Dashboard for settings persistence maintained
+  - **Implementation Status:** Foundation complete (types + folder structure + imports), UI components next phase
+  - **Design Documents:**
+    - `docs/plans/2025-12-05-siyuan-architecture-merge-design.md` — Complete merge strategy (301 lines)
+    - `docs/ARCHITECTURE-COMPARISON.md` — Detailed comparison analysis (556 lines)
+    - `AGENTS.md` — Repository guidelines with IES SiYuan Architecture expert context
+  - **Next Phase:** UI Components (Quick Capture Queue sidebar, Process workflow, Seedling type selection)
+  - **Preserved ADHD Features:** energy_level, resonance_signal, exploration_visits, backend linking (be_id, be_type)
+- **SiYuan Architecture Merge Design (Commit 4ce8b11)** — Design decisions for merging IES Architecture Package with current implementation:
+  - **Design Document:** `docs/plans/2025-12-05-siyuan-architecture-merge-design.md` — Complete merge strategy (301 lines)
+  - **Comparison Analysis:** `docs/ARCHITECTURE-COMPARISON.md` — Detailed gap analysis (486 lines) comparing architectures
+  - **Key Decision:** Hybrid merge preserving ADHD features while adopting Quick Capture system
+  - **Two Status Fields:** `capture_status` (AI: raw→classified→processed) vs `status` (user: captured→exploring→anchored)
+  - **Metadata Storage:** Both YAML frontmatter AND SiYuan attributes (synced) — YAML for readability, attributes for SQL queries
+  - **Implementation Priority:** Foundation (STRUCTURE_FOLDERS, Quick Capture schema, status lifecycle) → UI Components (Queue sidebar, Process workflow, Seedling type selection) → Templates → Integration
+- **SiYuan Architecture Evolution Package** — New comprehensive 7-layer structure proposal with formal block schemas and Quick Capture system:
+  - **Documentation:** `docs/ARCHITECTURE-COMPARISON.md` — Complete comparison matrix (486 lines) between current implementation and new architecture package
+  - **Reference Implementation:** `IES_SiYuan_Architecture_Package_QuickCaptureUpdated/` — Templates, schemas, and directives for evolved structure
+  - **Key Shift:** From emotional resonance capture (sparks) to cognitive atomic units (seedlings) with structured processing workflows
+  - **New 7-Layer Structure:**
+    1. `/00_Inbox/` — Ephemeral capture with Quick Capture system (status: raw → classified → processed)
+    2. `/01_Seedlings/` — Atomic ideas in 7 categories (Observations, Questions, Contradictions, What_Ifs, Insights, Moments, Schemas)
+    3. `/02_Shaping/` — Dialogue-mode guided questioning (Dialogue Sessions, Cognitive Excavations, Internal Models, Mini Syntheses)
+    4. `/03_Flow_Maps/` — Non-linear exploration (Perspectives, Concept Maps, Systems, Schemas, Timelines)
+    5. `/04_Concepts/` — Canonical knowledge graph with 11 domain folders (IES, Emotion, Cognition, ADHD, Therapy, Self, Motivation, Other_People, Environment, Tools, Systems)
+    6. `/05_Projects/` — Active work structures (8-page template: README, Goals, Questions, Plan, Status, Decisions, Research, Maps, Logs)
+    7. `/06_Archive/` — Retired/superseded material with reasons and dates
+    8. `/07_System/` — Meta-layer (Templates, Example Notes, Block Schemas, Quick Capture Schema, AI Directives, Dataflow docs)
+  - **6 Formal Block Schemas:** seed-block (atomic ideas), shaping-block (dialogue segments), map-block (visual representations), concept-block (canonical definitions), decision-block (project decisions), log-entry-block (activity records)
+  - **Quick Capture System (Defining Feature):**
+    - Status lifecycle: raw (just landed) → classified (AI metadata added) → processed (user decided placement)
+    - AI boundaries: Automatic (add auto_summary, auto_labels, linked_concepts) vs. Interactive (move blocks, split seedlings, attach to projects, mark processed)
+    - Capture channels: phone, Readest, web, voice, other
+    - Schema fields: quick_capture, capture_channel, capture_source, capture_time, capture_status, auto_summary, auto_labels, linked_concepts, optional book metadata
+  - **Migration Strategy:** Hybrid approach preserving ADHD-friendly features (energy levels, resonance signals, backend API integration, Question Engine) while adding Quick Capture lifecycle, Seedling types, formal block schemas, Project structure, Flow Maps, Archive system
+  - **Implementation Priority:** Foundation (update STRUCTURE_FOLDERS, add Quick Capture schema, status lifecycle) → UI Components (Quick Capture Queue sidebar, "Process this capture" workflow, Seedling type selection) → Templates (port Markdown templates, Concept Page structure, Flow Map templates) → Integration (backend APIs, AI classification, health checks)
+- **Interactive Thinking Partner Questions (Readest)** — Expandable question-response system with journey tracking:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/QuestionsSection.tsx` — Interactive Q&A with journey tracking (210 lines)
+  - **Expandable questions:** Click to reveal textarea for response input (useState expandedIndex tracking)
+  - **Response submission:** Cmd/Ctrl+Enter shortcut (handleKeyDown), tracks exchanges in journey breadcrumb
+  - **Question types:** Visual labels for clarifying/connecting/challenging questions with type-specific styling
+  - **Bookmark feature:** Save questions as journey marks for later reflection (addJourneyMark)
+  - **Submitted responses tracked:** UI shows submitted answers in green success card, clears input after submission
+  - **Auto-focus:** Textarea automatically focused when question expanded (useRef with setTimeout)
+  - **Related entities:** Shows related entity chips when question has relatedEntities array
+  - **Integration:** Questions section in FlowPanel.tsx shows thinking partner questions from backend
+- **Journey Breadcrumb Visualization (Readest)** — Makes invisible knowledge journeys visible and navigable:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/JourneyBreadcrumb.tsx` — Shows last 5 journey steps with entity names, dwell time, overflow count (98 lines)
+  - **Step navigation:** Click any breadcrumb step to revisit that entity in Flow panel (handleStepClick function)
+  - **Dwell time display:** Inline time indicators (seconds/minutes) show engagement per entity with LuClock icon
+  - **Journey marks counter:** Displays count of saved notes/annotations/questions from exploration
+  - **Overflow handling:** Shows "+N more" when journey path exceeds 5 steps
+  - **Integration:** Integrated into FlowPanel.tsx with LuRoute icon header section
+  - **Purpose:** Addresses UX gap where journeys were tracked but never shown to user
+- **Flow Panel Component Reorganization (Readest)** — Clean module structure for Flow panel subsystems:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/index.ts` — Centralized exports for 7 components
+  - **Exported components:** FlowPanel, FlowPanelHeader, EntitySection, RelationshipsSection, SourcesSection, QuestionsSection, JourneyBreadcrumb
+  - **Benefits:** Enables clean imports `import { FlowPanel, JourneyBreadcrumb } from './flowpanel'`, modular architecture where each section is independently fetchable and testable
+  - **Integration:** ReaderContent.tsx imports FlowPanel from index, all Flow panel features accessed through single import point
+- **Dashboard Energy-Based Navigation (SiYuan)** — ADHD-friendly spark filtering with dynamic backend configuration:
+  - `.worktrees/siyuan/ies/plugin/src/views/Dashboard.svelte` — Energy filters (low/medium/high) and resonance filters (8 emotional signals) for mood-appropriate navigation
+  - **Energy filters:** All, Low (🔋), Medium (⚡), High (🔥) with mutually exclusive selection
+  - **Resonance filters:** 8 emotional signals (curious, excited, surprised, moved, disturbed, unclear, connected, validated) with emoji labels
+  - **Backend health checking:** Connected/Checking/Disconnected status with manual retry, 30-second cache TTL
+  - **Flow mode concept navigation:** Clicking suggestions in "Most Connected" or "Novel Concepts" passes concept name to FlowMode for pre-selected exploration
+  - **API endpoints:** `/personal/sparks/by-energy/{level}`, `/personal/sparks/by-resonance/{signal}` for filtered spark retrieval
+  - **Empty state handling:** Shows friendly message when filters return no results with "Show all sparks" option
 - **Complete Entity Click-to-Flow Interaction System (Readest)** — Full event loop from text overlay to exploration:
   - `.worktrees/readest/readest/apps/readest-app/src/app/reader/hooks/useEntityClick.ts` — Event listener hook handles entity-click events from iframe content (88 lines)
   - **Event flow:** Entity highlighted → User clicks → Event dispatched → Flow panel opens → Entity fetched → Journey step added
@@ -906,7 +1159,174 @@ The Dashboard now includes ADHD-friendly energy-based navigation for sparks with
 - Resonance dropdown with emoji labels matching 8 ADHD-friendly signals
 - Backend status indicator with retry button and connection messages
 
-**AST Folder Structure:**
+**Settings Panel Implementation (Dec 5):**
+
+Configuration panel for plugin preferences with centralized settings store:
+
+**Core Features:**
+- **Ollama Integration** — Local AI for chat + embeddings (auto-discover models via API)
+- **Cloud Providers** — OpenAI/Anthropic API key + model selection
+- **Connection Management** — Backend URL + Ollama URL configuration with live health checks
+- **Notebook Preferences** — User-configurable preferred notebooks (domain-agnostic defaults)
+- **Display Options** — Question badges, auto-save sessions, user ID
+
+**Settings Architecture:**
+- **Primary Source:** Svelte store (`settingsStore`) with reactive subscriptions
+- **Persistence:** Plugin data (`plugin.saveData('settings.json')`) for workspace persistence
+- **Fallback Chain:** Settings store → localStorage (backward compat) → hardcoded defaults
+- **Initialization:** `initializeSettings()` merges loaded data with defaults on plugin mount
+- **Runtime Access:** `getSettingsSync()` for synchronous reads, `updateSettings()` for partial updates
+
+**Settings Schema:**
+```typescript
+interface IESSettings {
+  backendUrl: string;              // Backend API connection (default: http://192.168.86.60:8081)
+  ollamaUrl: string;               // Local Ollama instance (default: http://localhost:11434)
+  chatProvider: 'ollama' | 'openai' | 'anthropic';  // Default: openai
+  chatModel: string;               // Auto-populated from provider (default: gpt-4o)
+  embeddingProvider: 'ollama' | 'openai';  // Default: openai
+  embeddingModel: string;          // Default: text-embedding-3-small
+  openaiApiKey: string;            // Stored locally, never sent to backend
+  anthropicApiKey: string;
+  preferredNotebooks: string[];    // Domain-agnostic notebook list
+  userId: string;                  // Default: 'chris'
+  showQuestionBadges: boolean;     // Default: true
+  autoSaveSessions: boolean;       // Default: true
+}
+```
+
+**UI Design:**
+- Gear icon in Dashboard header → modal with collapsible sections
+- **Connection status indicators:** Live health checks with color-coded status (green = connected, red = disconnected, spinner = checking)
+- **Auto-discovery:** Ollama models fetched from `/api/tags` endpoint, filtered by type (chat vs embedding)
+- **Health checking:** Backend and Ollama connections validated on mount and URL change (500ms debounce)
+- **Provider switching:** Changing chat/embedding provider auto-selects first available model from that provider
+- **API keys:** Masked password fields, stored in SiYuan plugin data (never sent to backend)
+- **Settings persist:** Saved to workspace via `plugin.saveData()` on every change
+
+**Implementation Files:**
+- `stores/settings.ts` (150 lines) — Svelte writable store, schema definitions, DEFAULT_SETTINGS, model lists, helper functions
+- `utils/ollama.ts` (129 lines) — Ollama API client with health checks, model fetching, chat/embedding filtering
+- `components/SettingsPanel.svelte` (200+ lines) — Modal UI with collapsible sections, connection testing, debounced URL changes
+- `views/Dashboard.svelte` — Gear icon button, SettingsPanel integration, settings persistence via plugin instance
+- `index.ts` — Plugin lifecycle: loads settings on init, passes plugin instance to Dashboard for saveData access
+
+**Integration Points:**
+- **siyuan-structure.ts:** `getBackendUrl()` and `getPreferredNotebookNames()` now check settings store first, fall back to localStorage
+- **Dashboard.svelte:** Uses `settingsStore` for backend URL, initializes settings from plugin data on mount
+- **ForgeMode (future):** Will consume `chatProvider` and `chatModel` for dialogue generation
+- **QuickCapture (future):** Will consume `embeddingProvider` and `embeddingModel` for entity extraction
+
+**Backward Compatibility:**
+- Functions like `getBackendUrl()` check settings store first, then localStorage for migration
+- Settings initialized with defaults merged with loaded data (missing fields get default values)
+- No breaking changes to existing code - settings store is additive enhancement
+
+**Design Document:** `docs/plans/2025-12-05-siyuan-settings-panel-design.md` (177 lines) — Complete specification with schema, UI layout, integration points, implementation order
+
+---
+
+**SiYuan Architecture Merge Implementation (Dec 5):**
+
+**Complete Folder Structure Implementation:** `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` (lines 32-71)
+
+The STRUCTURE_FOLDERS array now defines a unified 9-folder hierarchy merging IES Architecture Package with ADHD-friendly current implementation:
+
+```typescript
+const STRUCTURE_FOLDERS = [
+    // Daily quick captures (Package's 00_Inbox)
+    { path: 'Daily', title: 'Daily' },
+
+    // Seedlings - atomic ideas (Package's 01_Seedlings)
+    { path: 'Seedlings', title: 'Seedlings' },
+    { path: 'Seedlings/Questions', title: 'Seedlings – Questions' },
+    { path: 'Seedlings/Observations', title: 'Seedlings – Observations' },
+    { path: 'Seedlings/Moments', title: 'Seedlings – Moments' },
+    { path: 'Seedlings/Schemas', title: 'Seedlings – Schemas' },
+    { path: 'Seedlings/Contradictions', title: 'Seedlings – Contradictions' },
+    { path: 'Seedlings/What_Ifs', title: 'Seedlings – What Ifs' },
+    { path: 'Seedlings/Insights', title: 'Seedlings – Insights' },
+
+    // Sessions by thinking mode (Package's 02_Shaping)
+    { path: 'Sessions', title: 'Sessions' },
+    { path: 'Sessions/Learning', title: 'Learning Sessions' },
+    { path: 'Sessions/Articulating', title: 'Articulating Sessions' },
+    { path: 'Sessions/Planning', title: 'Planning Sessions' },
+    { path: 'Sessions/Ideating', title: 'Ideating Sessions' },
+    { path: 'Sessions/Reflecting', title: 'Reflecting Sessions' },
+
+    // Flow Maps - visual maps (Package's 03_Flow_Maps)
+    { path: 'Flow_Maps', title: 'Flow Maps' },
+
+    // Concepts - canonical concepts (Package's 04_Concepts)
+    { path: 'Concepts', title: 'Concepts' },
+
+    // Promoted/validated insights (current ADHD structure)
+    { path: 'Insights', title: 'Insights' },
+
+    // ADHD anchor questions (current structure)
+    { path: 'Favorite_Problems', title: 'Favorite Problems' },
+
+    // Projects - active work (Package's 05_Projects)
+    { path: 'Projects', title: 'Projects' },
+
+    // Archive - retired material (Package's 06_Archive)
+    { path: 'Archive', title: 'Archive' },
+];
+```
+
+**Block Type System Implementation:** `.worktrees/siyuan/ies/plugin/src/types/blocks.ts` (250 lines)
+
+Complete TypeScript type system for merged block schemas:
+
+**Status Types:**
+- `CaptureStatus`: `'raw' | 'classified' | 'processed'` — AI processing state
+- `UserStatus`: `'captured' | 'exploring' | 'anchored'` — User engagement state
+
+**ADHD Extensions:**
+- `ResonanceSignal`: 8 emotional retrieval cues (spark, curiosity, delight, concern, tension, dread, clarity, stuck)
+- `EnergyLevel`: 3 levels for mood-appropriate navigation (low, medium, high)
+
+**Seedling Types:**
+- `IdeaType`: 7 atomic idea categories (question, insight, observation, moment, schema, contradiction, what_if)
+- `ClarityLevel`: Fuzzy-to-clear progression (fuzzy, partial, clear)
+- `ConfidenceLevel`: Idea strength (low, medium, high)
+
+**Capture Channels:**
+- `CaptureChannel`: How captured (phone, readest, web, voice, other)
+- `CaptureSource`: Specific tool (ios_shortcut, readest, browser_extension, mcp_tool, manual, other)
+
+**Block Types:**
+- `BlockType`: 6 formal types (seed, shaping, map, concept, decision, log_entry)
+
+**Block Metadata Interfaces:**
+1. `BaseMeta` — Common fields (block_type, be_id, be_type, resonance_signal, energy_level, status, exploration_visits, timestamps)
+2. `QuickCaptureMeta` — Raw captures with AI classification fields (auto_summary, auto_labels, linked_concepts, book metadata)
+3. `SeedBlockMeta` — Atomic ideas with idea_type, domain, source, clarity, confidence
+4. `ShapingBlockMeta` — Dialogue segments with session_id, speaker, phase
+5. `MapBlockMeta` — Visual maps with map_type, focus, entry_points
+6. `ConceptBlockMeta` — Canonical concepts with concept_id, concept_name, version
+7. `DecisionBlockMeta` — Project decisions with decision_status, rationale
+8. `LogEntryMeta` — Activity logs with context, summary
+
+**Helper Constants:**
+- `IDEA_TYPE_LABELS`: Human-readable names
+- `IDEA_TYPE_ICONS`: Emoji icons (❓ Question, 💡 Insight, 👁️ Observation, ⏱️ Moment, 🏗️ Schema, ⚡ Contradiction, 🔮 What If)
+- `CAPTURE_STATUS_LABELS`: Status display names
+- `USER_STATUS_LABELS`: User status display names
+- `SEEDLING_FOLDER_MAP`: Maps idea types to Seedlings subfolders
+
+**Key Design Decisions:**
+- Two separate status fields: `capture_status` (AI) vs `status` (user) to distinguish AI processing from user engagement
+- Dual Insights folders: `Seedlings/Insights` (raw "aha" moments) vs `/Insights/` (promoted/validated insights)
+- Metadata in both YAML frontmatter AND SiYuan attributes (synced for SQL queries)
+- ADHD features preserved: energy_level, resonance_signal, exploration_visits, backend linking (be_id, be_type)
+
+**Repository Guidelines:** `AGENTS.md` created to document IES SiYuan Architecture Package expert context for AI agents working with the merged structure.
+
+---
+
+**AST Folder Structure (Previous):**
 
 The plugin creates an ADHD-friendly folder hierarchy in SiYuan notebooks for session persistence and knowledge organization:
 
@@ -995,9 +1415,10 @@ question_classes_used: ["schema_probe", "causal", "anchor"]
 - `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` — Core utility module (769 lines) for SiYuan notebook structure and backend integration
   - **Folder Structure:** STRUCTURE_FOLDERS array defines ADHD-friendly hierarchy (Daily, Insights, Threads, Favorite Problems, Concepts, Sessions/{mode})
   - **Backend Integration:** callBackendApi() generic function for SiYuan forwardProxy requests to backend APIs at configurable URL (default: http://192.168.86.60:8081)
-  - **Domain-Agnostic Notebook Selection:** getPreferredNotebookNames() supports user-configurable preferences via localStorage `ies.preferredNotebooks`
-    - Default: `['Personal', 'Knowledge', 'Notes', 'Intelligent Exploration System']`
-    - Users customize via `setPreferredNotebooks(['MyNotebook', 'Research'])` to match their domain
+  - **Domain-Agnostic Notebook Selection:** getPreferredNotebookNames() supports user-configurable preferences
+    - **Primary source:** Settings store (`getSettingsSync().preferredNotebooks`) for reactive workspace-persisted preferences
+    - **Fallback:** localStorage `ies.preferredNotebooks` for backward compatibility with pre-settings-store code
+    - **Default:** `['Personal', 'Knowledge', 'Notes', 'Intelligent Exploration System']` if neither source available
     - resolveStructureNotebook() resolves to first matching open notebook, falls back to first available
   - **Session Document Creation:** createSessionDocument() (lines 557-679) saves ForgeMode sessions with full metadata
     - MODE_FOLDER_MAP: Maps thinking modes to folder paths (learning→Sessions/Learning, articulating→Sessions/Articulating, etc.)
@@ -1010,8 +1431,10 @@ question_classes_used: ["schema_probe", "causal", "anchor"]
     - promoteToInsight(): Promotes spark to insight in both backend and SiYuan (moves document to Insights folder, updates status)
     - getPersonalStats(): Fetches personal graph statistics (spark count, insight count, status distribution)
     - visitSpark(): Records visit for recency-based navigation
-  - **Configuration Management:** setBackendUrl(), getConfiguredBackendUrl(), checkBackendHealth() for backend URL configuration and health monitoring
-  - **Health Check Caching:** 30-second TTL cache for backend health status to reduce API overhead
+  - **Configuration Management:**
+    - **getBackendUrl():** Checks settings store first (`getSettingsSync().backendUrl`), falls back to localStorage, then hardcoded default
+    - **checkBackendHealth():** Health monitoring with 30-second TTL cache to reduce API overhead
+    - Backward compatible with pre-settings-store code via localStorage fallback
 - `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` — Calls `createSessionDocument()` on session end
   - Passes template data, section responses, transcript, question classes used
   - Displays success message with entity count and question types
