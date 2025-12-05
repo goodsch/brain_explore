@@ -13,18 +13,26 @@
     import ForgeMode from './ForgeMode.svelte';
     import FlowMode from './FlowMode.svelte';
     import QuickCapture from './QuickCapture.svelte';
-    import { promoteToInsight } from '../utils/siyuan-structure';
+    import SettingsPanel from '../components/SettingsPanel.svelte';
+    import { promoteToInsight, getConfiguredBackendUrl, checkBackendHealth } from '../utils/siyuan-structure';
+    import { settingsStore, initializeSettings, getSettingsForSave, type IESSettings } from '../stores/settings';
+
+    // Plugin instance (optional, for settings persistence)
+    export let plugin: any = null;
 
     // Backend configuration
-    const BACKEND_HOST = '192.168.86.60';
-    const BACKEND_URL = `http://${BACKEND_HOST}:8081`;
-    const VERSION = '0.3.1';
+    let backendUrl = getConfiguredBackendUrl();
+    const VERSION = '0.3.2';
     const USER_ID = 'chris';
+
+    // Settings state
+    let showSettings = false;
 
     // View state
     type ViewMode = 'dashboard' | 'structured-thinking' | 'flow' | 'capture';
     let currentView: ViewMode = 'dashboard';
     let selectedJourneyId: string | null = null;
+    let selectedConcept: string | null = null;
 
     // Dashboard data
     let stats: {
@@ -69,6 +77,24 @@
     let recentSparks: Spark[] = [];
     let promotingSparkId: string | null = null;
 
+    // Energy-based navigation filters (ADHD-friendly retrieval)
+    type EnergyFilter = 'all' | 'low' | 'medium' | 'high';
+    type ResonanceFilter = string | null;
+    let energyFilter: EnergyFilter = 'all';
+    let resonanceFilter: ResonanceFilter = null;
+    let isLoadingSparks = false;
+
+    const RESONANCE_OPTIONS = [
+        { value: 'curious', emoji: '🤔', label: 'Curious' },
+        { value: 'excited', emoji: '✨', label: 'Excited' },
+        { value: 'surprised', emoji: '😲', label: 'Surprised' },
+        { value: 'moved', emoji: '❤️', label: 'Moved' },
+        { value: 'disturbed', emoji: '😟', label: 'Disturbed' },
+        { value: 'unclear', emoji: '🤷', label: 'Unclear' },
+        { value: 'connected', emoji: '🔗', label: 'Connected' },
+        { value: 'validated', emoji: '✅', label: 'Validated' }
+    ];
+
     // Quick Capture queue
     let captureQueue: Array<{
         id: string;
@@ -80,10 +106,12 @@
     let isLoading = true;
     let error: string | null = null;
     let mounted = false;
+    let backendStatus: 'connected' | 'disconnected' | 'checking' = 'checking';
+    let backendStatusMessage = '';
 
     // API helper
     async function apiGet(endpoint: string): Promise<any> {
-        const url = `${BACKEND_URL}${endpoint}`;
+        const url = `${backendUrl}${endpoint}`;
 
         const response = await fetchSyncPost('/api/network/forwardProxy', {
             url: url,
@@ -132,6 +160,32 @@
         }
     }
 
+    async function refreshBackendStatus(force = false) {
+        isLoading = true;
+        backendStatus = 'checking';
+        backendStatusMessage = '';
+        error = null;
+
+        try {
+            const health = await checkBackendHealth({ force });
+            backendUrl = health.backendUrl || backendUrl;
+            backendStatus = health.ok ? 'connected' : 'disconnected';
+            backendStatusMessage = health.message || (health.ok ? 'Backend reachable' : 'No response from backend');
+
+            if (health.ok) {
+                await loadDashboardData();
+            } else {
+                isLoading = false;
+                error = `Backend unreachable at ${backendUrl}. ${backendStatusMessage}`.trim();
+            }
+        } catch (err) {
+            backendStatus = 'disconnected';
+            backendStatusMessage = err.message || 'Unable to reach backend';
+            error = `Backend unreachable at ${backendUrl}. ${backendStatusMessage}`.trim();
+            isLoading = false;
+        }
+    }
+
     async function handlePromoteSpark(spark: Spark) {
         if (!spark.siyuan_block_id) {
             showMessage('This spark is not linked to a SiYuan block and cannot be promoted', 3000, 'error');
@@ -156,6 +210,57 @@
         } finally {
             promotingSparkId = null;
         }
+    }
+
+    // Energy-based navigation: Load sparks filtered by energy or resonance
+    async function loadSparksWithFilters() {
+        isLoadingSparks = true;
+
+        try {
+            let endpoint = '/personal/sparks/unvisited?limit=10';
+
+            // Energy filter takes precedence (mood-appropriate navigation)
+            if (energyFilter !== 'all') {
+                endpoint = `/personal/sparks/by-energy/${energyFilter}?limit=10`;
+            }
+            // Resonance filter for emotional retrieval cues
+            else if (resonanceFilter) {
+                endpoint = `/personal/sparks/by-resonance/${resonanceFilter}?limit=10`;
+            }
+
+            const data = await apiGet(endpoint);
+            recentSparks = data.sparks || [];
+        } catch (err) {
+            console.error('[IES] Error loading filtered sparks:', err);
+            // Keep existing sparks on error
+        } finally {
+            isLoadingSparks = false;
+        }
+    }
+
+    // Reactive filter handlers
+    function handleEnergyFilterChange(newFilter: EnergyFilter) {
+        energyFilter = newFilter;
+        // Clear resonance when energy is selected (mutually exclusive filters)
+        if (newFilter !== 'all') {
+            resonanceFilter = null;
+        }
+        loadSparksWithFilters();
+    }
+
+    function handleResonanceFilterChange(newResonance: string | null) {
+        resonanceFilter = newResonance;
+        // Clear energy when resonance is selected (mutually exclusive filters)
+        if (newResonance) {
+            energyFilter = 'all';
+        }
+        loadSparksWithFilters();
+    }
+
+    function clearFilters() {
+        energyFilter = 'all';
+        resonanceFilter = null;
+        loadSparksWithFilters();
     }
 
     function formatRelativeTime(isoDate: string): string {
@@ -203,14 +308,42 @@
         return map[signal] || 'var(--text-muted)';
     }
 
-    onMount(() => {
+    onMount(async () => {
         mounted = true;
-        loadDashboardData();
+        // Load settings from plugin storage if available
+        if (plugin) {
+            try {
+                const savedSettings = await plugin.loadData('settings.json');
+                initializeSettings(savedSettings);
+                // Update backendUrl from settings
+                backendUrl = $settingsStore.backendUrl;
+            } catch (e) {
+                console.log('[IES] No saved settings, using defaults');
+            }
+        }
+        refreshBackendStatus();
     });
 
-    function navigateTo(view: ViewMode) {
+    async function handleSaveSettings(settings: IESSettings) {
+        if (plugin) {
+            try {
+                await plugin.saveData('settings.json', settings);
+                showMessage('Settings saved');
+                // Update local backendUrl
+                backendUrl = settings.backendUrl;
+            } catch (e) {
+                console.error('[IES] Failed to save settings:', e);
+                showMessage('Failed to save settings');
+            }
+        }
+    }
+
+    function navigateTo(view: ViewMode, concept: string | null = null) {
         if (view === 'flow') {
             selectedJourneyId = null;
+            selectedConcept = concept;
+        } else {
+            selectedConcept = null;
         }
         currentView = view;
     }
@@ -218,7 +351,8 @@
     function handleBack() {
         currentView = 'dashboard';
         selectedJourneyId = null;
-        loadDashboardData();
+        selectedConcept = null;
+        refreshBackendStatus(true);
     }
 
     function resumeJourney(journeyId: string) {
@@ -252,6 +386,37 @@
                         <span class="brand-version">v{VERSION}</span>
                     </div>
                 </div>
+
+                <div class="backend-status" data-status={backendStatus}>
+                    <span class="status-dot"></span>
+                    <div class="status-text">
+                        <span class="status-label">
+                            {backendStatus === 'connected'
+                                ? 'Connected'
+                                : backendStatus === 'checking'
+                                    ? 'Checking...'
+                                    : 'Disconnected'}
+                        </span>
+                        <span class="status-subtext">
+                            {backendStatus === 'disconnected'
+                                ? `Backend at ${backendUrl}`
+                                : backendStatusMessage || backendUrl}
+                        </span>
+                    </div>
+                    {#if backendStatus === 'disconnected'}
+                        <button class="status-retry" on:click={() => refreshBackendStatus(true)} disabled={backendStatus === 'checking'}>
+                            Retry
+                        </button>
+                    {:else if backendStatus === 'checking'}
+                        <div class="status-spinner"></div>
+                    {/if}
+                </div>
+
+                <button class="settings-btn" on:click={() => showSettings = true} title="Settings">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                </button>
             </header>
 
             {#if isLoading}
@@ -266,7 +431,7 @@
                         <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                     <p>{error}</p>
-                    <button class="btn btn--primary" on:click={loadDashboardData}>
+                    <button class="btn btn--primary" on:click={() => refreshBackendStatus(true)}>
                         Try Again
                     </button>
                 </div>
@@ -349,50 +514,147 @@
                     </button>
                 </div>
 
-                <!-- Recent Sparks -->
-                {#if recentSparks.length > 0}
+                <!-- Recent Sparks with Energy-Based Navigation -->
+                {#if recentSparks.length > 0 || energyFilter !== 'all' || resonanceFilter}
                     <section class="section">
                         <h3 class="section-title">
-                            Recent Sparks
+                            {#if energyFilter !== 'all'}
+                                {energyFilter.charAt(0).toUpperCase() + energyFilter.slice(1)} Energy Sparks
+                            {:else if resonanceFilter}
+                                {RESONANCE_OPTIONS.find(r => r.value === resonanceFilter)?.emoji} {resonanceFilter.charAt(0).toUpperCase() + resonanceFilter.slice(1)} Sparks
+                            {:else}
+                                Recent Sparks
+                            {/if}
                             <span class="spark-badge">{recentSparks.length}</span>
                         </h3>
-                        <div class="spark-list">
-                            {#each recentSparks as spark, i}
-                                <div class="spark-card" style="animation-delay: {i * 60}ms">
-                                    <div class="spark-indicator" style="background: {getResonanceColor(spark.resonance_signal)}"></div>
-                                    <div class="spark-content">
-                                        <div class="spark-header">
-                                            <span class="spark-emoji" style="color: {getResonanceColor(spark.resonance_signal)}">
-                                                {getResonanceEmoji(spark.resonance_signal)}
-                                            </span>
-                                            <span class="spark-title">{spark.title}</span>
-                                        </div>
-                                        <p class="spark-preview">{spark.content.substring(0, 80)}{spark.content.length > 80 ? '...' : ''}</p>
-                                        <div class="spark-meta">
-                                            <span class="spark-time">{formatRelativeTime(spark.created_at)}</span>
-                                            {#if spark.resonance_signal}
-                                                <span class="spark-resonance">{spark.resonance_signal}</span>
-                                            {/if}
-                                            <span class="spark-energy">{spark.energy_level} energy</span>
-                                        </div>
-                                    </div>
+
+                        <!-- Energy-Based Navigation Filters -->
+                        <div class="spark-filters">
+                            <div class="filter-group">
+                                <span class="filter-label">Energy:</span>
+                                <div class="filter-pills">
                                     <button
-                                        class="btn-promote"
-                                        on:click={() => handlePromoteSpark(spark)}
-                                        disabled={promotingSparkId === spark.id || !spark.siyuan_block_id}
-                                        title={spark.siyuan_block_id ? 'Promote to Insight' : 'Not linked to SiYuan block'}
+                                        class="filter-pill"
+                                        class:active={energyFilter === 'all' && !resonanceFilter}
+                                        on:click={() => handleEnergyFilterChange('all')}
                                     >
-                                        {#if promotingSparkId === spark.id}
-                                            <div class="btn-spinner"></div>
-                                        {:else}
-                                            <svg viewBox="0 0 24 24" width="16" height="16">
-                                                <path fill="currentColor" d="M7 14l5-5 5 5z"/>
-                                            </svg>
-                                        {/if}
+                                        All
+                                    </button>
+                                    <button
+                                        class="filter-pill filter-pill--low"
+                                        class:active={energyFilter === 'low'}
+                                        on:click={() => handleEnergyFilterChange('low')}
+                                    >
+                                        🔋 Low
+                                    </button>
+                                    <button
+                                        class="filter-pill filter-pill--medium"
+                                        class:active={energyFilter === 'medium'}
+                                        on:click={() => handleEnergyFilterChange('medium')}
+                                    >
+                                        ⚡ Medium
+                                    </button>
+                                    <button
+                                        class="filter-pill filter-pill--high"
+                                        class:active={energyFilter === 'high'}
+                                        on:click={() => handleEnergyFilterChange('high')}
+                                    >
+                                        🔥 High
                                     </button>
                                 </div>
-                            {/each}
+                            </div>
+
+                            <div class="filter-group">
+                                <span class="filter-label">Resonance:</span>
+                                <select
+                                    class="filter-select"
+                                    value={resonanceFilter || ''}
+                                    on:change={(e) => handleResonanceFilterChange(e.currentTarget.value || null)}
+                                >
+                                    <option value="">Any feeling</option>
+                                    {#each RESONANCE_OPTIONS as option}
+                                        <option value={option.value}>{option.emoji} {option.label}</option>
+                                    {/each}
+                                </select>
+                            </div>
+
+                            {#if energyFilter !== 'all' || resonanceFilter}
+                                <button class="filter-clear" on:click={clearFilters}>
+                                    <svg viewBox="0 0 24 24" width="14" height="14">
+                                        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                    Clear
+                                </button>
+                            {/if}
+
+                            {#if isLoadingSparks}
+                                <div class="filter-loading">
+                                    <div class="filter-spinner"></div>
+                                </div>
+                            {/if}
                         </div>
+
+                        {#if recentSparks.length > 0}
+                            <div class="spark-list">
+                                {#each recentSparks as spark, i}
+                                    <div class="spark-card" style="animation-delay: {i * 60}ms">
+                                        <div class="spark-indicator" style="background: {getResonanceColor(spark.resonance_signal)}"></div>
+                                        <div class="spark-content">
+                                            <div class="spark-header">
+                                                <span class="spark-emoji" style="color: {getResonanceColor(spark.resonance_signal)}">
+                                                    {getResonanceEmoji(spark.resonance_signal)}
+                                                </span>
+                                                <span class="spark-title">{spark.title}</span>
+                                            </div>
+                                            <p class="spark-preview">{spark.content.substring(0, 80)}{spark.content.length > 80 ? '...' : ''}</p>
+                                            <div class="spark-meta">
+                                                <span class="spark-time">{formatRelativeTime(spark.created_at)}</span>
+                                                {#if spark.resonance_signal}
+                                                    <span class="spark-resonance">{spark.resonance_signal}</span>
+                                                {/if}
+                                                <span class="spark-energy">{spark.energy_level} energy</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            class="btn-promote"
+                                            on:click={() => handlePromoteSpark(spark)}
+                                            disabled={promotingSparkId === spark.id || !spark.siyuan_block_id}
+                                            title={spark.siyuan_block_id ? 'Promote to Insight' : 'Not linked to SiYuan block'}
+                                        >
+                                            {#if promotingSparkId === spark.id}
+                                                <div class="btn-spinner"></div>
+                                            {:else}
+                                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                                    <path fill="currentColor" d="M7 14l5-5 5 5z"/>
+                                                </svg>
+                                            {/if}
+                                        </button>
+                                    </div>
+                                {/each}
+                            </div>
+                        {:else}
+                            <!-- Empty state when filter returns no results -->
+                            <div class="spark-empty">
+                                <svg class="spark-empty-icon" viewBox="0 0 24 24" width="32" height="32">
+                                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                    <path d="M8 14s1.5 2 4 2 4-2 4-2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    <circle cx="9" cy="10" r="1" fill="currentColor"/>
+                                    <circle cx="15" cy="10" r="1" fill="currentColor"/>
+                                </svg>
+                                <p class="spark-empty-text">
+                                    {#if energyFilter !== 'all'}
+                                        No sparks with {energyFilter} energy right now
+                                    {:else if resonanceFilter}
+                                        No sparks matching "{resonanceFilter}" feeling
+                                    {:else}
+                                        No recent sparks yet
+                                    {/if}
+                                </p>
+                                {#if energyFilter !== 'all' || resonanceFilter}
+                                    <button class="btn" on:click={clearFilters}>Show all sparks</button>
+                                {/if}
+                            </div>
+                        {/if}
                     </section>
                 {/if}
 
@@ -451,7 +713,7 @@
                                 <h4 class="suggestion-label">Most Connected</h4>
                                 <div class="chip-grid">
                                     {#each suggestions.connected.slice(0, 4) as topic}
-                                        <button class="chip" on:click={() => navigateTo('flow')}>
+                                        <button class="chip" on:click={() => navigateTo('flow', topic.name)}>
                                             {topic.name}
                                         </button>
                                     {/each}
@@ -464,7 +726,7 @@
                                 <h4 class="suggestion-label">Novel Concepts</h4>
                                 <div class="chip-grid">
                                     {#each suggestions.new as topic}
-                                        <button class="chip chip--accent" on:click={() => navigateTo('flow')}>
+                                        <button class="chip chip--accent" on:click={() => navigateTo('flow', topic.name)}>
                                             <span class="chip-dot"></span>
                                             {topic.name}
                                         </button>
@@ -477,11 +739,18 @@
             {/if}
         </div>
     {:else if currentView === 'structured-thinking'}
-        <ForgeMode backendUrl={BACKEND_URL} on:back={handleBack} />
+        <ForgeMode backendUrl={backendUrl} on:back={handleBack} />
     {:else if currentView === 'flow'}
-        <FlowMode backendUrl={BACKEND_URL} journeyId={selectedJourneyId} on:back={handleBack} />
+        <FlowMode backendUrl={backendUrl} journeyId={selectedJourneyId} initialConcept={selectedConcept} on:back={handleBack} />
     {:else if currentView === 'capture'}
-        <QuickCapture backendUrl={BACKEND_URL} on:back={handleBack} />
+        <QuickCapture backendUrl={backendUrl} on:back={handleBack} />
+    {/if}
+
+    {#if showSettings}
+        <SettingsPanel
+            onClose={() => showSettings = false}
+            onSave={handleSaveSettings}
+        />
     {/if}
 </div>
 
@@ -637,6 +906,31 @@
         font-size: 10px;
         color: var(--text-muted);
         letter-spacing: 0.02em;
+    }
+
+    /* Settings Button */
+    .settings-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: none;
+        border: none;
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        margin-left: var(--space-2);
+    }
+
+    .settings-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .settings-btn:active {
+        transform: scale(0.95);
     }
 
     /* Loading & Error States */
@@ -1173,5 +1467,157 @@
     .btn--primary:hover {
         background: var(--accent-dark);
         border-color: var(--accent-dark);
+    }
+
+    /* Energy-Based Navigation Filters */
+    .spark-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        background: var(--bg-base);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        margin-bottom: var(--space-2);
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .filter-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+    }
+
+    .filter-pills {
+        display: flex;
+        gap: var(--space-1);
+    }
+
+    .filter-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .filter-pill:hover {
+        background: var(--accent-lighter);
+        border-color: var(--accent-light);
+        color: var(--accent-dark);
+    }
+
+    .filter-pill.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+
+    /* Energy level specific colors */
+    .filter-pill--low.active {
+        background: #6b8e9f;
+        border-color: #6b8e9f;
+    }
+
+    .filter-pill--medium.active {
+        background: #c98b2f;
+        border-color: #c98b2f;
+    }
+
+    .filter-pill--high.active {
+        background: #d94f5c;
+        border-color: #d94f5c;
+    }
+
+    .filter-select {
+        padding: 4px 8px;
+        font-size: 12px;
+        font-family: var(--font-body);
+        color: var(--text-secondary);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .filter-select:hover {
+        border-color: var(--accent-light);
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent-lighter);
+    }
+
+    .filter-clear {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: transparent;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .filter-clear:hover {
+        color: var(--text-primary);
+        border-color: var(--border-medium);
+        background: var(--bg-elevated);
+    }
+
+    .filter-loading {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    .filter-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--border-light);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+
+    /* Empty state when filters return no results */
+    .spark-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-5);
+        color: var(--text-muted);
+        text-align: center;
+    }
+
+    .spark-empty-icon {
+        opacity: 0.5;
+    }
+
+    .spark-empty-text {
+        font-size: 13px;
     }
 </style>

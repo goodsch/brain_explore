@@ -10,6 +10,7 @@ import {
 import "@/index.scss";
 
 import { setPluginInstance, t } from "./utils/i18n";
+import { ensureNotebookStructure } from "./utils/siyuan-structure";
 import Dashboard from "./views/Dashboard.svelte";
 
 export const SETTINGS_FILE = "settings.json";
@@ -37,6 +38,16 @@ export default class IESExplorerPlugin extends Plugin {
     </symbol>
     `);
 
+        // Add top bar button for easy access
+        this.addTopBar({
+            icon: "iconIESExplorer",
+            title: "IES Explorer",
+            position: "right",
+            callback: () => {
+                this.openIESTab();
+            }
+        });
+
         // Register IES tab type
         const pluginInstance = this;
         this.addTab({
@@ -46,9 +57,12 @@ export default class IESExplorerPlugin extends Plugin {
                 element.style.display = 'flex';
                 element.style.flexDirection = 'column';
                 element.style.height = '100%';
-                // Create Dashboard in tab
+                // Create Dashboard in tab with plugin instance for settings persistence
                 new Dashboard({
-                    target: element
+                    target: element,
+                    props: {
+                        plugin: pluginInstance
+                    }
                 });
             },
             destroy() {
@@ -58,6 +72,14 @@ export default class IESExplorerPlugin extends Plugin {
     }
 
     async onLayoutReady() {
+        // Create IES folder structure in the notebook
+        try {
+            await ensureNotebookStructure();
+            console.log("[IES] Folder structure initialized");
+        } catch (err) {
+            console.warn("[IES] Failed to create folder structure:", err);
+        }
+
         // Register IES sidebar dock
         this.addDock({
             config: {
@@ -72,7 +94,10 @@ export default class IESExplorerPlugin extends Plugin {
             type: IES_SIDEBAR_TYPE,
             init: (dock) => {
                 this.dashboardApp = new Dashboard({
-                    target: dock.element
+                    target: dock.element,
+                    props: {
+                        plugin: this
+                    }
                 });
             },
             destroy: () => {

@@ -1,0 +1,305 @@
+/**
+ * IES Design System - Animations
+ * Philosophy: Cupertino-refined motion with purposeful, buttery-smooth transitions
+ *
+ * Key principles:
+ * - Motion should feel natural and responsive
+ * - Animations should reduce cognitive load, not add to it
+ * - Consistent timing creates predictable, trustworthy interfaces
+ */
+
+:root {
+  /* ==========================================================================
+     EASING FUNCTIONS - Cupertino signature curves
+     ========================================================================== */
+
+  /* Cupertino ease-out - The signature Apple feel */
+  --ies-ease-cupertino: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Spring - Bouncy, playful feel for attention-grabbing elements */
+  --ies-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Standard easing */
+  --ies-ease-linear: linear;
+  --ies-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ies-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ies-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Specialized easing */
+  --ies-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ies-ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* ==========================================================================
+     DURATIONS - Consistent timing
+     ========================================================================== */
+  --ies-duration-instant: 100ms;   /* Instant feedback (hover states) */
+  --ies-duration-fast: 160ms;      /* Quick interactions (buttons, toggles) */
+  --ies-duration-base: 320ms;      /* Default animations (cards, modals) */
+  --ies-duration-slow: 640ms;      /* Deliberate animations (page transitions) */
+  --ies-duration-slower: 1000ms;   /* Very slow (progress, loading) */
+
+  /* ==========================================================================
+     TRANSITION PRESETS - Common transition combinations
+     ========================================================================== */
+  --ies-transition-fast: var(--ies-duration-fast) var(--ies-ease-cupertino);
+  --ies-transition-base: var(--ies-duration-base) var(--ies-ease-cupertino);
+  --ies-transition-slow: var(--ies-duration-slow) var(--ies-ease-cupertino);
+  --ies-transition-spring: var(--ies-duration-base) var(--ies-ease-spring);
+
+  /* Property-specific transitions */
+  --ies-transition-colors: color var(--ies-duration-fast) var(--ies-ease-cupertino),
+                           background-color var(--ies-duration-fast) var(--ies-ease-cupertino),
+                           border-color var(--ies-duration-fast) var(--ies-ease-cupertino);
+
+  --ies-transition-transform: transform var(--ies-duration-fast) var(--ies-ease-cupertino);
+
+  --ies-transition-opacity: opacity var(--ies-duration-fast) var(--ies-ease-cupertino);
+
+  --ies-transition-shadow: box-shadow var(--ies-duration-fast) var(--ies-ease-cupertino);
+
+  --ies-transition-all: all var(--ies-duration-fast) var(--ies-ease-cupertino);
+}
+
+/* ==========================================================================
+   KEYFRAME ANIMATIONS
+   ========================================================================== */
+
+/* Fade in - Subtle entrance */
+@keyframes ies-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fade out */
+@keyframes ies-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Slide up - Content entrance from below */
+@keyframes ies-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide down - Content exit or dropdown appearance */
+@keyframes ies-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in - Modal/popover entrance */
+@keyframes ies-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scale out */
+@keyframes ies-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Pulse soft - Attention without aggression (ADHD-friendly) */
+@keyframes ies-pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Glow pulse - Highlight important elements */
+@keyframes ies-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--ies-accent-muted);
+  }
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+/* Bounce subtle - Playful confirmation */
+@keyframes ies-bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Shake - Error/warning feedback */
+@keyframes ies-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+/* Spin - Loading indicator */
+@keyframes ies-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Check pop - Success confirmation (ADHD-friendly celebratory feedback) */
+@keyframes ies-check-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Shimmer - Loading placeholder */
+@keyframes ies-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ==========================================================================
+   ANIMATION UTILITY CLASSES
+   ========================================================================== */
+
+/* Apply animations */
+.ies-animate-fade-in {
+  animation: ies-fade-in var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-fade-out {
+  animation: ies-fade-out var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-slide-up {
+  animation: ies-slide-up var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-slide-down {
+  animation: ies-slide-down var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-scale-in {
+  animation: ies-scale-in var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-scale-out {
+  animation: ies-scale-out var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-pulse {
+  animation: ies-pulse-soft 2s var(--ies-ease-in-out) infinite;
+}
+
+.ies-animate-bounce {
+  animation: ies-bounce-subtle 1s var(--ies-ease-spring) infinite;
+}
+
+.ies-animate-shake {
+  animation: ies-shake 0.5s var(--ies-ease-out);
+}
+
+.ies-animate-spin {
+  animation: ies-spin 1s linear infinite;
+}
+
+.ies-animate-check-pop {
+  animation: ies-check-pop 0.4s var(--ies-ease-spring) forwards;
+}
+
+/* Shimmer loading effect */
+.ies-animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--ies-bg-base) 0%,
+    var(--ies-bg-elevated) 50%,
+    var(--ies-bg-base) 100%
+  );
+  background-size: 200% 100%;
+  animation: ies-shimmer 1.5s infinite;
+}
+
+/* ==========================================================================
+   TRANSITION UTILITY CLASSES
+   ========================================================================== */
+.ies-transition-none { transition: none; }
+.ies-transition-all { transition: var(--ies-transition-all); }
+.ies-transition-colors { transition: var(--ies-transition-colors); }
+.ies-transition-opacity { transition: var(--ies-transition-opacity); }
+.ies-transition-transform { transition: var(--ies-transition-transform); }
+.ies-transition-shadow { transition: var(--ies-transition-shadow); }
+
+/* Duration utilities */
+.ies-duration-fast { transition-duration: var(--ies-duration-fast); }
+.ies-duration-base { transition-duration: var(--ies-duration-base); }
+.ies-duration-slow { transition-duration: var(--ies-duration-slow); }
+
+/* Easing utilities */
+.ies-ease-cupertino { transition-timing-function: var(--ies-ease-cupertino); }
+.ies-ease-spring { transition-timing-function: var(--ies-ease-spring); }
+.ies-ease-bounce { transition-timing-function: var(--ies-ease-bounce); }
+
+/* ==========================================================================
+   REDUCED MOTION - Accessibility
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

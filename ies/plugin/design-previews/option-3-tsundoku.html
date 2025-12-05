@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 3: Tsundoku Scholarly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Source+Sans+3:wght@400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Tsundoku - Japanese scholarly elegance, 13-level semantic colors */
+      --bg-deep: #f4f1eb;
+      --bg-base: #faf8f4;
+      --bg-elevated: #ffffff;
+      --bg-overlay: rgba(250, 248, 244, 0.98);
+
+      /* 13-level semantic font colors (Tsundoku signature) */
+      --font-color-1: #1a1a1a;   /* Headings, emphasis */
+      --font-color-2: #2d2d2d;   /* Primary body */
+      --font-color-3: #404040;   /* Secondary body */
+      --font-color-4: #525252;   /* Tertiary */
+      --font-color-5: #666666;   /* Captions */
+      --font-color-6: #7a7a7a;   /* Muted */
+      --font-color-7: #8f8f8f;   /* Subtle */
+      --font-color-8: #a3a3a3;   /* Disabled */
+      --font-color-9: #b8b8b8;   /* Placeholder */
+      --font-color-10: #cccccc;  /* Borders */
+      --font-color-11: #e0e0e0;  /* Dividers */
+      --font-color-12: #ebebeb;  /* Background accents */
+      --font-color-13: #f5f5f5;  /* Subtle backgrounds */
+
+      --text-primary: var(--font-color-2);
+      --text-secondary: var(--font-color-4);
+      --text-muted: var(--font-color-6);
+      --text-subtle: var(--font-color-8);
+
+      /* Accent - refined terracotta/clay */
+      --accent: #b86b4a;
+      --accent-hover: #c47858;
+      --accent-muted: rgba(184, 107, 74, 0.1);
+
+      --secondary: #5d7a6a;
+      --secondary-muted: rgba(93, 122, 106, 0.1);
+
+      --tertiary: #7a6b8a;
+      --tertiary-muted: rgba(122, 107, 138, 0.1);
+
+      /* Custom heading colors (Tsundoku signature) */
+      --h1-color: #2c3e50;
+      --h2-color: #34495e;
+      --h3-color: #3d566e;
+      --h4-color: #4a6378;
+      --h5-color: #5d7a8c;
+      --h6-color: #6b8a9c;
+
+      --border-subtle: rgba(0, 0, 0, 0.04);
+      --border-light: rgba(0, 0, 0, 0.08);
+      --border-medium: rgba(0, 0, 0, 0.12);
+
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+
+      /* Source font family - scholarly, readable */
+      --font-display: 'Source Serif 4', Georgia, serif;
+      --font-body: 'Source Sans 3', -apple-system, sans-serif;
+      --font-mono: 'Source Code Pro', monospace;
+
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --duration-fast: 150ms;
+      --duration-base: 250ms;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.7;
+      padding: 32px;
+      font-size: 16px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      font-weight: 500;
+      color: var(--h1-color);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--accent-muted);
+      color: var(--accent);
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-top: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-subtle);
+      transition: all var(--duration-base) var(--ease);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .card h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: var(--h3-color);
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    /* Buttons - scholarly, understated */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease);
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-tertiary {
+      background: var(--tertiary);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Entity chips */
+    .entity-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .entity-chip {
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all var(--duration-fast) var(--ease);
+    }
+
+    .entity-concept { background: rgba(44, 82, 130, 0.1); color: #2c5282; }
+    .entity-person { background: rgba(56, 118, 29, 0.1); color: #38761d; }
+    .entity-theory { background: rgba(106, 76, 147, 0.1); color: #6a4c93; }
+    .entity-framework { background: rgba(184, 107, 74, 0.1); color: var(--accent); }
+    .entity-assessment { background: rgba(163, 67, 67, 0.1); color: #a34343; }
+
+    /* Question Classes */
+    .question-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .q-chip {
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .q-schema { background: rgba(66, 133, 183, 0.12); color: #4285b7; }
+    .q-boundary { background: rgba(106, 76, 147, 0.12); color: #6a4c93; }
+    .q-dimensional { background: rgba(56, 118, 106, 0.12); color: #38766a; }
+    .q-causal { background: rgba(184, 134, 74, 0.12); color: #b8864a; }
+    .q-counterfactual { background: rgba(163, 88, 133, 0.12); color: #a35885; }
+    .q-anchor { background: rgba(56, 118, 29, 0.12); color: #38761d; }
+
+    /* Energy Levels */
+    .energy-section {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .energy-badge {
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .energy-low { background: rgba(107, 126, 138, 0.12); color: #6b7e8a; }
+    .energy-medium { background: rgba(184, 134, 74, 0.12); color: #b8864a; }
+    .energy-high { background: rgba(163, 88, 88, 0.12); color: #a35858; }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      transition: all var(--duration-fast) var(--ease);
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+
+    /* Typography Sample - Tsundoku heading hierarchy */
+    .typography-sample {
+      background: var(--bg-elevated);
+      padding: 32px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 32px;
+    }
+
+    .typography-sample h1 {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 500;
+      color: var(--h1-color);
+      margin-bottom: 4px;
+    }
+
+    .typography-sample h2 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 400;
+      color: var(--h2-color);
+      margin-bottom: 16px;
+    }
+
+    .typography-sample p {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .typography-sample code {
+      font-family: var(--font-mono);
+      background: var(--bg-deep);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: var(--accent);
+    }
+
+    /* Heading hierarchy demo */
+    .heading-demo {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .heading-demo h1 { font-family: var(--font-display); font-size: 1.5rem; color: var(--h1-color); margin-bottom: 8px; }
+    .heading-demo h2 { font-family: var(--font-display); font-size: 1.3rem; color: var(--h2-color); margin-bottom: 8px; }
+    .heading-demo h3 { font-family: var(--font-display); font-size: 1.15rem; color: var(--h3-color); margin-bottom: 8px; }
+    .heading-demo h4 { font-family: var(--font-display); font-size: 1.05rem; color: var(--h4-color); margin-bottom: 8px; }
+    .heading-demo h5 { font-family: var(--font-display); font-size: 0.95rem; color: var(--h5-color); margin-bottom: 8px; }
+    .heading-demo h6 { font-family: var(--font-display); font-size: 0.9rem; color: var(--h6-color); }
+
+    /* Color Swatches */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .swatch {
+      height: 70px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .swatch-accent { background: var(--accent); color: white; }
+    .swatch-secondary { background: var(--secondary); color: white; }
+    .swatch-tertiary { background: var(--tertiary); color: white; }
+    .swatch-h1 { background: var(--h1-color); color: white; }
+    .swatch-h3 { background: var(--h3-color); color: white; }
+    .swatch-h5 { background: var(--h5-color); color: white; }
+
+    /* 13-level grayscale demo */
+    .grayscale-demo {
+      display: flex;
+      margin-top: 16px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .gray-step {
+      flex: 1;
+      height: 32px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Tsundoku Scholarly</h1>
+    <p>Japanese elegance with 13-level semantic typography system</p>
+    <span class="badge">Inspired by SiYuan Tsundoku Theme</span>
+  </div>
+
+  <div class="typography-sample">
+    <h1>The Narrow Window of Awareness</h1>
+    <h2>How humans construct meaning within constraints</h2>
+    <p>This framework explores the fundamental tension between our <strong>limited perceptual bandwidth</strong> and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes <code>meaning</code> possible.</p>
+    <p style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
+      // Source Serif 4 + Source Sans 3 — Adobe's scholarly family
+    </p>
+    <div class="heading-demo">
+      <h1>H1: Primary Heading</h1>
+      <h2>H2: Section Heading</h2>
+      <h3>H3: Subsection</h3>
+      <h4>H4: Topic</h4>
+      <h5>H5: Detail</h5>
+      <h6>H6: Fine Print</h6>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Primary Actions</h3>
+      <p>Earthy terracotta accent with scholarly restraint.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary">Start Exploration</button>
+        <button class="btn btn-secondary">View Graph</button>
+        <button class="btn btn-outline">Cancel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Entity Types</h3>
+      <p>Muted academic colors for knowledge categories.</p>
+      <div class="entity-chips">
+        <span class="entity-chip entity-concept">Concept</span>
+        <span class="entity-chip entity-person">Person</span>
+        <span class="entity-chip entity-theory">Theory</span>
+        <span class="entity-chip entity-framework">Framework</span>
+        <span class="entity-chip entity-assessment">Assessment</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Question Classes</h3>
+      <p>Subdued cognitive function badges.</p>
+      <div class="question-chips">
+        <span class="q-chip q-schema">🏗️ Schema</span>
+        <span class="q-chip q-boundary">🔲 Boundary</span>
+        <span class="q-chip q-dimensional">📐 Dimensional</span>
+        <span class="q-chip q-causal">⚡ Causal</span>
+        <span class="q-chip q-counterfactual">🔮 Counter</span>
+        <span class="q-chip q-anchor">⚓ Anchor</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Energy Levels</h3>
+      <p>Warm, earthy energy badges.</p>
+      <div class="energy-section">
+        <span class="energy-badge energy-low">🔋 Low</span>
+        <span class="energy-badge energy-medium">⚡ Medium</span>
+        <span class="energy-badge energy-high">🔥 High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>13-Level Grayscale</h3>
+      <p>Tsundoku's signature semantic color system.</p>
+      <div class="grayscale-demo">
+        <div class="gray-step" style="background: var(--font-color-1)"></div>
+        <div class="gray-step" style="background: var(--font-color-2)"></div>
+        <div class="gray-step" style="background: var(--font-color-3)"></div>
+        <div class="gray-step" style="background: var(--font-color-4)"></div>
+        <div class="gray-step" style="background: var(--font-color-5)"></div>
+        <div class="gray-step" style="background: var(--font-color-6)"></div>
+        <div class="gray-step" style="background: var(--font-color-7)"></div>
+        <div class="gray-step" style="background: var(--font-color-8)"></div>
+        <div class="gray-step" style="background: var(--font-color-9)"></div>
+        <div class="gray-step" style="background: var(--font-color-10)"></div>
+        <div class="gray-step" style="background: var(--font-color-11)"></div>
+        <div class="gray-step" style="background: var(--font-color-12)"></div>
+        <div class="gray-step" style="background: var(--font-color-13)"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Color Palette</h3>
+      <div class="swatches">
+        <div class="swatch swatch-accent">#b86b4a</div>
+        <div class="swatch swatch-secondary">#5d7a6a</div>
+        <div class="swatch swatch-tertiary">#7a6b8a</div>
+        <div class="swatch swatch-h1">#2c3e50</div>
+        <div class="swatch swatch-h3">#3d566e</div>
+        <div class="swatch swatch-h5">#5d7a8c</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

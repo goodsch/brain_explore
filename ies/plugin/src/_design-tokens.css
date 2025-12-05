@@ -1,0 +1,871 @@
+/**
+ * IES Design System - Colors
+ * Philosophy: "Hybrid Contemplative" - warm scholarly tones with modern refinement
+ *
+ * Combines Scholar's Library warmth + Cupertino refinement + ADHD-friendly hierarchy
+ */
+
+:root {
+  /* ==========================================================================
+     BACKGROUNDS - Warm paper tones for intellectual warmth
+     ========================================================================== */
+  --ies-bg-deep: #f5f2ed;          /* Deepest background layer (sidebars, wells) */
+  --ies-bg-base: #faf8f5;          /* Main content background */
+  --ies-bg-elevated: #ffffff;       /* Cards, panels, modals */
+  --ies-bg-overlay: rgba(250, 248, 245, 0.95);  /* Overlays with blur */
+
+  /* ==========================================================================
+     TEXT HIERARCHY - Clear visual hierarchy for reduced cognitive load
+     ========================================================================== */
+  --ies-text-primary: #2d2a26;      /* Main text - high contrast */
+  --ies-text-secondary: #5c5650;    /* Secondary text - supporting content */
+  --ies-text-muted: #8a847b;        /* Muted text - hints, metadata */
+  --ies-text-subtle: #b5aea3;       /* Subtle text - disabled, placeholders */
+  --ies-text-inverse: #ffffff;      /* Text on colored backgrounds */
+
+  /* ==========================================================================
+     ACCENT COLORS - IES signature palette
+     ========================================================================== */
+
+  /* Primary Accent - Amber/Gold (illumination, insight, warmth) */
+  --ies-accent: #c9872e;
+  --ies-accent-hover: #d4952f;
+  --ies-accent-active: #b87928;
+  --ies-accent-muted: rgba(201, 135, 46, 0.12);
+  --ies-accent-subtle: rgba(201, 135, 46, 0.06);
+
+  /* Secondary - Sage Green (growth, knowledge, nature) */
+  --ies-secondary: #5a8a7a;
+  --ies-secondary-hover: #649b8a;
+  --ies-secondary-active: #4f7a6c;
+  --ies-secondary-muted: rgba(90, 138, 122, 0.12);
+  --ies-secondary-subtle: rgba(90, 138, 122, 0.06);
+
+  /* Tertiary - Soft Violet (reflection, depth, creativity) */
+  --ies-tertiary: #8b7aa0;
+  --ies-tertiary-hover: #9a8aad;
+  --ies-tertiary-active: #7c6b91;
+  --ies-tertiary-muted: rgba(139, 122, 160, 0.12);
+  --ies-tertiary-subtle: rgba(139, 122, 160, 0.06);
+
+  /* ==========================================================================
+     SEMANTIC COLORS - Status and feedback
+     ========================================================================== */
+  --ies-success: #059669;
+  --ies-success-muted: rgba(5, 150, 105, 0.12);
+
+  --ies-warning: #d97706;
+  --ies-warning-muted: rgba(217, 119, 6, 0.12);
+
+  --ies-error: #dc2626;
+  --ies-error-muted: rgba(220, 38, 38, 0.12);
+
+  --ies-info: #2563eb;
+  --ies-info-muted: rgba(37, 99, 235, 0.12);
+
+  /* ==========================================================================
+     ENTITY TYPE COLORS - Consistent across SiYuan and Readest
+     ========================================================================== */
+  --ies-entity-concept: #2563eb;
+  --ies-entity-concept-bg: rgba(37, 99, 235, 0.12);
+
+  --ies-entity-person: #059669;
+  --ies-entity-person-bg: rgba(5, 150, 105, 0.12);
+
+  --ies-entity-theory: #7c3aed;
+  --ies-entity-theory-bg: rgba(124, 58, 237, 0.12);
+
+  --ies-entity-framework: #ea580c;
+  --ies-entity-framework-bg: rgba(234, 88, 12, 0.12);
+
+  --ies-entity-assessment: #dc2626;
+  --ies-entity-assessment-bg: rgba(220, 38, 38, 0.12);
+
+  /* ==========================================================================
+     QUESTION CLASS COLORS - 9 cognitive function badges
+     ========================================================================== */
+  --ies-q-schema: #4a90d9;
+  --ies-q-schema-bg: rgba(74, 144, 217, 0.15);
+
+  --ies-q-boundary: #7b68ee;
+  --ies-q-boundary-bg: rgba(123, 104, 238, 0.15);
+
+  --ies-q-dimensional: #20b2aa;
+  --ies-q-dimensional-bg: rgba(32, 178, 170, 0.15);
+
+  --ies-q-causal: #d4874a;
+  --ies-q-causal-bg: rgba(244, 164, 96, 0.15);
+
+  --ies-q-counterfactual: #da70d6;
+  --ies-q-counterfactual-bg: rgba(218, 112, 214, 0.15);
+
+  --ies-q-anchor: #3cb371;
+  --ies-q-anchor-bg: rgba(60, 179, 113, 0.15);
+
+  --ies-q-perspective: #cd853f;
+  --ies-q-perspective-bg: rgba(205, 133, 63, 0.15);
+
+  --ies-q-meta: #778899;
+  --ies-q-meta-bg: rgba(119, 136, 153, 0.15);
+
+  --ies-q-synthesis: #6495ed;
+  --ies-q-synthesis-bg: rgba(100, 149, 237, 0.15);
+
+  /* ==========================================================================
+     ENERGY LEVELS - ADHD mood-based navigation
+     ========================================================================== */
+  --ies-energy-low: #6b8e9f;
+  --ies-energy-low-bg: rgba(107, 142, 159, 0.15);
+
+  --ies-energy-medium: #c98b2f;
+  --ies-energy-medium-bg: rgba(201, 139, 47, 0.15);
+
+  --ies-energy-high: #d94f5c;
+  --ies-energy-high-bg: rgba(217, 79, 92, 0.15);
+
+  /* ==========================================================================
+     BORDERS - Subtle definition without harsh lines
+     ========================================================================== */
+  --ies-border-subtle: rgba(45, 42, 38, 0.05);
+  --ies-border-light: rgba(45, 42, 38, 0.08);
+  --ies-border-medium: rgba(45, 42, 38, 0.12);
+  --ies-border-strong: rgba(45, 42, 38, 0.18);
+  --ies-border-focus: var(--ies-accent);
+}
+
+/* ==========================================================================
+   DARK THEME - Override for dark mode
+   ========================================================================== */
+[data-theme-mode="dark"],
+.dark {
+  /* Backgrounds - Deep warm tones */
+  --ies-bg-deep: #1a1816;
+  --ies-bg-base: #211f1c;
+  --ies-bg-elevated: #2a2724;
+  --ies-bg-overlay: rgba(33, 31, 28, 0.95);
+
+  /* Text - Inverted hierarchy */
+  --ies-text-primary: #f5f2ed;
+  --ies-text-secondary: #c9c4bc;
+  --ies-text-muted: #8a847b;
+  --ies-text-subtle: #5c5650;
+  --ies-text-inverse: #1a1816;
+
+  /* Accent colors remain similar but slightly adjusted for dark */
+  --ies-accent: #d4952f;
+  --ies-accent-hover: #e0a33a;
+  --ies-accent-muted: rgba(212, 149, 47, 0.15);
+
+  --ies-secondary: #6a9a8a;
+  --ies-secondary-muted: rgba(106, 154, 138, 0.15);
+
+  --ies-tertiary: #9b8ab0;
+  --ies-tertiary-muted: rgba(155, 138, 176, 0.15);
+
+  /* Borders - Lighter for dark backgrounds */
+  --ies-border-subtle: rgba(245, 242, 237, 0.05);
+  --ies-border-light: rgba(245, 242, 237, 0.08);
+  --ies-border-medium: rgba(245, 242, 237, 0.12);
+  --ies-border-strong: rgba(245, 242, 237, 0.18);
+}
+/**
+ * IES Design System - Typography
+ * Philosophy: Intellectual warmth with clear hierarchy
+ *
+ * Display: Crimson Pro (scholarly elegance)
+ * Body: Nunito (friendly readability)
+ * Mono: JetBrains Mono (technical clarity)
+ */
+
+/* Google Fonts - Load required font families */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ==========================================================================
+     FONT FAMILIES
+     ========================================================================== */
+  --ies-font-display: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  --ies-font-body: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ies-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  /* System font stack fallback */
+  --ies-font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+
+  /* ==========================================================================
+     TYPE SCALE - Major Third (1.25 ratio), 15px base
+     ========================================================================== */
+  --ies-text-xs: 0.75rem;      /* 12px - Small labels, badges */
+  --ies-text-sm: 0.875rem;     /* 14px - Secondary text, captions */
+  --ies-text-base: 1rem;       /* 16px - Body text (adjusted from 15px for rem alignment) */
+  --ies-text-lg: 1.125rem;     /* 18px - Large body, emphasized text */
+  --ies-text-xl: 1.25rem;      /* 20px - Section headings */
+  --ies-text-2xl: 1.5rem;      /* 24px - Card headings */
+  --ies-text-3xl: 1.875rem;    /* 30px - Page headings */
+  --ies-text-4xl: 2.25rem;     /* 36px - Large headings */
+  --ies-text-5xl: 3rem;        /* 48px - Hero headings */
+
+  /* ==========================================================================
+     FONT WEIGHTS
+     ========================================================================== */
+  --ies-font-normal: 400;
+  --ies-font-medium: 500;
+  --ies-font-semibold: 600;
+  --ies-font-bold: 700;
+
+  /* ==========================================================================
+     LINE HEIGHTS - Optimized for readability
+     ========================================================================== */
+  --ies-leading-none: 1;
+  --ies-leading-tight: 1.25;
+  --ies-leading-snug: 1.375;
+  --ies-leading-normal: 1.5;
+  --ies-leading-relaxed: 1.625;
+  --ies-leading-loose: 2;
+
+  /* Semantic line heights */
+  --ies-leading-heading: 1.25;
+  --ies-leading-body: 1.6;
+  --ies-leading-code: 1.5;
+
+  /* ==========================================================================
+     LETTER SPACING
+     ========================================================================== */
+  --ies-tracking-tighter: -0.05em;
+  --ies-tracking-tight: -0.025em;
+  --ies-tracking-normal: 0;
+  --ies-tracking-wide: 0.025em;
+  --ies-tracking-wider: 0.05em;
+  --ies-tracking-widest: 0.1em;
+
+  /* ==========================================================================
+     SEMANTIC TYPOGRAPHY COMPOSITIONS
+     ========================================================================== */
+
+  /* Display headings (Crimson Pro) */
+  --ies-heading-display: var(--ies-font-medium) var(--ies-text-4xl)/var(--ies-leading-heading) var(--ies-font-display);
+  --ies-heading-1: var(--ies-font-medium) var(--ies-text-3xl)/var(--ies-leading-heading) var(--ies-font-display);
+  --ies-heading-2: var(--ies-font-medium) var(--ies-text-2xl)/var(--ies-leading-heading) var(--ies-font-display);
+  --ies-heading-3: var(--ies-font-medium) var(--ies-text-xl)/var(--ies-leading-snug) var(--ies-font-display);
+  --ies-heading-4: var(--ies-font-semibold) var(--ies-text-lg)/var(--ies-leading-snug) var(--ies-font-body);
+
+  /* Body text (Nunito) */
+  --ies-body-lg: var(--ies-font-normal) var(--ies-text-lg)/var(--ies-leading-body) var(--ies-font-body);
+  --ies-body-base: var(--ies-font-normal) var(--ies-text-base)/var(--ies-leading-body) var(--ies-font-body);
+  --ies-body-sm: var(--ies-font-normal) var(--ies-text-sm)/var(--ies-leading-body) var(--ies-font-body);
+
+  /* UI text */
+  --ies-ui-base: var(--ies-font-medium) var(--ies-text-base)/var(--ies-leading-normal) var(--ies-font-body);
+  --ies-ui-sm: var(--ies-font-medium) var(--ies-text-sm)/var(--ies-leading-normal) var(--ies-font-body);
+  --ies-ui-xs: var(--ies-font-medium) var(--ies-text-xs)/var(--ies-leading-normal) var(--ies-font-body);
+
+  /* Code */
+  --ies-code: var(--ies-font-normal) 0.9em/var(--ies-leading-code) var(--ies-font-mono);
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+
+/* Font families */
+.ies-font-display { font-family: var(--ies-font-display); }
+.ies-font-body { font-family: var(--ies-font-body); }
+.ies-font-mono { font-family: var(--ies-font-mono); }
+
+/* Text sizes */
+.ies-text-xs { font-size: var(--ies-text-xs); }
+.ies-text-sm { font-size: var(--ies-text-sm); }
+.ies-text-base { font-size: var(--ies-text-base); }
+.ies-text-lg { font-size: var(--ies-text-lg); }
+.ies-text-xl { font-size: var(--ies-text-xl); }
+.ies-text-2xl { font-size: var(--ies-text-2xl); }
+.ies-text-3xl { font-size: var(--ies-text-3xl); }
+.ies-text-4xl { font-size: var(--ies-text-4xl); }
+.ies-text-5xl { font-size: var(--ies-text-5xl); }
+
+/* Font weights */
+.ies-font-normal { font-weight: var(--ies-font-normal); }
+.ies-font-medium { font-weight: var(--ies-font-medium); }
+.ies-font-semibold { font-weight: var(--ies-font-semibold); }
+.ies-font-bold { font-weight: var(--ies-font-bold); }
+
+/* Line heights */
+.ies-leading-tight { line-height: var(--ies-leading-tight); }
+.ies-leading-normal { line-height: var(--ies-leading-normal); }
+.ies-leading-relaxed { line-height: var(--ies-leading-relaxed); }
+/**
+ * IES Design System - Spacing
+ * Philosophy: Consistent rhythm for visual harmony and reduced cognitive load
+ *
+ * Base unit: 4px
+ * Scale: Powers of 2 with intermediate values
+ */
+
+:root {
+  /* ==========================================================================
+     SPACING SCALE - 4px base unit
+     ========================================================================== */
+  --ies-space-0: 0;
+  --ies-space-px: 1px;
+  --ies-space-0-5: 0.125rem;   /* 2px */
+  --ies-space-1: 0.25rem;      /* 4px */
+  --ies-space-1-5: 0.375rem;   /* 6px */
+  --ies-space-2: 0.5rem;       /* 8px */
+  --ies-space-2-5: 0.625rem;   /* 10px */
+  --ies-space-3: 0.75rem;      /* 12px */
+  --ies-space-3-5: 0.875rem;   /* 14px */
+  --ies-space-4: 1rem;         /* 16px */
+  --ies-space-5: 1.25rem;      /* 20px */
+  --ies-space-6: 1.5rem;       /* 24px */
+  --ies-space-7: 1.75rem;      /* 28px */
+  --ies-space-8: 2rem;         /* 32px */
+  --ies-space-9: 2.25rem;      /* 36px */
+  --ies-space-10: 2.5rem;      /* 40px */
+  --ies-space-11: 2.75rem;     /* 44px */
+  --ies-space-12: 3rem;        /* 48px */
+  --ies-space-14: 3.5rem;      /* 56px */
+  --ies-space-16: 4rem;        /* 64px */
+  --ies-space-20: 5rem;        /* 80px */
+  --ies-space-24: 6rem;        /* 96px */
+  --ies-space-32: 8rem;        /* 128px */
+
+  /* ==========================================================================
+     SEMANTIC SPACING - Named for common use cases
+     ========================================================================== */
+
+  /* Inline spacing (between elements in a row) */
+  --ies-inline-xs: var(--ies-space-1);    /* 4px - Tight inline gaps */
+  --ies-inline-sm: var(--ies-space-2);    /* 8px - Small gaps */
+  --ies-inline-md: var(--ies-space-3);    /* 12px - Default gaps */
+  --ies-inline-lg: var(--ies-space-4);    /* 16px - Larger gaps */
+  --ies-inline-xl: var(--ies-space-6);    /* 24px - Section gaps */
+
+  /* Stack spacing (between stacked elements) */
+  --ies-stack-xs: var(--ies-space-1);     /* 4px */
+  --ies-stack-sm: var(--ies-space-2);     /* 8px */
+  --ies-stack-md: var(--ies-space-4);     /* 16px */
+  --ies-stack-lg: var(--ies-space-6);     /* 24px */
+  --ies-stack-xl: var(--ies-space-8);     /* 32px */
+  --ies-stack-2xl: var(--ies-space-12);   /* 48px */
+
+  /* Padding (internal spacing) */
+  --ies-pad-xs: var(--ies-space-1);       /* 4px - Tight padding */
+  --ies-pad-sm: var(--ies-space-2);       /* 8px - Small padding */
+  --ies-pad-md: var(--ies-space-4);       /* 16px - Default padding */
+  --ies-pad-lg: var(--ies-space-6);       /* 24px - Generous padding */
+  --ies-pad-xl: var(--ies-space-8);       /* 32px - Large padding */
+
+  /* Component-specific spacing */
+  --ies-button-padding-x: var(--ies-space-5);   /* 20px horizontal */
+  --ies-button-padding-y: var(--ies-space-2-5); /* 10px vertical */
+  --ies-input-padding-x: var(--ies-space-4);    /* 16px */
+  --ies-input-padding-y: var(--ies-space-3);    /* 12px */
+  --ies-card-padding: var(--ies-space-6);       /* 24px */
+  --ies-chip-padding-x: var(--ies-space-3-5);   /* 14px */
+  --ies-chip-padding-y: var(--ies-space-1-5);   /* 6px */
+
+  /* Layout spacing */
+  --ies-page-margin: var(--ies-space-8);        /* 32px page margins */
+  --ies-section-gap: var(--ies-space-12);       /* 48px between sections */
+  --ies-card-gap: var(--ies-space-6);           /* 24px between cards */
+
+  /* ==========================================================================
+     BORDER RADIUS - Consistent rounding
+     ========================================================================== */
+  --ies-radius-none: 0;
+  --ies-radius-sm: 6px;        /* Subtle rounding */
+  --ies-radius-md: 10px;       /* Default cards, buttons */
+  --ies-radius-lg: 16px;       /* Large cards, modals */
+  --ies-radius-xl: 24px;       /* Extra large elements */
+  --ies-radius-2xl: 32px;      /* Very rounded */
+  --ies-radius-full: 9999px;   /* Pills, avatars */
+
+  /* Semantic radius */
+  --ies-radius-button: var(--ies-radius-md);
+  --ies-radius-input: var(--ies-radius-md);
+  --ies-radius-card: var(--ies-radius-lg);
+  --ies-radius-modal: var(--ies-radius-lg);
+  --ies-radius-chip: 20px;     /* Pill-shaped chips */
+  --ies-radius-badge: 16px;    /* Badge/tag rounding */
+
+  /* ==========================================================================
+     CONTAINER WIDTHS
+     ========================================================================== */
+  --ies-container-sm: 640px;
+  --ies-container-md: 768px;
+  --ies-container-lg: 1024px;
+  --ies-container-xl: 1280px;
+  --ies-container-2xl: 1536px;
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+
+/* Margin utilities */
+.ies-m-0 { margin: var(--ies-space-0); }
+.ies-m-1 { margin: var(--ies-space-1); }
+.ies-m-2 { margin: var(--ies-space-2); }
+.ies-m-4 { margin: var(--ies-space-4); }
+.ies-m-6 { margin: var(--ies-space-6); }
+.ies-m-8 { margin: var(--ies-space-8); }
+
+/* Padding utilities */
+.ies-p-0 { padding: var(--ies-space-0); }
+.ies-p-1 { padding: var(--ies-space-1); }
+.ies-p-2 { padding: var(--ies-space-2); }
+.ies-p-4 { padding: var(--ies-space-4); }
+.ies-p-6 { padding: var(--ies-space-6); }
+.ies-p-8 { padding: var(--ies-space-8); }
+
+/* Gap utilities */
+.ies-gap-1 { gap: var(--ies-space-1); }
+.ies-gap-2 { gap: var(--ies-space-2); }
+.ies-gap-3 { gap: var(--ies-space-3); }
+.ies-gap-4 { gap: var(--ies-space-4); }
+.ies-gap-6 { gap: var(--ies-space-6); }
+.ies-gap-8 { gap: var(--ies-space-8); }
+
+/* Border radius utilities */
+.ies-rounded-none { border-radius: var(--ies-radius-none); }
+.ies-rounded-sm { border-radius: var(--ies-radius-sm); }
+.ies-rounded-md { border-radius: var(--ies-radius-md); }
+.ies-rounded-lg { border-radius: var(--ies-radius-lg); }
+.ies-rounded-xl { border-radius: var(--ies-radius-xl); }
+.ies-rounded-full { border-radius: var(--ies-radius-full); }
+/**
+ * IES Design System - Shadows
+ * Philosophy: Cupertino-inspired layered shadows for depth and tactile feel
+ *
+ * Shadows are composed of multiple layers for realistic depth perception
+ */
+
+:root {
+  /* ==========================================================================
+     SHADOW SCALE - Cupertino layered shadow system
+     ========================================================================== */
+
+  /* Tactile shadow - Subtle pressed-in feel for inputs and buttons */
+  --ies-shadow-tactile: 0 1px 1px rgba(45, 42, 38, 0.05),
+                        0 2px 1px rgba(45, 42, 38, 0.04);
+
+  /* Extra small - Subtle lift */
+  --ies-shadow-xs: 0 1px 2px rgba(45, 42, 38, 0.05);
+
+  /* Small - Cards at rest, default elevation */
+  --ies-shadow-sm: 0 1px 2px rgba(45, 42, 38, 0.04),
+                   0 2px 4px rgba(45, 42, 38, 0.04);
+
+  /* Medium - Hovered cards, dropdowns */
+  --ies-shadow-md: 0 2px 4px rgba(45, 42, 38, 0.04),
+                   0 4px 8px rgba(45, 42, 38, 0.06),
+                   0 8px 16px rgba(45, 42, 38, 0.06);
+
+  /* Large - Modals, popovers */
+  --ies-shadow-lg: 0 4px 8px rgba(45, 42, 38, 0.04),
+                   0 8px 16px rgba(45, 42, 38, 0.06),
+                   0 16px 32px rgba(45, 42, 38, 0.08);
+
+  /* Extra large - High elevation overlays */
+  --ies-shadow-xl: 0 8px 16px rgba(45, 42, 38, 0.06),
+                   0 16px 32px rgba(45, 42, 38, 0.08),
+                   0 32px 64px rgba(45, 42, 38, 0.10);
+
+  /* ==========================================================================
+     GLOW EFFECTS - For focus states and highlights
+     ========================================================================== */
+
+  /* Accent glow - Primary action focus */
+  --ies-shadow-glow: 0 0 20px rgba(201, 135, 46, 0.2);
+  --ies-shadow-glow-accent: 0 0 0 3px var(--ies-accent-muted);
+
+  /* Secondary glow - Knowledge/growth emphasis */
+  --ies-shadow-glow-secondary: 0 0 20px rgba(90, 138, 122, 0.2);
+
+  /* Tertiary glow - Reflection/depth emphasis */
+  --ies-shadow-glow-tertiary: 0 0 20px rgba(139, 122, 160, 0.2);
+
+  /* Error glow - Error state focus */
+  --ies-shadow-glow-error: 0 0 0 3px var(--ies-error-muted);
+
+  /* ==========================================================================
+     SEMANTIC SHADOWS - Named for component use
+     ========================================================================== */
+
+  /* Button shadows */
+  --ies-shadow-button: var(--ies-shadow-tactile);
+  --ies-shadow-button-hover: var(--ies-shadow-sm);
+  --ies-shadow-button-active: inset 0 1px 2px rgba(45, 42, 38, 0.1);
+
+  /* Card shadows */
+  --ies-shadow-card: var(--ies-shadow-sm);
+  --ies-shadow-card-hover: var(--ies-shadow-md);
+
+  /* Input shadows */
+  --ies-shadow-input: var(--ies-shadow-tactile);
+  --ies-shadow-input-focus: var(--ies-shadow-glow-accent);
+
+  /* Modal/overlay shadows */
+  --ies-shadow-modal: var(--ies-shadow-lg);
+  --ies-shadow-dropdown: var(--ies-shadow-md);
+  --ies-shadow-tooltip: var(--ies-shadow-sm);
+
+  /* ==========================================================================
+     INSET SHADOWS - For pressed/inset states
+     ========================================================================== */
+  --ies-shadow-inset-sm: inset 0 1px 2px rgba(45, 42, 38, 0.06);
+  --ies-shadow-inset-md: inset 0 2px 4px rgba(45, 42, 38, 0.08);
+  --ies-shadow-inset-lg: inset 0 4px 8px rgba(45, 42, 38, 0.10);
+}
+
+/* ==========================================================================
+   DARK THEME SHADOWS
+   ========================================================================== */
+[data-theme-mode="dark"],
+.dark {
+  /* Darker shadows for dark backgrounds */
+  --ies-shadow-tactile: 0 1px 1px rgba(0, 0, 0, 0.15),
+                        0 2px 1px rgba(0, 0, 0, 0.12);
+
+  --ies-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+  --ies-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15),
+                   0 2px 4px rgba(0, 0, 0, 0.15);
+
+  --ies-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.15),
+                   0 4px 8px rgba(0, 0, 0, 0.2),
+                   0 8px 16px rgba(0, 0, 0, 0.2);
+
+  --ies-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15),
+                   0 8px 16px rgba(0, 0, 0, 0.2),
+                   0 16px 32px rgba(0, 0, 0, 0.25);
+
+  --ies-shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.2),
+                   0 16px 32px rgba(0, 0, 0, 0.25),
+                   0 32px 64px rgba(0, 0, 0, 0.3);
+
+  /* Brighter glows on dark */
+  --ies-shadow-glow: 0 0 24px rgba(212, 149, 47, 0.3);
+  --ies-shadow-glow-secondary: 0 0 24px rgba(106, 154, 138, 0.3);
+  --ies-shadow-glow-tertiary: 0 0 24px rgba(155, 138, 176, 0.3);
+
+  /* Inset shadows */
+  --ies-shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  --ies-shadow-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+  --ies-shadow-inset-lg: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+.ies-shadow-none { box-shadow: none; }
+.ies-shadow-xs { box-shadow: var(--ies-shadow-xs); }
+.ies-shadow-sm { box-shadow: var(--ies-shadow-sm); }
+.ies-shadow-md { box-shadow: var(--ies-shadow-md); }
+.ies-shadow-lg { box-shadow: var(--ies-shadow-lg); }
+.ies-shadow-xl { box-shadow: var(--ies-shadow-xl); }
+.ies-shadow-glow { box-shadow: var(--ies-shadow-glow); }
+/**
+ * IES Design System - Animations
+ * Philosophy: Cupertino-refined motion with purposeful, buttery-smooth transitions
+ *
+ * Key principles:
+ * - Motion should feel natural and responsive
+ * - Animations should reduce cognitive load, not add to it
+ * - Consistent timing creates predictable, trustworthy interfaces
+ */
+
+:root {
+  /* ==========================================================================
+     EASING FUNCTIONS - Cupertino signature curves
+     ========================================================================== */
+
+  /* Cupertino ease-out - The signature Apple feel */
+  --ies-ease-cupertino: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Spring - Bouncy, playful feel for attention-grabbing elements */
+  --ies-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Standard easing */
+  --ies-ease-linear: linear;
+  --ies-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ies-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ies-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Specialized easing */
+  --ies-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ies-ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* ==========================================================================
+     DURATIONS - Consistent timing
+     ========================================================================== */
+  --ies-duration-instant: 100ms;   /* Instant feedback (hover states) */
+  --ies-duration-fast: 160ms;      /* Quick interactions (buttons, toggles) */
+  --ies-duration-base: 320ms;      /* Default animations (cards, modals) */
+  --ies-duration-slow: 640ms;      /* Deliberate animations (page transitions) */
+  --ies-duration-slower: 1000ms;   /* Very slow (progress, loading) */
+
+  /* ==========================================================================
+     TRANSITION PRESETS - Common transition combinations
+     ========================================================================== */
+  --ies-transition-fast: var(--ies-duration-fast) var(--ies-ease-cupertino);
+  --ies-transition-base: var(--ies-duration-base) var(--ies-ease-cupertino);
+  --ies-transition-slow: var(--ies-duration-slow) var(--ies-ease-cupertino);
+  --ies-transition-spring: var(--ies-duration-base) var(--ies-ease-spring);
+
+  /* Property-specific transitions */
+  --ies-transition-colors: color var(--ies-duration-fast) var(--ies-ease-cupertino),
+                           background-color var(--ies-duration-fast) var(--ies-ease-cupertino),
+                           border-color var(--ies-duration-fast) var(--ies-ease-cupertino);
+
+  --ies-transition-transform: transform var(--ies-duration-fast) var(--ies-ease-cupertino);
+
+  --ies-transition-opacity: opacity var(--ies-duration-fast) var(--ies-ease-cupertino);
+
+  --ies-transition-shadow: box-shadow var(--ies-duration-fast) var(--ies-ease-cupertino);
+
+  --ies-transition-all: all var(--ies-duration-fast) var(--ies-ease-cupertino);
+}
+
+/* ==========================================================================
+   KEYFRAME ANIMATIONS
+   ========================================================================== */
+
+/* Fade in - Subtle entrance */
+@keyframes ies-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fade out */
+@keyframes ies-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Slide up - Content entrance from below */
+@keyframes ies-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide down - Content exit or dropdown appearance */
+@keyframes ies-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in - Modal/popover entrance */
+@keyframes ies-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scale out */
+@keyframes ies-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Pulse soft - Attention without aggression (ADHD-friendly) */
+@keyframes ies-pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Glow pulse - Highlight important elements */
+@keyframes ies-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--ies-accent-muted);
+  }
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+/* Bounce subtle - Playful confirmation */
+@keyframes ies-bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Shake - Error/warning feedback */
+@keyframes ies-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+/* Spin - Loading indicator */
+@keyframes ies-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Check pop - Success confirmation (ADHD-friendly celebratory feedback) */
+@keyframes ies-check-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Shimmer - Loading placeholder */
+@keyframes ies-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ==========================================================================
+   ANIMATION UTILITY CLASSES
+   ========================================================================== */
+
+/* Apply animations */
+.ies-animate-fade-in {
+  animation: ies-fade-in var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-fade-out {
+  animation: ies-fade-out var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-slide-up {
+  animation: ies-slide-up var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-slide-down {
+  animation: ies-slide-down var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-scale-in {
+  animation: ies-scale-in var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-scale-out {
+  animation: ies-scale-out var(--ies-duration-base) var(--ies-ease-cupertino) forwards;
+}
+
+.ies-animate-pulse {
+  animation: ies-pulse-soft 2s var(--ies-ease-in-out) infinite;
+}
+
+.ies-animate-bounce {
+  animation: ies-bounce-subtle 1s var(--ies-ease-spring) infinite;
+}
+
+.ies-animate-shake {
+  animation: ies-shake 0.5s var(--ies-ease-out);
+}
+
+.ies-animate-spin {
+  animation: ies-spin 1s linear infinite;
+}
+
+.ies-animate-check-pop {
+  animation: ies-check-pop 0.4s var(--ies-ease-spring) forwards;
+}
+
+/* Shimmer loading effect */
+.ies-animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--ies-bg-base) 0%,
+    var(--ies-bg-elevated) 50%,
+    var(--ies-bg-base) 100%
+  );
+  background-size: 200% 100%;
+  animation: ies-shimmer 1.5s infinite;
+}
+
+/* ==========================================================================
+   TRANSITION UTILITY CLASSES
+   ========================================================================== */
+.ies-transition-none { transition: none; }
+.ies-transition-all { transition: var(--ies-transition-all); }
+.ies-transition-colors { transition: var(--ies-transition-colors); }
+.ies-transition-opacity { transition: var(--ies-transition-opacity); }
+.ies-transition-transform { transition: var(--ies-transition-transform); }
+.ies-transition-shadow { transition: var(--ies-transition-shadow); }
+
+/* Duration utilities */
+.ies-duration-fast { transition-duration: var(--ies-duration-fast); }
+.ies-duration-base { transition-duration: var(--ies-duration-base); }
+.ies-duration-slow { transition-duration: var(--ies-duration-slow); }
+
+/* Easing utilities */
+.ies-ease-cupertino { transition-timing-function: var(--ies-ease-cupertino); }
+.ies-ease-spring { transition-timing-function: var(--ies-ease-spring); }
+.ies-ease-bounce { transition-timing-function: var(--ies-ease-bounce); }
+
+/* ==========================================================================
+   REDUCED MOTION - Accessibility
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

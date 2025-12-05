@@ -1,3 +1,7 @@
+/* Import IES Design System */
+@import './_design-tokens.css';
+@import './styles/design-system.scss';
+
 /* AI Sidebar Styles */
 .ai-sidebar {
   font-family: var(--b3-font-family);

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 7: Cupertino Contemplative</title>
+  <style>
+    :root {
+      /* Cupertino - Apple-inspired refinement with warm IES accents */
+      --bg-deep: #f5f5f7;
+      --bg-base: #fefefe;
+      --bg-elevated: #ffffff;
+      --bg-overlay: rgba(255, 255, 255, 0.98);
+
+      --text-primary: rgba(0, 0, 0, 0.88);
+      --text-secondary: rgba(0, 0, 0, 0.62);
+      --text-muted: rgba(0, 0, 0, 0.44);
+      --text-subtle: rgba(0, 0, 0, 0.28);
+
+      /* IES amber accent with Cupertino refinement */
+      --accent: #c08b30;
+      --accent-hover: #d4992a;
+      --accent-muted: rgba(192, 139, 48, 0.1);
+
+      /* Apple semantic colors */
+      --success: #34c759;
+      --warning: #ff9f0a;
+      --error: #ff3b30;
+      --info: #007aff;
+
+      --secondary: #5a8a7a;
+      --secondary-muted: rgba(90, 138, 122, 0.1);
+
+      --tertiary: #8b7aa0;
+      --tertiary-muted: rgba(139, 122, 160, 0.1);
+
+      --border-subtle: rgba(0, 0, 0, 0.04);
+      --border-light: rgba(0, 0, 0, 0.08);
+      --border-medium: rgba(0, 0, 0, 0.12);
+
+      /* Cupertino's signature layered shadows */
+      --shadow-s: 0 1px 2px rgba(0, 0, 0, 0.04),
+                  0 2px 4px rgba(0, 0, 0, 0.04);
+      --shadow-m: 0 2px 4px rgba(0, 0, 0, 0.04),
+                  0 4px 8px rgba(0, 0, 0, 0.06),
+                  0 8px 16px rgba(0, 0, 0, 0.06);
+      --shadow-l: 0 4px 8px rgba(0, 0, 0, 0.04),
+                  0 8px 16px rgba(0, 0, 0, 0.06),
+                  0 16px 32px rgba(0, 0, 0, 0.08);
+      --shadow-tactile: 0 1px 1px rgba(0, 0, 0, 0.06),
+                        0 2px 1px rgba(0, 0, 0, 0.04);
+
+      --radius-s: 6px;
+      --radius-m: 10px;
+      --radius-l: 14px;
+      --radius-xl: 20px;
+
+      /* System fonts - SF Pro style */
+      --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, sans-serif;
+      --font-mono: "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+      /* Cupertino's signature easing curve */
+      --ease-cupertino: cubic-bezier(0.32, 0.72, 0, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --duration-superfast: 80ms;
+      --duration-fast: 160ms;
+      --duration-moderate: 320ms;
+      --duration-slow: 640ms;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: 32px;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      background: var(--accent-muted);
+      color: var(--accent);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-top: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-l);
+      padding: 24px;
+      box-shadow: var(--shadow-s);
+      border: 1px solid var(--border-subtle);
+      transition: all var(--duration-moderate) var(--ease-cupertino);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-m);
+      transform: translateY(-2px);
+    }
+
+    .card h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    /* Buttons - Cupertino: subtle, tactile */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 9px 18px;
+      border-radius: var(--radius-m);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-cupertino);
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--shadow-tactile);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+      box-shadow: var(--shadow-tactile);
+    }
+
+    .btn-info {
+      background: var(--info);
+      color: white;
+      box-shadow: var(--shadow-tactile);
+    }
+
+    .btn-outline {
+      background: var(--bg-deep);
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-base);
+      border-color: var(--border-medium);
+    }
+
+    /* Entity chips - Cupertino: subtle, pastel */
+    .entity-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .entity-chip {
+      padding: 5px 12px;
+      border-radius: var(--radius-s);
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all var(--duration-fast) var(--ease-cupertino);
+    }
+
+    .entity-chip:hover {
+      transform: translateY(-1px);
+    }
+
+    .entity-concept { background: rgba(0, 122, 255, 0.1); color: #007aff; }
+    .entity-person { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+    .entity-theory { background: rgba(175, 82, 222, 0.1); color: #af52de; }
+    .entity-framework { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
+    .entity-assessment { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
+
+    /* Question Classes */
+    .question-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .q-chip {
+      padding: 5px 10px;
+      border-radius: var(--radius-s);
+      font-size: 0.75rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all var(--duration-fast) var(--ease-cupertino);
+    }
+
+    .q-chip:hover {
+      transform: translateY(-1px);
+    }
+
+    .q-schema { background: rgba(90, 200, 250, 0.15); color: #32ade6; }
+    .q-boundary { background: rgba(175, 82, 222, 0.12); color: #af52de; }
+    .q-dimensional { background: rgba(48, 209, 88, 0.12); color: #30d158; }
+    .q-causal { background: rgba(255, 159, 10, 0.15); color: #ff9f0a; }
+    .q-counterfactual { background: rgba(255, 55, 95, 0.12); color: #ff375f; }
+    .q-anchor { background: rgba(52, 199, 89, 0.12); color: #34c759; }
+
+    /* Energy Levels */
+    .energy-section {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .energy-badge {
+      padding: 8px 14px;
+      border-radius: var(--radius-m);
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all var(--duration-fast) var(--ease-cupertino);
+    }
+
+    .energy-badge:hover {
+      transform: translateY(-1px);
+    }
+
+    .energy-low { background: rgba(142, 142, 147, 0.12); color: #8e8e93; }
+    .energy-medium { background: rgba(255, 159, 10, 0.12); color: #ff9f0a; }
+    .energy-high { background: rgba(255, 59, 48, 0.12); color: #ff3b30; }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-m);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      transition: all var(--duration-fast) var(--ease-cupertino);
+      box-shadow: var(--shadow-tactile);
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+
+    /* Typography Sample */
+    .typography-sample {
+      background: var(--bg-elevated);
+      padding: 32px;
+      border-radius: var(--radius-xl);
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-s);
+    }
+
+    .typography-sample h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .typography-sample h2 {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .typography-sample p {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .typography-sample code {
+      font-family: var(--font-mono);
+      background: var(--bg-deep);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--accent);
+    }
+
+    /* Color Swatches */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .swatch {
+      height: 65px;
+      border-radius: var(--radius-m);
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      font-size: 0.65rem;
+      font-weight: 500;
+    }
+
+    .swatch-accent { background: var(--accent); color: white; }
+    .swatch-info { background: var(--info); color: white; }
+    .swatch-success { background: var(--success); color: white; }
+    .swatch-warning { background: var(--warning); color: white; }
+    .swatch-error { background: var(--error); color: white; }
+    .swatch-bg { background: var(--bg-deep); color: var(--text-secondary); border: 1px solid var(--border-light); }
+
+    /* Segmented Control - Cupertino signature */
+    .segmented-control {
+      display: inline-flex;
+      background: var(--bg-deep);
+      border-radius: var(--radius-m);
+      padding: 3px;
+      margin-top: 16px;
+    }
+
+    .segment {
+      padding: 8px 16px;
+      border-radius: var(--radius-s);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-cupertino);
+    }
+
+    .segment:hover {
+      color: var(--text-primary);
+    }
+
+    .segment.active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-s);
+    }
+
+    /* Animation demo */
+    .animation-demo {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      align-items: center;
+    }
+
+    .anim-box {
+      width: 48px;
+      height: 48px;
+      background: var(--accent);
+      border-radius: var(--radius-m);
+      cursor: pointer;
+      transition: all var(--duration-moderate) var(--ease-cupertino);
+    }
+
+    .anim-box:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-m);
+    }
+
+    .anim-box:active {
+      transform: scale(0.95);
+    }
+
+    .timing-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Cupertino Contemplative</h1>
+    <p>Apple-inspired refinement: less visual noise, more cognitive clarity</p>
+    <span class="badge">Inspired by Obsidian Cupertino</span>
+  </div>
+
+  <div class="typography-sample">
+    <h1>The Narrow Window of Awareness</h1>
+    <h2>How humans construct meaning within constraints</h2>
+    <p>This framework explores the fundamental tension between our <strong>limited perceptual bandwidth</strong> and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes <code>meaning</code> possible.</p>
+    <p style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
+      // System fonts with -apple-system stack for native feel
+    </p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Primary Actions</h3>
+      <p>Tactile shadows, subtle hover states, Cupertino easing.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary">Start Exploration</button>
+        <button class="btn btn-info">View Graph</button>
+        <button class="btn btn-outline">Cancel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Entity Types</h3>
+      <p>Apple semantic colors with subtle backgrounds.</p>
+      <div class="entity-chips">
+        <span class="entity-chip entity-concept">Concept</span>
+        <span class="entity-chip entity-person">Person</span>
+        <span class="entity-chip entity-theory">Theory</span>
+        <span class="entity-chip entity-framework">Framework</span>
+        <span class="entity-chip entity-assessment">Assessment</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Question Classes</h3>
+      <p>Restrained color palette for cognitive badges.</p>
+      <div class="question-chips">
+        <span class="q-chip q-schema">🏗️ Schema</span>
+        <span class="q-chip q-boundary">🔲 Boundary</span>
+        <span class="q-chip q-dimensional">📐 Dimensional</span>
+        <span class="q-chip q-causal">⚡ Causal</span>
+        <span class="q-chip q-counterfactual">🔮 Counter</span>
+        <span class="q-chip q-anchor">⚓ Anchor</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Segmented Control</h3>
+      <p>Cupertino signature component for mode switching.</p>
+      <div class="segmented-control">
+        <span class="segment active">Learning</span>
+        <span class="segment">Planning</span>
+        <span class="segment">Reflecting</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Animation Timing</h3>
+      <p>cubic-bezier(0.32, 0.72, 0, 1) — smooth deceleration.</p>
+      <div class="animation-demo">
+        <div class="anim-box"></div>
+        <div>
+          <div class="timing-label">Superfast: 80ms</div>
+          <div class="timing-label">Fast: 160ms</div>
+          <div class="timing-label">Moderate: 320ms</div>
+          <div class="timing-label">Slow: 640ms</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Energy Levels</h3>
+      <p>Subtle badges for mood-based navigation.</p>
+      <div class="energy-section">
+        <span class="energy-badge energy-low">🔋 Low</span>
+        <span class="energy-badge energy-medium">⚡ Medium</span>
+        <span class="energy-badge energy-high">🔥 High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Form Input</h3>
+      <p>Tactile shadow, clean focus ring.</p>
+      <div class="form-group">
+        <label>Search concepts</label>
+        <input type="text" class="input" placeholder="e.g., executive function...">
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Color Palette</h3>
+      <div class="swatches">
+        <div class="swatch swatch-accent">#c08b30</div>
+        <div class="swatch swatch-info">#007aff</div>
+        <div class="swatch swatch-success">#34c759</div>
+        <div class="swatch swatch-warning">#ff9f0a</div>
+        <div class="swatch swatch-error">#ff3b30</div>
+        <div class="swatch swatch-bg">#f5f5f7</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

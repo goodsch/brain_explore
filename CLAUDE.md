@@ -430,11 +430,130 @@ For deeper context on the five-agent analysis, see `docs/five-agent-synthesis.md
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: architecture -->
-<!-- This section will be automatically updated by auto-memory plugin -->
+## Plugin Architecture Updates
+
+### Domain-Agnostic Configuration (siyuan-structure.ts)
+
+**Notebook Selection:**
+- User-configurable via localStorage `ies.preferredNotebooks` (JSON array)
+- Default notebooks: `['Personal', 'Knowledge', 'Notes', 'Intelligent Exploration System']`
+- Helper functions: `setPreferredNotebooks(['MyNotebook'])`, `getPreferredNotebookNames()`
+- Notebook resolution: First matching open notebook by preference order
+- Eliminates therapy-specific hardcoding for true domain-agnostic architecture
+
+**Backend Integration:**
+- Configurable backend URL via localStorage `ies.backendUrl`
+- Default: `http://192.168.86.60:8081` (SiYuan Docker container to host backend)
+- Health check caching: 30-second TTL to reduce API overhead
+- Generic API caller: `callBackendApi<T>(method, endpoint, body?)` for all backend requests
+
+**Session Document Structure:**
+- Frontmatter includes: `be_type`, `be_id`, `mode`, `topic`, `status`, `created`, `template_id`, `question_classes_used`
+- Question class tracking: Sessions record which cognitive function classes were used
+- Mode-specific folders: `/Sessions/{mode}/` (Learning, Articulating, Planning, Ideating, Reflecting)
+- YAML serialization with proper type handling (arrays, objects, dates, nested structures)
+
+### Question Class System (ForgeMode.svelte)
+
+**Nine Cognitive Function Classes:**
+1. **Schema-Probe (🏗️)** — Structure questions (blue #4a90d9) - "What are the main categories?"
+2. **Boundary (🔲)** — Edge/limit questions (purple #7b68ee) - "What's NOT included?"
+3. **Dimensional (📐)** — Spectrum questions (teal #20b2aa) - "On a scale from X to Y?"
+4. **Causal (⚡)** — Mechanism questions (tan #f4a460) - "What causes this?"
+5. **Counterfactual (🔮)** — What-if questions (orchid #da70d6) - "What if the opposite were true?"
+6. **Anchor (⚓)** — Concrete example questions (green #3cb371) - "Give a specific instance"
+7. **Perspective-Shift (👁️)** — Viewpoint change (brown #cd853f) - "How would X see this?"
+8. **Meta-Cognitive (🧠)** — Thinking pattern checks (gray #778899) - "How confident are you?"
+9. **Reflective-Synthesis (🔗)** — Integration (blue #6495ed) - "What's the main insight?"
+
+**Interactive Question-Response Dialogue:**
+- NOT passive display - questions require user response before continuing
+- State tracking: `pendingQuestion` with class, approach, timestamp
+- Cognitive guidance hints per question class (e.g., "This question asks you to surface hidden structure")
+- Response starters suggested (e.g., "The main parts are..." for schema_probe)
+- Question-response history tracked for session transcript
+- Follow-up questions generated based on user response
+
+**Question Class Tracking:**
+- `questionClassesUsed: string[]` - All classes used in session
+- `lastQuestionClass: string | null` - Most recent question class
+- Visual badges displayed inline with questions (emoji + color-coded labels)
+- Session documents include `question_classes_used` in frontmatter
+- Enables Mode Transition Engine pattern analysis
+
+**Mode Transition Suggestions:**
+- Each question class maps to recommended thinking modes
+- Example: `schema_probe` → suggests Discovery or Learning modes
+- Example: `reflective_synthesis` → suggests AST or Articulating modes
+- Helps users discover when to switch modes based on question patterns
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: conventions -->
 ## UI Design System
+
+### Design Preview System (Dec 5)
+
+**Interactive Design Gallery:** `/ies/plugin/design-previews/`
+
+Browser-based design system exploration with 7 complete aesthetic options plus typography and color alternatives. All previews use real IES Dashboard/FlowMode/QuickCapture components with live data.
+
+**Preview Navigation:** `design-previews/index.html` — Main navigation hub with tabbed interface
+
+**7 Design Options:**
+1. **Scholar's Library (Recommended)** — Warm, contemplative, intellectual aesthetic
+   - Fonts: Crimson Pro (display), Nunito (body), JetBrains Mono
+   - Colors: Warm paper tones (#f5f2ed deep, #faf8f5 base), amber accent (#c9872e)
+   - Philosophy: "The Reading Room" — afternoon light in curated library
+   - Preview: `option-1-scholars-library.html`
+
+2. **Asri Modern** — Clean minimalism with structured clarity
+   - Fonts: Inter (all contexts), Source Code Pro (mono)
+   - Colors: Cool neutrals (#f8f9fa), blue accent (#2563eb)
+   - Philosophy: Modern research lab meets design system
+   - Preview: `option-2-asri-modern.html`
+
+3. **Tsundoku Scholarly** — Book-stack aesthetic with serif warmth
+   - Fonts: Source Serif 4 (display/body), Fira Code (mono)
+   - Colors: Warm off-white (#fdfcfa), deep brown (#2e1f1a), burgundy accent (#8b3a3a)
+   - Philosophy: Japanese book-collecting culture meets academia
+   - Preview: `option-3-tsundoku.html`
+
+4. **Neurogarden** — ADHD-optimized glassmorphism with aurora effects
+   - Fonts: Space Grotesk (geometric sans), JetBrains Mono
+   - Colors: Dark base (#12121a), cyan accent (#00d4ff), violet secondary (#a855f7)
+   - Philosophy: Neural network garden with gentle glow animations
+   - Preview: `option-4-neurogarden.html`
+
+5. **Soft Focus** — Gentle, low-contrast, ADHD-friendly minimalism
+   - Fonts: DM Sans (rounded sans), Source Code Pro
+   - Colors: Soft sage (#f4f6f5), muted teal (#6b9080), warm gray (#5c5650)
+   - Philosophy: Reduced visual noise, gentle hierarchy
+   - Preview: `option-5-soft-focus.html`
+
+6. **Hybrid (Balanced)** — Combines Scholar's warmth with modern structure
+   - Fonts: Inter (UI), Crimson Pro (headings), JetBrains Mono
+   - Colors: Warm base with structured accents
+   - Philosophy: Best of contemplative + modern
+   - Preview: `option-6-hybrid.html`
+
+7. **Cupertino** — Apple-inspired with SF Pro aesthetic
+   - Fonts: -apple-system stack, SF Mono
+   - Colors: System grays, blue accent (#007aff)
+   - Philosophy: macOS/iOS native feel
+   - Preview: `option-7-cupertino.html`
+
+**Typography Comparison:** `typography-options.html`
+- 12 font pairings with live samples (headings, body, code)
+- Serif options: Crimson Pro, Source Serif 4, Libre Baskerville, Lora, Merriweather, IBM Plex Serif
+- Sans options: Nunito, Inter, DM Sans, Plus Jakarta Sans, Space Grotesk, Outfit, IBM Plex Sans
+- Mono options: JetBrains Mono, Fira Code, Source Code Pro
+
+**Color Alternatives:** `color-alternatives.html`
+- 8 accent color palettes (amber, blue, emerald, violet, rose, slate, warm, cool)
+- Each palette shows primary + hover + muted variants
+- Live component examples with each color scheme
+
+**Current Implementation:** Option 1 (Scholar's Library) in `design-system.scss`
 
 **Design Philosophy: "Contemplative Knowledge Space"**
 - Aesthetic: Quiet library meets neural network
@@ -455,9 +574,21 @@ For deeper context on the five-agent analysis, see `docs/five-agent-synthesis.md
 - Border radius: sm (6px), md (10px), lg (16px), xl (24px)
 - Transitions: fast (120ms), base (200ms), slow (350ms), bounce (400ms cubic-bezier)
 
+**Component Design Tokens (Unified Across All Views):**
+All Svelte components (Dashboard, ForgeMode, QuickCapture, FlowMode) declare CSS variables at root level using design system tokens instead of SiYuan theme variables. Replace `--b3-theme-*` with:
+- Background: `--bg-deep`, `--bg-base`, `--bg-elevated`, `--bg-overlay`
+- Text: `--text-primary`, `--text-secondary`, `--text-muted`, `--text-subtle`
+- Borders: `--border-subtle`, `--border-light`, `--border-medium`
+- Spacing: `--space-1` through `--space-6`
+- Radius: `--radius-sm`, `--radius-md`, `--radius-lg`
+- Shadows: `--shadow-sm`, `--shadow-md`, `--shadow-lg`
+- Colors: `--accent`, `--secondary`, `--tertiary`, `--success`, `--error`
+
 **Component Architecture:**
 - Dashboard: Central hub with stats, suggestions, recent journeys, capture queue
-- FlowMode: Graph exploration with relationship grouping (outgoing/incoming), breadcrumb path tracking
-- Journey resumption: Click journey in Dashboard → loads in FlowMode with preserved state
+- ForgeMode: Structured thinking with question class tracking, cognitive guidance hints
+- QuickCapture: Content capture with resonance/energy metadata
+- FlowMode: Graph exploration with relationship grouping, breadcrumb tracking
+- All components use unified design system for visual consistency
 <!-- END AUTO-MANAGED -->
 - any changes with plugin development needs to be mirrored in the docker deployed data directory as well at /home/chris/dev/docker/compose/appdata/siyuan/workspace/data/plugins/ies-explorer

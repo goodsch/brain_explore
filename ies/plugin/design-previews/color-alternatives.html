@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Alternatives</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #faf8f5;
+      --bg-elevated: #ffffff;
+      --text-primary: #2d2a26;
+      --text-secondary: #5c5650;
+      --text-muted: #8a847b;
+      --border-light: rgba(45, 42, 38, 0.1);
+      --shadow-sm: 0 1px 3px rgba(45, 42, 38, 0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito', -apple-system, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 32px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+    }
+
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section h2 {
+      font-size: 1.25rem;
+      color: #c9872e;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* Accent Color Options */
+    .accent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .accent-card {
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .accent-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .accent-card.recommended {
+      border-color: #c9872e;
+    }
+
+    .accent-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .accent-header h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .accent-header .badge {
+      background: #c9872e;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+    }
+
+    .color-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .color-swatch {
+      flex: 1;
+      height: 50px;
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      padding: 6px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    .accent-preview {
+      display: flex;
+      gap: 8px;
+    }
+
+    .preview-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .preview-chip {
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    /* Background Options */
+    .bg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .bg-card {
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 200px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .bg-card h4 {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .bg-card p {
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .bg-values {
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+
+    /* Entity Color Sets */
+    .entity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .entity-set {
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .entity-set.recommended {
+      border: 2px solid #c9872e;
+    }
+
+    .entity-set h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .entity-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .entity-chip {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    /* Dark Theme Previews */
+    .dark-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .dark-card {
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 250px;
+    }
+
+    .dark-card h4 {
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+    }
+
+    .dark-card p {
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .dark-demo-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .dark-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .dark-chip {
+      padding: 5px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    /* Semantic Colors */
+    .semantic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .semantic-card {
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .semantic-card h5 {
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      color: var(--text-muted);
+    }
+
+    .semantic-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .semantic-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .semantic-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+    }
+
+    .semantic-label {
+      font-size: 0.8rem;
+    }
+
+    .semantic-hex {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Color Alternatives</h1>
+    <p>Explore different color palettes, entity colors, and theme variations</p>
+  </div>
+
+  <!-- Accent Colors -->
+  <div class="section">
+    <h2>Primary Accent Colors</h2>
+    <div class="accent-grid">
+      <div class="accent-card recommended">
+        <div class="accent-header">
+          <h4>Amber Gold (Current)</h4>
+          <span class="badge">Recommended</span>
+        </div>
+        <div class="color-row">
+          <div class="color-swatch" style="background: #c9872e;">#c9872e</div>
+          <div class="color-swatch" style="background: #5a8a7a;">#5a8a7a</div>
+          <div class="color-swatch" style="background: #8b7aa0;">#8b7aa0</div>
+        </div>
+        <div class="accent-preview">
+          <button class="preview-btn" style="background: #c9872e; color: white;">Primary</button>
+          <button class="preview-btn" style="background: #5a8a7a; color: white;">Secondary</button>
+          <span class="preview-chip" style="background: rgba(201, 135, 46, 0.12); color: #c9872e;">Tag</span>
+        </div>
+      </div>
+
+      <div class="accent-card">
+        <div class="accent-header">
+          <h4>Terracotta Clay</h4>
+        </div>
+        <div class="color-row">
+          <div class="color-swatch" style="background: #b86b4a;">#b86b4a</div>
+          <div class="color-swatch" style="background: #5d7a6a;">#5d7a6a</div>
+          <div class="color-swatch" style="background: #7a6b8a;">#7a6b8a</div>
+        </div>
+        <div class="accent-preview">
+          <button class="preview-btn" style="background: #b86b4a; color: white;">Primary</button>
+          <button class="preview-btn" style="background: #5d7a6a; color: white;">Secondary</button>
+          <span class="preview-chip" style="background: rgba(184, 107, 74, 0.12); color: #b86b4a;">Tag</span>
+        </div>
+      </div>
+
+      <div class="accent-card">
+        <div class="accent-header">
+          <h4>Royal Purple</h4>
+        </div>
+        <div class="color-row">
+          <div class="color-swatch" style="background: #7c6aef;">#7c6aef</div>
+          <div class="color-swatch" style="background: #10b981;">#10b981</div>
+          <div class="color-swatch" style="background: #f59e0b;">#f59e0b</div>
+        </div>
+        <div class="accent-preview">
+          <button class="preview-btn" style="background: #7c6aef; color: white;">Primary</button>
+          <button class="preview-btn" style="background: #10b981; color: white;">Secondary</button>
+          <span class="preview-chip" style="background: rgba(124, 106, 239, 0.12); color: #7c6aef;">Tag</span>
+        </div>
+      </div>
+
+      <div class="accent-card">
+        <div class="accent-header">
+          <h4>Ocean Teal</h4>
+        </div>
+        <div class="color-row">
+          <div class="color-swatch" style="background: #0d9488;">#0d9488</div>
+          <div class="color-swatch" style="background: #6366f1;">#6366f1</div>
+          <div class="color-swatch" style="background: #f97316;">#f97316</div>
+        </div>
+        <div class="accent-preview">
+          <button class="preview-btn" style="background: #0d9488; color: white;">Primary</button>
+          <button class="preview-btn" style="background: #6366f1; color: white;">Secondary</button>
+          <span class="preview-chip" style="background: rgba(13, 148, 136, 0.12); color: #0d9488;">Tag</span>
+        </div>
+      </div>
+
+      <div class="accent-card">
+        <div class="accent-header">
+          <h4>Apple Blue</h4>
+        </div>
+        <div class="color-row">
+          <div class="color-swatch" style="background: #007aff;">#007aff</div>
+          <div class="color-swatch" style="background: #34c759;">#34c759</div>
+          <div class="color-swatch" style="background: #ff9f0a;">#ff9f0a</div>
+        </div>
+        <div class="accent-preview">
+          <button class="preview-btn" style="background: #007aff; color: white;">Primary</button>
+          <button class="preview-btn" style="background: #34c759; color: white;">Secondary</button>
+          <span class="preview-chip" style="background: rgba(0, 122, 255, 0.1); color: #007aff;">Tag</span>
+        </div>
+      </div>
+
+      <div class="accent-card">
+        <div class="accent-header">
+          <h4>Cyber Cyan</h4>
+        </div>
+        <div class="color-row">
+          <div class="color-swatch" style="background: #00d4ff;">#00d4ff</div>
+          <div class="color-swatch" style="background: #a855f7;">#a855f7</div>
+          <div class="color-swatch" style="background: #10b981;">#10b981</div>
+        </div>
+        <div class="accent-preview">
+          <button class="preview-btn" style="background: #00d4ff; color: #0a0a0f;">Primary</button>
+          <button class="preview-btn" style="background: #a855f7; color: white;">Secondary</button>
+          <span class="preview-chip" style="background: rgba(0, 212, 255, 0.15); color: #00d4ff;">Tag</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Background Colors -->
+  <div class="section">
+    <h2>Background Palettes (Light)</h2>
+    <div class="bg-grid">
+      <div class="bg-card" style="background: #faf8f5; color: #2d2a26;">
+        <h4>Warm Paper (Recommended)</h4>
+        <p>Cream-tinted backgrounds that feel like quality paper. Inviting for long reading sessions.</p>
+        <div class="bg-values">
+          Base: #faf8f5 | Deep: #f5f2ed | Elevated: #ffffff
+        </div>
+      </div>
+
+      <div class="bg-card" style="background: #f7f7f7; color: #1a1a1a;">
+        <h4>Cool Neutral</h4>
+        <p>Clean, modern gray backgrounds. Professional and distraction-free.</p>
+        <div class="bg-values">
+          Base: #f7f7f7 | Deep: #f0f0f0 | Elevated: #ffffff
+        </div>
+      </div>
+
+      <div class="bg-card" style="background: #f5f5f7; color: #1d1d1f;">
+        <h4>Apple Gray</h4>
+        <p>Subtle blue undertones characteristic of Apple design. Clean and refined.</p>
+        <div class="bg-values">
+          Base: #f5f5f7 | Deep: #e8e8ed | Elevated: #ffffff
+        </div>
+      </div>
+
+      <div class="bg-card" style="background: #eff0f5; color: #2e2e3a;">
+        <h4>Soft Lavender</h4>
+        <p>Very subtle purple undertones. Calming and unique without being distracting.</p>
+        <div class="bg-values">
+          Base: #eff0f5 | Deep: #e8e8ee | Elevated: #f5f6fa
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entity Color Sets -->
+  <div class="section">
+    <h2>Entity Type Color Sets</h2>
+    <div class="entity-grid">
+      <div class="entity-set recommended">
+        <h4>Vibrant (Recommended) <span style="background: #c9872e; color: white; padding: 2px 8px; border-radius: 8px; font-size: 0.7rem;">Current</span></h4>
+        <div class="entity-chips">
+          <span class="entity-chip" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">Concept</span>
+          <span class="entity-chip" style="background: rgba(5, 150, 105, 0.12); color: #059669;">Person</span>
+          <span class="entity-chip" style="background: rgba(124, 58, 237, 0.12); color: #7c3aed;">Theory</span>
+          <span class="entity-chip" style="background: rgba(234, 88, 12, 0.12); color: #ea580c;">Framework</span>
+          <span class="entity-chip" style="background: rgba(220, 38, 38, 0.12); color: #dc2626;">Assessment</span>
+        </div>
+      </div>
+
+      <div class="entity-set">
+        <h4>Muted Academic</h4>
+        <div class="entity-chips">
+          <span class="entity-chip" style="background: rgba(44, 82, 130, 0.12); color: #2c5282;">Concept</span>
+          <span class="entity-chip" style="background: rgba(56, 118, 29, 0.12); color: #38761d;">Person</span>
+          <span class="entity-chip" style="background: rgba(106, 76, 147, 0.12); color: #6a4c93;">Theory</span>
+          <span class="entity-chip" style="background: rgba(184, 107, 74, 0.12); color: #b86b4a;">Framework</span>
+          <span class="entity-chip" style="background: rgba(163, 67, 67, 0.12); color: #a34343;">Assessment</span>
+        </div>
+      </div>
+
+      <div class="entity-set">
+        <h4>Apple Semantic</h4>
+        <div class="entity-chips">
+          <span class="entity-chip" style="background: rgba(0, 122, 255, 0.1); color: #007aff;">Concept</span>
+          <span class="entity-chip" style="background: rgba(52, 199, 89, 0.1); color: #34c759;">Person</span>
+          <span class="entity-chip" style="background: rgba(175, 82, 222, 0.1); color: #af52de;">Theory</span>
+          <span class="entity-chip" style="background: rgba(255, 149, 0, 0.1); color: #ff9500;">Framework</span>
+          <span class="entity-chip" style="background: rgba(255, 59, 48, 0.1); color: #ff3b30;">Assessment</span>
+        </div>
+      </div>
+
+      <div class="entity-set">
+        <h4>Neon (Dark Theme)</h4>
+        <div class="entity-chips" style="background: #12121a; padding: 12px; border-radius: 8px;">
+          <span class="entity-chip" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">Concept</span>
+          <span class="entity-chip" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">Person</span>
+          <span class="entity-chip" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">Theory</span>
+          <span class="entity-chip" style="background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.3);">Framework</span>
+          <span class="entity-chip" style="background: rgba(248, 113, 113, 0.2); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3);">Assessment</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dark Theme Variations -->
+  <div class="section">
+    <h2>Dark Theme Variations</h2>
+    <div class="dark-grid">
+      <div class="dark-card" style="background: #1c1c1e; color: rgba(255,255,255,0.92);">
+        <h4 style="color: rgba(255,255,255,0.92);">Apple Dark</h4>
+        <p style="color: rgba(255,255,255,0.68);">Cool neutral dark with subtle blue undertones. Clean and modern.</p>
+        <div class="dark-demo-row">
+          <button class="dark-btn" style="background: #c08b30; color: white;">Primary</button>
+          <button class="dark-btn" style="background: #2c2c2e; color: rgba(255,255,255,0.68);">Secondary</button>
+        </div>
+        <div class="dark-demo-row">
+          <span class="dark-chip" style="background: rgba(192, 139, 48, 0.15); color: #d4992a;">Tag</span>
+          <span class="dark-chip" style="background: rgba(0, 122, 255, 0.15); color: #0a84ff;">Concept</span>
+        </div>
+      </div>
+
+      <div class="dark-card" style="background: #12121a; color: #f0f0f5;">
+        <h4 style="color: #f0f0f5;">Neurogarden Dark</h4>
+        <p style="color: #a8a8b8;">Deep purple-black with aurora glow effects. ADHD-optimized.</p>
+        <div class="dark-demo-row">
+          <button class="dark-btn" style="background: linear-gradient(135deg, #00d4ff, #0099cc); color: #0a0a0f;">Primary</button>
+          <button class="dark-btn" style="background: rgba(30, 30, 45, 0.7); color: #a8a8b8; border: 1px solid rgba(255,255,255,0.08);">Secondary</button>
+        </div>
+        <div class="dark-demo-row">
+          <span class="dark-chip" style="background: rgba(0, 212, 255, 0.15); color: #00d4ff; border: 1px solid rgba(0, 212, 255, 0.3);">Tag</span>
+          <span class="dark-chip" style="background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3);">Theory</span>
+        </div>
+      </div>
+
+      <div class="dark-card" style="background: #1a1816; color: #f0ede8;">
+        <h4 style="color: #f0ede8;">Warm Sepia Dark</h4>
+        <p style="color: #a8a29e;">Warm brown-black that maintains Scholar's Library warmth.</p>
+        <div class="dark-demo-row">
+          <button class="dark-btn" style="background: #c9872e; color: white;">Primary</button>
+          <button class="dark-btn" style="background: #2a2622; color: #a8a29e;">Secondary</button>
+        </div>
+        <div class="dark-demo-row">
+          <span class="dark-chip" style="background: rgba(201, 135, 46, 0.15); color: #d4a574;">Tag</span>
+          <span class="dark-chip" style="background: rgba(90, 138, 122, 0.15); color: #7a9987;">Knowledge</span>
+        </div>
+      </div>
+
+      <div class="dark-card" style="background: #0f172a; color: #f1f5f9;">
+        <h4 style="color: #f1f5f9;">Slate Dark</h4>
+        <p style="color: #94a3b8;">Deep blue-gray with strong contrast. Professional and focused.</p>
+        <div class="dark-demo-row">
+          <button class="dark-btn" style="background: #3b82f6; color: white;">Primary</button>
+          <button class="dark-btn" style="background: #1e293b; color: #94a3b8;">Secondary</button>
+        </div>
+        <div class="dark-demo-row">
+          <span class="dark-chip" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">Tag</span>
+          <span class="dark-chip" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">Person</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Semantic Colors -->
+  <div class="section">
+    <h2>Semantic Color Options</h2>
+    <div class="semantic-grid">
+      <div class="semantic-card">
+        <h5>Success</h5>
+        <div class="semantic-options">
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #34c759;"></div>
+            <div>
+              <div class="semantic-label">Apple Green</div>
+              <div class="semantic-hex">#34c759</div>
+            </div>
+          </div>
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #10b981;"></div>
+            <div>
+              <div class="semantic-label">Emerald</div>
+              <div class="semantic-hex">#10b981</div>
+            </div>
+          </div>
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #059669;"></div>
+            <div>
+              <div class="semantic-label">Deep Emerald</div>
+              <div class="semantic-hex">#059669</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="semantic-card">
+        <h5>Warning</h5>
+        <div class="semantic-options">
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #ff9f0a;"></div>
+            <div>
+              <div class="semantic-label">Apple Orange</div>
+              <div class="semantic-hex">#ff9f0a</div>
+            </div>
+          </div>
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #f59e0b;"></div>
+            <div>
+              <div class="semantic-label">Amber</div>
+              <div class="semantic-hex">#f59e0b</div>
+            </div>
+          </div>
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #c98b2f;"></div>
+            <div>
+              <div class="semantic-label">Warm Gold</div>
+              <div class="semantic-hex">#c98b2f</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="semantic-card">
+        <h5>Error</h5>
+        <div class="semantic-options">
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #ff3b30;"></div>
+            <div>
+              <div class="semantic-label">Apple Red</div>
+              <div class="semantic-hex">#ff3b30</div>
+            </div>
+          </div>
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #ef4444;"></div>
+            <div>
+              <div class="semantic-label">Red</div>
+              <div class="semantic-hex">#ef4444</div>
+            </div>
+          </div>
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #dc2626;"></div>
+            <div>
+              <div class="semantic-label">Deep Red</div>
+              <div class="semantic-hex">#dc2626</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="semantic-card">
+        <h5>Info</h5>
+        <div class="semantic-options">
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #007aff;"></div>
+            <div>
+              <div class="semantic-label">Apple Blue</div>
+              <div class="semantic-hex">#007aff</div>
+            </div>
+          </div>
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #3b82f6;"></div>
+            <div>
+              <div class="semantic-label">Blue</div>
+              <div class="semantic-hex">#3b82f6</div>
+            </div>
+          </div>
+          <div class="semantic-option">
+            <div class="semantic-swatch" style="background: #2563eb;"></div>
+            <div>
+              <div class="semantic-label">Royal Blue</div>
+              <div class="semantic-hex">#2563eb</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -306,7 +306,9 @@ async function getDocIdByPath(notebookId: string, relativePath: string): Promise
         return null;
     }
 
-    const ids = await getIDsByHPath(notebookId, normalized);
+    // SiYuan's getIDsByHPath expects paths with leading slash
+    const hpath = '/' + normalized;
+    const ids = await getIDsByHPath(notebookId, hpath);
     if (!ids || !ids.length) {
         return null;
     }

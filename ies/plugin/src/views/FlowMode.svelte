@@ -13,6 +13,7 @@
 
     export let backendUrl: string;
     export let journeyId: string | null = null;
+    export let initialConcept: string | null = null;
 
     const dispatch = createEventDispatcher();
 
@@ -31,10 +32,38 @@
     let mounted = false;
     let conceptDetailTab: 'connections' | 'reframes' = 'connections';
 
+    interface QuestionExchange {
+        question: string;
+        response: string;
+        questionClass?: string | null;
+        approach?: string | null;
+        state?: string | null;
+    }
+
+    const QUESTION_CLASS_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
+        schema_probe: { label: 'Structure', emoji: '🏗️', color: '#4a90d9' },
+        boundary: { label: 'Boundary', emoji: '🔲', color: '#7b68ee' },
+        dimensional: { label: 'Dimensional', emoji: '📐', color: '#20b2aa' },
+        causal: { label: 'Causal', emoji: '⚡', color: '#f4a460' },
+        counterfactual: { label: 'What-If', emoji: '🔮', color: '#da70d6' },
+        anchor: { label: 'Anchor', emoji: '⚓', color: '#3cb371' },
+        perspective_shift: { label: 'Perspective', emoji: '👁️', color: '#cd853f' },
+        meta_cognitive: { label: 'Meta', emoji: '🧠', color: '#778899' },
+        reflective_synthesis: { label: 'Synthesis', emoji: '🔗', color: '#6495ed' },
+    };
+
+    let questionResponse = '';
+    let questionHistory: QuestionExchange[] = [];
+    let currentQuestionClass: string | null = null;
+    let currentApproach: string | null = null;
+    let lastDetectedState: string | null = null;
+
     onMount(() => {
         mounted = true;
         if (journeyId) {
             loadJourney(journeyId);
+        } else if (initialConcept) {
+            exploreConcept(initialConcept);
         }
     });
 
@@ -166,6 +195,11 @@
             currentConcept = concept;
             nodes = data.nodes || [];
             relationships = data.relationships || [];
+            questionHistory = [];
+            questionResponse = '';
+            currentQuestionClass = null;
+            currentApproach = null;
+            lastDetectedState = null;
 
             // Add to path (avoid duplicates if navigating back)
             const existingIndex = explorationPath.indexOf(concept);
@@ -196,8 +230,75 @@
                 related: nodes.slice(0, 5).map(n => n.name)
             });
             thinkingQuestion = data.question;
+            currentQuestionClass = data.question_class || null;
+            currentApproach = null;
+            lastDetectedState = null;
+            questionResponse = '';
         } catch (err) {
             showMessage(`Question failed: ${err.message}`, 5000, 'error');
+        } finally {
+            isLoadingQuestion = false;
+        }
+    }
+
+    async function submitQuestionResponse() {
+        if (!thinkingQuestion) {
+            showMessage('No active question to respond to', 3000, 'error');
+            return;
+        }
+        if (!questionResponse.trim()) {
+            showMessage('Please enter a response', 3000, 'error');
+            return;
+        }
+
+        isLoadingQuestion = true;
+        const responseText = questionResponse.trim();
+
+        try {
+            const detection = await apiPost('/question-engine/detect-state', {
+                recent_messages: [thinkingQuestion, responseText],
+                user_id: 'chris'
+            });
+            lastDetectedState = detection?.primary_state || null;
+
+            const generated = await apiPost('/question-engine/generate-questions', {
+                user_id: 'chris',
+                recent_messages: [thinkingQuestion, responseText],
+                context: currentConcept || 'exploration',
+                num_questions: 1
+            });
+
+            const classified = generated?.classified_questions?.[0];
+            const followUp = classified?.question || generated?.questions?.[0] || null;
+
+            questionHistory = [
+                ...questionHistory,
+                {
+                    question: thinkingQuestion,
+                    response: responseText,
+                    questionClass: currentQuestionClass,
+                    approach: currentApproach || generated?.approach || null,
+                    state: lastDetectedState
+                }
+            ];
+
+            if (!followUp) {
+                thinkingQuestion = null;
+                currentQuestionClass = null;
+                currentApproach = null;
+                questionResponse = '';
+                showMessage('No follow-up question returned', 4000, 'error');
+                return;
+            }
+
+            thinkingQuestion = followUp;
+            currentQuestionClass = classified?.question_class || null;
+            currentApproach = classified?.approach || generated?.approach || null;
+            questionResponse = '';
+        } catch (err) {
+            console.error('[IES] Question response handling failed:', err);
+            const message = err?.message || String(err);
+            showMessage(`Could not process response: ${message}`, 5000, 'error');
         } finally {
             isLoadingQuestion = false;
         }
@@ -220,6 +321,11 @@
         relationships = [];
         explorationPath = [];
         thinkingQuestion = null;
+        questionHistory = [];
+        questionResponse = '';
+        currentQuestionClass = null;
+        currentApproach = null;
+        lastDetectedState = null;
         searchQuery = '';
         searchResults = [];
         conceptDetailTab = 'connections';
@@ -495,8 +601,63 @@
                         </svg>
                         <span>Thinking Partner</span>
                     </div>
+                    <div class="question-meta">
+                        {#if currentQuestionClass}
+                            <span class="question-badge" style={`--badge-color: ${QUESTION_CLASS_LABELS[currentQuestionClass]?.color || '#7a756e'}`}>
+                                <span class="badge-emoji">{QUESTION_CLASS_LABELS[currentQuestionClass]?.emoji || '💭'}</span>
+                                <span>{QUESTION_CLASS_LABELS[currentQuestionClass]?.label || currentQuestionClass}</span>
+                            </span>
+                        {/if}
+                        {#if lastDetectedState}
+                            <span class="state-chip">{lastDetectedState}</span>
+                        {/if}
+                    </div>
                     <p class="thinking-question">{thinkingQuestion}</p>
+                    <div class="response-box">
+                        <label for="question-response">Your response</label>
+                        <textarea
+                            id="question-response"
+                            rows="4"
+                            bind:value={questionResponse}
+                            placeholder="Capture your take or next step..."
+                            disabled={isLoadingQuestion}
+                        ></textarea>
+                        <button
+                            class="response-submit"
+                            on:click={submitQuestionResponse}
+                            disabled={isLoadingQuestion || !questionResponse.trim()}
+                        >
+                            {#if isLoadingQuestion}
+                                <span class="spinner small"></span>
+                                <span>Sending...</span>
+                            {:else}
+                                Submit response
+                            {/if}
+                        </button>
+                    </div>
                 </div>
+                {#if questionHistory.length > 0}
+                    <div class="question-history">
+                        <div class="history-header">Recent reflections</div>
+                        {#each questionHistory as entry, idx}
+                            <div class="history-item" style={`--delay: ${idx * 40}ms`}>
+                                <div class="history-question">
+                                    {#if entry.questionClass}
+                                        <span class="question-badge" style={`--badge-color: ${QUESTION_CLASS_LABELS[entry.questionClass]?.color || '#7a756e'}`}>
+                                            <span class="badge-emoji">{QUESTION_CLASS_LABELS[entry.questionClass]?.emoji || '💭'}</span>
+                                            <span>{QUESTION_CLASS_LABELS[entry.questionClass]?.label || entry.questionClass}</span>
+                                        </span>
+                                    {/if}
+                                    <p>{entry.question}</p>
+                                    {#if entry.state}
+                                        <span class="state-chip subtle">{entry.state}</span>
+                                    {/if}
+                                </div>
+                                <p class="history-response">{entry.response}</p>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
             {:else}
                 <button
                     class="thinking-btn"
@@ -1208,6 +1369,153 @@
         line-height: 1.6;
         color: var(--ies-text-primary);
         margin: 0;
+    }
+
+    .question-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        flex-wrap: wrap;
+    }
+
+    .question-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--badge-color, #7a756e);
+        border-radius: 999px;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--badge-color, var(--ies-text-primary));
+    }
+
+    .badge-emoji {
+        font-size: 1rem;
+    }
+
+    .state-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        text-transform: capitalize;
+        background: var(--ies-bg-base);
+        border: 1px solid var(--ies-border-light);
+        color: var(--ies-text-secondary);
+    }
+
+    .state-chip.subtle {
+        background: var(--ies-bg-elevated);
+    }
+
+    .response-box {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .response-box label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--ies-text-secondary);
+    }
+
+    .response-box textarea {
+        width: 100%;
+        padding: 10px 12px;
+        font-family: inherit;
+        font-size: 0.9375rem;
+        color: var(--ies-text-primary);
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-light);
+        border-radius: var(--ies-radius-sm);
+        resize: vertical;
+        min-height: 90px;
+    }
+
+    .response-box textarea:focus {
+        outline: none;
+        border-color: var(--ies-tertiary);
+        box-shadow: 0 0 0 3px var(--ies-tertiary-light);
+    }
+
+    .response-submit {
+        align-self: flex-end;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: white;
+        background: var(--ies-tertiary);
+        border: none;
+        border-radius: var(--ies-radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease-out;
+    }
+
+    .response-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .response-submit:not(:disabled):hover {
+        background: var(--ies-tertiary-light);
+        color: var(--ies-text-primary);
+    }
+
+    .question-history {
+        margin-top: 12px;
+        padding: 12px;
+        background: var(--ies-bg-elevated);
+        border: 1px solid var(--ies-border-subtle);
+        border-radius: var(--ies-radius-md);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: var(--ies-shadow-sm);
+    }
+
+    .history-header {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--ies-text-secondary);
+    }
+
+    .history-item {
+        padding: 10px;
+        border-radius: var(--ies-radius-sm);
+        background: var(--ies-bg-base);
+        border: 1px solid var(--ies-border-subtle);
+        animation: slideIn 0.25s ease-out backwards;
+        animation-delay: var(--delay);
+    }
+
+    .history-question {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+    }
+
+    .history-question p {
+        margin: 0;
+        font-weight: 600;
+        color: var(--ies-text-primary);
+    }
+
+    .history-response {
+        margin: 0;
+        color: var(--ies-text-secondary);
+        line-height: 1.5;
+        white-space: pre-wrap;
     }
 
     /* Spinner */
