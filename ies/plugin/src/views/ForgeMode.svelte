@@ -99,6 +99,10 @@
     let sectionResponses: Record<string, string> = {};
     let showProgress = false;
 
+    // Question engine state
+    let detectedState: string = 'exploring';
+    let currentApproach: string = 'socratic';
+
     const USER_ID = 'chris';
 
     // Use SiYuan's forwardProxy to reach backend
@@ -157,6 +161,90 @@
         }
 
         return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
+    }
+
+    // Question Engine integration
+    async function detectUserState(messages: Array<{role: string, content: string}>): Promise<string> {
+        try {
+            // Get last few user messages for state detection
+            const recentUserMessages = messages
+                .filter(m => m.role === 'user')
+                .slice(-3)
+                .map(m => m.content);
+
+            if (recentUserMessages.length === 0) return 'exploring';
+
+            const data = await apiPost('/question-engine/detect-state', {
+                messages: recentUserMessages,
+                context: {
+                    mode: selectedMode,
+                    topic: sessionTopic,
+                    section: template?.sections[currentSectionIndex]?.id || null
+                }
+            });
+
+            return data.detected_state || 'exploring';
+        } catch (err) {
+            console.warn('[IES] State detection failed, using default:', err);
+            return 'exploring';
+        }
+    }
+
+    async function selectApproach(state: string): Promise<string> {
+        try {
+            // Map thinking modes to preferred approaches
+            const modeApproachHints: Record<ThinkingMode, string> = {
+                learning: 'socratic',
+                articulating: 'phenomenological',
+                planning: 'solution_focused',
+                ideating: 'systems',
+                reflecting: 'phenomenological'
+            };
+
+            const data = await apiPost('/question-engine/select-approach', {
+                user_state: state,
+                context: {
+                    mode: selectedMode,
+                    preferred_approach: modeApproachHints[selectedMode]
+                }
+            });
+
+            return data.selected_approach || modeApproachHints[selectedMode];
+        } catch (err) {
+            console.warn('[IES] Approach selection failed:', err);
+            return 'socratic';
+        }
+    }
+
+    async function generateThinkingQuestion(
+        userMessage: string,
+        aiResponse: string,
+        state: string,
+        approach: string
+    ): Promise<string | null> {
+        try {
+            const data = await apiPost('/question-engine/generate-questions', {
+                approach,
+                user_state: state,
+                context: {
+                    mode: selectedMode,
+                    topic: sessionTopic,
+                    user_message: userMessage,
+                    ai_response: aiResponse,
+                    section: template?.sections[currentSectionIndex]?.id || null,
+                    section_prompt: template?.sections[currentSectionIndex]?.prompt || null
+                },
+                count: 1
+            });
+
+            if (data.questions && data.questions.length > 0) {
+                return data.questions[0];
+            }
+            return null;
+        } catch (err) {
+            console.warn('[IES] Question generation failed:', err);
+            return null;
+        }
     }
 
     onMount(() => {
@@ -258,14 +346,51 @@
             mode: selectedMode,
             mode_prompt: modeConfig.aiPrompt
         })
-            .then(data => {
+            .then(async data => {
                 let response = data.response || '';
 
                 // Advance to next section if template-driven
                 if (template && currentSectionIndex < template.sections.length - 1) {
                     currentSectionIndex++;
                     const nextSection = template.sections[currentSectionIndex];
+
+                    // Detect state and potentially add a thinking question before next section
+                    detectedState = await detectUserState(messages);
+                    currentApproach = await selectApproach(detectedState);
+
+                    // Only add thinking question if user seems stuck or overwhelmed
+                    if (detectedState === 'stuck' || detectedState === 'overwhelmed' || detectedState === 'uncertain') {
+                        const thinkingQuestion = await generateThinkingQuestion(
+                            userMsg,
+                            response,
+                            detectedState,
+                            currentApproach
+                        );
+                        if (thinkingQuestion) {
+                            response += `\n\n💭 *${thinkingQuestion}*`;
+                        }
+                    }
+
                     response += `\n\n${nextSection.prompt}`;
+                } else if (!template) {
+                    // Use question engine for non-template sessions
+                    // Detect user state from conversation
+                    detectedState = await detectUserState(messages);
+
+                    // Select appropriate questioning approach
+                    currentApproach = await selectApproach(detectedState);
+
+                    // Generate a thinking partner question
+                    const thinkingQuestion = await generateThinkingQuestion(
+                        userMsg,
+                        response,
+                        detectedState,
+                        currentApproach
+                    );
+
+                    if (thinkingQuestion) {
+                        response += `\n\n💭 *${thinkingQuestion}*`;
+                    }
                 }
 
                 messages[messages.length - 1].content = response;
