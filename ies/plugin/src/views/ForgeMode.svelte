@@ -18,7 +18,8 @@
      */
     import { onMount, createEventDispatcher } from 'svelte';
     import { showMessage, getFrontend, fetchSyncPost } from 'siyuan';
-    import { createSessionDocument } from '../utils/siyuan-structure';
+    import { createSessionDocument, resolveStructureNotebook } from '../utils/siyuan-structure';
+    import ConceptExtractor from '../components/ConceptExtractor.svelte';
 
     export let backendUrl: string;
 
@@ -88,7 +89,7 @@
 
     // State
     let sessionId: string | null = null;
-    let status: 'idle' | 'starting' | 'active' | 'error' = 'idle';
+    let status: 'idle' | 'starting' | 'active' | 'error' | 'extracting' = 'idle';
     let messages: Array<{role: string, content: string}> = [];
     let errorMsg = '';
     let inputText = '';
@@ -138,6 +139,23 @@
         timestamp: number;
     }
     let questionResponseHistory: QuestionResponse[] = [];
+
+    // Concept extraction state (P3: Virtuous Cycle - formalize insights as concepts)
+    interface SessionEndData {
+        docId: string | null;
+        entitiesCreated: string[];
+        entitiesUpdated: string[];
+        keyInsights: string[];
+        openQuestions: string[];
+    }
+    let sessionEndData: SessionEndData | null = null;
+    let selectedForExtraction: Set<string> = new Set();
+    let extractionDefinitions: Record<string, string> = {};
+    let isCreatingConcept = false;
+
+    // Advanced Concept Extractor modal state (with backend Neo4j integration)
+    let showConceptExtractor = false;
+    let extractorEntityName: string | null = null;
 
     // Question class display names
     const QUESTION_CLASS_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
@@ -744,27 +762,216 @@
                 : `Session saved. ${data.entities_extracted} entities extracted.${dialogueMsg}${classesMsg}${docMsg}`;
             showMessage(msg, 4000);
 
-            // Reset state
-            sessionId = null;
-            status = 'idle';
-            messages = [];
-            template = null;
-            sectionResponses = {};
-            currentSectionIndex = 0;
-            showProgress = false;
-            questionClassesUsed = [];
-            lastQuestionClass = null;
-            pendingQuestion = null;
-            questionResponseText = '';
-            questionResponseHistory = [];
-            classUsageCount = {};
-            coverageStats = { structureSurfacing: 0, mechanismExploration: 0, groundingPerspective: 0, metaLevel: 0 };
-            modeTransitionSuggestion = null;
+            // P3: Check if there are concepts/insights to potentially extract
+            const hasExtractableContent =
+                (data.entities_created?.length > 0) ||
+                (data.key_insights?.length > 0);
+
+            if (hasExtractableContent) {
+                // Store session end data for extraction UI
+                sessionEndData = {
+                    docId: data.doc_id,
+                    entitiesCreated: data.entities_created || [],
+                    entitiesUpdated: data.entities_updated || [],
+                    keyInsights: data.key_insights || [],
+                    openQuestions: data.open_questions || []
+                };
+                // Pre-select all new entities for extraction
+                selectedForExtraction = new Set(data.entities_created || []);
+                extractionDefinitions = {};
+                status = 'extracting';
+                // Keep sessionId for reference but clear conversation state
+                sessionId = null;
+                messages = [];
+            } else {
+                // No extractable content - reset fully
+                resetToIdle();
+            }
         } catch (err) {
             console.error('[IES] End error:', err);
             status = 'error';
             errorMsg = err.message;
             showMessage(`Error: ${err.message}`, 5000, 'error');
+        }
+    }
+
+    // P3: Reset to idle state (extracted to avoid duplication)
+    function resetToIdle() {
+        sessionId = null;
+        status = 'idle';
+        messages = [];
+        template = null;
+        sectionResponses = {};
+        currentSectionIndex = 0;
+        showProgress = false;
+        questionClassesUsed = [];
+        lastQuestionClass = null;
+        pendingQuestion = null;
+        questionResponseText = '';
+        questionResponseHistory = [];
+        classUsageCount = {};
+        coverageStats = { structureSurfacing: 0, mechanismExploration: 0, groundingPerspective: 0, metaLevel: 0 };
+        modeTransitionSuggestion = null;
+        sessionEndData = null;
+        selectedForExtraction = new Set();
+        extractionDefinitions = {};
+    }
+
+    // P3: Toggle entity selection for extraction
+    function toggleExtractionSelection(entityName: string) {
+        if (selectedForExtraction.has(entityName)) {
+            selectedForExtraction.delete(entityName);
+        } else {
+            selectedForExtraction.add(entityName);
+        }
+        selectedForExtraction = selectedForExtraction; // Trigger reactivity
+    }
+
+    // P3: Create concept documents for selected entities
+    async function createSelectedConcepts() {
+        if (selectedForExtraction.size === 0) {
+            showMessage('Select at least one concept to extract', 3000, 'info');
+            return;
+        }
+
+        isCreatingConcept = true;
+        let created = 0;
+
+        try {
+            for (const entityName of selectedForExtraction) {
+                const definition = extractionDefinitions[entityName] || '';
+                await createConceptDocument(entityName, definition, sessionEndData);
+                created++;
+            }
+
+            showMessage(`Created ${created} concept document${created > 1 ? 's' : ''} in /Concepts/`, 4000);
+            resetToIdle();
+        } catch (err) {
+            console.error('[IES] Concept creation error:', err);
+            showMessage(`Error creating concepts: ${err.message}`, 5000, 'error');
+        } finally {
+            isCreatingConcept = false;
+        }
+    }
+
+    // P3: Skip extraction and reset to idle
+    function skipExtraction() {
+        showMessage('Session complete. Skipped concept extraction.', 3000, 'info');
+        resetToIdle();
+    }
+
+    // P3: Open advanced ConceptExtractor modal for detailed extraction with Neo4j integration
+    function openAdvancedExtractor(entityName: string) {
+        extractorEntityName = entityName;
+        showConceptExtractor = true;
+    }
+
+    // P3: Handle completion of ConceptExtractor (concept saved to Neo4j + SiYuan)
+    function handleExtractionComplete(event: CustomEvent<{
+        conceptId: string;
+        name: string;
+        docId: string | null;
+    }>) {
+        const { conceptId, name, docId } = event.detail;
+        showConceptExtractor = false;
+        extractorEntityName = null;
+
+        // Remove from pending selection if it was there
+        if (selectedForExtraction.has(name)) {
+            selectedForExtraction.delete(name);
+            selectedForExtraction = selectedForExtraction; // Trigger reactivity
+        }
+
+        showMessage(`✅ Concept "${name}" saved to knowledge graph${docId ? ' and SiYuan' : ''}`, 4000);
+
+        // If no more entities to extract, can reset
+        if (selectedForExtraction.size === 0 && sessionEndData) {
+            // Offer to finish or continue
+            showMessage('All selected concepts extracted. Click "Skip & Finish" to complete.', 5000, 'info');
+        }
+    }
+
+    // P3: Handle ConceptExtractor close (cancel)
+    function handleExtractionClose() {
+        showConceptExtractor = false;
+        extractorEntityName = null;
+    }
+
+    // P3: Create a concept document in SiYuan /Concepts/ folder
+    async function createConceptDocument(name: string, definition: string, sessionData: SessionEndData | null) {
+        const notebook = await resolveStructureNotebook();
+        if (!notebook) {
+            throw new Error('No notebook available for concept creation');
+        }
+
+        // Ensure /Concepts/ folder exists
+        const conceptsPath = '/Concepts';
+        await ensureFolderExists(notebook, conceptsPath);
+
+        // Generate safe filename
+        const safeTitle = name.replace(/[\/\\:*?"<>|]/g, '-').substring(0, 50);
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filePath = `${conceptsPath}/${timestamp}-${safeTitle}`;
+
+        // Build frontmatter
+        const frontmatter = {
+            be_type: 'concept',
+            be_id: `concept_${Date.now()}`,
+            name: name,
+            status: 'draft',
+            created: new Date().toISOString(),
+            source_session: sessionData?.docId || null,
+            source_mode: selectedMode,
+            source_topic: sessionTopic
+        };
+
+        // Build document content
+        const content = `---
+${Object.entries(frontmatter).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n')}
+---
+
+# ${name}
+
+## Definition
+${definition || '*Add a definition for this concept...*'}
+
+## Context
+This concept emerged from a ${THINKING_MODES[selectedMode]?.name || selectedMode} session on "${sessionTopic}".
+
+## Related Concepts
+${sessionData?.entitiesCreated?.filter(e => e !== name).map(e => `- [[${e}]]`).join('\n') || '*No related concepts identified*'}
+
+## Open Questions
+${sessionData?.openQuestions?.map(q => `- ${q}`).join('\n') || '*No open questions recorded*'}
+
+## Notes
+*Add additional notes about this concept...*
+`;
+
+        // Create the document via SiYuan API
+        const response = await fetchSyncPost('/api/filetree/createDocWithMd', {
+            notebook: notebook,
+            path: filePath,
+            markdown: content
+        });
+
+        if (response.code !== 0) {
+            throw new Error(response.msg || 'Failed to create concept document');
+        }
+
+        return response.data;
+    }
+
+    // Helper: Ensure folder exists in notebook
+    async function ensureFolderExists(notebook: string, path: string) {
+        try {
+            await fetchSyncPost('/api/filetree/createDocWithMd', {
+                notebook: notebook,
+                path: path,
+                markdown: `# ${path.split('/').pop()}\n\n*Folder created by IES plugin*`
+            });
+        } catch (e) {
+            // Folder may already exist, ignore error
         }
     }
 
@@ -964,6 +1171,114 @@
             {:else if status === 'error'}
                 <div class="forge-error">{errorMsg}</div>
                 <button class="b3-button" on:click={() => status = 'idle'}>Try Again</button>
+
+            {:else if status === 'extracting' && sessionEndData}
+                <!-- P3: Concept Extraction Flow - Formalize insights from session -->
+                <div class="extraction-panel">
+                    <div class="extraction-header">
+                        <h3>📝 Session Complete - Extract Concepts?</h3>
+                        <p class="extraction-subtitle">
+                            {sessionEndData.entitiesCreated.length + sessionEndData.entitiesUpdated.length} entities discovered.
+                            Select any to formalize as concept documents.
+                        </p>
+                    </div>
+
+                    <!-- Key Insights Summary -->
+                    {#if sessionEndData.keyInsights.length > 0}
+                        <div class="extraction-section">
+                            <h4>💡 Key Insights</h4>
+                            <ul class="insights-list">
+                                {#each sessionEndData.keyInsights as insight}
+                                    <li>{insight}</li>
+                                {/each}
+                            </ul>
+                        </div>
+                    {/if}
+
+                    <!-- Entity Selection -->
+                    <div class="extraction-section">
+                        <h4>🔗 Discovered Entities</h4>
+                        <p class="extraction-hint">Check for quick extract, or click "Advanced" for full wizard with relationships</p>
+                        <div class="entity-selection-grid">
+                            {#each [...sessionEndData.entitiesCreated, ...sessionEndData.entitiesUpdated] as entity}
+                                <div class="entity-row">
+                                    <label class="entity-checkbox" class:selected={selectedForExtraction.has(entity)}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedForExtraction.has(entity)}
+                                            on:change={() => toggleExtractionSelection(entity)}
+                                        />
+                                        <span class="entity-name">{entity}</span>
+                                        {#if sessionEndData.entitiesCreated.includes(entity)}
+                                            <span class="entity-badge new">new</span>
+                                        {:else}
+                                            <span class="entity-badge updated">updated</span>
+                                        {/if}
+                                    </label>
+                                    <button
+                                        class="entity-advanced-btn"
+                                        on:click={() => openAdvancedExtractor(entity)}
+                                        title="Open advanced concept wizard with relationships"
+                                    >
+                                        Advanced →
+                                    </button>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+
+                    <!-- Definition Input for Selected Entities -->
+                    {#if selectedForExtraction.size > 0}
+                        <div class="extraction-section">
+                            <h4>📖 Define Selected Concepts</h4>
+                            <p class="definition-hint">Add a brief definition for each concept to create in /Concepts/</p>
+                            {#each [...selectedForExtraction] as entity}
+                                <div class="definition-input-group">
+                                    <label>{entity}</label>
+                                    <textarea
+                                        bind:value={extractionDefinitions[entity]}
+                                        placeholder="What does {entity} mean in your understanding?"
+                                        rows="2"
+                                    ></textarea>
+                                </div>
+                            {/each}
+                        </div>
+                    {/if}
+
+                    <!-- Open Questions -->
+                    {#if sessionEndData.openQuestions.length > 0}
+                        <div class="extraction-section">
+                            <h4>❓ Open Questions</h4>
+                            <ul class="questions-list">
+                                {#each sessionEndData.openQuestions as question}
+                                    <li>{question}</li>
+                                {/each}
+                            </ul>
+                        </div>
+                    {/if}
+
+                    <!-- Actions -->
+                    <div class="extraction-actions">
+                        <button
+                            class="b3-button"
+                            on:click={skipExtraction}
+                            disabled={isCreatingConcept}
+                        >
+                            Skip & Finish
+                        </button>
+                        <button
+                            class="b3-button b3-button--primary"
+                            on:click={createSelectedConcepts}
+                            disabled={selectedForExtraction.size === 0 || isCreatingConcept}
+                        >
+                            {#if isCreatingConcept}
+                                Creating...
+                            {:else}
+                                Create {selectedForExtraction.size} Concept{selectedForExtraction.size !== 1 ? 's' : ''}
+                            {/if}
+                        </button>
+                    </div>
+                </div>
 
             {:else}
                 <!-- Active Session -->
@@ -1217,6 +1532,24 @@
         {/if}
     </div>
 </div>
+
+<!-- P3: Advanced Concept Extractor Modal (with Neo4j integration) -->
+{#if showConceptExtractor && extractorEntityName && sessionEndData}
+    <ConceptExtractor
+        {backendUrl}
+        initialEntityName={extractorEntityName}
+        sessionData={{
+            sessionId: sessionId || `session_${Date.now()}`,
+            mode: selectedMode,
+            topic: sessionTopic,
+            transcript: messages.map(m => `${m.role === 'user' ? 'You' : 'AI'}: ${m.content}`).join('\n\n'),
+            entities: [...sessionEndData.entitiesCreated, ...sessionEndData.entitiesUpdated],
+            insights: sessionEndData.keyInsights
+        }}
+        on:complete={handleExtractionComplete}
+        on:close={handleExtractionClose}
+    />
+{/if}
 
 <style>
     /* Design tokens - matches Dashboard.svelte */
@@ -2453,5 +2786,220 @@
 
     .template-indicator-name {
         font-weight: 600;
+    }
+
+    /* ============================================
+       CONCEPT EXTRACTION PANEL (P3)
+       ============================================ */
+    .extraction-panel {
+        background: var(--bg-elevated);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+        padding: var(--space-4);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .extraction-header {
+        text-align: center;
+    }
+
+    .extraction-header h3 {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 var(--space-2) 0;
+    }
+
+    .extraction-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .extraction-section {
+        padding: var(--space-3);
+        background: var(--bg-base);
+        border-radius: var(--radius-sm);
+    }
+
+    .extraction-section h4 {
+        font-family: var(--font-display);
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin: 0 0 var(--space-2) 0;
+    }
+
+    .insights-list,
+    .questions-list {
+        margin: 0;
+        padding-left: var(--space-4);
+    }
+
+    .insights-list li,
+    .questions-list li {
+        margin-bottom: var(--space-1);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .entity-selection-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .entity-checkbox {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-elevated);
+        border: 2px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .entity-checkbox:hover {
+        border-color: var(--accent);
+    }
+
+    .entity-checkbox.selected {
+        border-color: var(--accent);
+        background: var(--accent-lighter);
+    }
+
+    .entity-checkbox input {
+        accent-color: var(--accent);
+    }
+
+    .entity-name {
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+
+    .entity-badge {
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .entity-badge.new {
+        background: var(--secondary-light);
+        color: var(--secondary);
+    }
+
+    .entity-badge.updated {
+        background: var(--accent-light);
+        color: var(--accent-dark);
+    }
+
+    .extraction-hint {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0 0 var(--space-2) 0;
+    }
+
+    .entity-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        width: 100%;
+    }
+
+    .entity-row .entity-checkbox {
+        flex: 1;
+    }
+
+    .entity-advanced-btn {
+        padding: var(--space-1) var(--space-2);
+        background: transparent;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .entity-advanced-btn:hover {
+        background: var(--accent-lighter);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .definition-hint {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0 0 var(--space-3) 0;
+    }
+
+    .definition-input-group {
+        margin-bottom: var(--space-3);
+    }
+
+    .definition-input-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .definition-input-group label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--space-1);
+    }
+
+    .definition-input-group textarea {
+        width: 100%;
+        padding: var(--space-2);
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-sm);
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+        font-family: var(--font-body);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        resize: vertical;
+    }
+
+    .definition-input-group textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-lighter);
+    }
+
+    .definition-input-group textarea::placeholder {
+        color: var(--text-subtle);
+    }
+
+    .extraction-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-3);
+        padding-top: var(--space-2);
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    .extraction-actions button {
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-sm);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .extraction-actions button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 </style>

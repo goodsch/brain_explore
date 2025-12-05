@@ -949,6 +949,128 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
 }
 
 /**
+ * Options for creating a concept document.
+ */
+export interface ConceptDocumentOptions {
+    conceptId: string;
+    name: string;
+    conceptType: string;
+    description: string;
+    aliases?: string[];
+    relationships?: Array<{
+        targetName: string;
+        relationshipType: string;
+        evidence?: string;
+    }>;
+    sourceSessionId?: string;
+    sourceQuotes?: string[];
+    userId: string;
+}
+
+/**
+ * Create a concept document in the /Concepts/ folder.
+ * This formalizes insights from thinking sessions into persistent knowledge graph nodes.
+ */
+export async function createConceptDocument(options: ConceptDocumentOptions): Promise<string | null> {
+    const {
+        conceptId,
+        name,
+        conceptType,
+        description,
+        aliases = [],
+        relationships = [],
+        sourceSessionId,
+        sourceQuotes = [],
+        userId,
+    } = options;
+
+    const notebook = await resolveStructureNotebook();
+    await ensureNotebookStructure();
+
+    // Create document path in Concepts folder
+    const safeTitle = name.substring(0, 50).replace(/[/\\?%*:|"<>]/g, '-').trim();
+    const docPath = `Concepts/${safeTitle}`;
+
+    // Build frontmatter
+    const frontmatter: Record<string, any> = {
+        be_type: 'concept',
+        be_id: conceptId,
+        concept_type: conceptType,
+        name: name,
+        status: 'anchored',
+        created: new Date().toISOString(),
+        created_by: userId,
+    };
+    if (aliases.length > 0) {
+        frontmatter.aliases = aliases;
+    }
+    if (sourceSessionId) {
+        frontmatter.source_session_id = sourceSessionId;
+    }
+
+    const fm = serializeFrontmatter(frontmatter);
+
+    // Build document content
+    let content = `---\n${fm}\n---\n\n`;
+    content += `# ${name}\n\n`;
+    content += `**Type:** ${conceptType.charAt(0).toUpperCase() + conceptType.slice(1)}\n\n`;
+
+    // Description section
+    content += `## Definition\n\n${description}\n\n`;
+
+    // Aliases section
+    if (aliases.length > 0) {
+        content += `## Also Known As\n\n`;
+        content += aliases.map(a => `- ${a}`).join('\n') + '\n\n';
+    }
+
+    // Relationships section
+    if (relationships.length > 0) {
+        content += `## Relationships\n\n`;
+        for (const rel of relationships) {
+            const relType = rel.relationshipType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            content += `- **${relType}** → [[${rel.targetName}]]`;
+            if (rel.evidence) {
+                content += `\n  - *${rel.evidence}*`;
+            }
+            content += '\n';
+        }
+        content += '\n';
+    }
+
+    // Source quotes section
+    if (sourceQuotes.length > 0) {
+        content += `## Supporting Evidence\n\n`;
+        for (const quote of sourceQuotes) {
+            content += `> ${quote}\n\n`;
+        }
+    }
+
+    // Source session link
+    if (sourceSessionId) {
+        content += `## Origin\n\n`;
+        content += `This concept was extracted from session \`${sourceSessionId}\`.\n\n`;
+    }
+
+    try {
+        const docId = await createDocWithMd(notebook.id, docPath, content);
+
+        // Set block attributes for backend linking
+        await setBlockAttrs(docId, {
+            'custom-be_type': 'concept',
+            'custom-be_id': conceptId,
+            'custom-concept_type': conceptType,
+            'custom-status': 'anchored',
+        });
+
+        return docId;
+    } catch (err) {
+        console.error('[IES] Failed to create concept document:', err);
+        return null;
+    }
+}
+
+/**
  * Get personal graph statistics from the backend.
  */
 export async function getPersonalStats(): Promise<{
