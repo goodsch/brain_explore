@@ -4,10 +4,24 @@
      *
      * Captures unstructured text and processes via /capture/process API
      * to extract entities and suggest placements.
+     *
+     * Uses merged architecture block schema with:
+     * - capture_status: AI processing state (raw → classified → processed)
+     * - capture_channel: How content was captured (manual, web, etc.)
+     * - capture_source: Source tool (manual, browser_extension, etc.)
      */
     import { createEventDispatcher } from 'svelte';
     import { showMessage, fetchSyncPost } from 'siyuan';
     import { createSparkWithBackend } from '../utils/siyuan-structure';
+    import type {
+        CaptureStatus,
+        CaptureChannel,
+        CaptureSource,
+        QuickCaptureMeta,
+    } from '../types/blocks';
+    import {
+        CAPTURE_STATUS_LABELS,
+    } from '../types/blocks';
 
     export let backendUrl: string;
 
@@ -38,9 +52,33 @@
     } | null = null;
     let error: string | null = null;
 
-    // Spark metadata selection
+    // Capture metadata (new block schema fields)
+    let captureStatus: CaptureStatus = 'raw';
+    let captureChannel: CaptureChannel = 'web';
+    let captureSource: CaptureSource = 'manual';
+
+    // ADHD metadata selection (existing fields)
     let selectedResonance: string = '';
     let selectedEnergy: 'low' | 'medium' | 'high' = 'medium';
+
+    // Capture channel options
+    const channelOptions: Array<{ value: CaptureChannel; label: string }> = [
+        { value: 'web', label: '🌐 Web' },
+        { value: 'phone', label: '📱 Phone' },
+        { value: 'readest', label: '📖 Readest' },
+        { value: 'voice', label: '🎤 Voice' },
+        { value: 'other', label: '📝 Other' },
+    ];
+
+    // Capture source options
+    const sourceOptions: Array<{ value: CaptureSource; label: string }> = [
+        { value: 'manual', label: 'Manual Entry' },
+        { value: 'browser_extension', label: 'Browser Extension' },
+        { value: 'ios_shortcut', label: 'iOS Shortcut' },
+        { value: 'readest', label: 'Readest' },
+        { value: 'mcp_tool', label: 'MCP Tool' },
+        { value: 'other', label: 'Other' },
+    ];
 
     const resonanceOptions = [
         { value: '', label: 'None' },
@@ -103,6 +141,8 @@
             });
 
             processingResult = result;
+            // Transition status: raw → classified (AI has processed the content)
+            captureStatus = 'classified';
         } catch (err) {
             error = err.message || String(err);
             console.error('[QuickCapture] Process error:', err);
@@ -129,14 +169,29 @@
                 .filter(e => e.graph_match)
                 .map(e => e.name);
 
-            // Create spark in backend and SiYuan Daily log
+            // Build QuickCaptureMeta-compatible options
+            const captureTime = new Date().toISOString();
+
+            // Create spark in backend and SiYuan Daily log with full schema
             const result = await createSparkWithBackend(title, content, {
+                // ADHD metadata
                 resonance_signal: selectedResonance || undefined,
                 energy_level: selectedEnergy,
                 concept_ids,
+                // New block schema fields
+                capture_channel: captureChannel,
+                capture_source: captureSource,
+                capture_status: 'processed', // User has decided placement
+                capture_time: captureTime,
+                // AI-populated fields from processing
+                auto_summary: processingResult.summary,
+                auto_labels: processingResult.suggested_tags,
+                linked_concepts: concept_ids,
             });
 
             if (result) {
+                // Transition status: classified → processed (user has decided placement)
+                captureStatus = 'processed';
                 showMessage(`✓ Spark created: ${result.sparkId.slice(0, 8)}... (block: ${result.blockId.slice(0, 8)}...)`, 4000, 'info');
 
                 // Reset form for next capture
@@ -161,8 +216,13 @@
         inputText = '';
         processingResult = null;
         error = null;
+        // Reset ADHD metadata
         selectedResonance = '';
         selectedEnergy = 'medium';
+        // Reset capture schema fields
+        captureStatus = 'raw';
+        captureChannel = 'web';
+        captureSource = 'manual';
     }
 
     function getConfidenceColor(confidence: number): string {
@@ -284,9 +344,62 @@
                 </div>
             {/if}
 
-            <!-- Spark Metadata Selection -->
+            <!-- Capture Status Badge -->
             <div class="result-section">
-                <span class="result-label">Capture Metadata</span>
+                <span class="result-label">Capture Status</span>
+                <div class="status-badge-row">
+                    <span class="status-badge status-badge--{captureStatus}">
+                        {#if captureStatus === 'raw'}⬜{:else if captureStatus === 'classified'}🔄{:else}✅{/if}
+                        {CAPTURE_STATUS_LABELS[captureStatus]}
+                    </span>
+                    <span class="status-hint">
+                        {#if captureStatus === 'raw'}
+                            Waiting for AI processing
+                        {:else if captureStatus === 'classified'}
+                            AI has classified - choose placement
+                        {:else}
+                            Ready to save
+                        {/if}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Capture Source Metadata -->
+            <div class="result-section">
+                <span class="result-label">Capture Source</span>
+                <div class="metadata-grid">
+                    <div class="metadata-field">
+                        <label for="channel-select">Channel</label>
+                        <select
+                            id="channel-select"
+                            class="metadata-select"
+                            bind:value={captureChannel}
+                            disabled={isSaving}
+                        >
+                            {#each channelOptions as option}
+                                <option value={option.value}>{option.label}</option>
+                            {/each}
+                        </select>
+                    </div>
+                    <div class="metadata-field">
+                        <label for="source-select">Source</label>
+                        <select
+                            id="source-select"
+                            class="metadata-select"
+                            bind:value={captureSource}
+                            disabled={isSaving}
+                        >
+                            {#each sourceOptions as option}
+                                <option value={option.value}>{option.label}</option>
+                            {/each}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADHD Metadata Selection -->
+            <div class="result-section">
+                <span class="result-label">ADHD Metadata</span>
                 <div class="metadata-grid">
                     <div class="metadata-field">
                         <label for="resonance-select">Resonance Signal</label>
@@ -618,6 +731,49 @@
         background: var(--secondary-lighter);
         border-radius: var(--radius-full);
         color: var(--secondary);
+    }
+
+    /* Status Badge Styles */
+    .status-badge-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px var(--space-3);
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: var(--radius-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .status-badge--raw {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-medium);
+        color: var(--text-muted);
+    }
+
+    .status-badge--classified {
+        background: var(--accent-lighter);
+        border: 1px solid var(--accent-light);
+        color: var(--accent);
+    }
+
+    .status-badge--processed {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: var(--success);
+    }
+
+    .status-hint {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-style: italic;
     }
 
     .metadata-grid {

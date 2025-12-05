@@ -4,7 +4,7 @@
      *
      * Central hub for knowledge exploration with:
      * - Recent explorations (journeys)
-     * - Quick Capture queue status
+     * - Quick Capture queue status with capture_status filtering
      * - Entry points: Explore Concept, Structured Thinking, Capture
      */
     import { onMount } from 'svelte';
@@ -16,6 +16,8 @@
     import SettingsPanel from '../components/SettingsPanel.svelte';
     import { promoteToInsight, getConfiguredBackendUrl, checkBackendHealth } from '../utils/siyuan-structure';
     import { settingsStore, initializeSettings, getSettingsForSave, type IESSettings } from '../stores/settings';
+    import type { CaptureStatus } from '../types/blocks';
+    import { CAPTURE_STATUS_LABELS } from '../types/blocks';
 
     // Plugin instance (optional, for settings persistence)
     export let plugin: any = null;
@@ -95,13 +97,43 @@
         { value: 'validated', emoji: '✅', label: 'Validated' }
     ];
 
-    // Quick Capture queue
+    // Quick Capture queue with capture_status filtering
     let captureQueue: Array<{
         id: string;
+        title: string;
         content_preview: string;
         captured_at: string;
-        status: string;
+        capture_status: CaptureStatus;
+        resonance_signal?: string;
+        energy_level?: string;
     }> = [];
+    let captureStatusFilter: CaptureStatus | 'all' = 'all';
+
+    // Capture status filter options
+    const captureStatusOptions: Array<{ value: CaptureStatus | 'all'; label: string; emoji: string }> = [
+        { value: 'all', label: 'All', emoji: '📥' },
+        { value: 'raw', label: CAPTURE_STATUS_LABELS.raw, emoji: '⬜' },
+        { value: 'classified', label: CAPTURE_STATUS_LABELS.classified, emoji: '🔄' },
+        { value: 'processed', label: CAPTURE_STATUS_LABELS.processed, emoji: '✅' },
+    ];
+
+    // Resonance options for emoji lookup in capture queue
+    const resonanceOptions = [
+        { value: '', label: 'None', emoji: '' },
+        { value: 'curious', label: 'Curious', emoji: '🤔' },
+        { value: 'excited', label: 'Excited', emoji: '✨' },
+        { value: 'surprised', label: 'Surprised', emoji: '😮' },
+        { value: 'moved', label: 'Moved', emoji: '💚' },
+        { value: 'disturbed', label: 'Disturbed', emoji: '😟' },
+        { value: 'unclear', label: 'Unclear', emoji: '🤷' },
+        { value: 'connected', label: 'Connected', emoji: '🔗' },
+        { value: 'validated', label: 'Validated', emoji: '✓' },
+    ];
+
+    // Computed filtered queue
+    $: filteredCaptureQueue = captureStatusFilter === 'all'
+        ? captureQueue
+        : captureQueue.filter(item => item.capture_status === captureStatusFilter);
 
     let isLoading = true;
     let error: string | null = null;
@@ -143,7 +175,7 @@
                 apiGet('/graph/suggestions'),
                 apiGet(`/journeys/user/${USER_ID}`).catch(() => ({ journeys: [] })),
                 apiGet('/personal/stats').catch(() => null),
-                apiGet('/personal/sparks/unvisited?limit=5').catch(() => ({ sparks: [] }))
+                apiGet('/personal/sparks/unvisited?limit=10').catch(() => ({ sparks: [] }))
             ]);
 
             stats = statsData;
@@ -151,7 +183,18 @@
             recentJourneys = journeysData.journeys || [];
             personalStats = personalStatsData;
             recentSparks = sparksData.sparks || [];
-            captureQueue = [];
+
+            // Transform sparks into capture queue format
+            // Sparks that are unvisited are effectively in "raw" or "classified" status
+            captureQueue = (sparksData.sparks || []).map((spark: any) => ({
+                id: spark.id,
+                title: spark.title || 'Untitled capture',
+                content_preview: spark.content?.slice(0, 100) || '',
+                captured_at: spark.created_at || new Date().toISOString(),
+                capture_status: spark.capture_status || 'raw' as CaptureStatus,
+                resonance_signal: spark.resonance_signal,
+                energy_level: spark.energy_level,
+            }));
         } catch (err) {
             error = err.message;
             console.error('[IES] Dashboard load error:', err);
@@ -687,21 +730,61 @@
                     </section>
                 {/if}
 
-                <!-- Capture Queue -->
+                <!-- Capture Queue with Status Filtering -->
                 {#if captureQueue.length > 0}
                     <section class="section">
                         <h3 class="section-title">
                             Capture Queue
-                            <span class="queue-badge">{captureQueue.length}</span>
+                            <span class="queue-badge">{filteredCaptureQueue.length}</span>
                         </h3>
+
+                        <!-- Capture Status Filter -->
+                        <div class="capture-status-filters">
+                            {#each captureStatusOptions as option}
+                                <button
+                                    class="status-filter-btn"
+                                    class:status-filter-btn--active={captureStatusFilter === option.value}
+                                    on:click={() => captureStatusFilter = option.value}
+                                    title={option.label}
+                                >
+                                    <span class="filter-emoji">{option.emoji}</span>
+                                    <span class="filter-label">{option.label}</span>
+                                    {#if option.value !== 'all'}
+                                        <span class="filter-count">
+                                            {captureQueue.filter(c => c.capture_status === option.value).length}
+                                        </span>
+                                    {/if}
+                                </button>
+                            {/each}
+                        </div>
+
                         <div class="capture-list">
-                            {#each captureQueue.slice(0, 3) as item}
-                                <div class="capture-card">
+                            {#each filteredCaptureQueue.slice(0, 5) as item}
+                                <div class="capture-card" on:click={() => navigateTo('capture')}>
+                                    <div class="capture-header-row">
+                                        <span class="capture-status-badge capture-status-badge--{item.capture_status}">
+                                            {#if item.capture_status === 'raw'}⬜{:else if item.capture_status === 'classified'}🔄{:else}✅{/if}
+                                        </span>
+                                        <span class="capture-title">{item.title}</span>
+                                    </div>
                                     <span class="capture-preview">{item.content_preview}</span>
-                                    <span class="capture-time">{formatRelativeTime(item.captured_at)}</span>
+                                    <div class="capture-meta-row">
+                                        <span class="capture-time">{formatRelativeTime(item.captured_at)}</span>
+                                        {#if item.resonance_signal}
+                                            <span class="capture-resonance" title="Resonance: {item.resonance_signal}">
+                                                {resonanceOptions.find(r => r.value === item.resonance_signal)?.emoji || ''}
+                                            </span>
+                                        {/if}
+                                    </div>
                                 </div>
                             {/each}
                         </div>
+
+                        {#if filteredCaptureQueue.length === 0}
+                            <div class="empty-queue">
+                                No captures with status "{captureStatusFilter === 'all' ? 'All' : CAPTURE_STATUS_LABELS[captureStatusFilter]}"
+                            </div>
+                        {/if}
                     </section>
                 {/if}
 
@@ -1344,6 +1427,62 @@
         transform: translateX(0);
     }
 
+    /* Capture Status Filters */
+    .capture-status-filters {
+        display: flex;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+        margin-bottom: var(--space-2);
+    }
+
+    .status-filter-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: var(--bg-base);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .status-filter-btn:hover {
+        background: var(--bg-elevated);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .status-filter-btn--active {
+        background: var(--accent-lighter);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .filter-emoji {
+        font-size: 12px;
+    }
+
+    .filter-label {
+        font-size: 11px;
+    }
+
+    .filter-count {
+        font-size: 10px;
+        padding: 1px 5px;
+        background: var(--bg-deep);
+        border-radius: 8px;
+        margin-left: 2px;
+    }
+
+    .status-filter-btn--active .filter-count {
+        background: var(--accent);
+        color: white;
+    }
+
     /* Capture Cards */
     .capture-list {
         display: flex;
@@ -1353,26 +1492,84 @@
 
     .capture-card {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        gap: var(--space-2);
         padding: var(--space-3) var(--space-4);
         background: var(--bg-elevated);
         border: 1px solid var(--border-subtle);
         border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
     }
 
-    .capture-preview {
+    .capture-card:hover {
+        border-color: var(--accent);
+        background: var(--accent-lighter);
+    }
+
+    .capture-header-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .capture-status-badge {
+        font-size: 12px;
+        line-height: 1;
+    }
+
+    .capture-status-badge--raw {
+        opacity: 0.6;
+    }
+
+    .capture-status-badge--classified {
+        opacity: 0.9;
+    }
+
+    .capture-status-badge--processed {
+        opacity: 1;
+    }
+
+    .capture-title {
         font-size: 13px;
-        color: var(--text-secondary);
+        font-weight: 500;
+        color: var(--text-primary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 180px;
+    }
+
+    .capture-preview {
+        font-size: 12px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .capture-meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
     }
 
     .capture-time {
         font-size: 11px;
+        color: var(--text-subtle);
+    }
+
+    .capture-resonance {
+        font-size: 12px;
+    }
+
+    .empty-queue {
+        font-size: 12px;
         color: var(--text-muted);
+        font-style: italic;
+        text-align: center;
+        padding: var(--space-4);
     }
 
     /* Suggestions */

@@ -424,17 +424,42 @@ export function getDailyLogPath(date: Date): string {
 }
 
 /**
+ * Options for creating a spark with backend integration.
+ * Combines ADHD metadata with the new block schema fields.
+ */
+export interface CreateSparkOptions {
+    // ADHD metadata (existing)
+    resonance_signal?: string;
+    energy_level?: string;
+    concept_ids?: string[];
+    // New block schema fields (from QuickCaptureMeta)
+    capture_channel?: string;
+    capture_source?: string;
+    capture_status?: string;
+    capture_time?: string;
+    // AI-populated fields
+    auto_summary?: string;
+    auto_labels?: string[];
+    linked_concepts?: string[];
+    // Optional book metadata (from Readest captures)
+    book_title?: string;
+    book_author?: string;
+    location?: string;
+    highlight_id?: string;
+    entities?: string[];
+}
+
+/**
  * Create a spark in the backend and add it to today's daily log.
  * Returns the spark ID from the backend.
+ *
+ * Supports both the original ADHD metadata (resonance_signal, energy_level)
+ * and the new block schema fields (capture_channel, capture_source, capture_status).
  */
 export async function createSparkWithBackend(
     title: string,
     content: string,
-    options: {
-        resonance_signal?: string;
-        energy_level?: string;
-        concept_ids?: string[];
-    } = {}
+    options: CreateSparkOptions = {}
 ): Promise<{ sparkId: string; blockId: string } | null> {
     if (!content || !content.trim()) {
         throw new Error('Cannot create an empty spark');
@@ -445,20 +470,62 @@ export async function createSparkWithBackend(
     await ensureNotebookStructure();
 
     const dateValue = new Date();
+    const captureTime = options.capture_time || dateValue.toISOString();
     const relativePath = sanitizePath(getDailyLogPath(dateValue));
     const docId = await ensureDocument(notebook.id, relativePath, formatDailyTitle(dateValue));
 
-    // Create the block in SiYuan first
+    // Create the block in SiYuan first with full schema metadata
     const frontmatter: Record<string, any> = {
         be_type: 'spark',
         status: 'captured',
-        created: dateValue.toISOString(),
+        created: captureTime,
+        // New block schema fields
+        quick_capture: true,
+        capture_status: options.capture_status || 'raw',
     };
+
+    // Add optional ADHD metadata
     if (options.resonance_signal) {
         frontmatter.resonance = options.resonance_signal;
     }
     if (options.energy_level) {
         frontmatter.energy = options.energy_level;
+    }
+
+    // Add optional capture source metadata
+    if (options.capture_channel) {
+        frontmatter.capture_channel = options.capture_channel;
+    }
+    if (options.capture_source) {
+        frontmatter.capture_source = options.capture_source;
+    }
+
+    // Add AI-populated fields if present
+    if (options.auto_summary) {
+        frontmatter.auto_summary = options.auto_summary;
+    }
+    if (options.auto_labels?.length) {
+        frontmatter.auto_labels = options.auto_labels;
+    }
+    if (options.linked_concepts?.length) {
+        frontmatter.linked_concepts = options.linked_concepts;
+    }
+
+    // Add book metadata if present (from Readest captures)
+    if (options.book_title) {
+        frontmatter.book_title = options.book_title;
+    }
+    if (options.book_author) {
+        frontmatter.book_author = options.book_author;
+    }
+    if (options.location) {
+        frontmatter.location = options.location;
+    }
+    if (options.highlight_id) {
+        frontmatter.highlight_id = options.highlight_id;
+    }
+    if (options.entities?.length) {
+        frontmatter.entities = options.entities;
     }
 
     const fm = serializeFrontmatter(frontmatter);
@@ -482,11 +549,14 @@ export async function createSparkWithBackend(
     const spark = await callBackendApi<SparkResponse>('POST', '/personal/sparks', sparkData);
 
     if (spark?.id && blockId) {
-        // Update the SiYuan block with the backend spark ID
+        // Update the SiYuan block with the backend spark ID and capture status
         await setBlockAttrs(blockId, {
             'custom-be_id': spark.id,
             'custom-be_type': 'spark',
             'custom-status': 'captured',
+            'custom-capture_status': options.capture_status || 'raw',
+            ...(options.capture_channel && { 'custom-capture_channel': options.capture_channel }),
+            ...(options.capture_source && { 'custom-capture_source': options.capture_source }),
         });
     }
 
