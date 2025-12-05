@@ -310,8 +310,8 @@ After full pressure testing, the system should demonstrate:
 
 | Component | Status | Analysis Date | Grade | Remediation |
 |-----------|--------|---------------|-------|-------------|
-| SiYuan Plugin | **ANALYZED** | 2025-12-05 | C | In progress |
-| Readest Integration | **ANALYZED** | 2025-12-05 | D+ | Pending |
+| SiYuan Plugin | **COMPLETE** | 2025-12-05 | C→B+ | ✅ All critical items fixed |
+| Readest Integration | **PARTIAL** | 2025-12-05 | D+ | 4/15 bugs fixed, UX pending |
 | Question Engine | Pending | - | - | - |
 | Knowledge Graph | Pending | - | - | - |
 | Personal Graph | Pending | - | - | - |
@@ -320,6 +320,32 @@ After full pressure testing, the system should demonstrate:
 | Reframe Services | Pending | - | - | - |
 | Template Services | Pending | - | - | - |
 | Cross-App Integration | Pending | - | - | - |
+
+### SiYuan Remediation Complete (Dec 5)
+
+Verified via code audit:
+- ✅ Phase 1.1: Questions Interactive (`handleQuestionResponse()` dialogue loop)
+- ✅ Phase 1.2: Question Classes Active (`QUESTION_CLASS_HINTS` cognitive guidance)
+- ✅ Phase 1.3: Domain Agnostic (configurable notebook preferences)
+- ✅ Phase 1.4: Backend Health Check (Dashboard status indicator)
+- ✅ Phase 2.2: Concept Extraction Flow (`ConceptExtractor.svelte`)
+- ✅ Phase 2.3: Energy Navigation (Dashboard energy/resonance filters)
+- DEFERRED: Phase 2.1 Mode-Specific UI (single panel works well)
+
+### Readest Bugs Status
+
+| Bug | Severity | Status | Note |
+|-----|----------|--------|------|
+| BUG-R01 | Critical | ⚠️ OPEN | Event listeners in FoliateViewer (foliate-js complexity) |
+| BUG-R02 | Critical | ✅ FIXED | Trie-based entity matching in entity.ts |
+| BUG-R03 | High | ✅ FIXED | AbortController in flowModeStore |
+| BUG-R04 | High | ✅ FIXED | Mount tracking in useFlowEntity |
+| BUG-R05 | High | ⚠️ OPEN | Singleton config refresh |
+| BUG-R06-15 | Med/Low | ⚠️ OPEN | Various UX and edge cases |
+
+**Remaining Readest Work:**
+- Core UX: Entity highlights clickable, question response input, journey breadcrumbs visible
+- Design system integration (IES tokens → Readest)
 
 ### Issue Tracking
 
