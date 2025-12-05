@@ -3,7 +3,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ies_backend.api import book_entities, books, capture, graph, journey, personal, profile, question_engine, reframe, session, template
+from ies_backend.api import (
+    book_entities,
+    books,
+    capture,
+    flow_session,
+    graph,
+    journey,
+    personal,
+    profile,
+    question_engine,
+    reframe,
+    session,
+    template,
+    thinking,
+)
 
 app = FastAPI(
     title="IES Backend",
@@ -28,6 +42,8 @@ app.include_router(graph.router, prefix="/graph", tags=["graph"])
 app.include_router(book_entities.router, prefix="/graph", tags=["graph"])
 app.include_router(journey.router, tags=["journeys"])
 app.include_router(capture.router, tags=["capture"])
+app.include_router(thinking.router, tags=["thinking"])
+app.include_router(flow_session.router, tags=["flow"])
 app.include_router(reframe.router, prefix="/reframes", tags=["reframes"])
 app.include_router(personal.router, tags=["personal"])
 app.include_router(books.router, tags=["books"])
