@@ -273,8 +273,9 @@ brain_explore/
 │   ├── session-notes.md           # Session reflection (append-only)
 │   ├── parking-lot.md             # Future features (don't work on these)
 │   ├── plans/                     # Implementation design documents
-│   │   ├── 2025-12-04-reframe-template-integration-design.md  # Active Phase 2c plan
-│   │   └── 2025-12-04-calibre-integration-design.md  # Next Phase 2c: book library
+│   │   ├── 2025-12-04-reframe-template-integration-design.md  # Phase 2c: Reframe + Templates
+│   │   ├── 2025-12-04-calibre-integration-design.md  # Calibre integration architecture
+│   │   └── 2025-12-04-readest-calibre-library-view.md  # Phase 4: Readest library browser (UI design)
 │   └── archive/                   # Old progress files, archived memories
 │
 └── docker-compose.yml             # Neo4j + Qdrant + Calibre infrastructure (Layers 1 & 2 support)
@@ -301,8 +302,9 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/SYSTEM-DESIGN.md` — **Operational reference**: How the system works end-to-end, data structures, user workflows, integration points, critical gaps (read at session start)
 - `docs/COMPREHENSIVE-PROJECT-STATUS.md` — Complete project status: all 4 layers, phase completion, worktree organization
 - `docs/PLANNING-GAPS-AND-QUESTIONS.md` — Comprehensive Phase 2c planning: critical gaps, technical stack review, API inventory, integration questions
-- `docs/plans/2025-12-04-reframe-template-integration-design.md` — **Active implementation plan**: Reframe Layer + Thinking Templates + SiYuan document structure (Phase 2c)
-- `docs/plans/2025-12-04-calibre-integration-design.md` — **Next implementation plan**: Calibre library integration; single source of truth for book catalog with universal calibre_id identifier; multi-pass ingestion pipeline (structure → relationships → enrichment); new backend APIs for book browsing, entity lookup, cover fetching (Dec 4)
+- `docs/plans/2025-12-04-reframe-template-integration-design.md` — Phase 2c implementation: Reframe Layer + Thinking Templates + SiYuan document structure
+- `docs/plans/2025-12-04-calibre-integration-design.md` — Calibre integration architecture: single source of truth for book catalog with universal calibre_id identifier; multi-pass ingestion pipeline (structure → relationships → enrichment); backend APIs complete (Dec 4)
+- `docs/plans/2025-12-04-readest-calibre-library-view.md` — **Phase 4 UI design**: Readest library browser modal with search, entity badge filter, and direct book opening (Dec 4)
 - `docs/plans/2025-12-03-integrated-reading-knowledge-system.md` — Four-layer architecture design
 - `docs/PHASE-1-WORKFLOW.md` — Complete operational guide for running dialogue sessions (proven, reusable for Phase 2+ exploration)
 - `docs/PHASE-2A-VALIDATION-RESULTS.md` — Layer 3 CLI validation results; all criteria met
@@ -499,6 +501,82 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 4):**
+- **Auto Ingestion Daemon Operational** — Fixed critical Book-Entity relationship structure for full entity overlay compatibility:
+  - `scripts/auto_ingest_daemon.py`: Fixed MENTIONS relationship creation between Book and Entity nodes (lines 150-156)
+  - **Problem:** Auto-ingested books had entities but missing direct Book→MENTIONS→Entity relationships required by entity overlay feature
+  - **Solution:** After entity extraction, daemon now creates MENTIONS relationships for each entity: `MATCH (b:Book {calibre_id: $calibre_id}) MATCH (e) WHERE e.name = $entity_name MERGE (b)-[:MENTIONS]->(e)`
+  - **Impact:** Books processed by daemon now fully support entity overlay in Readest reading interface
+  - **Results:** Successfully processed 9 out of 10 Calibre books with entity counts ranging from 6 to 169 entities per book
+  - **Graph structure:** Now matches expected schema for `GET /graph/entities/by-calibre-id/{calibre_id}` endpoint
+  - **Daemon status:** Background processing operational, running every 5 minutes with comprehensive entity extraction and proper Book-Entity linking
+  - **Entity overlay requirement:** Books must be opened via Calibre Library dialog in Readest (not local library) to access indexed content
+  - **SiYuan integration:** Suggestions API working and returns both connected entity suggestions and new entity recommendations
+- **Tauri Runtime Detection Enhancement** — Fixed browser crashes with deep object validation (commit 7c9ca46):
+  - `.worktrees/readest/readest/apps/readest-app/src/services/environment.ts`: Enhanced `isTauriAppPlatform()` with five-point validation
+  - Problem: Setting `NEXT_PUBLIC_APP_PLATFORM=tauri` alone caused app to attempt Tauri API calls in browser context, leading to crashes
+  - Root cause: Partial `__TAURI_INTERNALS__` objects can exist in browser context without full Tauri functionality
+  - Solution: Five-point validation ensures BOTH environment configuration AND complete Tauri runtime availability
+  - Implementation checks:
+    1. `process.env.NEXT_PUBLIC_APP_PLATFORM === 'tauri'` — Environment configured for Tauri
+    2. `typeof window !== 'undefined'` — Browser context exists (prevents SSR errors)
+    3. `window.__TAURI_INTERNALS__ !== undefined` — Tauri object exists
+    4. `typeof internals === 'object' && internals !== null` — Valid object structure
+    5. `typeof internals.invoke === 'function'` — Critical: Full Tauri API available with invoke function
+  - Rationale: Previous simple check (`'__TAURI_INTERNALS__' in window`) was insufficient because partial objects can exist without invoke capability
+  - Safety: Each validation step builds on previous, preventing TypeError exceptions in edge cases
+  - Impact: App gracefully falls back to WebAppService when running in browser, even if environment variable is incorrectly set
+  - Use case: Enables running `pnpm dev` in browser for debugging without breaking Tauri-specific code paths
+  - Pattern: `getNativeAppService()` catches Tauri plugin load failures and falls back to WebAppService
+  - Related: `.worktrees/readest/readest/apps/readest-app/src/services/nativeAppService.ts` uses dynamic import for `@tauri-apps/plugin-os`
+- **Readest Native Service Dynamic Import Fix** (commit 51b8ee3) — Fixed browser/Tauri context compatibility with dynamic plugin loading:
+  - `.worktrees/readest/readest/apps/readest-app/src/services/nativeAppService.ts`: Removed static import of `@tauri-apps/plugin-os`, replaced with dynamic import
+  - Problem: Static `import { type as osType } from '@tauri-apps/plugin-os'` executes module-level code requiring Tauri APIs, causing Next.js build failures in browser context
+  - Solution: Dynamic import pattern with async initialization
+  - Implementation: `initOsType()` async function calls `await import('@tauri-apps/plugin-os')` and caches result in `_osType` variable
+  - Execution: `initOsType()` invoked at start of `NativeAppService.init()` method, which only runs in actual Tauri environment
+  - Impact: All 20+ OS-type-dependent properties converted from static values to getters calling `getOsType()` (e.g., `override get isAndroidApp() { return getOsType() === 'android'; }`)
+  - Pattern: Dynamic import ensures Tauri plugin only loads when running in Tauri, not during Next.js bundling for browser
+  - Result: Eliminates module-level code execution that fails in browser/SSR contexts
+- **Relationship Type Sanitization** — Enhanced Neo4j relationship creation with robust type validation:
+  - `library/graph/neo4j_client.py`: `add_relationship()` method now sanitizes relationship types before creating Neo4j relationships
+  - Replaces spaces and hyphens with underscores (e.g., "RELATED TO" → "RELATED_TO")
+  - Removes invalid characters using regex (only A-Z, 0-9, underscore allowed in Neo4j relationship types)
+  - Fallback to "RELATED_TO" for empty/invalid types
+  - Prevents Neo4j Cypher syntax errors during ingestion from malformed relationship type names
+- **GraphService Entity Query Fix** (Dec 4) — Critical alignment between ingestion and query patterns:
+  - **Problem:** Entity overlay failing because queries used old Book<-Chunk->Entity pattern while ingestion creates direct Book->Entity relationships
+  - **Solution:** Modified `get_entities_by_calibre_id()` and `get_entities_by_book()` to use `MATCH (b)-[:MENTIONS]->(e)` pattern
+  - **Root cause:** `scripts/ingest_calibre.py` creates direct Book-MENTIONS->Entity relationships without intermediate Chunk nodes
+  - **Impact:** Entity overlay now works correctly by matching actual graph structure created during book ingestion
+  - **Pattern change:** From `MATCH (b)<-[:BELONGS_TO]-(chunk)-[:MENTIONS]->(e)` to `MATCH (b)-[:MENTIONS]->(e)`
+  - **Files changed:** `ies/backend/src/ies_backend/services/graph_service.py` lines 218 and 267
+- **Calibre Integration Phase 3 Complete (Commit 3c2efde)** — Multi-pass ingestion pipeline for Calibre books into Neo4j:
+  - Ingestion script: `scripts/ingest_calibre.py` — Extracts entities from Calibre books and stores in Neo4j with `calibre_id` as primary identifier (263 lines)
+  - Multi-pass pipeline: Pass 1 (structure: Book node + chunks + entities + MENTIONS relationships → status: entities_extracted)
+  - Future passes: Pass 2 (relationships), Pass 3 (LLM enrichment with reframes, mechanisms, patterns)
+  - Migration script: `scripts/match_calibre_ids.py` — Matches existing Neo4j Book nodes to Calibre books by title/author similarity for one-time migration (167 lines)
+  - KnowledgeGraph updates: `add_book()` accepts `calibre_id` parameter, `book_exists()` checks by calibre_id, `update_book_status()` tracks processing lifecycle
+  - Entity extraction: Uses existing `EntityExtractor` from `library/graph/entities.py` with OpenAI
+  - Status lifecycle: `pending → chunked → entities_extracted → relationships_mapped → enriched`
+  - CLI features: `--id` (single book), `--test` (one book test), `--status` (processing stats), `--limit` (batch size)
+  - Library path: `/home/chris/Documents/calibre` (179 books)
+- **Calibre Integration Phase 2 Complete (Commit 9542ec2)** — Backend APIs for Calibre book library access:
+  - New `CalibreService` queries Calibre `metadata.db` SQLite database (99 lines)
+  - New `Book` schema with `calibre_id`, `title`, `author`, `path` (Pydantic model)
+  - Books API: `GET /books`, `GET /books?search=`, `GET /books/{calibre_id}`, `GET /books/{calibre_id}/cover` (75 lines)
+  - GraphService: New `get_entities_by_calibre_id()` method for direct Calibre ID entity lookup (47 lines)
+  - Entity API: New `GET /graph/entities/by-calibre-id/{calibre_id}` endpoint (20 lines)
+  - Tests: 85/85 backend tests passing (6 CalibreService tests, 6 Books API tests, 3 entity endpoint tests)
+  - Eliminates hash/title matching fragility by using Calibre as single source of truth
+- **Backend Refactoring** (commit a9ce87b) — Enhanced session processing and state detection:
+  - New `SessionService` extracted from `session.py` for cleaner separation of concerns (142 lines)
+  - Orchestrates session extraction, storage, and template mapping pipeline
+  - Enhanced `StateDetectionService` with improved word boundary matching for marker detection
+  - Added context handling for repetition detection and emotional state analysis
+  - Book entities API: Added `title` query parameter for dual identifier strategy (hash OR title matching)
+  - ADHD ontology exports: Added `Reframe` and `ReframeType` to `library/graph/__init__.py`
+  - Schema updates: Additional entity fields for session processing
+  - Tests: 70/70 backend tests passing (all question_engine tests fixed)
 - **Entity Overlay Feature Complete** (commit 3a513b2) — Real-time entity highlighting in Readest reading interface:
   - Backend: GET `/graph/entities/by-book/{book_hash}` endpoint returns entities sorted by mention frequency
   - GraphService: `get_entities_by_book()` method with entity type filtering support
@@ -604,7 +682,7 @@ The `ADHDKnowledgeGraph` client includes schema versioning to support future mig
 
 ### Layer 2: Phase 2c Backend APIs (COMPLETE - Dec 4)
 
-Three integrated backend services addressing critical gaps #1 and #2, all registered in `ies/backend/src/ies_backend/main.py`:
+Five integrated backend services addressing critical gaps #1-#3, all registered in `ies/backend/src/ies_backend/main.py`:
 
 **1. Reframe API** (`/reframes`) — Makes domain concepts accessible via metaphors, analogies, stories, patterns, and contrasts
 
@@ -680,13 +758,14 @@ Three integrated backend services addressing critical gaps #1 and #2, all regist
 
 **4. Entity Overlay API** (`/graph/entities/by-book`) — Real-time entity highlighting for reading interface
 
-**Current Implementation (Temporary):**
+**Current Implementation:**
 - `GET /graph/entities/by-book/{book_hash}` - Retrieve all entities mentioned in a specific book
 - Query parameters: `title` (optional fallback), `types` (optional filter), `limit` (default 500, max 1000)
 - Matching strategy: Primary by `hash` property, fallback to title substring match
+- **Fixed:** Query pattern now uses direct Book-MENTIONS->Entity relationships (aligned with ingestion pipeline)
 
 **Migration to Calibre Integration (Dec 4):**
-- **New endpoint:** `GET /graph/entities/by-book/{calibre_id}` - Direct lookup by Calibre book ID
+- **New endpoint:** `GET /graph/entities/by-calibre-id/{calibre_id}` - Direct lookup by Calibre book ID
 - Eliminates hash/title matching fragility by using Calibre as single source of truth
 - See Calibre Integration section below for complete architecture
 
@@ -743,7 +822,7 @@ Three integrated backend services addressing critical gaps #1 and #2, all regist
 
 ---
 
-### Calibre Integration: Single Source of Truth (Design Complete - Dec 4)
+### Calibre Integration: Single Source of Truth (Phase 2 Backend Complete - Dec 4)
 
 **Problem Solved:** Books exist with different identifiers (Calibre integer ID, Neo4j file path, Readest UUID), causing entity overlay failures when identifiers don't match.
 
@@ -753,59 +832,197 @@ Three integrated backend services addressing critical gaps #1 and #2, all regist
 
 ```
 Calibre (Source of Truth)
-├── metadata.db (SQLite catalog)
+├── metadata.db (SQLite catalog) - 179 books
 └── Author/Book folders (epub/pdf files)
          │
-         ├─→ Ingestion Pipeline → Neo4j (Book nodes with calibre_id)
-         ├─→ IES Backend → Book catalog API + entity lookup by calibre_id
-         └─→ Readest → Browse books, open files, entity overlay
+         ├─→ Ingestion Pipeline → Neo4j (Book nodes with calibre_id) [Phase 3]
+         ├─→ IES Backend → Book catalog API + entity lookup by calibre_id [COMPLETE]
+         └─→ Readest → Browse books, open files, entity overlay [Phase 4]
 ```
 
-**Docker Service:**
-- Container: `crocodilestick/calibre-web-automated:latest`
-- Port: 8084 (web UI)
-- Volumes: `./calibre/config`, `./calibre/ingest`, `./calibre/library`
+**Docker Service (Already Running):**
+- Container: `calibre-web-automated` (Up 23+ hours)
+- Port: 8083 (web UI)
+- Library: `/home/chris/Documents/calibre` (179 books)
+- Ingest: `/home/chris/Documents/ingest`
 
-**Multi-Pass Ingestion Pipeline:**
-1. **Pass 1 (Structure):** Create Book node with `calibre_id`, chunk text, extract entities (Concept, Person, Theory, Framework), create MENTIONS relationships → status: `entities_extracted`
-2. **Pass 2 (Relationships):** Extract causal (CAUSES, ENABLES), component (PART_OF), contrast (CONTRASTS_WITH) relationships → status: `relationships_mapped`
-3. **Pass 3 (Enrichment - LLM):** Generate reframes, extract mechanisms, identify patterns → status: `enriched`
+**Backend APIs (PHASE 2 COMPLETE - Dec 4, Commit 9542ec2):**
 
-**Status Lifecycle:** `pending → chunked → entities_extracted → relationships_mapped → enriched`
+**5. Books API** (`/books`) — Calibre library catalog access
 
-**New Backend Endpoints:**
-- `GET /books` - List all books from Calibre
+**Endpoints:**
+- `GET /books` - List all books from Calibre (default limit 100, max 500)
 - `GET /books?search=ADHD` - Search books by title/author
-- `GET /books/{calibre_id}` - Get book metadata
-- `GET /books/{calibre_id}/cover` - Fetch book cover image
-- `GET /graph/entities/by-book/{calibre_id}` - Entity lookup by Calibre ID (replaces hash/title matching)
+- `GET /books/{calibre_id}` - Get single book by Calibre ID
+- `GET /books/{calibre_id}/cover` - Fetch book cover image (JPEG)
+- `HEAD /books/{calibre_id}/file` - Get file metadata (size, type) without body for size checking
+- `GET /books/{calibre_id}/file` - Serve book file (epub or pdf) for web browser access
+- `GET /graph/entities/by-calibre-id/{calibre_id}` - Entity lookup by Calibre ID (new endpoint in book_entities.py)
 
-**Neo4j Schema Update:**
+**Implementation:**
+- `ies/backend/src/ies_backend/services/calibre_service.py` - CalibreService queries metadata.db (128 lines)
+  - `list_books(search, limit)` - Query books table with optional title/author search
+  - `get_book(calibre_id)` - Fetch single book by ID
+  - `get_cover_path(calibre_id)` - Locate cover.jpg in book folder
+  - `get_book_file_path(calibre_id)` - Locate epub/pdf file in book folder (prefers epub)
+- `ies/backend/src/ies_backend/api/books.py` - FastAPI router (125 lines)
+  - Library path: `/home/chris/Documents/calibre` (hardcoded, TODO: environment variable)
+  - HEAD endpoint returns Content-Length, Content-Type, Content-Disposition headers for file metadata
+  - GET endpoint serves files with proper media types (application/epub+zip or application/pdf)
+  - All endpoints properly handle 404s for missing books/covers/files
+- `ies/backend/src/ies_backend/schemas/calibre.py` - Book schema (Pydantic, 13 lines)
+- `ies/backend/src/ies_backend/services/graph_service.py` - Added `get_entities_by_calibre_id()` method (47 lines)
+  - Queries Neo4j: `MATCH (b:Book) WHERE b.calibre_id = $calibre_id`
+  - Returns entities with mention counts sorted by frequency
+- `ies/backend/src/ies_backend/api/book_entities.py` - Added `/entities/by-calibre-id/{calibre_id}` endpoint (20 lines)
+  - Returns `CalibreEntitiesResponse` with calibre_id, entities list, total count
+- `ies/backend/tests/test_calibre_service.py` - 6 unit tests (mocked SQLite)
+- `ies/backend/tests/test_books_api.py` - 6 unit tests (mocked service)
+- `ies/backend/tests/test_book_entities.py` - 3 new tests for calibre_id endpoint
+- Tests: 85/85 passing (15 new Calibre-related tests)
+
+**Schema:**
+```python
+class Book(BaseModel):
+    calibre_id: int
+    title: str
+    author: str
+    path: str
+```
+
+**Migration Script (Ready to Run):**
+- `scripts/match_calibre_ids.py` — One-time migration to add `calibre_id` to existing Neo4j Book nodes (167 lines)
+- **Matching Strategy:**
+  - Normalizes titles (removes subtitles, punctuation, lowercase)
+  - Calculates string similarity (SequenceMatcher 0-1 score)
+  - Boosts score +0.1 if author names overlap
+  - Auto-matches if score >= 0.7 (configurable `MATCH_THRESHOLD`)
+- **Process:**
+  1. Load all books from Calibre `metadata.db`
+  2. Load all Book nodes from Neo4j
+  3. Find best match for each Neo4j book using similarity scoring
+  4. Display matched pairs with scores for review
+  5. Prompt for confirmation before updating
+  6. Execute Cypher: `MATCH (b:Book) WHERE elementId(b) = $id SET b.calibre_id = $calibre_id`
+- **Usage:** `python scripts/match_calibre_ids.py` (interactive, requires confirmation)
+
+**Multi-Pass Ingestion Pipeline (Phase 3 - COMPLETE):**
+
+**Ingestion Script:** `scripts/ingest_calibre.py` (263 lines) — Extracts entities from Calibre books and stores in Neo4j
+
+**Auto Ingestion Daemon:** `scripts/auto_ingest_daemon.py` (272 lines) — Continuous background processing with proper Book-Entity relationships
+
+**Pass 1 (Structure) - IMPLEMENTED:**
+- Create Book node with `calibre_id` as primary identifier
+- Extract text and chunk (max 512 tokens, 50 token overlap)
+- Extract entities via OpenAI (Concept, Person, Theory, Framework, Assessment)
+- **FIXED (Dec 4):** Create MENTIONS relationships between Book and Entity nodes (lines 150-156)
+- Status: `pending → chunked → entities_extracted`
+
+**Pass 2 (Relationships) - FUTURE:**
+- Extract causal relationships (CAUSES, ENABLES)
+- Extract component relationships (PART_OF)
+- Extract contrast relationships (CONTRASTS_WITH)
+- Status: `entities_extracted → relationships_mapped`
+
+**Pass 3 (Enrichment - LLM) - FUTURE:**
+- Generate reframes via Reframe API
+- Extract mechanisms and patterns
+- Add rich descriptions
+- Status: `relationships_mapped → enriched`
+
+**CLI Usage:**
+```bash
+# Manual ingestion
+python scripts/ingest_calibre.py               # Process all books
+python scripts/ingest_calibre.py --id 42       # Process single book by calibre_id
+python scripts/ingest_calibre.py --test        # Test with one book
+python scripts/ingest_calibre.py --status      # Show processing stats
+python scripts/ingest_calibre.py --limit 10    # Process 10 books
+
+# Automated daemon (RECOMMENDED)
+python scripts/auto_ingest_daemon.py &         # Background daemon (5-minute polls)
+python scripts/auto_ingest_daemon.py --once    # Single batch run
+python scripts/auto_ingest_daemon.py --batch-size 10  # Custom batch size
+```
+
+**Features:**
+- Skips books already processed (checks `book_exists(calibre_id)`)
+- Progress tracking with Rich console output
+- Chunk limit (50 chunks per book to avoid excessive API calls)
+- Stats tracking: sections extracted, chunks created, entities found, relationships added
+- Status updates: `update_book_status(calibre_id, status)`
+- **Auto daemon:** Continuous polling, background processing, comprehensive logging
+
+**Neo4j Schema (Updated):**
 ```cypher
 (:Book {
-  calibre_id: 42,           # Primary identifier (replaces hash/path)
+  calibre_id: 42,              # Primary identifier (integer)
   title: "...",
   author: "...",
   path: "/calibre-library/Author/Title (42)/book.epub",
-  processing_status: "enriched",
+  processing_status: "entities_extracted",  # pending → chunked → entities_extracted
   has_entities: true
 })
 ```
 
-**Readest Integration:**
-1. New Library view fetches `GET /books` to display catalog
-2. User selects book → opens directly from Calibre file path
-3. `calibre_id` stored in book state (replaces fragile hash matching)
-4. Entity overlay calls `/graph/entities/by-book/{calibre_id}` for reliable lookup
+**KnowledgeGraph Client Updates:**
+- `add_book(title, author, path, calibre_id, processing_status)` - Accepts `calibre_id` parameter
+- `book_exists(calibre_id)` - Checks if book with `calibre_id` exists
+- `update_book_status(calibre_id, status)` - Updates processing status
+
+**Readest Integration (Phase 4 - COMPLETE - Dec 4, Commit 51b8ee3):**
+
+**User Flow:**
+- **Import Menu:** Import menu → "From Calibre Library" → Modal with searchable book grid → Click book → Opens in reader with entity overlay
+- **Settings Menu:** Settings (gear icon) → "Calibre Library" → Modal with searchable book grid → Click book → Opens in reader with entity overlay
+
+**UI Components (Implemented):**
+- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/CalibreDialog.tsx` — Main modal with book grid, search, filtering (238 lines)
+  - Fetches full catalog on open (`GET /books?limit=500`)
+  - Correctly parses API response: `setBooks(data.books || [])` (API returns `{ books: [...], total: N }`, not raw array)
+  - Batched entity count fetching (10 books at a time to avoid API overload)
+  - Client-side search filtering (catalog is ~179 books)
+  - "Has entities only" checkbox filter
+  - Opens book via backend URL (`/books/{calibre_id}/file`) enabling web browser access (no filesystem dependency)
+- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/CalibreBookCard.tsx` — Individual card with cover, title, author, entity badge (98 lines)
+  - Cover image with loading spinner and error fallback
+  - Entity badge: green dot + count (>= 0), or "Not indexed" (-1), or spinner (null)
+  - Responsive design with hover states
+- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/CalibreSearchBar.tsx` — Search input + "Has entities only" filter (69 lines)
+  - Debounced search (300ms)
+  - Clear button when search active
+  - Filter toggle with result count display
+
+**Key Features:**
+- Search books by title/author (debounced 300ms)
+- "Has entities" filter shows only indexed books
+- Entity badge: green dot + count, or gray "Not indexed"
+- Responsive grid (4 cols desktop, 2 cols mobile)
+- Click book → fetches file via backend API (`/books/{calibre_id}/file`) for web browser compatibility
+- `calibre_id` stored in Readest Book object
+- Entity overlay uses calibreId for reliable entity fetching
+- Dynamic API host resolution (localhost or network IP, same as flowModeStore)
+- Backend serves epub/pdf files with correct media types for browser download/viewing
+
+**Modified Files:**
+- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/ImportMenu.tsx` — Added "From Calibre Library" menu item with IoLibrary icon (71 lines total)
+- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/SettingsMenu.tsx` — Added "Calibre Library" menu item and `onOpenCalibreLibrary` callback handler (200+ lines total)
+- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/LibraryHeader.tsx` — Wired up `onOpenCalibreLibrary` callback to SettingsMenu (100+ lines total)
+- `.worktrees/readest/readest/apps/readest-app/src/app/library/page.tsx` — Added `showCalibreDialog` state and CalibreDialog render (500+ lines total)
+- `.worktrees/readest/readest/apps/readest-app/src/types/book.ts` — Added `calibreId?: number` to Book interface (46 lines total)
+- `.worktrees/readest/readest/apps/readest-app/src/store/flowModeStore.ts` — Updated `fetchEntitiesForBook()` to use calibreId parameter for entity lookup (380+ lines total)
 
 **Implementation Phases:**
-- **Phase 1:** Docker infrastructure + Calibre service setup
-- **Phase 2:** Backend APIs (`/books`, `/books/{id}/cover`, updated entity endpoint)
-- **Phase 3:** Ingestion pipeline (metadata.db polling, Pass 1 entity extraction)
-- **Phase 4:** Readest Library view + calibre_id integration
-- **Phase 5:** Enrichment passes (relationships, reframes, mechanisms)
+- **Phase 1:** Docker infrastructure + Calibre service setup ✅ (already running)
+- **Phase 2:** Backend APIs (`/books`, `/books/{id}/cover`, `/books/{id}/file`, calibre_id entity endpoint) ✅ COMPLETE
+- **Phase 3:** Ingestion pipeline (Pass 1: entity extraction) ✅ COMPLETE
+- **Phase 4:** Readest Library view + calibre_id integration + web browser book access ✅ COMPLETE (Dec 4, Commit 51b8ee3)
+- **Phase 5:** Enrichment passes (Pass 2: relationships, Pass 3: reframes) — NOT STARTED
 
-**Complete Design:** `docs/plans/2025-12-04-calibre-integration-design.md`
+**Design Documents:**
+- `docs/plans/2025-12-04-calibre-integration-design.md` — Overall architecture
+- `docs/plans/2025-12-04-readest-calibre-library-view.md` — Phase 4 UI design and implementation plan (Dec 4)
 
 **Related:**
 - Reframe API (Phase 2c) will be used by Pass 3 enrichment

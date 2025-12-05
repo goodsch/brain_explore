@@ -215,9 +215,9 @@ class GraphService:
            OR b.file_hash = $book_hash
            {title_match}
         WITH b
-        MATCH (b)<-[:FROM_BOOK]-(c:Chunk)-[:MENTIONS]->(e)
+        MATCH (b)-[:MENTIONS]->(e)
         WHERE e.name IS NOT NULL {type_filter}
-        WITH e, count(c) as mention_count
+        WITH e, count(*) as mention_count
         RETURN DISTINCT e.name as name, labels(e)[0] as type, mention_count
         ORDER BY mention_count DESC
         LIMIT $limit
@@ -264,9 +264,9 @@ class GraphService:
         MATCH (b:Book)
         WHERE b.calibre_id = $calibre_id
         WITH b
-        MATCH (b)<-[:FROM_BOOK]-(c:Chunk)-[:MENTIONS]->(e)
+        MATCH (b)-[:MENTIONS]->(e)
         WHERE e.name IS NOT NULL {type_filter}
-        WITH e, count(c) as mention_count
+        WITH e, count(*) as mention_count
         RETURN DISTINCT e.name as name, labels(e)[0] as type, mention_count
         ORDER BY mention_count DESC
         LIMIT $limit

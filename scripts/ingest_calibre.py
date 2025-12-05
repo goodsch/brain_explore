@@ -35,8 +35,8 @@ from library.graph.neo4j_client import KnowledgeGraph
 console = Console()
 
 # Configuration
-CALIBRE_DB = Path("/home/chris/Documents/calibre/metadata.db")
-CALIBRE_LIBRARY = Path("/home/chris/Documents/calibre")
+CALIBRE_DB = Path("./calibre/library/metadata.db")
+CALIBRE_LIBRARY = Path("./calibre/library")
 
 
 @dataclass

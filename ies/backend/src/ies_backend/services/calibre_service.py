@@ -96,3 +96,32 @@ class CalibreService:
         if cover_path.exists():
             return cover_path
         return None
+
+    def get_book_file_path(self, calibre_id: int) -> Path | None:
+        """Get the path to a book's epub/pdf file.
+
+        Args:
+            calibre_id: The Calibre book ID
+
+        Returns:
+            Path to the book file or None if not found
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT path FROM books WHERE id = ?", (calibre_id,))
+            row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        book_dir = self.library_path / row[0]
+        if not book_dir.exists():
+            return None
+
+        # Look for epub first, then pdf
+        for ext in [".epub", ".pdf"]:
+            for file in book_dir.iterdir():
+                if file.suffix.lower() == ext:
+                    return file
+
+        return None

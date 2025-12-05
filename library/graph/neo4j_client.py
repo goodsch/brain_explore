@@ -145,7 +145,13 @@ class KnowledgeGraph:
 
     def add_relationship(self, rel: Relationship):
         """Add a relationship between entities."""
+        # Sanitize relationship type: replace spaces with underscores, remove invalid chars
+        import re
         rel_type = rel.relation_type.upper()
+        rel_type = rel_type.replace(" ", "_").replace("-", "_")
+        rel_type = re.sub(r'[^A-Z0-9_]', '', rel_type)
+        if not rel_type:
+            rel_type = "RELATED_TO"  # Fallback for empty types
 
         with self.driver.session() as session:
             # Try to find source and target nodes of any type
