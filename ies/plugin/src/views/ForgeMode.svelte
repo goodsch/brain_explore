@@ -104,6 +104,28 @@
     let detectedState: string = 'exploring';
     let currentApproach: string = 'socratic';
 
+    // Question class tracking for session documents
+    interface ClassifiedQuestion {
+        question: string;
+        question_class: string;
+        approach: string;
+    }
+    let questionClassesUsed: string[] = [];
+    let lastQuestionClass: string | null = null;
+
+    // Question class display names
+    const QUESTION_CLASS_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
+        schema_probe: { label: 'Structure', emoji: '🏗️', color: '#4a90d9' },
+        boundary: { label: 'Boundary', emoji: '🔲', color: '#7b68ee' },
+        dimensional: { label: 'Dimensional', emoji: '📐', color: '#20b2aa' },
+        causal: { label: 'Causal', emoji: '⚡', color: '#f4a460' },
+        counterfactual: { label: 'What-If', emoji: '🔮', color: '#da70d6' },
+        anchor: { label: 'Anchor', emoji: '⚓', color: '#3cb371' },
+        perspective_shift: { label: 'Perspective', emoji: '👁️', color: '#cd853f' },
+        meta_cognitive: { label: 'Meta', emoji: '🧠', color: '#778899' },
+        reflective_synthesis: { label: 'Synthesis', emoji: '🔗', color: '#6495ed' },
+    };
+
     const USER_ID = 'chris';
 
     // Use SiYuan's forwardProxy to reach backend
@@ -222,24 +244,37 @@
         aiResponse: string,
         state: string,
         approach: string
-    ): Promise<string | null> {
+    ): Promise<ClassifiedQuestion | null> {
         try {
             const data = await apiPost('/question-engine/generate-questions', {
-                approach,
-                user_state: state,
-                context: {
-                    mode: selectedMode,
-                    topic: sessionTopic,
-                    user_message: userMessage,
-                    ai_response: aiResponse,
-                    section: template?.sections[currentSectionIndex]?.id || null,
-                    section_prompt: template?.sections[currentSectionIndex]?.prompt || null
-                },
-                count: 1
+                user_id: USER_ID,
+                recent_messages: messages
+                    .filter(m => m.role === 'user')
+                    .slice(-3)
+                    .map(m => m.content),
+                context: `Mode: ${selectedMode}. Topic: ${sessionTopic}. ${
+                    template?.sections[currentSectionIndex]?.prompt || ''
+                }. User just said: ${userMessage}`,
+                num_questions: 1
             });
 
+            // Use classified_questions if available (new format with question class tagging)
+            if (data.classified_questions && data.classified_questions.length > 0) {
+                const classified = data.classified_questions[0];
+                return {
+                    question: classified.question,
+                    question_class: classified.question_class,
+                    approach: classified.approach
+                };
+            }
+
+            // Fallback to old format (plain questions array)
             if (data.questions && data.questions.length > 0) {
-                return data.questions[0];
+                return {
+                    question: data.questions[0],
+                    question_class: 'schema_probe', // Default class
+                    approach: data.approach || approach
+                };
             }
             return null;
         } catch (err) {
@@ -361,14 +396,22 @@
 
                     // Only add thinking question if user seems stuck or overwhelmed
                     if (detectedState === 'stuck' || detectedState === 'overwhelmed' || detectedState === 'uncertain') {
-                        const thinkingQuestion = await generateThinkingQuestion(
+                        const classifiedQuestion = await generateThinkingQuestion(
                             userMsg,
                             response,
                             detectedState,
                             currentApproach
                         );
-                        if (thinkingQuestion) {
-                            response += `\n\n💭 *${thinkingQuestion}*`;
+                        if (classifiedQuestion) {
+                            // Track the question class used
+                            lastQuestionClass = classifiedQuestion.question_class;
+                            if (!questionClassesUsed.includes(classifiedQuestion.question_class)) {
+                                questionClassesUsed = [...questionClassesUsed, classifiedQuestion.question_class];
+                            }
+                            // Format with class badge
+                            const classInfo = QUESTION_CLASS_LABELS[classifiedQuestion.question_class];
+                            const badge = classInfo ? `${classInfo.emoji}` : '💭';
+                            response += `\n\n${badge} *${classifiedQuestion.question}*`;
                         }
                     }
 
@@ -382,15 +425,23 @@
                     currentApproach = await selectApproach(detectedState);
 
                     // Generate a thinking partner question
-                    const thinkingQuestion = await generateThinkingQuestion(
+                    const classifiedQuestion = await generateThinkingQuestion(
                         userMsg,
                         response,
                         detectedState,
                         currentApproach
                     );
 
-                    if (thinkingQuestion) {
-                        response += `\n\n💭 *${thinkingQuestion}*`;
+                    if (classifiedQuestion) {
+                        // Track the question class used
+                        lastQuestionClass = classifiedQuestion.question_class;
+                        if (!questionClassesUsed.includes(classifiedQuestion.question_class)) {
+                            questionClassesUsed = [...questionClassesUsed, classifiedQuestion.question_class];
+                        }
+                        // Format with class badge
+                        const classInfo = QUESTION_CLASS_LABELS[classifiedQuestion.question_class];
+                        const badge = classInfo ? `${classInfo.emoji}` : '💭';
+                        response += `\n\n${badge} *${classifiedQuestion.question}*`;
                     }
                 }
 
@@ -436,12 +487,16 @@
                 transcript: messages,
                 entitiesExtracted: data.entities_extracted,
                 graphMappingExecuted: !!template,
+                questionClassesUsed: questionClassesUsed.length > 0 ? questionClassesUsed : undefined,
             });
 
             const docMsg = docId ? ' Session document saved to SiYuan.' : '';
+            const classesMsg = questionClassesUsed.length > 0
+                ? ` Question types: ${questionClassesUsed.map(c => QUESTION_CLASS_LABELS[c]?.label || c).join(', ')}.`
+                : '';
             const msg = template
-                ? `Session saved. Template mapping executed. ${data.entities_extracted} entities extracted.${docMsg}`
-                : `Session saved. ${data.entities_extracted} entities extracted.${docMsg}`;
+                ? `Session saved. Template mapping executed. ${data.entities_extracted} entities extracted.${classesMsg}${docMsg}`
+                : `Session saved. ${data.entities_extracted} entities extracted.${classesMsg}${docMsg}`;
             showMessage(msg, 4000);
 
             // Reset state
@@ -452,6 +507,8 @@
             sectionResponses = {};
             currentSectionIndex = 0;
             showProgress = false;
+            questionClassesUsed = [];
+            lastQuestionClass = null;
         } catch (err) {
             console.error('[IES] End error:', err);
             status = 'error';
@@ -576,6 +633,26 @@
                             End
                         </button>
                     </div>
+                    {#if questionClassesUsed.length > 0}
+                        <div class="question-classes-bar">
+                            <span class="question-classes-label">Questions used:</span>
+                            <div class="question-class-badges">
+                                {#each questionClassesUsed as qc}
+                                    {@const classInfo = QUESTION_CLASS_LABELS[qc]}
+                                    {#if classInfo}
+                                        <span
+                                            class="question-class-badge"
+                                            class:question-class-badge--active={lastQuestionClass === qc}
+                                            style="--badge-color: {classInfo.color}"
+                                            title={qc.replace(/_/g, ' ')}
+                                        >
+                                            {classInfo.emoji} {classInfo.label}
+                                        </span>
+                                    {/if}
+                                {/each}
+                            </div>
+                        </div>
+                    {/if}
                 </div>
             {/if}
         </div>
@@ -933,5 +1010,42 @@
         display: flex;
         gap: 8px;
         justify-content: flex-end;
+    }
+
+    /* Question class badges */
+    .question-classes-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        flex-wrap: wrap;
+    }
+    .question-classes-label {
+        font-size: 11px;
+        color: var(--b3-theme-on-surface-light);
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    .question-class-badges {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .question-class-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 8px;
+        font-size: 11px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--badge-color, #888) 15%, transparent);
+        color: var(--badge-color, #888);
+        border: 1px solid color-mix(in srgb, var(--badge-color, #888) 30%, transparent);
+        transition: all 0.15s ease;
+    }
+    .question-class-badge--active {
+        background: color-mix(in srgb, var(--badge-color, #888) 25%, transparent);
+        border-color: var(--badge-color, #888);
+        box-shadow: 0 0 6px color-mix(in srgb, var(--badge-color, #888) 40%, transparent);
     }
 </style>

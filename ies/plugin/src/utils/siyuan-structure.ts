@@ -506,6 +506,7 @@ interface SessionDocumentOptions {
     transcript: Array<{ role: string; content: string }>;
     entitiesExtracted?: number;
     graphMappingExecuted?: boolean;
+    questionClassesUsed?: string[];
 }
 
 /**
@@ -523,6 +524,7 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
         transcript,
         entitiesExtracted,
         graphMappingExecuted,
+        questionClassesUsed,
     } = options;
 
     const notebook = await resolveStructureNotebook();
@@ -557,6 +559,9 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
     if (graphMappingExecuted !== undefined) {
         frontmatter.graph_mapping_executed = graphMappingExecuted;
     }
+    if (questionClassesUsed && questionClassesUsed.length > 0) {
+        frontmatter.question_classes_used = questionClassesUsed;
+    }
 
     const fm = serializeFrontmatter(frontmatter);
 
@@ -586,13 +591,31 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
     }
 
     // Extraction summary
-    if (entitiesExtracted !== undefined || graphMappingExecuted) {
+    if (entitiesExtracted !== undefined || graphMappingExecuted || (questionClassesUsed && questionClassesUsed.length > 0)) {
         content += `## Session Results\n\n`;
         if (entitiesExtracted !== undefined) {
             content += `- Entities extracted: ${entitiesExtracted}\n`;
         }
         if (graphMappingExecuted) {
             content += `- Graph mapping executed: ✓\n`;
+        }
+        if (questionClassesUsed && questionClassesUsed.length > 0) {
+            // Format question classes with human-readable labels
+            const classLabels: Record<string, string> = {
+                schema_probe: 'Structure',
+                boundary: 'Boundary',
+                dimensional: 'Dimensional',
+                causal: 'Causal',
+                counterfactual: 'What-If',
+                anchor: 'Anchor',
+                perspective_shift: 'Perspective',
+                meta_cognitive: 'Meta',
+                reflective_synthesis: 'Synthesis',
+            };
+            const formattedClasses = questionClassesUsed
+                .map(qc => classLabels[qc] || qc.replace(/_/g, ' '))
+                .join(', ');
+            content += `- Question types used: ${formattedClasses}\n`;
         }
     }
 
