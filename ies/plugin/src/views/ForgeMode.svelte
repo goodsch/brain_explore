@@ -13,6 +13,7 @@
      */
     import { onMount, createEventDispatcher } from 'svelte';
     import { showMessage, getFrontend, fetchSyncPost } from 'siyuan';
+    import { createSessionDocument } from '../utils/siyuan-structure';
 
     export let backendUrl: string;
 
@@ -405,7 +406,7 @@
             });
     }
 
-    function handleEnd() {
+    async function handleEnd() {
         if (!sessionId) return;
         status = 'starting';
 
@@ -421,26 +422,42 @@
             endPayload.section_responses = sectionResponses;
         }
 
-        apiPost('/session/end', endPayload)
-            .then(data => {
-                const msg = template
-                    ? `Session saved. Template mapping executed. ${data.entities_extracted} entities extracted.`
-                    : `Session saved. ${data.entities_extracted} entities extracted.`;
-                showMessage(msg, 3000);
-                sessionId = null;
-                status = 'idle';
-                messages = [];
-                template = null;
-                sectionResponses = {};
-                currentSectionIndex = 0;
-                showProgress = false;
-            })
-            .catch(err => {
-                console.error('[IES] End error:', err);
-                status = 'error';
-                errorMsg = err.message;
-                showMessage(`Error: ${err.message}`, 5000, 'error');
+        try {
+            const data = await apiPost('/session/end', endPayload);
+
+            // Create session document in SiYuan
+            const docId = await createSessionDocument({
+                sessionId: sessionId,
+                mode: selectedMode,
+                topic: sessionTopic,
+                templateId: template?.id,
+                templateName: template?.name,
+                sectionResponses: template ? sectionResponses : undefined,
+                transcript: messages,
+                entitiesExtracted: data.entities_extracted,
+                graphMappingExecuted: !!template,
             });
+
+            const docMsg = docId ? ' Session document saved to SiYuan.' : '';
+            const msg = template
+                ? `Session saved. Template mapping executed. ${data.entities_extracted} entities extracted.${docMsg}`
+                : `Session saved. ${data.entities_extracted} entities extracted.${docMsg}`;
+            showMessage(msg, 4000);
+
+            // Reset state
+            sessionId = null;
+            status = 'idle';
+            messages = [];
+            template = null;
+            sectionResponses = {};
+            currentSectionIndex = 0;
+            showProgress = false;
+        } catch (err) {
+            console.error('[IES] End error:', err);
+            status = 'error';
+            errorMsg = err.message;
+            showMessage(`Error: ${err.message}`, 5000, 'error');
+        }
     }
 
     function handleKeydown(e: KeyboardEvent) {

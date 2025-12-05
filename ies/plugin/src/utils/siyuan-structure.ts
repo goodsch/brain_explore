@@ -10,11 +10,19 @@ import {
 } from '../api';
 
 const STRUCTURE_FOLDERS = [
+    // Core ADHD-friendly folders
     { path: 'Daily', title: 'Daily Log' },
     { path: 'Insights', title: 'Insights Library' },
     { path: 'Threads', title: 'Active Threads' },
     { path: 'Favorite Problems', title: 'Favorite Problems' },
+    { path: 'Concepts', title: 'Concepts' },
+    // AST Session folders by thinking mode
     { path: 'Sessions', title: 'Sessions' },
+    { path: 'Sessions/Learning', title: 'Learning Sessions' },
+    { path: 'Sessions/Articulating', title: 'Articulating Sessions' },
+    { path: 'Sessions/Planning', title: 'Planning Sessions' },
+    { path: 'Sessions/Ideating', title: 'Ideating Sessions' },
+    { path: 'Sessions/Reflecting', title: 'Reflecting Sessions' },
 ];
 
 const NOTEBOOK_STORAGE_KEY = 'ies.structureNotebookId';
@@ -477,4 +485,131 @@ export async function getPersonalStats(): Promise<{
 export async function visitSpark(sparkId: string): Promise<boolean> {
     const result = await callBackendApi<{ success: boolean }>('POST', `/personal/sparks/${sparkId}/visit`);
     return result?.success || false;
+}
+
+// Thinking mode to folder path mapping
+const MODE_FOLDER_MAP: Record<string, string> = {
+    learning: 'Sessions/Learning',
+    articulating: 'Sessions/Articulating',
+    planning: 'Sessions/Planning',
+    ideating: 'Sessions/Ideating',
+    reflecting: 'Sessions/Reflecting',
+};
+
+interface SessionDocumentOptions {
+    sessionId: string;
+    mode: string;
+    topic: string;
+    templateId?: string;
+    templateName?: string;
+    sectionResponses?: Record<string, string>;
+    transcript: Array<{ role: string; content: string }>;
+    entitiesExtracted?: number;
+    graphMappingExecuted?: boolean;
+}
+
+/**
+ * Create a session document in SiYuan for a completed ForgeMode session.
+ * Stores the full session with metadata, section responses, and transcript.
+ */
+export async function createSessionDocument(options: SessionDocumentOptions): Promise<string | null> {
+    const {
+        sessionId,
+        mode,
+        topic,
+        templateId,
+        templateName,
+        sectionResponses,
+        transcript,
+        entitiesExtracted,
+        graphMappingExecuted,
+    } = options;
+
+    const notebook = await resolveStructureNotebook();
+    await ensureNotebookStructure();
+
+    // Determine folder based on mode
+    const folderPath = MODE_FOLDER_MAP[mode] || 'Sessions';
+
+    // Create document path with timestamp
+    const dateValue = new Date();
+    const dateStr = formatDailyTitle(dateValue);
+    const timeStr = `${pad2(dateValue.getHours())}${pad2(dateValue.getMinutes())}`;
+    const safeTitle = topic.substring(0, 50).replace(/[/\\?%*:|"<>]/g, '-').trim();
+    const docPath = `${folderPath}/${dateStr}-${timeStr}-${safeTitle}`;
+
+    // Build frontmatter
+    const frontmatter: Record<string, any> = {
+        be_type: 'session',
+        be_id: sessionId,
+        mode: mode,
+        topic: topic,
+        status: 'completed',
+        created: dateValue.toISOString(),
+    };
+    if (templateId) {
+        frontmatter.template_id = templateId;
+        frontmatter.template_name = templateName || templateId;
+    }
+    if (entitiesExtracted !== undefined) {
+        frontmatter.entities_extracted = entitiesExtracted;
+    }
+    if (graphMappingExecuted !== undefined) {
+        frontmatter.graph_mapping_executed = graphMappingExecuted;
+    }
+
+    const fm = serializeFrontmatter(frontmatter);
+
+    // Build document content
+    let content = `---\n${fm}\n---\n\n`;
+    content += `# ${topic}\n\n`;
+    content += `**Mode:** ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
+    if (templateName) {
+        content += ` (${templateName})`;
+    }
+    content += `\n**Date:** ${dateStr}\n\n`;
+
+    // Add section responses if template-driven
+    if (sectionResponses && Object.keys(sectionResponses).length > 0) {
+        content += `## Section Responses\n\n`;
+        for (const [sectionId, response] of Object.entries(sectionResponses)) {
+            const formattedId = sectionId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            content += `### ${formattedId}\n\n${response}\n\n`;
+        }
+    }
+
+    // Add conversation transcript
+    content += `## Conversation\n\n`;
+    for (const msg of transcript) {
+        const speaker = msg.role === 'user' ? '**You:**' : '**AI:**';
+        content += `${speaker}\n\n${msg.content}\n\n---\n\n`;
+    }
+
+    // Extraction summary
+    if (entitiesExtracted !== undefined || graphMappingExecuted) {
+        content += `## Session Results\n\n`;
+        if (entitiesExtracted !== undefined) {
+            content += `- Entities extracted: ${entitiesExtracted}\n`;
+        }
+        if (graphMappingExecuted) {
+            content += `- Graph mapping executed: ✓\n`;
+        }
+    }
+
+    try {
+        const docId = await createDocWithMd(notebook.id, docPath, content);
+
+        // Set block attributes for backend linking
+        await setBlockAttrs(docId, {
+            'custom-be_type': 'session',
+            'custom-be_id': sessionId,
+            'custom-mode': mode,
+            'custom-status': 'completed',
+        });
+
+        return docId;
+    } catch (err) {
+        console.error('[IES] Failed to create session document:', err);
+        return null;
+    }
 }
