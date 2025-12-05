@@ -2,6 +2,7 @@
 
 **Purpose:** Single source of truth for how the system works end-to-end.
 **Rule:** Read this FULLY at session start. Check against it before building anything.
+**Last Updated:** December 5, 2025
 
 ---
 
@@ -10,13 +11,14 @@
 **One Sentence:** Help a person think WITH an AI partner who adapts to their unique cognitive patterns while exploring a rich knowledge domain.
 
 **The Experience:**
-1. You read a book and highlight something that resonates
-2. That highlight connects to a concept in the knowledge graph
-3. You see what else discusses that concept, what it relates to
-4. An AI asks you questions tailored to how YOU think
-5. Your exploration path is captured as breadcrumbs
-6. Over time, your sparks become insights, your patterns become visible
-7. The cycle deepens both your understanding and the system's understanding of you
+1. You browse the Calibre library and open a book in Readest
+2. Entity overlay highlights concepts, people, theories in the text
+3. Click a highlighted term → Flow Panel shows connections
+4. See what else discusses that concept, what it relates to
+5. An AI asks you questions tailored to how YOU think
+6. Your exploration path is captured as breadcrumbs
+7. Over time, your sparks become insights, your patterns become visible
+8. The cycle deepens both your understanding and the system's understanding of you
 
 ---
 
@@ -27,11 +29,12 @@
 │  LAYER 4: READEST (Reading Interface)                           │
 │  WHERE: You read books and explore concepts                     │
 │  ───────────────────────────────────────────────────────────    │
-│  • Linear reading with highlight/annotate                       │
+│  • Calibre library browser (search, open books via backend API) │
+│  • Entity overlay: inline highlighting with type-specific colors│
 │  • Flow mode: split view (text + entity panel)                  │
-│  • Text selection → entity lookup → relationship browse         │
+│  • Click entity → relationships, sources, questions             │
 │  • Breadcrumb journey captured automatically                    │
-│  STATUS: MVP built, needs integration                           │
+│  STATUS: MVP + Entity Overlay + Calibre Library (Dec 5)         │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -40,10 +43,11 @@
 │  WHERE: You process, think, and organize                        │
 │  ───────────────────────────────────────────────────────────    │
 │  • Dashboard: what to explore, recent journeys, capture queue   │
-│  • Structured Thinking: 5 modes with AI dialogue                │
+│  • ForgeMode: Template-driven structured thinking (5 modes)     │
 │  • Flow Mode: graph exploration without books                   │
 │  • Quick Capture: dump thoughts, auto-extract entities          │
-│  STATUS: MVP built, needs integration                           │
+│  • ReframesTab: view concept reframes (metaphors, analogies)    │
+│  STATUS: MVP + Template Integration (Dec 5)                     │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -52,12 +56,14 @@
 │  WHERE: All intelligence and data lives                         │
 │  ───────────────────────────────────────────────────────────    │
 │  • Graph API: search, explore, sources, suggestions             │
+│  • Books API: Calibre catalog, covers, file serving (Dec 4)     │
+│  • Entity API: by-book and by-calibre-id lookup                 │
+│  • Reframe API: Claude-generated metaphors/analogies (Dec 4)    │
+│  • Template API: thinking templates for ForgeMode (Dec 5)       │
+│  • Personal API: ADHD-friendly spark/insight capture            │
 │  • Session API: structured thinking dialogue                    │
 │  • Journey API: breadcrumb capture and retrieval                │
-│  • Capture API: content → entity extraction                     │
-│  • Question Engine: thinking partner questions                  │
-│  • Profile Service: cognitive profile (6 dimensions)            │
-│  STATUS: Production ready (54/61 tests)                         │
+│  STATUS: Production ready (85/85 tests)                         │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -66,15 +72,16 @@
 │  WHERE: Domain knowledge + personal knowledge live              │
 │  ───────────────────────────────────────────────────────────    │
 │  Domain Graph:                                                  │
-│  • 50k entities from 63 therapy/psychology books                │
-│  • 125k relationships (supports, contrasts, develops, etc.)     │
+│  • Calibre library: 179 books (single source of truth)          │
+│  • Auto-ingestion daemon: books → entities automatically        │
+│  • Current: 291 entities, 338 relationships (10 books indexed)  │
 │  • Neo4j for graph queries, Qdrant for semantic search          │
 │                                                                 │
-│  Personal Graph (NEW - ADHD ontology):                          │
+│  Personal Graph (ADHD ontology):                                │
 │  • spark, insight, thread, favorite_problem entities            │
 │  • resonance_signal, energy_level metadata                      │
 │  • sparked_by, led_to_discovery relationships                   │
-│  STATUS: Domain graph operational, personal graph schema built  │
+│  STATUS: Operational + Auto-Ingestion Running                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -88,7 +95,7 @@
 Entity Types: concept | framework | theory | mechanism | phenomenon |
               pattern | distinction | person | book | assessment
 
-Relationships: supports | contrasts_with | component_of | develops |
+Relationships: MENTIONS | supports | contrasts_with | component_of | develops |
                cites | operationalizes | instance_of | related_to
 ```
 
@@ -100,7 +107,7 @@ Relationships: supports | contrasts_with | component_of | develops |
 Entity Types: spark | insight | thread | favorite_problem
 
 Metadata:
-  resonance_signal: curious | excited | surprised | moved | disturbed | unclear
+  resonance_signal: curious | excited | surprised | moved | disturbed | unclear | connected | validated
   energy_level: low | medium | high
   status: captured | exploring | anchored
   capture_context: string (what you were doing when you captured it)
@@ -112,7 +119,44 @@ Relationships: sparked_by | led_to_discovery | addresses_problem |
 
 **Source:** `library/graph/adhd_ontology.py`, `library/graph/adhd_graph_client.py`
 
-### 3.3 User Profile (6 dimensions)
+### 3.3 Reframe (makes concepts accessible)
+
+```
+Types: metaphor | analogy | story | pattern | contrast
+
+Fields:
+  concept_id: string (linked concept)
+  type: ReframeType
+  content: string (the reframe text)
+  helpful_votes: integer
+  confusing_votes: integer
+  generated_by: string (model name)
+```
+
+**Source:** `ies/backend/src/ies_backend/api/reframe.py`
+
+### 3.4 Thinking Template (ForgeMode structure)
+
+```
+Template Schema:
+  id: string (e.g., "learning-mechanism-map")
+  mode: learning | articulating | planning | ideating | reflecting
+  title: string
+  description: string
+  sections: Array<Section>
+  graph_mapping: GraphMapping rules
+
+Section:
+  id: string
+  prompt: string (AI asks this)
+  input_type: concept_search | freeform | selection
+  ai_behavior: string
+  required: boolean
+```
+
+**Source:** `schemas/thinking-template.schema.json`, `ies/backend/src/ies_backend/api/template.py`
+
+### 3.5 User Profile (6 dimensions)
 
 ```typescript
 {
@@ -125,7 +169,7 @@ Relationships: sparked_by | led_to_discovery | addresses_problem |
 }
 ```
 
-### 3.4 Journey (exploration path)
+### 3.6 Journey (exploration path)
 
 ```typescript
 {
@@ -155,17 +199,18 @@ Relationships: sparked_by | led_to_discovery | addresses_problem |
 ### 4.1 Reading Flow (Layer 4 → Layer 2 → Layer 1)
 
 ```
-1. Open book in Readest
-2. Read, highlight passage that resonates
-3. Toggle Flow mode (split panel appears)
-4. Entity panel shows:
-   - What concept this relates to
+1. Open Readest → Import Menu → "From Calibre Library"
+2. Browse/search books → click to open
+3. Entity overlay highlights concepts in text (color-coded by type)
+4. Click highlighted term → Flow Panel opens
+5. Entity panel shows:
+   - Definition and related concepts
+   - Relationships grouped by type
    - Other sources discussing it
-   - Related concepts
    - Thinking partner question
-5. Click related concept → navigate there
-6. Journey captured automatically
-7. End session → journey saved → available in SiYuan dashboard
+6. Click related concept → navigate there
+7. Journey captured automatically
+8. End session → journey saved
 ```
 
 ### 4.2 Structured Thinking Flow (Layer 3 → Layer 2)
@@ -173,14 +218,15 @@ Relationships: sparked_by | led_to_discovery | addresses_problem |
 ```
 1. Open SiYuan plugin dashboard
 2. Select "Start Thinking" → choose mode:
-   - Learning: understand new concept
-   - Articulating: clarify vague intuition
+   - Learning: understand new concept (template: mechanism-map)
+   - Articulating: clarify vague intuition (template: clarify-intuition)
    - Planning: develop action strategy
    - Ideating: generate creative options
    - Reflecting: personal insight
-3. AI asks mode-appropriate questions
-4. Live note preview shows emerging structure
-5. Save note → entities extracted → linked to graph
+3. ForgeMode loads template from backend API
+4. AI asks section-by-section questions
+5. Live note preview shows emerging structure
+6. Save note → entities extracted → linked to graph
 ```
 
 ### 4.3 Quick Capture Flow (anywhere → Layer 3 → Layer 2)
@@ -201,99 +247,140 @@ Relationships: sparked_by | led_to_discovery | addresses_problem |
 ```
 1. Search or browse from dashboard
 2. Select entity → see relationships grouped by type
-3. Click relationship → navigate to connected entity
-4. Ask thinking partner for questions at any point
-5. Journey captured as you explore
+3. Click "Reframes" tab → see metaphors/analogies
+4. Click relationship → navigate to connected entity
+5. Ask thinking partner for questions at any point
+6. Journey captured as you explore
 ```
 
 ---
 
-## 5. Integration Points (What's Connected vs. Not)
+## 5. Integration Points (What's Connected)
 
 ### Currently Connected ✅
 | From | To | How |
 |------|-----|-----|
-| Readest | Backend Graph API | REST calls for entity/explore |
-| SiYuan Plugin | Backend APIs | All endpoints work |
-| Backend | Neo4j (domain) | graph_service.py |
+| Readest | Calibre Library | `/books` API serves catalog + files |
+| Readest | Entity Overlay | `/graph/entities/by-calibre-id` |
+| Readest | Flow Panel | `/graph/explore`, `/graph/sources` |
+| SiYuan Plugin | Backend APIs | All endpoints via forwardProxy |
+| SiYuan ForgeMode | Template API | `/templates/{id}` |
+| Backend | Neo4j | graph_service.py |
 | Backend | Qdrant | Semantic search |
+| Backend | Calibre DB | calibre_service.py |
+| Ingestion Daemon | Neo4j | auto_ingest_daemon.py |
+
+### Partially Connected ⚠️
+| From | To | Status |
+|------|-----|-----|
+| Readest | Personal Graph | API exists, UI not wired |
+| SiYuan | Personal Graph | API exists, UI not wired |
+| Quick Capture | Destinations | Entity extraction works, routing partial |
+| Journeys | Graph enrichment | Captured but not analyzed |
 
 ### NOT Connected Yet ❌
 | From | To | Gap |
 |------|-----|-----|
-| Readest | Personal Graph | ADHD ontology not wired |
-| SiYuan | Personal Graph | ADHD ontology not wired |
-| Quick Capture | Anywhere | No destination defined |
 | Readest | SiYuan | No sync between them |
-| Books library | Graph | 63 books ingested but not navigable from UI |
-| Journeys | Graph enrichment | Captured but not used |
+| Journey patterns | Suggestions | Patterns not used for personalization |
 
 ---
 
-## 6. SiYuan Structure (NOT YET DEFINED)
+## 6. Backend API Reference
 
-**This is a major gap.** We have:
-- A plugin that can create/read blocks
-- An ADHD ontology with entity types
-
-We DON'T have:
-- Where sparks go (which notebook? which document structure?)
-- How favorite_problems are represented
-- How threads are stored
-- How personal graph relates to SiYuan documents
-- Note types and templates
-
-**Needs Design:**
+### Graph API
 ```
-/brain_explore/                    # Notebook
-├── /Sparks/                       # Quick captures
-│   └── YYYY-MM-DD.md              # Daily spark log? Or individual files?
-├── /Insights/                     # Promoted sparks
-├── /Threads/                      # Exploration journeys
-├── /Favorite Problems/            # Navigation anchors
-├── /Concepts/                     # Domain concepts I'm developing
-└── /Journeys/                     # Reading session captures
+GET  /graph/stats                    # Knowledge graph statistics
+GET  /graph/search?q={query}         # Entity search
+GET  /graph/explore/{entity_id}      # Neighborhood exploration
+GET  /graph/sources/{entity_id}      # Book references
+GET  /graph/suggestions              # Dashboard topics
+POST /graph/thinking-partner         # AI questions for entity
+```
+
+### Books API (Calibre)
+```
+GET  /books                          # List all books from Calibre
+GET  /books?search={query}           # Search by title/author
+GET  /books/{calibre_id}             # Get single book
+GET  /books/{calibre_id}/cover       # Fetch cover image
+HEAD /books/{calibre_id}/file        # File metadata (size, type)
+GET  /books/{calibre_id}/file        # Serve epub/pdf file
+```
+
+### Entity API
+```
+GET  /graph/entities/by-book/{hash}       # Entities by book hash
+GET  /graph/entities/by-calibre-id/{id}   # Entities by Calibre ID
+```
+
+### Reframe API
+```
+GET  /concepts/{id}/reframes              # Get cached reframes
+POST /concepts/{id}/reframes/generate     # Generate via Claude
+POST /reframes/{id}/feedback              # Vote helpful/confusing
+```
+
+### Template API
+```
+GET  /templates/{template_id}             # Get thinking template
+```
+
+### Personal Graph API
+```
+POST /personal/sparks                     # Create spark
+GET  /personal/sparks/{id}                # Get spark
+POST /personal/sparks/{id}/visit          # Record visit
+POST /personal/sparks/{id}/promote        # Promote to insight
+GET  /personal/sparks/by-resonance/{sig}  # Find by emotional state
+GET  /personal/sparks/by-energy/{level}   # Find by energy level
+GET  /personal/stats                      # Personal graph stats
+```
+
+### Journey API
+```
+POST   /journeys                     # Save breadcrumb journey
+GET    /journeys/{id}                # Retrieve journey
+GET    /journeys/user/{user_id}      # List user's journeys
+PATCH  /journeys/{id}                # Update journey
+DELETE /journeys/{id}                # Delete journey
+```
+
+### Session API
+```
+POST /session                        # Start structured thinking session
+POST /session/{id}/message           # Send message in session
+GET  /session/context/{user_id}      # Load session context
 ```
 
 ---
 
-## 7. Data Flow Diagram
+## 7. Current Graph Statistics
 
+```json
+{
+  "entities": 291,
+  "relationships": 338,
+  "books": 10,
+  "node_counts": {
+    "Concept": 134,
+    "Researcher": 118,
+    "Theory": 22,
+    "Book": 10,
+    "Assessment": 7
+  },
+  "relationship_counts": {
+    "MENTIONS": 324,
+    "COMPONENT_OF": 4,
+    "SUPPORTS": 4,
+    "DEVELOPS": 3,
+    "CONTRADICTS": 2,
+    "CITES": 1
+  }
+}
 ```
-                    ┌──────────────────┐
-                    │   USER ACTION    │
-                    └────────┬─────────┘
-                             │
-         ┌───────────────────┼───────────────────┐
-         ▼                   ▼                   ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ Read in Readest │ │Think in SiYuan  │ │ Capture thought │
-└────────┬────────┘ └────────┬────────┘ └────────┬────────┘
-         │                   │                   │
-         ▼                   ▼                   ▼
-┌─────────────────────────────────────────────────────────┐
-│                    BACKEND APIs                          │
-│  Graph API  │  Session API  │  Journey API  │ Capture   │
-└─────────────────────────────────────────────────────────┘
-         │                   │                   │
-         ▼                   ▼                   ▼
-┌─────────────────────────────────────────────────────────┐
-│                   KNOWLEDGE GRAPH                        │
-│         Domain Graph (Neo4j)  +  Personal Graph          │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│                   USER PROFILE                           │
-│         Cognitive dimensions + exploration patterns      │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│              THINKING PARTNER QUESTIONS                  │
-│         Personalized based on profile + context          │
-└─────────────────────────────────────────────────────────┘
-```
+
+**Auto-ingestion status:** 10/179 Calibre books indexed. Daemon running (5-minute polls).
 
 ---
 
@@ -302,48 +389,50 @@ We DON'T have:
 | Component | Designed | Built | Integrated | Usable |
 |-----------|----------|-------|------------|--------|
 | Neo4j domain graph | ✅ | ✅ | ✅ | ✅ |
+| Calibre integration | ✅ | ✅ | ✅ | ✅ |
+| Auto-ingestion daemon | ✅ | ✅ | ✅ | ✅ |
 | Backend Graph API | ✅ | ✅ | ✅ | ✅ |
+| Backend Books API | ✅ | ✅ | ✅ | ✅ |
+| Backend Reframe API | ✅ | ✅ | ✅ | ✅ |
+| Backend Template API | ✅ | ✅ | ✅ | ✅ |
+| Backend Personal API | ✅ | ✅ | ⚠️ | ⚠️ |
 | Backend Session API | ✅ | ✅ | ✅ | ✅ |
-| Backend Journey API | ✅ | ✅ | ⚠️ | ❌ |
-| Backend Capture API | ✅ | ✅ | ⚠️ | ❌ |
+| Backend Journey API | ✅ | ✅ | ⚠️ | ⚠️ |
 | Question Engine | ✅ | ✅ | ✅ | ⚠️ |
-| Profile Service | ✅ | ✅ | ⚠️ | ❌ |
-| ADHD Personal Graph | ✅ | ✅ | ❌ | ❌ |
-| Readest Flow Mode | ✅ | ✅ | ⚠️ | ⚠️ |
-| SiYuan Dashboard | ✅ | ✅ | ⚠️ | ⚠️ |
-| SiYuan Thinking Modes | ✅ | ✅ | ⚠️ | ⚠️ |
-| Quick Capture | ✅ | ⚠️ | ❌ | ❌ |
-| SiYuan structure | ❌ | ❌ | ❌ | ❌ |
-| Book navigation | ❌ | ❌ | ❌ | ❌ |
+| ADHD Personal Graph | ✅ | ✅ | ⚠️ | ❌ |
+| Readest Flow Mode | ✅ | ✅ | ✅ | ✅ |
+| Readest Entity Overlay | ✅ | ✅ | ✅ | ✅ |
+| Readest Calibre Browser | ✅ | ✅ | ✅ | ✅ |
+| SiYuan Dashboard | ✅ | ✅ | ✅ | ⚠️ |
+| SiYuan ForgeMode | ✅ | ✅ | ✅ | ⚠️ |
+| SiYuan ReframesTab | ✅ | ✅ | ✅ | ⚠️ |
+| Quick Capture | ✅ | ⚠️ | ⚠️ | ❌ |
+| SiYuan structure | ⚠️ | ❌ | ❌ | ❌ |
 | Cross-app sync | ✅ | ❌ | ❌ | ❌ |
 
 **Legend:** ✅ Done | ⚠️ Partial | ❌ Not done
 
 ---
 
-## 9. Critical Gaps (Blocking Real Usage)
+## 9. Critical Gaps (Blocking Full Usage)
 
-### Gap 1: SiYuan Structure
+### Gap 1: SiYuan Document Structure ⚠️
 **Problem:** No defined place for sparks, insights, threads to go
-**Impact:** Can't use Quick Capture, can't store personal knowledge
-**To Resolve:** Design notebook/document structure, implement templates
+**Impact:** Can't use Quick Capture destinations, can't store personal knowledge in SiYuan
+**Status:** Design exists in `docs/plans/2025-12-04-reframe-template-integration-design.md`
+**To Resolve:** Implement folder structure utils, document templates
 
-### Gap 2: Personal Graph Integration
-**Problem:** ADHD ontology built but not connected to any UI
-**Impact:** Can't capture with resonance signals, can't navigate by energy
-**To Resolve:** Wire ADHDKnowledgeGraph to backend APIs, expose in frontends
+### Gap 2: Personal Graph UI Integration ⚠️
+**Problem:** ADHD ontology API built but not connected to UI
+**Impact:** Can't capture with resonance signals in UI, can't navigate by energy
+**To Resolve:** Wire Personal API to SiYuan Quick Capture and Readest capture
 
-### Gap 3: Book Library Access
-**Problem:** 63 books ingested but no way to browse/open them from UI
-**Impact:** Can't start reading flow from within the system
-**To Resolve:** Add book browser to SiYuan/Readest, link to graph entities
-
-### Gap 4: Journey → Value Loop
-**Problem:** Journeys captured but never used
+### Gap 3: Journey → Value Loop ❌
+**Problem:** Journeys captured but never analyzed
 **Impact:** Exploration data doesn't improve suggestions or enrich graph
 **To Resolve:** Design journey processing pipeline
 
-### Gap 5: Cross-App Continuity
+### Gap 4: Cross-App Continuity ❌
 **Problem:** Readest and SiYuan don't share state
 **Impact:** Can't resume exploration across apps
 **To Resolve:** Shared journey storage, sync mechanism
@@ -353,7 +442,11 @@ We DON'T have:
 ## 10. The Virtuous Cycle (Goal State)
 
 ```
-You read a book
+You browse Calibre library
+    ↓
+Open book in Readest → entities highlighted
+    ↓
+Click entity → see connections, reframes
     ↓
 Something resonates → capture as spark
     ↓
@@ -403,8 +496,15 @@ cd ies/backend && uv run uvicorn ies_backend.main:app --port 8081
 
 ### Test Backend
 ```bash
+cd ies/backend && uv run pytest              # 85/85 tests
 curl http://localhost:8081/health
 curl http://localhost:8081/graph/stats
+```
+
+### Check Ingestion
+```bash
+python scripts/check_ingestion.py            # View status table
+python scripts/auto_ingest_daemon.py &       # Start daemon
 ```
 
 ### Work in Worktrees
@@ -416,13 +516,15 @@ cd .                     # Layer 2 / shared
 
 ### Key Files
 ```
-docs/SYSTEM-DESIGN.md              # This file (source of truth)
-library/graph/adhd_ontology.py     # Personal knowledge schema
-library/graph/adhd_graph_client.py # Personal knowledge operations
-ies/backend/src/ies_backend/       # All backend services
+docs/SYSTEM-DESIGN.md                    # This file (source of truth)
+docs/COMPREHENSIVE-PROJECT-STATUS.md     # Complete project status
+library/graph/adhd_ontology.py           # Personal knowledge schema
+library/graph/adhd_graph_client.py       # Personal knowledge operations
+ies/backend/src/ies_backend/             # All backend services
+scripts/auto_ingest_daemon.py            # Book ingestion daemon
 ```
 
 ---
 
-*Last Updated: December 4, 2025*
+*Last Updated: December 5, 2025*
 *Rule: Update this doc when system design changes. This is the canonical reference.*

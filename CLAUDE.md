@@ -37,13 +37,13 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 ## Current Status
 
-**Phase 2b: Visual Interface Implementation** ✅ COMPLETE (Dec 3)
+**Phase 2c: Integration Features** 🔄 IN PROGRESS (65% complete, Dec 5)
 
-**All Four Layers Built and Validated:**
-- ✅ Layer 1: Knowledge graph creation (validated with 114-book corpus across 8 domains: 50k+ entities)
-- ✅ Layer 2: Backend APIs (graph, session, journey, capture services - 54/61 tests passing)
-- ✅ Layer 3: SiYuan Plugin MVP (dashboard, 5 thinking modes, flow exploration, quick capture)
-- ✅ Layer 4: Readest Integration MVP (reading interface with flow mode, entity panel, breadcrumb capture)
+**All Four Layers Built and Operational:**
+- ✅ Layer 1: Calibre library (179 books) + auto-ingestion daemon → 291 entities, 338 relationships (10 books indexed)
+- ✅ Layer 2: Backend APIs complete — 85/85 tests passing (Books, Reframe, Template, Personal, Graph APIs)
+- ✅ Layer 3: SiYuan Plugin + ForgeMode template integration + ReframesTab
+- ✅ Layer 4: Readest + Entity Overlay (inline highlighting) + Calibre Library Browser
 
 **For complete project status, see:** `docs/COMPREHENSIVE-PROJECT-STATUS.md`
 
@@ -53,8 +53,8 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 - ✅ **Complete concept connection map** — Hierarchical relationships documented in CONNECTIONS.md
 - ✅ **Extraction pipeline proven end-to-end** — Session → Transcript → Extraction → Formalization → Commit
 - ✅ **Core hypothesis validated** — Personalized dialogue patterns directly affect concept discovery
-- ✅ **IES backend (54/61 tests passing)** — Layers 1 & 2 working flawlessly
-- ✅ **Test corpus fully ingested** — Neo4j with 50k+ entities from 114 books across 8 domains (see `books/BOOK-CATALOG.md`)
+- ✅ **IES backend (85/85 tests passing)** — All APIs production-ready
+- ✅ **Calibre integration complete** — 179 books, auto-ingestion daemon running
 
 **Phase 2a Validation Summary:**
 - ✅ **5/5 exploration sessions completed** — CLI tool navigates knowledge graph reliably
@@ -100,8 +100,8 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 - **Phase 1 (COMPLETE):** Core hypothesis proven — Layers 1 & 2 work; extraction pipeline validated with 11 concepts
 - **Phase 2a (COMPLETE):** Layer 3 CLI validation — CLI exploration tool proven with 5 validation sessions
 - **Phase 2b (COMPLETE):** Visual interfaces — Readest reading interface + SiYuan plugin dashboard (both MVPs complete)
-- **Phase 2c (IN PROGRESS):** Reframe & Template Integration — Concept reframes + thinking templates + SiYuan document structure
-- **Phase 3+:** Additional knowledge domains and continued refinement
+- **Phase 2c (65% COMPLETE):** Calibre integration + Entity overlay + Reframe API + Template API + ForgeMode
+- **Phase 3+:** Cross-app sync, journey analysis, additional domains
 
 ## How to Work Here (Phase 2c+)
 
@@ -145,7 +145,22 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 
 ### Phase 2c Focus
 
-**Current Implementation: Reframe & Template Integration** (Dec 4, 2025)
+**Current Implementation: Integration Features** (Dec 4-5, 2025)
+
+**Completed in Phase 2c:**
+- ✅ **Calibre Integration** — Single source of truth for book catalog (179 books)
+- ✅ **Books API** — Catalog, search, covers, file serving via HTTP
+- ✅ **Auto-Ingestion Daemon** — Background processing, 10/179 books indexed
+- ✅ **Entity Overlay** — Inline highlighting in Readest with type-specific colors
+- ✅ **Calibre Library Browser** — Browse/search/open books in Readest
+- ✅ **Reframe API** — Claude-generated metaphors/analogies with caching
+- ✅ **Template API** — Structured thinking templates for ForgeMode
+- ✅ **ReframesTab** — UI components in SiYuan and Readest
+
+**Remaining:**
+- 🔄 Pass 2/3 enrichment (relationships, LLM enrichment)
+- 🔄 Cross-app continuity (Readest ↔ SiYuan sync)
+- 🔄 SiYuan document structure implementation
 
 Addressing critical gaps #1 and #2 with three integrated capabilities:
 
@@ -501,6 +516,26 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 4):**
+- **Entity Overlay UI Redesign** (commits 0b646cf, fddd8f0, 8887e90) — Enhanced user experience with pill-based controls and Flow Panel integration:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/EntityTypeFilter.tsx`: Complete redesign from checkbox-based to pill-based UI (122 lines)
+  - **Master toggle redesign:** Replaced checkbox with prominent ON/OFF button featuring eye icons (LuEye/LuEyeOff from react-icons)
+  - **Pill controls:** Interactive type-specific pills replace traditional checkboxes for more intuitive visual feedback
+  - **Active state styling:** Pills show type-specific colors with 12% opacity backgrounds when active, muted appearance when inactive
+  - **Status indicator:** Centered display shows entity count ("X entities in this book"), loading spinner, error messages, or "Book not indexed" warning
+  - **Disabled interaction:** Pills are properly disabled when overlay is off to prevent user confusion
+  - **Flow Panel integration:** EntityTypeFilter positioned at top of Flow Panel (FlowPanel.tsx lines 156-159) for immediate access
+  - **Flow Panel components updated:** EntitySection, RelationshipsSection, SourcesSection, QuestionsSection, Header all refined with type-specific badges and consistent styling
+  - **CSS styling system:** Complete entity overlay styling in `globals.css` (lines 559-618 for filter controls, 756-855 for inline highlights)
+  - **Type-specific colors:** Blue (Concept #2563eb), Green (Person #059669), Purple (Theory #7c3aed), Orange (Framework #ea580c), Red (Assessment #dc2626)
+  - **Hover effects:** Underline decoration appears on hover with type-specific color transitions for both pills and inline highlights
+  - **Visual consistency:** All Flow Panel sections now use consistent design language with flow-card, flow-section-header, relationship-badge classes
+- **Template API for ForgeMode Integration** (commit 9fcc171) — New backend endpoint enables structured thinking sessions:
+  - `ies/backend/src/ies_backend/api/template.py`: New FastAPI router with `GET /templates/{template_id}` endpoint (24 lines)
+  - Returns `ThinkingTemplate` schema with sections, graph mapping rules, and AI behavior specifications
+  - Registered in `ies/backend/src/ies_backend/main.py` with `/templates` prefix
+  - Integration: `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` fetches templates via SiYuan forwardProxy
+  - Available templates: `learning-mechanism-map` (understand mechanisms), `articulating-clarify-intuition` (clarify vague thoughts)
+  - Enables template-driven sessions with section-by-section progress tracking in ForgeMode UI
 - **Auto Ingestion Daemon Operational** — Fixed critical Book-Entity relationship structure for full entity overlay compatibility:
   - `scripts/auto_ingest_daemon.py`: Fixed MENTIONS relationship creation between Book and Entity nodes (lines 150-156)
   - **Problem:** Auto-ingested books had entities but missing direct Book→MENTIONS→Entity relationships required by entity overlay feature
@@ -560,10 +595,12 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
   - Status lifecycle: `pending → chunked → entities_extracted → relationships_mapped → enriched`
   - CLI features: `--id` (single book), `--test` (one book test), `--status` (processing stats), `--limit` (batch size)
   - Library path: `/home/chris/Documents/calibre` (179 books)
-- **Calibre Integration Phase 2 Complete (Commit 9542ec2)** — Backend APIs for Calibre book library access:
-  - New `CalibreService` queries Calibre `metadata.db` SQLite database (99 lines)
+- **Calibre Integration Phase 2 Complete (Commit 9542ec2, updated 6d607af)** — Backend APIs for Calibre book library access:
+  - New `CalibreService` queries Calibre `metadata.db` SQLite database with `get_book_file_path()` method (128 lines)
   - New `Book` schema with `calibre_id`, `title`, `author`, `path` (Pydantic model)
-  - Books API: `GET /books`, `GET /books?search=`, `GET /books/{calibre_id}`, `GET /books/{calibre_id}/cover` (75 lines)
+  - Books API: `GET /books`, `GET /books?search=`, `GET /books/{calibre_id}`, `GET /books/{calibre_id}/cover` (125 lines)
+  - **File serving endpoints:** `HEAD /books/{calibre_id}/file` (metadata only), `GET /books/{calibre_id}/file` (epub/pdf download)
+  - File serving: Prefers epub over pdf, serves with correct media types (application/epub+zip or application/pdf)
   - GraphService: New `get_entities_by_calibre_id()` method for direct Calibre ID entity lookup (47 lines)
   - Entity API: New `GET /graph/entities/by-calibre-id/{calibre_id}` endpoint (20 lines)
   - Tests: 85/85 backend tests passing (6 CalibreService tests, 6 Books API tests, 3 entity endpoint tests)
@@ -730,7 +767,14 @@ Five integrated backend services addressing critical gaps #1-#3, all registered 
 
 ---
 
-**3. Template Service** (internal) — JSON-based thinking templates with validation and graph mapping
+**3. Template API** (`/templates`) — JSON-based thinking templates with validation and graph mapping
+
+**Endpoints:**
+- `GET /templates/{template_id}` - Retrieve thinking template by ID (returns `ThinkingTemplate` schema)
+
+**Available Templates:**
+- `learning-mechanism-map` - Learning mode: understand how something works
+- `articulating-clarify-intuition` - Articulating mode: clarify vague intuitions
 
 **Features:**
 - JSON Schema validation (`schemas/thinking-template.schema.json`)
@@ -740,14 +784,17 @@ Five integrated backend services addressing critical gaps #1-#3, all registered 
   - `schemas/templates/learning-mechanism-map.json` - Learning mode: mechanism map
   - `schemas/templates/articulating-clarify-intuition.json` - Articulating mode: clarify intuition
 
-**API Integration:**
-- Service methods callable from session/dialogue endpoints
-- Executes `on_complete` actions: create entities, link relationships, update journeys
-
 **Implementation:**
+- `ies/backend/src/ies_backend/api/template.py` - FastAPI router (24 lines) with GET endpoint
 - `ies/backend/src/ies_backend/services/template_service.py` - Template loading and execution (150 lines)
 - `ies/backend/src/ies_backend/schemas/template.py` - Template structure definitions
 - `ies/backend/tests/test_template_service.py` - Unit tests
+- Registered in `ies/backend/src/ies_backend/main.py` with `/templates` prefix
+
+**Frontend Integration:**
+- SiYuan: `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` - Fetches templates via `apiGet()` with SiYuan forwardProxy
+- Template-driven session state: currentSectionIndex, sectionResponses tracking
+- Thinking modes mapped to template IDs: `learning` → `learning-mechanism-map`, `articulating` → `articulating-clarify-intuition`
 
 **JSON Schema:** `schemas/thinking-template.schema.json` defines:
 - 5 thinking modes: `learning`, `articulating`, `planning`, `ideating`, `reflecting`
@@ -791,19 +838,33 @@ Five integrated backend services addressing critical gaps #1-#3, all registered 
 
 **Frontend Integration (Readest):**
 - `.worktrees/readest/readest/apps/readest-app/src/services/transformers/entity.ts` - HTML transformer wraps entity names in styled `<span>` elements
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/EntityTypeFilter.tsx` - Complete UI component with master toggle, per-type filtering, loading/error states, entity count display (144 lines)
-  - Master toggle for overlay enable/disable
-  - Individual checkboxes for 5 entity types (Concept, Person, Theory, Framework, Assessment)
-  - Type-specific color indicators and background styling
-  - Loading spinner and error alerts
-  - Entity count display or "Book not in knowledge graph" warning
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/EntityTypeFilter.tsx` - Enhanced pill-based UI component (122 lines, Dec 4 redesign)
+  - **Master toggle:** ON/OFF button with eye icons (LuEye/LuEyeOff) replacing checkbox
+  - **Pill controls:** Interactive type-specific pills replace traditional checkboxes (5 types: Concept, Person, Theory, Framework, Assessment)
+  - **Visual feedback:** Active pills show type-specific colors with 12% opacity backgrounds, inactive pills are muted
+  - **Status indicator:** Centered display shows entity count, loading spinner, error message, or "Book not indexed" warning
+  - **Disabled state:** Pills are disabled when overlay is off, preventing interaction confusion
+  - **CSS integration:** Uses `.entity-type-pill` classes with color variants (`.entity-type-concept`, `.entity-type-person`, etc.)
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/FlowPanel.tsx` - Main flow panel container with EntityTypeFilter integrated at top (lines 156-159)
+  - EntityTypeFilter always visible above entity content for quick overlay control
+  - Positioned before entity details section for immediate access
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/EntitySection.tsx` - Entity header card with type-specific badges (53 lines)
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/RelationshipsSection.tsx` - Grouped relationship display with type badges (104 lines)
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/SourcesSection.tsx` - Source book links with chapter and page info (65 lines)
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/QuestionsSection.tsx` - Expandable thinking partner questions with type labels (136 lines)
+- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/Header.tsx` - Flow panel header with pin/close controls (58 lines)
 - `.worktrees/readest/readest/apps/readest-app/src/store/flowModeStore.ts` - Comprehensive Zustand state management (380+ lines)
   - Entity overlay state: enabled, entities array, visible types, loading, error
   - Actions: setEntityOverlayEnabled, toggleEntityType, setVisibleTypes
   - fetchEntitiesForBook() with dynamic API host resolution (localhost or network IP)
   - Journey tracking integration (breadcrumb journey with dwell time)
 - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/FoliateViewer.tsx` - Auto-fetches entities on book load, applies transformer
-- `.worktrees/readest/readest/apps/readest-app/src/styles/globals.css` - Entity type styling classes (`.entity-concept`, `.entity-person`, etc.)
+- `.worktrees/readest/readest/apps/readest-app/src/styles/globals.css` - Complete entity overlay styling system (lines 559-618, 756-855)
+  - **Filter controls:** `.entity-filter-container`, `.flow-master-toggle` for overlay UI
+  - **Type pills:** `.entity-type-pill` base class with `:hover`, `.active`, `.disabled` states
+  - **Type-specific colors:** Blue (Concept), Green (Person), Purple (Theory), Orange (Framework), Red (Assessment)
+  - **Inline highlights:** `.entity-concept`, `.entity-person`, `.entity-theory`, `.entity-framework`, `.entity-assessment` for text overlay
+  - **Hover effects:** Underline decoration appears on hover, type-specific color changes
 
 **Network Access Support:**
 - `fetchEntitiesForBook()` dynamically determines API host based on `window.location.hostname`
@@ -944,6 +1005,13 @@ python scripts/ingest_calibre.py --limit 10    # Process 10 books
 python scripts/auto_ingest_daemon.py &         # Background daemon (5-minute polls)
 python scripts/auto_ingest_daemon.py --once    # Single batch run
 python scripts/auto_ingest_daemon.py --batch-size 10  # Custom batch size
+
+# Management utilities
+python scripts/manage_ingestion.py start       # Start daemon + watcher
+python scripts/manage_ingestion.py stop        # Stop all services
+python scripts/manage_ingestion.py status      # Show running services
+python scripts/check_ingestion.py              # View processing status table
+python scripts/calibre_watcher.py &            # Watch for Calibre library changes
 ```
 
 **Features:**
@@ -953,6 +1021,11 @@ python scripts/auto_ingest_daemon.py --batch-size 10  # Custom batch size
 - Stats tracking: sections extracted, chunks created, entities found, relationships added
 - Status updates: `update_book_status(calibre_id, status)`
 - **Auto daemon:** Continuous polling, background processing, comprehensive logging
+
+**Management Scripts (Added Dec 4):**
+- `scripts/manage_ingestion.py` — Start/stop/status for automated ingestion services (80 lines)
+- `scripts/check_ingestion.py` — Display Rich table of book processing status with entity counts (80 lines)
+- `scripts/calibre_watcher.py` — File system watcher for Calibre metadata.db and ingest directory changes (120 lines)
 
 **Neo4j Schema (Updated):**
 ```cypher
