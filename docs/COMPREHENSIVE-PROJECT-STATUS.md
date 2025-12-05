@@ -157,6 +157,10 @@
   - JSON schema with sections, AI behaviors, graph mapping
   - Two templates: learning-mechanism-map, articulating-clarify-intuition
   - ForgeMode fetches and renders templates
+- ✅ **SiYuan AST documentation set** — 20 notebook pages built across six sections (Structure, Modes, Question Engine, Schemas, Templates, Workflows)
+  - Lives inside SiYuan notebook *Intelligent Exploration System* (`20251201113102-ctr4bco`)
+  - Documents Discovery/Dialog/Flow/AST modes, ADHD-friendly folders, and mode transition guardrails
+  - Mirrors specs in `docs/IES AST SiYuan structure.md` and `docs/IES question engine expansion.md` for Git-tracked reference
 
 **In Progress:**
 - 🔄 **Pass 2/3 Enrichment** — Relationship extraction and LLM enrichment
@@ -221,6 +225,8 @@ cd /home/chris/dev/projects/codex/brain_explore/.worktrees/siyuan   # SiYuan plu
 | `docs/plans/2025-12-03-integrated-reading-knowledge-system.md` | Four-layer architecture design |
 | `docs/plans/2025-12-04-calibre-integration-design.md` | Calibre as single source of truth |
 | `docs/plans/2025-12-04-reframe-template-integration-design.md` | Phase 2c integration design |
+| `docs/IES AST SiYuan structure.md` | SiYuan notebook layout, mode transitions, folder strategy |
+| `docs/IES question engine expansion.md` | 9-question-class taxonomy powering AST mode |
 | `docs/session-notes.md` | Complete session history |
 | `docs/PHASE-2A-VALIDATION-RESULTS.md` | Layer 3 CLI validation |
 

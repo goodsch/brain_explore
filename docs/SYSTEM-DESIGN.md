@@ -192,6 +192,43 @@ Section:
 }
 ```
 
+### 3.7 SiYuan AST Structure (Layer 3 knowledge scaffolding)
+
+**Sources:** `docs/IES AST SiYuan structure.md`, `docs/IES question engine expansion.md`, SiYuan notebook `Intelligent Exploration System (20251201113102-ctr4bco)`
+
+**Thinking Modes (Mode Transition Engine aware):**
+- **Discovery (schema surfacing):** Collapses dense reading into fast schema capture sessions that map the Seed Schema before deep dives begin.
+- **Dialogue (model building):** Blends profile data + Dialogue mode prompts to help the user formalize causal models in the Concept Schema.
+- **Flow (associative exploration):** Keeps associative browsing open while piping anchor questions into the Flow panel to prevent drift.
+- **AST (Assisted Structured Thinking):** Introduces block-level templates and precision scaffolds for reflective synthesis; this mode is now the canonical entry point for ForgeMode sessions.
+
+**Nine Question Classes (IES Question Engine expansion):**
+- **Schema-Probe:** surfaces hidden structure by asking for lists, buckets, or taxonomies.
+- **Boundary:** clarifies edges/limits to avoid vague scope creep.
+- **Dimensional:** introduces spectra or coordinates to position ideas precisely.
+- **Causal:** pushes for mechanisms, prerequisites, or sequences.
+- **Counterfactual:** invites "what if" deviations to expose assumptions.
+- **Anchor:** grounds abstractions in concrete instances or lived experiences.
+- **Perspective-Shift:** forces viewpoint changes (roles, time horizons, system level).
+- **Meta-Cognitive:** checks thinking patterns directly (confidence, stuckness, energy).
+- **Reflective-Synthesis:** asks for integration statements that tie threads together.
+
+Each class maps to at least one mode and is tagged inside the SiYuan question blocks so the backend can replay which inquiry style unlocked movement.
+
+**Mode Transition Engine:** Watches three signal streams (interaction cadence, cognitive load markers, resonance hits) and automatically proposes mode switches (e.g., Discovery → Dialogue when enough anchors collected). Manual override stays available inside each AST template, but auto-suggestions now surface inline alerts when the question mix drifts from the user's 6-D cognition model.
+
+**User Cognition Model (6 dimensions):** Reuses the profile described in Section 3.5 (`structure_preference`, `pace`, `ambiguity_tolerance`, `abstraction_level`, `verification_need`, `novelty_preference`). In AST mode, these sliders drive template defaults (section locking, prompt density) and question class selection.
+
+**ADHD-friendly notebook spine:** `/Daily/`, `/Insights/`, `/Threads/`, `/Favorite Problems/`, `/Concepts/`. Every AST template writes to these canonical folders so Quick Capture and backend syncs have predictable destinations.
+
+**Data Schemas referenced in SiYuan:**
+- **Seed Schema:** establishes the minimal metadata for any captured idea (origin signal, resonance tag, entry point) and is filled automatically during Discovery sessions.
+- **Concept Schema:** extends Seed Schema with causal structure, exemplars, and graph mappings used during Dialogue and AST modes.
+- **Block Attributes:** standardizes block-level metadata (question class, mode, energy level) stored as SiYuan attributes for replay.
+- **Note Templates:** AST mode bundles template sets (Discovery sweep, Dialogue lab, Flow sketchbook, AST worksheet) that align with the above schemas.
+
+**ADHD-friendly folders + schemas unlock Gap 1 resolution path:** documenting this structure means Layer 3 has a ready-made placement strategy for sparks/insights once UI wiring lands.
+
 ---
 
 ## 4. User Workflows
@@ -407,7 +444,7 @@ GET  /session/context/{user_id}      # Load session context
 | SiYuan ForgeMode | ✅ | ✅ | ✅ | ⚠️ |
 | SiYuan ReframesTab | ✅ | ✅ | ✅ | ⚠️ |
 | Quick Capture | ✅ | ⚠️ | ⚠️ | ❌ |
-| SiYuan structure | ⚠️ | ❌ | ❌ | ❌ |
+| SiYuan AST structure | ✅ | ⚠️ | ❌ | ❌ |
 | Cross-app sync | ✅ | ❌ | ❌ | ❌ |
 
 **Legend:** ✅ Done | ⚠️ Partial | ❌ Not done

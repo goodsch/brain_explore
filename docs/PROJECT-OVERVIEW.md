@@ -69,6 +69,15 @@ The system works through three interconnected layers that form a thinking partne
 
 **Status:** ⏳ Not yet built. Deferred to Phase 2+ (after Phase 1 validates Layers 1 & 2).
 
+#### IES Question Engine + AST Mode (Phase 2c Preview)
+
+Design work captured in `docs/IES question engine expansion.md` and `docs/IES AST SiYuan structure.md` now defines how Layer 3 evolves once reactivated:
+- **Four thinking modes** — Discovery (schema surfacing), Dialogue (model building), Flow (associative exploration), and the new **AST (Assisted Structured Thinking)** mode that guides high-structure sessions inside SiYuan.
+- **Nine question classes** — Schema-Probe, Boundary, Dimensional, Causal, Counterfactual, Anchor, Perspective-Shift, Meta-Cognitive, and Reflective-Synthesis. These serve as the taxonomy for the adaptive question engine so the system can intentionally shift inquiry style instead of relying on generic prompts.
+- **Mode Transition Engine + Cognition Model** — Signals from the 6-dimension cognition profile (structure preference, pace, ambiguity tolerance, abstraction level, verification need, novelty preference) determine when to switch modes or rebalance question classes.
+
+AST Mode effectively bridges ForgeMode templates with Flow exploration, ensuring that when Layer 3 resumes in Phase 2c it already has a well-defined structure for ADHD-friendly note capture and question tagging.
+
 ---
 
 ### Why These Three Form a Thinking Partnership
