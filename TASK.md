@@ -130,9 +130,32 @@ Layer 1: KNOWLEDGE GRAPH      - Neo4j with 50k+ entities
 
 ## Current Status
 
-**Commit:** `38ee800` - Dashboard, Structured Thinking, and Quick Capture complete
+**Commit:** `242ae72` - Concept Extraction Flow (Virtuous Cycle) complete
 
-**Phase:** Layer 3 Processing Hub IMPLEMENTED
+**Phase:** Layer 3 Processing Hub IMPLEMENTED + REMEDIATION COMPLETE
+
+### Critical Analysis Remediation (Dec 5)
+
+A four-agent pressure test (CRITICAL-ANALYSIS-2025-12-05.md) identified gaps between documented principles and implementation. **Remediation audit complete - most items already fixed:**
+
+| Phase | Item | Status |
+|-------|------|--------|
+| 1.1 | Make Questions Interactive | ✅ COMPLETE - `handleQuestionResponse()` creates full dialogue loop |
+| 1.2 | Activate Question Classes | ✅ COMPLETE - `QUESTION_CLASS_HINTS` provides cognitive guidance |
+| 1.3 | Remove Domain Hardcoding | ✅ COMPLETE - Configurable notebook preferences |
+| 1.4 | Add Backend Health Check | ✅ COMPLETE - Dashboard shows connection status |
+| 2.1 | Mode-Specific UI | DEFERRED - Single unified panel works well |
+| 2.2 | Concept Extraction Flow | ✅ COMPLETE - `ConceptExtractor.svelte` with graph formalization |
+| 2.3 | Energy-Based Navigation | ✅ COMPLETE - Dashboard energy/resonance filters |
+| 3.x | Design Consolidation | OPTIONAL - CSS already comprehensive |
+| 4.x | Minor Bug Fixes | ✅ VERIFIED - Error handling patterns correct |
+
+**Key Implementations Verified:**
+- `ForgeMode.svelte` lines 993-1075: Full question-response dialogue loop
+- `ForgeMode.svelte` lines 1290-1360: Question hints, response starters, history
+- `Dashboard.svelte` lines 267-271: Energy/resonance filter endpoints
+- `QuickCapture.svelte` lines 149-239: Proper try/catch/finally error handling
+- `siyuan-structure.ts` lines 218-248: Notebook validation with meaningful errors
 
 ---
 
@@ -170,15 +193,23 @@ Layer 1: KNOWLEDGE GRAPH      - Neo4j with 50k+ entities
 
 ## Next Steps
 
-Now that the SiYuan plugin has all three main modes implemented:
+SiYuan plugin Phase 3 is **COMPLETE** with remediation verified. The plugin now delivers on core principles:
 
-1. **User Testing** - Get feedback on Dashboard navigation, Structured Thinking modes, and Quick Capture workflow
-2. **Integration Testing** - Verify backend API integration works smoothly across all features
-3. **UI/UX Refinement** - Polish based on user feedback
-4. ~~**Journey Resumption** - Implement full journey resumption from recent explorations list~~ ✅ DONE (commit 7060541)
-5. **Capture Processing** - Test full capture workflow from iOS Shortcut → Queue → Processing → Routing
+- ✅ Thinking partnership (interactive questions with dialogue loop)
+- ✅ Question class guidance (cognitive hints, response starters)
+- ✅ ADHD-friendly navigation (energy/resonance filters)
+- ✅ Virtuous cycle (concept extraction → graph formalization)
 
-**Note:** Quick Capture design document at `docs/plans/2025-12-03-quick-capture-design.md` describes the iOS Shortcut setup. Current plugin implementation uses SiYuan APIs directly for capture queue management.
+**Recommended next actions:**
+
+1. **Readest Pressure Test** - Apply same four-agent analysis to Layer 4 (per PRESSURE-TEST-PLAN.md)
+2. **End-to-End Testing** - Test complete flow: Reading → Capture → Thinking → Concept Extraction → Graph
+3. **User Testing** - Get feedback on the complete four-layer system
+4. **iOS Shortcut Setup** - Configure Quick Capture shortcut (see `docs/plans/2025-12-03-quick-capture-design.md`)
+
+**Deferred:**
+- Split view for Structured Thinking (single panel works well)
+- Mode-specific UI differentiation (unified design is clean)
 
 ---
 
