@@ -11,7 +11,7 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
    - Ingests domain materials (texts, research, conceptual frameworks)
    - Creates rich knowledge graphs with entities and relationships
    - Domain-agnostic: can ingest and structure any knowledge domain
-   - *Current corpus:* 114 books across 8 domains (50k+ entities) — used for system validation
+   - *Current corpus:* 179 books in Calibre library, 10 indexed with entities (~300 entities) — used for system validation
    - *See:* `books/BOOK-CATALOG.md` for complete categorized inventory
 
 2. **Layer 2: Backend Services** — APIs for graph, dialogue, journey tracking, content capture
@@ -39,29 +39,58 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 **Phase 2c: Integration Features** 🔄 IN PROGRESS (65% complete, Dec 5)
 
-**⚠️ CRITICAL FINDING (Dec 5): Implementation-Principle Gap Discovered**
+**⚠️ CRITICAL FINDING (Dec 5): Systemic Implementation-Principle Gap**
 
-Four-agent critical analysis of SiYuan plugin revealed catastrophic disconnect between documented principles and actual implementation. Infrastructure exists but core principles not delivered:
+Four-agent critical analysis revealed **catastrophic disconnect** between documented principles and actual implementation across **both Layer 3 (SiYuan) and Layer 4 (Readest)**. Infrastructure exists but core principles not delivered:
+
+**SiYuan Plugin (Grade: D, 1.6/4.0):**
 - Questions displayed passively (no response capture, no dialogue)
 - Question classes exist but don't guide cognition (decorative badges only)
 - ADHD metadata captured but no energy-based navigation
 - Virtuous cycle incomplete (no concept extraction flow)
 - Domain hardcoding ("Therapy" in notebook preferences)
 
-**See:** `docs/CRITICAL-ANALYSIS-2025-12-05.md` for full findings
-**See:** `docs/PRESSURE-TEST-PLAN.md` for systematic evaluation of all components
+**Readest Integration (Grade: D+, 1.8/4.0):**
+- Entity highlights exist but **cannot be clicked** (interaction model never built)
+- Journey tracking captures data invisibly with **no user benefit**
+- Questions display passively with **no response mechanism**
+- Design system completely disconnected (hardcoded colors vs IES tokens)
+- 15 bugs identified (2 critical: memory leak, regex performance bomb)
 
-**Current Priority:** Remediate SiYuan plugin, then pressure test remaining components.
+**See:**
+- `docs/CRITICAL-ANALYSIS-2025-12-05.md` — SiYuan plugin findings
+- `docs/ANALYSIS-READEST-2025-12-05.md` — Readest integration findings
+- `docs/PRESSURE-TEST-PLAN.md` — Systematic evaluation plan for remaining components
+
+**Current Priority:** Remediate both interfaces before proceeding with new features.
 
 ---
 
-**All Four Layers Built (But Principle Alignment Unverified):**
+**All Four Layers Built (But Principle Alignment Critical):**
 - ✅ Layer 1: Calibre library (179 books) + auto-ingestion daemon → 291 entities, 338 relationships (10 books indexed)
 - ✅ Layer 2: Backend APIs complete — 85/85 tests passing (Books, Reframe, Template, Personal, Graph APIs)
-- ⚠️ Layer 3: SiYuan Plugin — **NEEDS REMEDIATION** (design system, question interaction, principle alignment)
-- 🔍 Layer 4: Readest — **PENDING PRESSURE TEST**
+- ⚠️ Layer 3: SiYuan Plugin — **CRITICAL REMEDIATION NEEDED** (Grade: D, 1.6/4.0) — passive displays, no interaction model
+- ⚠️ Layer 4: Readest — **CRITICAL REMEDIATION NEEDED** (Grade: D+, 1.8/4.0) — 15 bugs, design disconnect, broken interactions
 
 **Latest (Dec 5):**
+- ✅ **IES Design System Integration** — Main plugin stylesheet now imports comprehensive design system
+  - `.worktrees/siyuan/ies/plugin/src/index.scss`: Added `@import './styles/design-system.scss'` for unified styling
+  - Integrates "Contemplative Knowledge Space" design philosophy across all plugin components
+  - Provides CSS variables for colors, spacing, shadows, transitions, and animations
+  - Part of SiYuan plugin remediation effort to improve design consistency
+  - Design system location: `.worktrees/siyuan/ies/plugin/src/styles/design-system.scss`
+- ✅ **Domain-Agnostic SiYuan Structure** — Removed therapy-specific hardcoding from notebook selection
+  - User-configurable notebook preferences via localStorage `ies.preferredNotebooks`
+  - Default notebooks: `['Personal', 'Knowledge', 'Notes', 'Intelligent Exploration System']` (domain-agnostic)
+  - Helper functions: `setPreferredNotebooks()`, `getPreferredNotebooks()` for runtime customization
+  - Notebook resolution: First matching open notebook by preference, falls back to first available
+  - Backend URL configuration via `ies.backendUrl` localStorage key with `setBackendUrl()` helper
+- ✅ **Personal Graph Integration** — Complete backend API integration for ADHD-friendly capture
+  - `createSparkWithBackend()`: Creates spark in backend + SiYuan block with bidirectional linking
+  - `promoteToInsight()`: Promotes spark to insight in backend + moves SiYuan doc to /Insights/ folder
+  - `getPersonalStats()`: Retrieves personal graph statistics (total sparks, insights, status distribution)
+  - `visitSpark()`: Records visit for recency-based navigation
+  - Block attributes synced: `custom-be_id`, `custom-be_type`, `custom-status` for backend linking
 - ✅ **Question Engine Nine Classes Implementation (Commit 1d1ca9f)** — Backend question classification system complete
   - QuestionClass enum with 9 classes mapped to AST thinking modes
   - APPROACH_TO_CLASSES mapping: inquiry approaches generate specific question types
@@ -70,9 +99,10 @@ Four-agent critical analysis of SiYuan plugin revealed catastrophic disconnect b
   - Integration with ForgeMode: state detection, approach selection, question generation all use class system
 - ✅ **AST Folder Structure and Session Persistence (Commit c97aaf7)** — SiYuan plugin now creates structured session documents
   - Expanded STRUCTURE_FOLDERS: /Concepts/ + mode-specific /Sessions/{mode}/ folders (Learning, Articulating, Planning, Ideating, Reflecting)
-  - createSessionDocument() function: saves sessions with frontmatter (be_type, be_id, mode, topic, status, resonance, energy)
+  - createSessionDocument() function: saves sessions with frontmatter (be_type, be_id, mode, topic, status, question_classes_used)
   - Session documents include: section responses (template-driven), full conversation transcript, entities extracted, graph mapping status
   - ForgeMode integration: sessions auto-save to SiYuan on completion with timestamp and mode-specific folder placement
+  - Enhanced YAML serialization: Proper handling of arrays, nested objects, dates, null values
 - ✅ **IES AST Mode and Question Engine** — 20 SiYuan documents created defining structured thinking architecture
   - Four thinking modes: Discovery (schema surfacing), Dialogue (model building), Flow (associative exploration), AST (assisted structured thinking)
   - Nine question classes: Schema-Probe, Boundary, Dimensional, Causal, Counterfactual, Anchor, Perspective-Shift, Meta-Cognitive, Reflective-Synthesis
@@ -151,7 +181,8 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 | `.` (root) | `master` | Backend APIs, Layer 1/2, shared docs | None (master has no TASK.md) |
 | `.worktrees/readest/` | `feature/readest-integration` | Layer 4 Reading Interface | `TASK.md` in worktree |
 | `.worktrees/siyuan/` | `feature/siyuan-evolution` | Layer 3 Processing Hub | `TASK.md` in worktree |
-| `.worktrees/quick-capture/` | `feature/quick-capture` | Quick Capture iOS/SiYuan | `TASK.md` in worktree |
+| `.worktrees/readest-critique/` | `feature/readest-critique` | Readest Four-Agent Pressure Test | `TASK.md` in worktree |
+| `.worktrees/ux-dev/` | `feature/ux-development` | UX/Feature Development (Flow Mode, Entity Overlay, Journey Surfacing) | `TASK.md` in worktree |
 
 **Working in Worktrees:**
 - Each worktree is a separate directory with its own branch checked out
@@ -353,6 +384,9 @@ The project maintains a three-level documentation structure for clarity:
 **Level 2: Operational & Validation Documentation**
 - `docs/SYSTEM-DESIGN.md` — **Operational reference**: How the system works end-to-end, data structures, user workflows, integration points, critical gaps (read at session start)
 - `docs/COMPREHENSIVE-PROJECT-STATUS.md` — Complete project status: all 4 layers, phase completion, worktree organization
+- `docs/CRITICAL-ANALYSIS-2025-12-05.md` — **SiYuan Plugin Analysis** (Grade: D, 1.6/4.0): Infrastructure exists but core principles not delivered (questions displayed passively, no response capture, decorative question badges, missing ADHD navigation, incomplete virtuous cycle, domain hardcoding)
+- `docs/ANALYSIS-READEST-2025-12-05.md` — **Readest Integration Analysis** (Grade: D+, 1.8/4.0): Same catastrophic pattern as SiYuan; entity highlights non-interactive, journey tracking invisible, 15 bugs (2 critical), design system disconnect
+- `docs/PRESSURE-TEST-PLAN.md` — **Systematic evaluation plan**: Four-agent testing pattern for all components (Design Reviewer, Principle Evaluator, Bug Hunter, UX Analyst); Readest analysis complete, remaining queue: Backend Question Engine → Knowledge Graph → Personal Graph → Backend Services
 - `docs/PLANNING-GAPS-AND-QUESTIONS.md` — Comprehensive Phase 2c planning: critical gaps, technical stack review, API inventory, integration questions
 - `docs/plans/2025-12-04-reframe-template-integration-design.md` — Phase 2c implementation: Reframe Layer + Thinking Templates + SiYuan document structure
 - `docs/plans/2025-12-04-calibre-integration-design.md` — Calibre integration architecture: single source of truth for book catalog with universal calibre_id identifier; multi-pass ingestion pipeline (structure → relationships → enrichment); backend APIs complete (Dec 4)
@@ -554,6 +588,68 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 5):**
+- **Complete Entity Click-to-Flow Interaction System (Readest)** — Full event loop from text overlay to exploration:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/hooks/useEntityClick.ts` — Event listener hook handles entity-click events from iframe content (88 lines)
+  - **Event flow:** Entity highlighted → User clicks → Event dispatched → Flow panel opens → Entity fetched → Journey step added
+  - **Temporary display:** Shows "Loading..." while fetching full details from knowledge graph
+  - **Graceful fallback:** If entity not in graph, displays helpful message explaining extraction status
+  - **Integration points:**
+    - useEntityClick() called in ReaderContent.tsx (line 52) to wire up event handling
+    - iframeEventHandlers.ts dispatches 'entity-click' events from iframe content
+    - useFlowEntity.ts hook provides entity search/fetch capabilities
+    - graphClient.ts handles backend API calls for entity data
+    - flowModeStore.ts manages state: currentEntity, journey steps, loading states
+  - **Critical bug fix (BUG-R03):** AbortController pattern prevents memory leaks from cancelled entity fetches
+  - Works with entity transformer overlay system for seamless click-to-explore experience
+- **Entity Transformer Performance Fix (Readest)** — Eliminated catastrophic backtracking with trie-based matching:
+  - `.worktrees/readest/readest/apps/readest-app/src/services/transformers/entity.ts` — Trie-based entity matching prevents O(n*m) catastrophic backtracking (BUG-R02)
+  - **buildEntityTrie():** Constructs case-insensitive trie from entity names supporting multi-word phrases
+  - **processTextWithTrie():** Linear O(n) text scan with efficient phrase matching
+  - **Multi-word support:** Handles "executive function", "cognitive behavioral therapy" etc.
+  - **Longest match preference:** Trie prioritizes longer entity names when overlapping
+  - **Impact:** Eliminates browser freezes when highlighting books with 100+ entities (previously caused 5-10 second hangs)
+  - **Algorithm change:** From regex alternations `(entity1|entity2|...)` (exponential) to token-based trie lookup (linear)
+- **Journey Breadcrumb Visualization (Readest)** — Makes invisible knowledge journeys visible and navigable:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/JourneyBreadcrumb.tsx` — Shows last 5 journey steps with entity names, dwell time, overflow count (98 lines)
+  - **Step navigation:** Click any breadcrumb step to revisit that entity in Flow panel (handleStepClick function)
+  - **Dwell time display:** Inline time indicators (seconds/minutes) show engagement per entity with LuClock icon
+  - **Journey marks counter:** Displays count of saved notes/annotations/questions from exploration
+  - **Overflow handling:** Shows "+N more" when journey path exceeds 5 steps
+  - **Integration:** Integrated into FlowPanel.tsx with LuRoute icon header section
+  - **Purpose:** Addresses UX gap where journeys were tracked but never shown to user
+- **Interactive Thinking Partner Questions (Readest)** — Expandable question-response system with journey tracking:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/QuestionsSection.tsx` — Interactive Q&A with journey tracking (210 lines)
+  - **Expandable questions:** Click to reveal textarea for response input (useState expandedIndex tracking)
+  - **Response submission:** Cmd/Ctrl+Enter shortcut (handleKeyDown), tracks exchanges in journey breadcrumb
+  - **Question types:** Visual labels for clarifying/connecting/challenging questions with type-specific styling
+  - **Bookmark feature:** Save questions as journey marks for later reflection (addJourneyMark)
+  - **Submitted responses tracked:** UI shows submitted answers in green success card, clears input after submission
+  - **Auto-focus:** Textarea automatically focused when question expanded (useRef with setTimeout)
+  - **Related entities:** Shows related entity chips when question has relatedEntities array
+  - **Integration:** Questions section in FlowPanel.tsx shows thinking partner questions from backend
+- **Flow Panel Component Reorganization (Readest)** — Clean module structure for Flow panel subsystems:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/index.ts` — Centralized exports for 7 components
+  - **Exported components:** FlowPanel, FlowPanelHeader, EntitySection, RelationshipsSection, SourcesSection, QuestionsSection, JourneyBreadcrumb
+  - **Benefits:** Enables clean imports `import { FlowPanel, JourneyBreadcrumb } from './flowpanel'`, modular architecture where each section is independently fetchable and testable
+  - **Integration:** ReaderContent.tsx imports FlowPanel from index, all Flow panel features accessed through single import point
+- **Dashboard Energy-Based Navigation (SiYuan)** — ADHD-friendly spark filtering with dynamic backend configuration:
+  - `.worktrees/siyuan/ies/plugin/src/views/Dashboard.svelte` — Energy filters (low/medium/high) and resonance filters (8 emotional signals) for mood-appropriate navigation
+  - **Energy filters:** All, Low (🔋), Medium (⚡), High (🔥) with mutually exclusive selection
+  - **Resonance filters:** 8 emotional signals (curious, excited, surprised, moved, disturbed, unclear, connected, validated) with emoji labels
+  - **Backend health checking:** Connected/Checking/Disconnected status with manual retry, 30-second cache TTL
+  - **Flow mode concept navigation:** Clicking suggestions in "Most Connected" or "Novel Concepts" passes concept name to FlowMode for pre-selected exploration
+  - **API endpoints:** `/personal/sparks/by-energy/{level}`, `/personal/sparks/by-resonance/{signal}` for filtered spark retrieval
+  - **Empty state handling:** Shows friendly message when filters return no results with "Show all sparks" option
+- **Domain-Agnostic Notebook Configuration (SiYuan)** (commit 5e3ad8b) — Removed hardcoded therapy-specific notebook names:
+  - `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts`: Replaced `PREFERRED_NOTEBOOK_NAMES` with `DEFAULT_NOTEBOOK_NAMES` and `getPreferredNotebookNames()`
+  - **User-configurable preferences:** Users can customize via localStorage `ies.preferredNotebooks` as JSON array
+  - **Default names now domain-agnostic:** "Personal", "Knowledge", "Notes", "Intelligent Exploration System" (removed "Therapy", "Therapy Framework", "Framework Project")
+  - **Backward compatible:** Falls back to defaults if localStorage is unavailable or parse fails
+  - **Improved health checking:** Added `BackendHealth` interface, `cachedHealthStatus` variable, and `HEALTH_CACHE_TTL_MS` constant (30 seconds)
+  - **Backend URL context comments:** Added clarification that SiYuan runs in Docker on 192.168.86.60, forwardProxy makes requests FROM container using host IP
+  - **Question class tracking in sessions:** Added `questionClassesUsed?: string[]` field to `SessionDocumentOptions` interface
+  - **Session document frontmatter:** Sessions now include `question_classes_used` array in YAML frontmatter when question classes are tracked
+  - **Impact:** Plugin now works across any domain without therapy-specific assumptions, aligns with project goal of domain-agnostic architecture
 - **IES AST Mode Documentation** (commit 3b347fc) — Comprehensive SiYuan notebook structure defining assisted structured thinking architecture:
   - `IES AST SiYuan structure.md`: Tracking document for 20 new SiYuan pages across 6 sections (Modes, Question Engine, Data Schemas, Specs, Templates, Workflows)
   - **Four thinking modes:** Discovery (schema surfacing), Dialogue (model building), Flow (associative exploration), AST (assisted structured thinking)
@@ -780,6 +876,36 @@ The `ADHDKnowledgeGraph` client includes schema versioning to support future mig
 
 ### Layer 3: SiYuan Plugin Architecture (Phase 2c - Dec 5)
 
+**Dashboard Enhancement: Energy-Based Navigation (Uncommitted - Dec 5):**
+
+The Dashboard now includes ADHD-friendly energy-based navigation for sparks with dynamic backend configuration:
+
+**Energy-Based Spark Filtering:**
+- **Energy filters:** All, Low (🔋), Medium (⚡), High (🔥) - Mood-appropriate navigation
+- **Resonance filters:** 8 emotional signals (curious, excited, surprised, moved, disturbed, unclear, connected, validated)
+- **Mutually exclusive filters:** Selecting energy clears resonance, and vice versa
+- **Emotional retrieval cues:** Resonance signals support ADHD memory retrieval patterns
+- **API endpoints:** `/personal/sparks/by-energy/{level}`, `/personal/sparks/by-resonance/{signal}`
+- **Empty state:** Shows friendly message when filters return no results, with "Show all sparks" option
+
+**Backend Health Checking:**
+- **Dynamic configuration:** Uses `getConfiguredBackendUrl()` from siyuan-structure.ts (configurable via localStorage)
+- **Health status display:** Connected (green dot), Checking (spinner), Disconnected (red dot) with backend URL
+- **Retry functionality:** Manual refresh button when disconnected, force health check on retry
+- **Status caching:** 30-second TTL reduces API overhead (implemented in siyuan-structure.ts)
+- **onMount behavior:** Calls `refreshBackendStatus()` instead of direct data load - ensures backend is checked first
+
+**Flow Mode Concept Navigation:**
+- **Suggestion chips:** Clicking suggestions in "Most Connected" or "Novel Concepts" now passes concept name to FlowMode
+- **Direct navigation:** `navigateTo('flow', conceptName)` pre-selects entity for exploration
+- **State management:** `selectedConcept` variable tracks concept for FlowMode initialization
+
+**Implementation:**
+- `.worktrees/siyuan/ies/plugin/src/views/Dashboard.svelte` — Energy filters (lines 69-88), backend status (98-102), filter handlers (207-256), UI (475-621, 1397-1550)
+- Filter pills with energy-specific colors: Low (#6b8e9f), Medium (#c98b2f), High (#d94f5c)
+- Resonance dropdown with emoji labels matching 8 ADHD-friendly signals
+- Backend status indicator with retry button and connection messages
+
 **AST Folder Structure:**
 
 The plugin creates an ADHD-friendly folder hierarchy in SiYuan notebooks for session persistence and knowledge organization:
@@ -826,6 +952,13 @@ ForgeMode now tracks which question classes are used during sessions and display
 - Question class tracking integrated with Question Engine API calls
 - Supports both classified_questions (new format) and fallback to plain questions array
 
+**Usage Flow:**
+1. ForgeMode detects user state from recent messages
+2. Selects inquiry approach based on state + thinking mode
+3. Generates question using approach + context (topic, section, user/AI messages)
+4. Question tagged with QuestionClass for mode transition decisions
+5. Session document records question classes for analysis
+
 **Session Document Creation (ForgeMode):**
 
 When a ForgeMode session completes, `createSessionDocument()` saves structured documents with:
@@ -859,15 +992,29 @@ question_classes_used: ["schema_probe", "causal", "anchor"]
    - Question types used with human-readable labels (Structure, Causal, Anchor, etc.)
 
 **Implementation:**
-- `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` — `createSessionDocument()` function (lines 499-638)
-  - MODE_FOLDER_MAP: Maps thinking modes to folder paths
-  - SessionDocumentOptions interface: Full type safety for session data
-  - serializeFrontmatter(): YAML serialization with proper type handling
-  - Question class labels: Converts snake_case to readable names
-- `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` — Calls `createSessionDocument()` on session end (lines 480-491)
+- `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` — Core utility module (769 lines) for SiYuan notebook structure and backend integration
+  - **Folder Structure:** STRUCTURE_FOLDERS array defines ADHD-friendly hierarchy (Daily, Insights, Threads, Favorite Problems, Concepts, Sessions/{mode})
+  - **Backend Integration:** callBackendApi() generic function for SiYuan forwardProxy requests to backend APIs at configurable URL (default: http://192.168.86.60:8081)
+  - **Domain-Agnostic Notebook Selection:** getPreferredNotebookNames() supports user-configurable preferences via localStorage `ies.preferredNotebooks`
+    - Default: `['Personal', 'Knowledge', 'Notes', 'Intelligent Exploration System']`
+    - Users customize via `setPreferredNotebooks(['MyNotebook', 'Research'])` to match their domain
+    - resolveStructureNotebook() resolves to first matching open notebook, falls back to first available
+  - **Session Document Creation:** createSessionDocument() (lines 557-679) saves ForgeMode sessions with full metadata
+    - MODE_FOLDER_MAP: Maps thinking modes to folder paths (learning→Sessions/Learning, articulating→Sessions/Articulating, etc.)
+    - SessionDocumentOptions interface: Full type safety for session data
+    - serializeFrontmatter(): YAML serialization with proper type handling (arrays, objects, dates, nested structures)
+    - Question class labels: Converts snake_case to readable names (schema_probe→Structure, causal→Causal, anchor→Anchor, etc.)
+    - Document naming: `{folderPath}/{YYYY-MM-DD-HHMM-topic}.md` with safe filename sanitization
+  - **Personal Graph Integration:** Helper functions for backend Personal Graph API
+    - createSparkWithBackend(): Creates spark in backend + daily log block, bidirectional linking with custom-be_id block attributes
+    - promoteToInsight(): Promotes spark to insight in both backend and SiYuan (moves document to Insights folder, updates status)
+    - getPersonalStats(): Fetches personal graph statistics (spark count, insight count, status distribution)
+    - visitSpark(): Records visit for recency-based navigation
+  - **Configuration Management:** setBackendUrl(), getConfiguredBackendUrl(), checkBackendHealth() for backend URL configuration and health monitoring
+  - **Health Check Caching:** 30-second TTL cache for backend health status to reduce API overhead
+- `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` — Calls `createSessionDocument()` on session end
   - Passes template data, section responses, transcript, question classes used
   - Displays success message with entity count and question types
-- Notebook selection: Prefers "Personal", "Therapy", or first open notebook
 - File path: `/Sessions/{mode}/{YYYY-MM-DD-HHMM-topic}.md`
 - Block attributes: `custom-be_type`, `custom-be_id`, `custom-mode`, `custom-status` for backend linking
 
