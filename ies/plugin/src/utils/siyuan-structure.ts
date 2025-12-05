@@ -8,34 +8,112 @@ import {
     setBlockAttrs,
     fetchSyncPost,
 } from '../api';
+import { getSettingsSync } from '../stores/settings';
+import type {
+    CaptureStatus,
+    UserStatus,
+    IdeaType,
+    QuickCaptureMeta,
+    SeedBlockMeta,
+} from '../types/blocks';
+import { SEEDLING_FOLDER_MAP } from '../types/blocks';
 
+/**
+ * IES SiYuan Folder Structure (9 top-level folders)
+ *
+ * Merged architecture combining:
+ * - IES Architecture Package (Quick Capture system, Seedlings, Flow Maps, Projects, Archive)
+ * - Current ADHD-friendly structure (Insights, Favorite Problems, Sessions)
+ *
+ * Two Insights folders serve different purposes:
+ * - Seedlings/Insights: Raw "aha" moments (not yet validated)
+ * - /Insights/: Promoted and validated insights
+ */
 const STRUCTURE_FOLDERS = [
-    // Core ADHD-friendly folders
-    { path: 'Daily', title: 'Daily Log' },
-    { path: 'Insights', title: 'Insights Library' },
-    { path: 'Threads', title: 'Active Threads' },
-    { path: 'Favorite Problems', title: 'Favorite Problems' },
-    { path: 'Concepts', title: 'Concepts' },
-    // AST Session folders by thinking mode
+    // Daily quick captures (Package's 00_Inbox)
+    { path: 'Daily', title: 'Daily' },
+
+    // Seedlings - atomic ideas (Package's 01_Seedlings)
+    { path: 'Seedlings', title: 'Seedlings' },
+    { path: 'Seedlings/Questions', title: 'Seedlings – Questions' },
+    { path: 'Seedlings/Observations', title: 'Seedlings – Observations' },
+    { path: 'Seedlings/Moments', title: 'Seedlings – Moments' },
+    { path: 'Seedlings/Schemas', title: 'Seedlings – Schemas' },
+    { path: 'Seedlings/Contradictions', title: 'Seedlings – Contradictions' },
+    { path: 'Seedlings/What_Ifs', title: 'Seedlings – What Ifs' },
+    { path: 'Seedlings/Insights', title: 'Seedlings – Insights' },
+
+    // Sessions by thinking mode (Package's 02_Shaping)
     { path: 'Sessions', title: 'Sessions' },
     { path: 'Sessions/Learning', title: 'Learning Sessions' },
     { path: 'Sessions/Articulating', title: 'Articulating Sessions' },
     { path: 'Sessions/Planning', title: 'Planning Sessions' },
     { path: 'Sessions/Ideating', title: 'Ideating Sessions' },
     { path: 'Sessions/Reflecting', title: 'Reflecting Sessions' },
+
+    // Flow Maps - visual maps (Package's 03_Flow_Maps)
+    { path: 'Flow_Maps', title: 'Flow Maps' },
+
+    // Concepts - canonical concepts (Package's 04_Concepts)
+    { path: 'Concepts', title: 'Concepts' },
+
+    // Promoted/validated insights (current ADHD structure)
+    { path: 'Insights', title: 'Insights' },
+
+    // ADHD anchor questions (current structure)
+    { path: 'Favorite_Problems', title: 'Favorite Problems' },
+
+    // Projects - active work (Package's 05_Projects)
+    { path: 'Projects', title: 'Projects' },
+
+    // Archive - retired material (Package's 06_Archive)
+    { path: 'Archive', title: 'Archive' },
 ];
 
 const NOTEBOOK_STORAGE_KEY = 'ies.structureNotebookId';
 const BACKEND_URL_KEY = 'ies.backendUrl';
+// SiYuan runs in Docker on 192.168.86.60, backend runs on same host
+// forwardProxy makes requests FROM the container, so use host IP
 const DEFAULT_BACKEND_URL = 'http://192.168.86.60:8081';
+const HEALTH_CACHE_TTL_MS = 30_000;
 
-const PREFERRED_NOTEBOOK_NAMES = [
+// User-configurable notebook preferences (domain-agnostic)
+// Users can customize via localStorage 'ies.preferredNotebooks' as JSON array
+const DEFAULT_NOTEBOOK_NAMES = [
     'Personal',
-    'Therapy',
-    'Therapy Framework',
-    'Framework Project',
+    'Knowledge',
+    'Notes',
     'Intelligent Exploration System',
 ];
+
+function getPreferredNotebookNames(): string[] {
+    // First try settings store (primary source of truth)
+    try {
+        const settings = getSettingsSync();
+        if (settings.preferredNotebooks?.length > 0) {
+            return settings.preferredNotebooks;
+        }
+    } catch {
+        // Settings store not initialized yet, fall back
+    }
+
+    // Fall back to localStorage for backwards compatibility
+    if (typeof window === 'undefined' || !window?.localStorage) {
+        return DEFAULT_NOTEBOOK_NAMES;
+    }
+    try {
+        const stored = window.localStorage.getItem('ies.preferredNotebooks');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed;
+            }
+        }
+    } catch {
+        // Fall back to defaults on parse error
+    }
+    return DEFAULT_NOTEBOOK_NAMES;
+}
 
 interface NotebookInfo {
     id: string;
@@ -59,15 +137,36 @@ interface InsightResponse {
     status: string;
 }
 
+export interface BackendHealth {
+    ok: boolean;
+    status?: string;
+    message?: string;
+    backendUrl: string;
+    checkedAt: number;
+}
+
 let cachedNotebook: NotebookInfo | null = null;
 let notebooksCache: NotebookInfo[] | null = null;
 let lastNotebookFetch = 0;
+let cachedHealthStatus: BackendHealth | null = null;
+let lastHealthCheck = 0;
 
 function now(): number {
     return Date.now();
 }
 
 function getBackendUrl(): string {
+    // First try settings store (primary source of truth)
+    try {
+        const settings = getSettingsSync();
+        if (settings.backendUrl) {
+            return settings.backendUrl;
+        }
+    } catch {
+        // Settings store not initialized yet, fall back
+    }
+
+    // Fall back to localStorage for backwards compatibility
     if (typeof window === 'undefined' || !window?.localStorage) {
         return DEFAULT_BACKEND_URL;
     }
@@ -92,22 +191,31 @@ async function callBackendApi<T>(
             method,
             timeout: 30000,
             contentType: 'application/json',
-            headers: [{ 'Content-Type': 'application/json' }],
+            headers: [],
             payload: body ? JSON.stringify(body) : undefined,
         });
 
-        if (response?.body) {
-            let data = response.body;
-            if (typeof data === 'string') {
-                try {
-                    data = JSON.parse(data);
-                } catch {
-                    // Not JSON, use as-is
-                }
-            }
-            return data as T;
+        // SiYuan forwardProxy returns { code: 0, data: { status: 200, body: "..." } }
+        if (response?.code !== 0) {
+            console.warn(`[IES] Proxy error (${endpoint}):`, response?.msg);
+            return null;
         }
-        return null;
+
+        const proxyData = response?.data;
+        if (!proxyData || proxyData.status !== 200) {
+            console.warn(`[IES] Backend error (${endpoint}):`, proxyData?.status);
+            return null;
+        }
+
+        let data = proxyData.body;
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+            } catch {
+                // Not JSON, use as-is
+            }
+        }
+        return data as T;
     } catch (err) {
         console.warn(`[IES] Backend API call failed (${endpoint}):`, err);
         return null;
@@ -171,7 +279,7 @@ async function resolveStructureNotebook(): Promise<NotebookInfo> {
         }
     }
 
-    for (const preferred of PREFERRED_NOTEBOOK_NAMES) {
+    for (const preferred of getPreferredNotebookNames()) {
         const match = notebooks.find(nb => nb.name === preferred);
         if (match) {
             cachedNotebook = match;
@@ -496,6 +604,14 @@ const MODE_FOLDER_MAP: Record<string, string> = {
     reflecting: 'Sessions/Reflecting',
 };
 
+interface QuestionResponseEntry {
+    question: string;
+    questionClass: string;
+    userResponse: string;
+    followUpQuestion?: string;
+    timestamp: number;
+}
+
 interface SessionDocumentOptions {
     sessionId: string;
     mode: string;
@@ -507,6 +623,7 @@ interface SessionDocumentOptions {
     entitiesExtracted?: number;
     graphMappingExecuted?: boolean;
     questionClassesUsed?: string[];
+    questionResponseHistory?: QuestionResponseEntry[];
 }
 
 /**
@@ -525,6 +642,7 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
         entitiesExtracted,
         graphMappingExecuted,
         questionClassesUsed,
+        questionResponseHistory,
     } = options;
 
     const notebook = await resolveStructureNotebook();
@@ -562,6 +680,9 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
     if (questionClassesUsed && questionClassesUsed.length > 0) {
         frontmatter.question_classes_used = questionClassesUsed;
     }
+    if (questionResponseHistory && questionResponseHistory.length > 0) {
+        frontmatter.thinking_dialogues_count = questionResponseHistory.length;
+    }
 
     const fm = serializeFrontmatter(frontmatter);
 
@@ -583,6 +704,41 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
         }
     }
 
+    // Add thinking dialogues (question-response exchanges)
+    if (questionResponseHistory && questionResponseHistory.length > 0) {
+        const classLabels: Record<string, string> = {
+            schema_probe: '🏗️ Structure',
+            boundary: '🔲 Boundary',
+            dimensional: '📐 Dimensional',
+            causal: '⚡ Causal',
+            counterfactual: '🔮 What-If',
+            anchor: '⚓ Anchor',
+            perspective_shift: '👁️ Perspective',
+            meta_cognitive: '🧠 Meta',
+            reflective_synthesis: '🔗 Synthesis',
+        };
+        content += `## Thinking Dialogues\n\n`;
+        content += `*${questionResponseHistory.length} thinking partner exchange${questionResponseHistory.length > 1 ? 's' : ''} during this session:*\n\n`;
+
+        for (let i = 0; i < questionResponseHistory.length; i++) {
+            const qr = questionResponseHistory[i];
+            const classLabel = classLabels[qr.questionClass] || qr.questionClass.replace(/_/g, ' ');
+
+            if (qr.userResponse === '[skipped]') {
+                content += `### Dialogue ${i + 1} (${classLabel}) — *Skipped*\n\n`;
+                content += `> ${qr.question}\n\n`;
+            } else {
+                content += `### Dialogue ${i + 1} (${classLabel})\n\n`;
+                content += `> ${qr.question}\n\n`;
+                content += `**Response:** ${qr.userResponse}\n\n`;
+                if (qr.followUpQuestion) {
+                    content += `*Follow-up generated:* ${qr.followUpQuestion}\n\n`;
+                }
+            }
+            content += `---\n\n`;
+        }
+    }
+
     // Add conversation transcript
     content += `## Conversation\n\n`;
     for (const msg of transcript) {
@@ -591,13 +747,27 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
     }
 
     // Extraction summary
-    if (entitiesExtracted !== undefined || graphMappingExecuted || (questionClassesUsed && questionClassesUsed.length > 0)) {
+    const hasResults = entitiesExtracted !== undefined ||
+        graphMappingExecuted ||
+        (questionClassesUsed && questionClassesUsed.length > 0) ||
+        (questionResponseHistory && questionResponseHistory.length > 0);
+
+    if (hasResults) {
         content += `## Session Results\n\n`;
         if (entitiesExtracted !== undefined) {
             content += `- Entities extracted: ${entitiesExtracted}\n`;
         }
         if (graphMappingExecuted) {
             content += `- Graph mapping executed: ✓\n`;
+        }
+        if (questionResponseHistory && questionResponseHistory.length > 0) {
+            const answered = questionResponseHistory.filter(qr => qr.userResponse !== '[skipped]').length;
+            const skipped = questionResponseHistory.length - answered;
+            content += `- Thinking dialogues: ${answered} answered`;
+            if (skipped > 0) {
+                content += `, ${skipped} skipped`;
+            }
+            content += `\n`;
         }
         if (questionClassesUsed && questionClassesUsed.length > 0) {
             // Format question classes with human-readable labels
@@ -635,4 +805,429 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
         console.error('[IES] Failed to create session document:', err);
         return null;
     }
+}
+
+/**
+ * Set user's preferred notebook names for structure creation.
+ * Enables domain-agnostic usage (user can set to match their domain).
+ */
+export function setPreferredNotebooks(names: string[]): void {
+    if (typeof window === 'undefined' || !window?.localStorage) {
+        return;
+    }
+    try {
+        if (Array.isArray(names) && names.length > 0) {
+            window.localStorage.setItem('ies.preferredNotebooks', JSON.stringify(names));
+            // Clear cached notebook to force re-resolution
+            cachedNotebook = null;
+        }
+    } catch (err) {
+        console.warn('[IES] Unable to save preferred notebooks:', err);
+    }
+}
+
+/**
+ * Get the current list of preferred notebook names.
+ */
+export function getPreferredNotebooks(): string[] {
+    return getPreferredNotebookNames();
+}
+
+/**
+ * Set the backend URL for API calls.
+ */
+export function setBackendUrl(url: string): void {
+    if (typeof window === 'undefined' || !window?.localStorage) {
+        return;
+    }
+    try {
+        window.localStorage.setItem(BACKEND_URL_KEY, url);
+    } catch (err) {
+        console.warn('[IES] Unable to save backend URL:', err);
+    }
+}
+
+/**
+ * Get the current backend URL.
+ */
+export function getConfiguredBackendUrl(): string {
+    return getBackendUrl();
+}
+
+export async function checkBackendHealth(options: { force?: boolean } = {}): Promise<BackendHealth> {
+    const backendUrl = getBackendUrl();
+    const timestamp = now();
+
+    if (
+        !options.force &&
+        cachedHealthStatus &&
+        timestamp - lastHealthCheck < HEALTH_CACHE_TTL_MS &&
+        cachedHealthStatus.backendUrl === backendUrl
+    ) {
+        return cachedHealthStatus;
+    }
+
+    const setCache = (health: BackendHealth): BackendHealth => {
+        cachedHealthStatus = health;
+        lastHealthCheck = timestamp;
+        return health;
+    };
+
+    const response = await callBackendApi<any>('GET', '/health');
+    if (!response) {
+        return setCache({
+            ok: false,
+            status: 'unreachable',
+            message: 'No response from backend',
+            backendUrl,
+            checkedAt: timestamp,
+        });
+    }
+
+    const ok = Boolean(response?.status === 'ok' || response?.status === 'healthy' || response?.ok === true);
+    const message = typeof response === 'string' ? response : response?.message;
+
+    return setCache({
+        ok,
+        status: typeof response === 'object' ? response?.status : undefined,
+        message: ok ? message || 'Backend reachable' : message || 'Backend reported unhealthy status',
+        backendUrl,
+        checkedAt: timestamp,
+    });
+}
+
+// === Block Metadata Helpers ===
+
+/**
+ * Sets block metadata in both YAML frontmatter format and SiYuan attributes.
+ * Returns YAML string for insertion at top of block content.
+ * Sets custom-* attributes for SQL querying.
+ */
+export async function setBlockMeta(
+    blockId: string,
+    meta: Record<string, any>
+): Promise<string> {
+    if (!blockId) {
+        throw new Error('setBlockMeta requires a blockId');
+    }
+
+    // Build YAML frontmatter string
+    const yaml = serializeFrontmatter(meta);
+    const attrs: Record<string, string> = {};
+
+    // Mirror all meta keys into SiYuan custom-* attrs for querying
+    for (const [key, value] of Object.entries(meta)) {
+        if (value === undefined) continue;
+        const attrKey = `custom-${key}`;
+        if (value === null) {
+            attrs[attrKey] = '';
+            continue;
+        }
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            attrs[attrKey] = String(value);
+            continue;
+        }
+        // Arrays / objects → JSON string for lossless round-trip
+        attrs[attrKey] = JSON.stringify(value);
+    }
+
+    await setBlockAttrs(blockId, attrs);
+    return yaml;
+}
+
+/**
+ * Updates capture_status (AI processing state) and sets last_touched_at timestamp.
+ */
+export async function updateCaptureStatus(
+    blockId: string,
+    newStatus: CaptureStatus
+): Promise<void> {
+    const now = new Date().toISOString();
+    await setBlockAttrs(blockId, {
+        'custom-capture_status': newStatus,
+        'custom-last_touched_at': now,
+    });
+}
+
+/**
+ * Updates user engagement status and increments exploration visits.
+ */
+export async function updateUserStatus(
+    blockId: string,
+    newStatus: UserStatus,
+    currentVisits: number = 0
+): Promise<void> {
+    const now = new Date().toISOString();
+    await setBlockAttrs(blockId, {
+        'custom-status': newStatus,
+        'custom-exploration_visits': String(currentVisits + 1),
+        'custom-last_touched_at': now,
+    });
+}
+
+/**
+ * Creates a Quick Capture block in the Daily folder with proper metadata.
+ * Returns the block ID.
+ */
+export async function createQuickCapture(
+    content: string,
+    options: {
+        capture_channel?: QuickCaptureMeta['capture_channel'];
+        capture_source?: QuickCaptureMeta['capture_source'];
+        resonance_signal?: string;
+        energy_level?: string;
+        book_title?: string;
+        book_author?: string;
+        location?: string;
+    } = {}
+): Promise<string | null> {
+    if (!content || !content.trim()) {
+        throw new Error('Cannot create an empty quick capture');
+    }
+
+    const notebook = await resolveStructureNotebook();
+    await ensureNotebookStructure();
+
+    const dateValue = new Date();
+    const relativePath = sanitizePath(getDailyLogPath(dateValue));
+    const docId = await ensureDocument(notebook.id, relativePath, formatDailyTitle(dateValue));
+
+    // Build Quick Capture metadata
+    const meta: Partial<QuickCaptureMeta> = {
+        quick_capture: true,
+        capture_channel: options.capture_channel || 'other',
+        capture_source: options.capture_source || 'manual',
+        capture_time: dateValue.toISOString(),
+        capture_status: 'raw',
+        status: 'captured',
+    };
+
+    if (options.resonance_signal) {
+        meta.resonance_signal = options.resonance_signal as any;
+    }
+    if (options.energy_level) {
+        meta.energy_level = options.energy_level as any;
+    }
+    if (options.book_title) {
+        meta.book_title = options.book_title;
+    }
+    if (options.book_author) {
+        meta.book_author = options.book_author;
+    }
+    if (options.location) {
+        meta.location = options.location;
+    }
+
+    const fm = serializeFrontmatter(meta);
+    const yamlBlock = fm ? `---\n${fm}\n---\n` : '';
+    const entry = `${yamlBlock}${content.trim()}\n\n`;
+
+    // Append to daily log and get the block ID
+    const appendResult = await appendBlock('markdown', entry, docId);
+    const blockId = appendResult?.[0]?.doOperations?.[0]?.id || '';
+
+    if (blockId) {
+        // Set SiYuan attributes for SQL querying
+        const attrs: Record<string, string> = {
+            'custom-quick_capture': 'true',
+            'custom-capture_status': 'raw',
+            'custom-status': 'captured',
+            'custom-capture_time': meta.capture_time!,
+            'custom-capture_channel': meta.capture_channel!,
+            'custom-capture_source': meta.capture_source!,
+        };
+        if (options.resonance_signal) {
+            attrs['custom-resonance_signal'] = options.resonance_signal;
+        }
+        if (options.energy_level) {
+            attrs['custom-energy_level'] = options.energy_level;
+        }
+        await setBlockAttrs(blockId, attrs);
+    }
+
+    return blockId || null;
+}
+
+/**
+ * Creates a Seedling from a processed Quick Capture.
+ * Moves content to appropriate Seedlings subfolder based on idea_type.
+ */
+export async function createSeedling(
+    title: string,
+    content: string,
+    ideaType: IdeaType,
+    options: {
+        sourceBlockId?: string;
+        domain?: string;
+        clarity?: SeedBlockMeta['clarity'];
+        confidence?: SeedBlockMeta['confidence'];
+        resonance_signal?: string;
+        energy_level?: string;
+        related_concepts?: string[];
+        tags?: string[];
+    } = {}
+): Promise<string | null> {
+    if (!content || !content.trim()) {
+        throw new Error('Cannot create an empty seedling');
+    }
+
+    const notebook = await resolveStructureNotebook();
+    await ensureNotebookStructure();
+
+    // Determine folder based on idea type
+    const folderPath = SEEDLING_FOLDER_MAP[ideaType] || 'Seedlings';
+
+    // Create document path with timestamp
+    const dateValue = new Date();
+    const dateStr = formatDailyTitle(dateValue);
+    const timeStr = `${pad2(dateValue.getHours())}${pad2(dateValue.getMinutes())}`;
+    const safeTitle = title.substring(0, 50).replace(/[/\\?%*:|"<>]/g, '-').trim();
+    const docPath = `${folderPath}/${dateStr}-${timeStr}-${safeTitle}`;
+
+    // Build Seedling metadata
+    const meta: Partial<SeedBlockMeta> = {
+        block_type: 'seed',
+        idea_type: ideaType,
+        status: 'captured',
+        created_at: dateValue.toISOString(),
+        last_touched_at: dateValue.toISOString(),
+    };
+
+    if (options.sourceBlockId) {
+        meta.source_capture_id = options.sourceBlockId;
+    }
+    if (options.domain) {
+        meta.domain = options.domain;
+    }
+    if (options.clarity) {
+        meta.clarity = options.clarity;
+    }
+    if (options.confidence) {
+        meta.confidence = options.confidence;
+    }
+    if (options.resonance_signal) {
+        meta.resonance_signal = options.resonance_signal as any;
+    }
+    if (options.energy_level) {
+        meta.energy_level = options.energy_level as any;
+    }
+    if (options.related_concepts?.length) {
+        meta.related_concepts = options.related_concepts;
+    }
+    if (options.tags?.length) {
+        meta.tags = options.tags;
+    }
+
+    const fm = serializeFrontmatter(meta);
+
+    // Build document content
+    let docContent = `---\n${fm}\n---\n\n`;
+    docContent += `# ${title}\n\n`;
+    docContent += content.trim();
+    docContent += '\n';
+
+    try {
+        const docId = await createDocWithMd(notebook.id, docPath, docContent);
+
+        // Set SiYuan attributes for SQL querying
+        const attrs: Record<string, string> = {
+            'custom-block_type': 'seed',
+            'custom-idea_type': ideaType,
+            'custom-status': 'captured',
+            'custom-created_at': meta.created_at!,
+        };
+        if (options.sourceBlockId) {
+            attrs['custom-source_capture_id'] = options.sourceBlockId;
+        }
+        if (options.domain) {
+            attrs['custom-domain'] = options.domain;
+        }
+        if (options.resonance_signal) {
+            attrs['custom-resonance_signal'] = options.resonance_signal;
+        }
+        if (options.energy_level) {
+            attrs['custom-energy_level'] = options.energy_level;
+        }
+        await setBlockAttrs(docId, attrs);
+
+        // If this came from a Quick Capture, update its status
+        if (options.sourceBlockId) {
+            await updateCaptureStatus(options.sourceBlockId, 'processed');
+        }
+
+        return docId;
+    } catch (err) {
+        console.error('[IES] Failed to create seedling:', err);
+        return null;
+    }
+}
+
+/**
+ * Promotes a seedling from Seedlings/Insights to /Insights/ folder.
+ * Updates status to 'anchored'.
+ */
+export async function promoteSeedlingToInsight(
+    seedlingBlockId: string,
+    options: {
+        backendSparkId?: string;
+        insightTitle?: string;
+    } = {}
+): Promise<string | null> {
+    if (!seedlingBlockId) {
+        throw new Error('Seedling block ID is required');
+    }
+
+    const block = await getBlockByID(seedlingBlockId);
+    if (!block) {
+        throw new Error('Unable to locate the seedling');
+    }
+
+    // Get the document block (seedlings are documents)
+    const docBlock = block.type === 'd' ? block : await getBlockByID(block.root_id);
+    if (!docBlock) {
+        throw new Error('Unable to resolve the parent document');
+    }
+
+    const notebookId = docBlock.box;
+
+    // Ensure Insights folder exists
+    await ensureDocument(notebookId, 'Insights', 'Insights');
+    const insightsId = await getDocIdByPath(notebookId, 'Insights');
+    if (!insightsId) {
+        throw new Error('Insights folder is missing');
+    }
+
+    // Move the document to Insights folder
+    await moveDocsByID([docBlock.id], insightsId);
+
+    // Update SiYuan block attributes
+    const now = new Date().toISOString();
+    const attrs: Record<string, string> = {
+        'custom-status': 'anchored',
+        'custom-last_touched_at': now,
+    };
+
+    // If we have a backend spark ID, sync with backend
+    let beSparkId = options.backendSparkId;
+    if (!beSparkId) {
+        const blockAttrs = block['ial'] || {};
+        beSparkId = blockAttrs['custom-be_id'];
+    }
+
+    if (beSparkId) {
+        // Promote in backend
+        const insight = await callBackendApi<InsightResponse>(
+            'POST',
+            `/personal/sparks/${beSparkId}/promote`,
+            { insight_title: options.insightTitle }
+        );
+        if (insight?.id) {
+            attrs['custom-be_id'] = insight.id;
+            attrs['custom-be_type'] = 'insight';
+        }
+    }
+
+    await setBlockAttrs(docBlock.id, attrs);
+
+    return docBlock.id;
 }
