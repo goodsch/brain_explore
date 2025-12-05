@@ -63,3 +63,8 @@ claude-prompts/
 AGENTS.md
 claudedoc.txt
 resources+.md
+
+# ChatGPT research exports (reference materials)
+IES Chat/
+*.chatgpt.md
+.research/

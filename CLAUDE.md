@@ -42,8 +42,27 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 **All Four Layers Built and Operational:**
 - ✅ Layer 1: Calibre library (179 books) + auto-ingestion daemon → 291 entities, 338 relationships (10 books indexed)
 - ✅ Layer 2: Backend APIs complete — 85/85 tests passing (Books, Reframe, Template, Personal, Graph APIs)
-- ✅ Layer 3: SiYuan Plugin + ForgeMode template integration + ReframesTab
+- ✅ Layer 3: SiYuan Plugin + ForgeMode template integration + ReframesTab + AST Mode documentation
 - ✅ Layer 4: Readest + Entity Overlay (inline highlighting) + Calibre Library Browser
+
+**Latest (Dec 5):**
+- ✅ **Question Engine Nine Classes Implementation (Commit 1d1ca9f)** — Backend question classification system complete
+  - QuestionClass enum with 9 classes mapped to AST thinking modes
+  - APPROACH_TO_CLASSES mapping: inquiry approaches generate specific question types
+  - New endpoints: `/question-classes` (list all with descriptions), `/approach-classes` (show approach→class mappings)
+  - ClassifiedQuestion schema for tagged questions with cognitive function labels
+  - Integration with ForgeMode: state detection, approach selection, question generation all use class system
+- ✅ **AST Folder Structure and Session Persistence (Commit c97aaf7)** — SiYuan plugin now creates structured session documents
+  - Expanded STRUCTURE_FOLDERS: /Concepts/ + mode-specific /Sessions/{mode}/ folders (Learning, Articulating, Planning, Ideating, Reflecting)
+  - createSessionDocument() function: saves sessions with frontmatter (be_type, be_id, mode, topic, status, resonance, energy)
+  - Session documents include: section responses (template-driven), full conversation transcript, entities extracted, graph mapping status
+  - ForgeMode integration: sessions auto-save to SiYuan on completion with timestamp and mode-specific folder placement
+- ✅ **IES AST Mode and Question Engine** — 20 SiYuan documents created defining structured thinking architecture
+  - Four thinking modes: Discovery (schema surfacing), Dialogue (model building), Flow (associative exploration), AST (assisted structured thinking)
+  - Nine question classes: Schema-Probe, Boundary, Dimensional, Causal, Counterfactual, Anchor, Perspective-Shift, Meta-Cognitive, Reflective-Synthesis
+  - Mode Transition Engine specifications for automatic mode switching
+  - ADHD-friendly folder structure: /Daily, /Insights, /Threads, /Favorite Problems, /Concepts
+  - Complete data schemas: Seed Schema, Concept Schema, Block Attributes, Note Templates
 
 **For complete project status, see:** `docs/COMPREHENSIVE-PROJECT-STATUS.md`
 
@@ -138,10 +157,12 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 4. Check git log — `git log --oneline` shows progression of sessions and concept extraction
 
 **Key Resources:**
-- `docs/SYSTEM-DESIGN.md` — Operational reference: how all layers integrate, critical gaps
-- `docs/PROJECT-OVERVIEW.md` — Complete vision and design rationale
+- `docs/SYSTEM-DESIGN.md` — Operational reference: how all layers integrate, critical gaps, SiYuan AST structure (4 modes, 9 question classes)
+- `docs/PROJECT-OVERVIEW.md` — Complete vision and design rationale, IES Question Engine preview
 - `docs/five-agent-synthesis.md` — Deep analysis of why architecture decisions were made
 - `docs/PHASE-1-WORKFLOW.md` — Phase 1 operational guide (for reference if running additional exploration sessions)
+- `IES AST SiYuan structure.md` — Tracking document for 20 SiYuan notebook pages defining AST mode architecture
+- `docs/IES question engine expansion.md` — Complete Question Engine specification (referenced by SiYuan documents)
 
 ### Phase 2c Focus
 
@@ -374,6 +395,7 @@ These visual documents are exported from SiYuan and provide mermaid diagrams, ta
 - Refinement based on real-world usage
 - ADHD-friendly ontology design (research complete in `.interleaved-thinking/`)
 - Personal growth framework development (ongoing application)
+- IES AST Mode implementation (specifications complete Dec 5, SiYuan notebook created)
 
 **Rule:** Additional domains (Phase 3+) wait until core system is refined through real usage.
 
@@ -515,6 +537,19 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 <!-- AUTO-MANAGED: architecture -->
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
+**Recent Changes (Dec 5):**
+- **IES AST Mode Documentation** (commit 3b347fc) — Comprehensive SiYuan notebook structure defining assisted structured thinking architecture:
+  - `IES AST SiYuan structure.md`: Tracking document for 20 new SiYuan pages across 6 sections (Modes, Question Engine, Data Schemas, Specs, Templates, Workflows)
+  - **Four thinking modes:** Discovery (schema surfacing), Dialogue (model building), Flow (associative exploration), AST (assisted structured thinking)
+  - **Nine question classes:** Schema-Probe (hidden structure), Boundary (clarify edges), Dimensional (introduce spectra), Causal (mechanisms), Counterfactual (what-if), Anchor (concrete instances), Perspective-Shift (viewpoint change), Meta-Cognitive (thinking patterns), Reflective-Synthesis (integration)
+  - **Mode Transition Engine:** Automatic mode switching based on interaction cadence, cognitive load markers, and resonance hits
+  - **User Cognition Model integration:** 6-dimension profile drives template defaults and question class selection
+  - **ADHD-friendly folder structure:** `/Daily/` (zero-friction capture), `/Insights/` (promoted sparks), `/Threads/` (exploration paths), `/Favorite Problems/` (anchor questions), `/Concepts/` (knowledge graph nodes)
+  - **Data Schemas:** Seed Schema (atomic insights), Concept Schema (persistent ideas with causal structure), Block Attributes (SiYuan metadata standards), Note Templates (per-mode session templates)
+  - **Integration:** AST mode bridges ForgeMode templates with Flow exploration, provides canonical placement for sparks/insights
+  - **Documentation updates:** SYSTEM-DESIGN.md adds Section 3.7 (SiYuan AST Structure), PROJECT-OVERVIEW.md adds IES Question Engine preview, COMPREHENSIVE-PROJECT-STATUS.md updated with documentation status
+  - **Source:** Based on IES Question Engine expansion spec synthesized with existing ADHD ontology design research
+
 **Recent Changes (Dec 4):**
 - **Entity Overlay UI Redesign** (commits 0b646cf, fddd8f0, 8887e90) — Enhanced user experience with pill-based controls and Flow Panel integration:
   - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/EntityTypeFilter.tsx`: Complete redesign from checkbox-based to pill-based UI (122 lines)
@@ -627,6 +662,16 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
   - Personal Graph API (`/personal`) — ADHD-friendly spark/insight capture with resonance and energy-based retrieval
   - Template Service — JSON-based thinking templates with validation and graph mapping execution
 - Updated `library/graph/__init__.py` to export unified graph API with ADHD-friendly ontology implementation for personal knowledge capture.
+- **SiYuan Structure Documentation** (Dec 5) — Comprehensive documentation of IES SiYuan notebook organization:
+  - `IES AST SiYuan structure.md`: Tracking document for 20 created SiYuan pages across 6 major sections
+  - **Core Navigation:** Project Index with unified entry point and quick navigation
+  - **Modes Section:** 4 thinking modes documented (Discovery, Dialogue, Flow, AST) + Mode Transition Engine specification
+  - **Question Engine:** Complete documentation of 9 question classes (Schema-Probe, Boundary, Dimensional, Causal, Counterfactual, Anchor, Perspective-Shift, Meta-Cognitive, Reflective-Synthesis)
+  - **Data Schemas:** 5 schema specifications (Seed Schema, Concept Schema, Block Attributes, Note Templates, Folder Structure Standards)
+  - **ADHD-Friendly Folders:** 5 folder templates documented (`/Daily/`, `/Insights/`, `/Threads/`, `/Favorite Problems/`, `/Concepts/`)
+  - **Integration Specifications:** User Cognition Model, mode transition rules, question routing by mode, SiYuan block attribute standards
+  - **Notebook ID:** `Intelligent Exploration System` (20251201113102-ctr4bco)
+  - **Source:** Based on ChatGPT Question Engine expansion spec synthesized with existing IES architecture and ADHD-friendly ontology research
 
 ### Two Knowledge Graph Systems
 
@@ -717,6 +762,108 @@ The `ADHDKnowledgeGraph` client includes schema versioning to support future mig
 - Use `migrate_schema()` when upgrading (migrations defined in `MIGRATIONS` dict)
 - Indexes created for status, resonance, energy, recency queries
 
+### Layer 3: SiYuan Plugin Architecture (Phase 2c - Dec 5)
+
+**AST Folder Structure:**
+
+The plugin creates an ADHD-friendly folder hierarchy in SiYuan notebooks for session persistence and knowledge organization:
+
+```
+/Daily/                   # Daily log for low-friction capture
+/Insights/                # Promoted insights from sparks
+/Threads/                 # Active exploration threads
+/Favorite Problems/       # Anchor questions (Feynman-inspired)
+/Concepts/                # Formalized concepts
+/Sessions/                # AST session documents (mode-specific)
+  ├── Learning/           # Learning mode sessions
+  ├── Articulating/       # Articulating mode sessions
+  ├── Planning/           # Planning mode sessions
+  ├── Ideating/           # Ideating mode sessions
+  └── Reflecting/         # Reflecting mode sessions
+```
+
+**Question Class Tracking in ForgeMode (Dec 5):**
+
+ForgeMode now tracks which question classes are used during sessions and displays them with visual badges:
+
+**Question Class Labels:**
+- **Schema-Probe (🏗️)** — Structure questions (blue #4a90d9)
+- **Boundary (🔲)** — Edge/limit questions (purple #7b68ee)
+- **Dimensional (📐)** — Spectrum questions (teal #20b2aa)
+- **Causal (⚡)** — Mechanism questions (tan #f4a460)
+- **Counterfactual (🔮)** — What-if questions (orchid #da70d6)
+- **Anchor (⚓)** — Concrete example questions (green #3cb371)
+- **Perspective-Shift (👁️)** — Viewpoint change questions (brown #cd853f)
+- **Meta-Cognitive (🧠)** — Thinking pattern questions (gray #778899)
+- **Reflective-Synthesis (🔗)** — Integration questions (blue #6495ed)
+
+**Features:**
+- Questions generated with classified question classes from Question Engine
+- Visual emoji badges displayed inline with questions during session
+- `questionClassesUsed` array tracks all classes used in session
+- `lastQuestionClass` stores most recent question class
+- Question classes included in session document frontmatter
+- Session results display question types with human-readable labels
+
+**Implementation:**
+- `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` lines 107-127 (QUESTION_CLASS_LABELS), 405-415 (tracking), 437-445 (display)
+- Question class tracking integrated with Question Engine API calls
+- Supports both classified_questions (new format) and fallback to plain questions array
+
+**Session Document Creation (ForgeMode):**
+
+When a ForgeMode session completes, `createSessionDocument()` saves structured documents with:
+
+**Frontmatter (YAML):**
+```yaml
+be_type: "session"
+be_id: "session_abc123"
+mode: "learning"
+topic: "Understanding executive function"
+status: "completed"
+created: "2025-12-05T01:42:00Z"
+template_id: "learning-mechanism-map"
+template_name: "Mechanism Map"
+entities_extracted: 12
+graph_mapping_executed: true
+question_classes_used: ["schema_probe", "causal", "anchor"]
+```
+
+**Document Contents:**
+1. **Topic Section** — Session topic, thinking mode, template name (if applicable), date
+2. **Section Responses** — Template-driven responses by section ID (if template-based session)
+   - Section IDs formatted as human-readable headings
+   - Example: "understanding_prerequisites" → "Understanding Prerequisites"
+3. **Conversation Transcript** — Full user/AI message exchange with role labels
+   - Formatted: **You:** / **AI:** with horizontal rules between messages
+   - Includes thinking partner questions with emoji badges
+4. **Session Results** — Summary of session outcomes
+   - Entities extracted count
+   - Graph mapping status (✓ if executed)
+   - Question types used with human-readable labels (Structure, Causal, Anchor, etc.)
+
+**Implementation:**
+- `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` — `createSessionDocument()` function (lines 499-638)
+  - MODE_FOLDER_MAP: Maps thinking modes to folder paths
+  - SessionDocumentOptions interface: Full type safety for session data
+  - serializeFrontmatter(): YAML serialization with proper type handling
+  - Question class labels: Converts snake_case to readable names
+- `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` — Calls `createSessionDocument()` on session end (lines 480-491)
+  - Passes template data, section responses, transcript, question classes used
+  - Displays success message with entity count and question types
+- Notebook selection: Prefers "Personal", "Therapy", or first open notebook
+- File path: `/Sessions/{mode}/{YYYY-MM-DD-HHMM-topic}.md`
+- Block attributes: `custom-be_type`, `custom-be_id`, `custom-mode`, `custom-status` for backend linking
+
+**Purpose:**
+- Persistent record of thinking sessions for later review
+- Breadcrumb trail showing evolution of understanding
+- Raw material for concept extraction and formalization
+- Training data for Mode Transition Engine pattern learning
+- Question class analytics for understanding thinking patterns
+
+---
+
 ### Layer 2: Phase 2c Backend APIs (COMPLETE - Dec 4)
 
 Five integrated backend services addressing critical gaps #1-#3, all registered in `ies/backend/src/ies_backend/main.py`:
@@ -800,6 +947,86 @@ Five integrated backend services addressing critical gaps #1-#3, all registered 
 - 5 thinking modes: `learning`, `articulating`, `planning`, `ideating`, `reflecting`
 - Section structure: `id`, `prompt`, `input_type` (concept_search/freeform/selection), `ai_behavior`, `required`
 - Graph mapping actions: `create_or_link`, `update_journey` with metadata and relationship specs
+
+---
+
+**3b. Question Engine API** (`/question-engine`) — Adaptive question generation with nine cognitive function classes (Dec 5)
+
+**Nine Question Classes (IES Question Engine expansion):**
+
+Each class has distinct cognitive function and maps to specific AST thinking modes:
+
+1. **Schema-Probe** — Surfaces hidden structure (lists, buckets, taxonomies)
+   - Maps to: Discovery, Learning modes
+   - Example: "What are the main categories here?", "What's the underlying structure?"
+
+2. **Boundary** — Clarifies edges/limits to avoid scope creep
+   - Maps to: Discovery, Articulating modes
+   - Example: "What's NOT included?", "Where does this end?"
+
+3. **Dimensional** — Introduces spectra/coordinates for precise positioning
+   - Maps to: Discovery, Planning modes
+   - Example: "On a spectrum from X to Y, where is this?", "What dimensions matter here?"
+
+4. **Causal** — Pushes for mechanisms, prerequisites, sequences
+   - Maps to: Dialogue, Learning modes
+   - Example: "What causes this?", "What has to happen first?", "How does A lead to B?"
+
+5. **Counterfactual** — "What if" deviations to expose assumptions
+   - Maps to: Dialogue, Ideating modes
+   - Example: "What if the opposite were true?", "Imagine this failed - why?"
+
+6. **Anchor** — Grounds abstractions in concrete instances
+   - Maps to: Dialogue, Reflecting modes
+   - Example: "Can you give a specific example?", "When did you experience this?"
+
+7. **Perspective-Shift** — Forces viewpoint changes (roles, time, system level)
+   - Maps to: Flow, Ideating modes
+   - Example: "How would X see this?", "Zoom out - what's the bigger picture?"
+
+8. **Meta-Cognitive** — Checks thinking patterns directly
+   - Maps to: AST, Reflecting modes
+   - Example: "How confident are you?", "Where do you feel stuck?", "What's your energy level?"
+
+9. **Reflective-Synthesis** — Integration statements tying threads together
+   - Maps to: AST, Articulating modes
+   - Example: "What's the main insight here?", "How do these pieces connect?"
+
+**Endpoints:**
+- `POST /question-engine/detect-state` - Detect user cognitive/emotional state (flowing, stuck, overwhelmed, exploring, etc.)
+- `POST /question-engine/select-approach` - Select inquiry approach based on state (Socratic, Solution-Focused, Phenomenological, Systems, Metacognitive)
+- `GET /question-engine/templates/{approach}` - Get question templates for specific approach
+- `POST /question-engine/generate-questions` - Generate profile-adapted questions (orchestrates full pipeline)
+- `GET /question-engine/question-classes` - List all 9 question classes with descriptions
+- `GET /question-engine/approach-classes` - Show approach→class mappings
+
+**APPROACH_TO_CLASSES Mapping:**
+- **Socratic** → Schema-Probe, Boundary, Causal
+- **Solution-Focused** → Anchor, Dimensional
+- **Phenomenological** → Anchor, Meta-Cognitive
+- **Systems** → Causal, Perspective-Shift, Dimensional
+- **Metacognitive** → Meta-Cognitive, Reflective-Synthesis
+
+**Implementation:**
+- `ies/backend/src/ies_backend/api/question_engine.py` - FastAPI router with question class endpoints (261 lines)
+- `ies/backend/src/ies_backend/schemas/question_engine.py` - QuestionClass enum, ClassifiedQuestion, APPROACH_TO_CLASSES, CLASS_TO_MODES mappings (200+ lines)
+- `ies/backend/src/ies_backend/services/state_detection_service.py` - State detection logic
+- `ies/backend/src/ies_backend/services/approach_selection_service.py` - Approach selection logic
+- `ies/backend/src/ies_backend/services/question_templates_service.py` - Template library
+
+**ForgeMode Integration (SiYuan Plugin):**
+- State detection: analyzes last 3 user messages → determines cognitive state
+- Approach selection: maps thinking mode to inquiry approach with hints (learning→socratic, articulating→phenomenological, etc.)
+- Question generation: generates 1 thinking partner question per AI response using detected state + selected approach
+- Questions are classified with QuestionClass tags for Mode Transition Engine tracking
+- Session documents record question classes used for pattern analysis
+
+**Usage Flow:**
+1. ForgeMode detects user state from recent messages
+2. Selects inquiry approach based on state + thinking mode
+3. Generates question using approach + context (topic, section, user/AI messages)
+4. Question tagged with QuestionClass for mode transition decisions
+5. Session document records question classes for analysis
 
 ---
 
