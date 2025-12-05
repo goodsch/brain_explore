@@ -39,11 +39,27 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 **Phase 2c: Integration Features** 🔄 IN PROGRESS (65% complete, Dec 5)
 
-**All Four Layers Built and Operational:**
+**⚠️ CRITICAL FINDING (Dec 5): Implementation-Principle Gap Discovered**
+
+Four-agent critical analysis of SiYuan plugin revealed catastrophic disconnect between documented principles and actual implementation. Infrastructure exists but core principles not delivered:
+- Questions displayed passively (no response capture, no dialogue)
+- Question classes exist but don't guide cognition (decorative badges only)
+- ADHD metadata captured but no energy-based navigation
+- Virtuous cycle incomplete (no concept extraction flow)
+- Domain hardcoding ("Therapy" in notebook preferences)
+
+**See:** `docs/CRITICAL-ANALYSIS-2025-12-05.md` for full findings
+**See:** `docs/PRESSURE-TEST-PLAN.md` for systematic evaluation of all components
+
+**Current Priority:** Remediate SiYuan plugin, then pressure test remaining components.
+
+---
+
+**All Four Layers Built (But Principle Alignment Unverified):**
 - ✅ Layer 1: Calibre library (179 books) + auto-ingestion daemon → 291 entities, 338 relationships (10 books indexed)
 - ✅ Layer 2: Backend APIs complete — 85/85 tests passing (Books, Reframe, Template, Personal, Graph APIs)
-- ✅ Layer 3: SiYuan Plugin + ForgeMode template integration + ReframesTab + AST Mode documentation
-- ✅ Layer 4: Readest + Entity Overlay (inline highlighting) + Calibre Library Browser
+- ⚠️ Layer 3: SiYuan Plugin — **NEEDS REMEDIATION** (design system, question interaction, principle alignment)
+- 🔍 Layer 4: Readest — **PENDING PRESSURE TEST**
 
 **Latest (Dec 5):**
 - ✅ **Question Engine Nine Classes Implementation (Commit 1d1ca9f)** — Backend question classification system complete
@@ -1008,8 +1024,13 @@ Each class has distinct cognitive function and maps to specific AST thinking mod
 - **Metacognitive** → Meta-Cognitive, Reflective-Synthesis
 
 **Implementation:**
-- `ies/backend/src/ies_backend/api/question_engine.py` - FastAPI router with question class endpoints (261 lines)
-- `ies/backend/src/ies_backend/schemas/question_engine.py` - QuestionClass enum, ClassifiedQuestion, APPROACH_TO_CLASSES, CLASS_TO_MODES mappings (200+ lines)
+- `ies/backend/src/ies_backend/api/question_engine.py` - FastAPI router with question class endpoints (400 lines)
+  - Endpoints: detect-state, select-approach, templates/{approach}, generate-questions, approaches, categories, question-classes, approach-classes
+  - Full pipeline orchestration with profile adaptation and question classification
+- `ies/backend/src/ies_backend/schemas/question_engine.py` - QuestionClass enum, ClassifiedQuestion, APPROACH_TO_CLASSES, CLASS_TO_MODES mappings (251 lines)
+  - Nine question classes with descriptions and mode mappings
+  - APPROACH_TO_CLASSES: Maps inquiry approaches to question classes they generate
+  - STATE_TO_APPROACHES: Maps user states to recommended inquiry approaches
 - `ies/backend/src/ies_backend/services/state_detection_service.py` - State detection logic
 - `ies/backend/src/ies_backend/services/approach_selection_service.py` - Approach selection logic
 - `ies/backend/src/ies_backend/services/question_templates_service.py` - Template library
