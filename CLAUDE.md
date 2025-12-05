@@ -729,29 +729,45 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 5):**
-- **Flow Mode Backend Implementation** — Complete backend services for capture → thinking → flow visualization pipeline:
+- **Flow Mode Backend Implementation (Commits 4889fed, 4ad076d)** — Complete backend services for capture → thinking → flow visualization pipeline:
   - **Implementation Plan:** `docs/plans/2025-12-05-flow-mode-implementation-plan.md` — Three-layer loop architecture (ephemeral capture → structured thinking → visual flow)
-  - **New API Endpoints:** `ies/backend/src/ies_backend/api/flow_session.py` (60 lines) — Flow session lifecycle management
-    - `POST /flow/openFromSession` — Open flow from thinking session with initial graph view
-    - `GET /flow/{session_id}` — Get current flow state
-    - `POST /flow/{session_id}/step` — Record exploration breadcrumb
-    - `POST /flow/{session_id}/synthesize` — Generate synthesis from journey
-    - `GET /flow/{session_id}/journey` — Get complete journey with breadcrumbs
+  - **New API Endpoints:** Three new routers registered in `ies/backend/src/ies_backend/main.py`
+    - `/capture` — Quick capture queue management (create, list, update, delete, process)
+    - `/thinking` — Thinking session lifecycle (start, step, complete)
+    - `/flow` — Flow session lifecycle (openFromSession, step, synthesize, journey)
+  - **CaptureService:** `ies/backend/src/ies_backend/services/capture_service.py` (220 lines) — Capture queue management
+    - `create_capture()` — Creates CaptureItem node in Neo4j with status tracking
+    - `list_captures(status)` — Retrieves captures filtered by status (queued, in_thinking, integrated)
+    - `update_capture()` — Updates status, entities, topics during processing
+    - `process_capture()` — Legacy endpoint for intelligent content routing
+    - Schema creation: `CaptureItem` nodes with raw_text, source, status, context_snippet, entities, topics
+  - **ThinkingService:** `ies/backend/src/ies_backend/services/thinking_service.py` (215 lines) — Structured thinking sessions
+    - `start_session()` — Creates ThinkingSession node linked to CaptureItem, updates capture status to in_thinking
+    - `record_breadcrumb()` — Tracks user thinking steps (angles, insights) during session
+    - `complete_session()` — Marks session complete, updates capture status to integrated
+    - Schema creation: `ThinkingSession` nodes with capture_id, siyuan_note_id, angles, entities, breadcrumbs
   - **FlowSessionService:** `ies/backend/src/ies_backend/services/flow_session_service.py` (342 lines) — Flow lifecycle and synthesis
     - `open_from_thinking_session()` — Creates FlowSession node in Neo4j, fetches initial graph view, links to ThinkingSession
     - `record_step()` — Updates breadcrumbs, visited_nodes, visited_edges during exploration
     - `generate_synthesis()` — Uses Claude Sonnet 4 to synthesize insights from journey breadcrumbs
     - Schema creation: `FlowSession` nodes with origin, visited tracking, breadcrumbs, insights
     - Integration: Connects ThinkingSession → FlowSession via `FROM_THINKING` relationship
-  - **Schemas:** `ies/backend/src/ies_backend/schemas/flow_session.py` — FlowSession, FlowOrigin, FlowInitialView, GraphNode, GraphEdge, RecommendedPath (80+ lines)
-  - **Thinking Schemas:** `ies/backend/src/ies_backend/schemas/thinking.py` — ThinkingSession, Angle, Breadcrumb, ThinkingStatus (80+ lines)
+  - **Schemas:** Complete Pydantic schemas for all three layers
+    - `ies/backend/src/ies_backend/schemas/capture.py` — CaptureItem, CaptureCreateRequest, CaptureStatus enum, CaptureSource enum
+    - `ies/backend/src/ies_backend/schemas/thinking.py` — ThinkingSession, Angle, Breadcrumb, ThinkingStatus enum
+    - `ies/backend/src/ies_backend/schemas/flow_session.py` — FlowSession, FlowOrigin, FlowInitialView, GraphNode, GraphEdge, RecommendedPath
   - **Tests:** `ies/backend/tests/test_thinking_and_flow.py` (265 lines) — 5 tests for full capture → thinking → flow pipeline (all passing)
-  - **Main Router:** Updated `ies/backend/src/ies_backend/main.py` — Registered flow_session and thinking routers
+    - `test_create_capture` — Validates capture creation with entities and topics
+    - `test_start_thinking_session` — Validates session creation linked to capture
+    - `test_complete_thinking_session` — Validates breadcrumb tracking and completion
+    - `test_open_flow_from_session` — Validates flow session creation from thinking session
+    - `test_record_flow_step` — Validates breadcrumb tracking during flow exploration
+  - **Test Results:** 94/94 backend tests passing (11 new tests: 6 capture, 5 thinking/flow)
   - **Key Design:** Flow doesn't start from zero - it starts from a Spark (current context, highlight, thought) → structured processing → graph exploration
   - **Three-Layer Loop:**
-    1. Ephemeral Capture — Quick spark capture without derailing current task
-    2. Structured Thinking Session — AI-prompted meaning extraction from captures
-    3. Visual Flow Exploration — Graph-based exploration from integrated captures
+    1. Ephemeral Capture — Quick spark capture without derailing current task (CaptureItem with status: queued)
+    2. Structured Thinking Session — AI-prompted meaning extraction from captures (ThinkingSession with angles, breadcrumbs)
+    3. Visual Flow Exploration — Graph-based exploration from integrated captures (FlowSession with journey synthesis)
   - **Data Flow:** CaptureItem (queued → in_thinking → integrated) → ThinkingSession (angles, breadcrumbs, entities) → FlowSession (origin, visited nodes/edges, synthesis)
 - **Architecture Merge Phase 1: Foundation Implementation (Commit 30df4d6)** — Merged architecture implemented in SiYuan plugin TypeScript layer:
   - **New Block Schema Types:** `.worktrees/siyuan/ies/plugin/src/types/blocks.ts` — Complete TypeScript definitions (272 lines)

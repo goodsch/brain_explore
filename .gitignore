@@ -68,3 +68,8 @@ resources+.md
 IES Chat/
 *.chatgpt.md
 .research/
+
+# Reference materials
+IES_SiYuan_Architecture_Package/
+IES_SiYuan_Architecture_Package_QuickCaptureUpdated/
+Flow mode implementation guide.md
