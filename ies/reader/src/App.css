@@ -1,149 +1,47 @@
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+/* ============================================
+   APP ROOT STYLES
+   Using IES Design System tokens
+   ============================================ */
 
 .app {
   min-height: 100vh;
-  background: #f5f5f5;
+  min-height: 100dvh;
+  background: var(--ies-bg-deep);
 }
 
-/* Loading Screen */
+/* ============================================
+   LOADING SCREEN
+   ============================================ */
+
 .loading-screen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  color: #666;
-  font-size: 16px;
-}
-
-/* Book Selector Screen */
-.book-selector {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
-
-.selector-header {
-  text-align: center;
-  margin-bottom: 48px;
-}
-
-.selector-header h1 {
-  margin: 0 0 8px 0;
-  font-size: 32px;
-  font-weight: 600;
-  color: #222;
-}
-
-.selector-subtitle {
-  margin: 0;
-  font-size: 16px;
-  color: #666;
-}
-
-.selector-section {
-  margin-bottom: 40px;
-}
-
-.selector-section h2 {
-  margin: 0 0 16px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-}
-
-.section-hint {
-  margin: -8px 0 16px 0;
-  font-size: 14px;
-  color: #888;
-}
-
-/* Open File Button */
-.open-file-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  padding: 20px;
-  background: #fff;
-  border: 2px dashed #ccc;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  color: #666;
-  transition: all 0.15s ease;
-}
-
-.open-file-btn:hover {
-  border-color: #1976d2;
-  background: #f5f9ff;
-  color: #1976d2;
-}
-
-/* Book Grid */
-.book-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
-}
-
-.book-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 16px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.book-card:hover {
-  border-color: #1976d2;
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
-  transform: translateY(-2px);
-}
-
-.book-cover {
-  display: flex;
-  align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 100px;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border-radius: 6px;
-  margin-bottom: 12px;
-  color: #1976d2;
+  min-height: 100vh;
+  min-height: 100dvh;
+  gap: var(--ies-space-4);
+  color: var(--ies-text-muted);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-base);
 }
 
-.book-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  text-align: center;
-  line-height: 1.4;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--ies-border-subtle);
+  border-top-color: var(--ies-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-/* Footer */
-.selector-footer {
-  text-align: center;
-  padding-top: 24px;
-  border-top: 1px solid #e0e0e0;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.selector-footer p {
+.loading-screen p {
   margin: 0;
-  font-size: 14px;
-  color: #888;
+  font-weight: 500;
 }

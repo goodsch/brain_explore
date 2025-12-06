@@ -1,94 +1,183 @@
+/* ============================================
+   READER COMPONENT
+   The Reading Room - Immersive Reading Experience
+   ============================================ */
+
 .reader-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #fff;
+  height: 100dvh;
+  background: var(--ies-bg-base);
 }
+
+/* ============================================
+   TOOLBAR
+   ============================================ */
 
 .reader-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid #e0e0e0;
-  z-index: 50;
-  gap: 12px;
+  padding: var(--ies-space-3) var(--ies-space-4);
+  padding-top: calc(var(--ies-space-3) + env(safe-area-inset-top, 0px));
+  background: var(--ies-bg-surface);
+  border-bottom: 1px solid var(--ies-border-subtle);
+  z-index: var(--ies-z-sticky);
+  gap: var(--ies-space-3);
 }
 
-.back-button {
+.reader-toolbar-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #666;
-  transition: all 0.15s ease;
+  gap: var(--ies-space-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.reader-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
   flex-shrink: 0;
 }
 
-.back-button:hover {
-  background: #e8e8e8;
-  border-color: #ccc;
-  color: #333;
+.reader-back-btn {
+  flex-shrink: 0;
 }
 
 .reader-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-  color: #333;
+  font-family: var(--ies-font-display);
+  font-size: var(--ies-text-lg);
+  font-weight: 600;
+  color: var(--ies-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.flow-toggle {
+/* Flow Toggle Button */
+.reader-flow-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 14px;
+  gap: var(--ies-space-2);
+  padding: var(--ies-space-2) var(--ies-space-4);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
   font-weight: 500;
-  color: #666;
-  transition: all 0.15s ease;
+  color: var(--ies-text-secondary);
+  background: var(--ies-bg-muted);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-full);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
 }
 
-.flow-toggle:hover {
-  background: #e8e8e8;
-  border-color: #ccc;
+.reader-flow-toggle:hover {
+  background: var(--ies-bg-surface);
+  border-color: var(--ies-border-strong);
+  color: var(--ies-text-primary);
 }
 
-.flow-toggle.active {
-  background: #e3f2fd;
-  border-color: #1976d2;
-  color: #1976d2;
+.reader-flow-toggle.active {
+  background: var(--ies-accent-subtle);
+  border-color: var(--ies-accent);
+  color: var(--ies-accent);
 }
 
-.flow-toggle svg {
-  flex-shrink: 0;
+.reader-flow-label {
+  display: none;
 }
+
+@media (min-width: 480px) {
+  .reader-flow-label {
+    display: inline;
+  }
+}
+
+/* ============================================
+   LOADING OVERLAY
+   ============================================ */
+
+.reader-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ies-space-4);
+  background: var(--ies-bg-base);
+  color: var(--ies-text-muted);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-base);
+  z-index: var(--ies-z-modal);
+}
+
+.reader-loading-spinner {
+  animation: spin 1s linear infinite;
+  color: var(--ies-accent);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   READER CONTENT AREA
+   ============================================ */
 
 .reader-content {
   flex: 1;
   position: relative;
-  transition: margin-right 0.2s ease;
+  transition: margin-right var(--ies-duration-base) var(--ies-ease-default);
+  background: var(--ies-bg-base);
 }
 
-/* Override react-reader styles */
+/* Override react-reader styles for IES aesthetic */
 .reader-content > div {
   height: 100% !important;
 }
 
-/* Selection highlight color */
+/* React-reader navigation buttons */
+.reader-content button[aria-label] {
+  background: transparent !important;
+  color: var(--ies-text-muted) !important;
+  transition: color var(--ies-duration-fast) !important;
+}
+
+.reader-content button[aria-label]:hover {
+  color: var(--ies-text-primary) !important;
+}
+
+/* ============================================
+   TEXT SELECTION
+   ============================================ */
+
 ::selection {
-  background: rgba(25, 118, 210, 0.2);
+  background: var(--ies-accent-subtle);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (min-width: 768px) {
+  .reader-toolbar {
+    padding: var(--ies-space-4) var(--ies-space-6);
+  }
+
+  .reader-title {
+    font-size: var(--ies-text-xl);
+  }
+}
+
+/* Mobile: Flow panel becomes bottom sheet (handled in FlowPanel.css) */
+@media (max-width: 767px) {
+  .reader-content {
+    margin-right: 0 !important;
+  }
 }

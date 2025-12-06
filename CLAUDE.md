@@ -70,7 +70,21 @@ Four-agent critical analysis (Dec 5) identified gaps between documented principl
 - `docs/PRESSURE-TEST-PLAN.md` — Systematic evaluation plan for remaining components
 - `.worktrees/siyuan/TASK.md` — Complete remediation checklist with verification
 
-**Current Priority:** Phase 2c complete. Ready for user testing and Phase 3 planning.
+**Current Priority:** IES Reader Wave 1 Enhancement (Dec 6)
+
+**Next Phase: IES Reader Standalone Enhancement**
+**Status:** Planning Complete - Wave 1 design approved (commit 7420127)
+**Plan:** `docs/plans/2025-12-06-ies-reader-wave1-design.md`
+
+**Wave 1 Focus (This Week):**
+1. **Calibre Library Integration** - LibraryBrowser component with book grid, search, entity badges
+2. **PWA Configuration** - Installable app with offline reading (vite-plugin-pwa)
+3. **IES Design System** - Apply unified design tokens (Contemplative Knowledge Space aesthetic)
+4. **Responsive Layout** - Mobile/tablet/desktop breakpoints, bottom sheet Flow Panel on mobile
+
+**Future Waves (Out of Scope):**
+- **Wave 2:** Interactive reading (question responses, entity overlay, notes, breadcrumbs)
+- **Wave 3:** Exploration/synthesis (spark initiation, multi-phase flow, synthesis artifacts)
 
 ---
 
@@ -536,6 +550,7 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/plans/2025-12-04-reframe-template-integration-design.md` — Phase 2c implementation: Reframe Layer + Thinking Templates + SiYuan document structure
 - `docs/plans/2025-12-04-calibre-integration-design.md` — Calibre integration architecture: single source of truth for book catalog with universal calibre_id identifier; multi-pass ingestion pipeline (structure → relationships → enrichment); backend APIs complete (Dec 4)
 - `docs/plans/2025-12-04-readest-calibre-library-view.md` — **Phase 4 UI design**: Readest library browser modal with search, entity badge filter, and direct book opening (Dec 4)
+- `docs/plans/2025-12-06-ies-reader-wave1-design.md` — **IES Reader Wave 1 Enhancement**: Calibre library integration, PWA configuration, IES design system application, responsive layout (Dec 6)
 - `docs/plans/UNIFIED-DESIGN-SYSTEM.md` — **Complete design system specification** (801 lines): "Contemplative Knowledge Space" aesthetic with typography system, color palette, spacing scale, shadows, animations, component patterns; CSS custom properties for Svelte/React compatibility
 - `docs/plans/2025-12-03-integrated-reading-knowledge-system.md` — Four-layer architecture design
 - `docs/PHASE-1-WORKFLOW.md` — Complete operational guide for running dialogue sessions (proven, reusable for Phase 2+ exploration)

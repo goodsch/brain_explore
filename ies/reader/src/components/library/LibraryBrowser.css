@@ -1,0 +1,413 @@
+/* ============================================
+   LIBRARY BROWSER
+   The Reading Room - Contemplative Knowledge Space
+   ============================================ */
+
+.library-browser {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ies-bg-deep);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.library-header {
+  padding: var(--ies-space-6) var(--ies-space-4);
+  padding-top: calc(var(--ies-space-6) + env(safe-area-inset-top, 0px));
+  background: var(--ies-bg-surface);
+  border-bottom: 1px solid var(--ies-border-subtle);
+}
+
+.library-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.library-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-3);
+  color: var(--ies-text-primary);
+}
+
+.library-brand h1 {
+  margin: 0;
+  font-size: var(--ies-text-2xl);
+}
+
+.library-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+}
+
+.library-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ies-radius-md);
+  transition: background var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.library-status.online {
+  color: var(--ies-success);
+}
+
+.library-status.offline {
+  color: var(--ies-text-muted);
+  background: var(--ies-warning-subtle);
+}
+
+.library-upload-btn {
+  cursor: pointer;
+}
+
+.library-subtitle {
+  max-width: 1400px;
+  margin: var(--ies-space-3) auto 0;
+  color: var(--ies-text-muted);
+  font-size: var(--ies-text-sm);
+}
+
+/* ============================================
+   CONTROLS (Search + Filters)
+   ============================================ */
+
+.library-controls {
+  position: sticky;
+  top: 0;
+  z-index: var(--ies-z-sticky);
+  padding: var(--ies-space-4);
+  background: var(--ies-bg-deep);
+  border-bottom: 1px solid var(--ies-border-subtle);
+}
+
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto var(--ies-space-4);
+}
+
+.search-bar-icon {
+  position: absolute;
+  left: var(--ies-space-4);
+  color: var(--ies-text-muted);
+  pointer-events: none;
+}
+
+.search-bar-input {
+  padding-left: calc(var(--ies-space-4) + 20px + var(--ies-space-3));
+  padding-right: calc(var(--ies-space-4) + 48px);
+}
+
+.search-bar-clear {
+  position: absolute;
+  right: calc(var(--ies-space-4) + 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--ies-text-muted);
+  border-radius: var(--ies-radius-sm);
+  transition: color var(--ies-duration-fast), background var(--ies-duration-fast);
+}
+
+.search-bar-clear:hover {
+  color: var(--ies-text-primary);
+  background: var(--ies-bg-muted);
+}
+
+.search-bar-hint {
+  position: absolute;
+  right: var(--ies-space-4);
+  padding: 2px 6px;
+  font-family: var(--ies-font-mono);
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-subtle);
+  background: var(--ies-bg-muted);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-sm);
+}
+
+.library-filters {
+  display: flex;
+  justify-content: center;
+  gap: var(--ies-space-2);
+}
+
+.library-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+  padding: var(--ies-space-2) var(--ies-space-4);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
+  font-weight: 500;
+  color: var(--ies-text-secondary);
+  background: transparent;
+  border-radius: var(--ies-radius-full);
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.library-filter-btn:hover {
+  background: var(--ies-bg-muted);
+  color: var(--ies-text-primary);
+}
+
+.library-filter-btn.active {
+  background: var(--ies-accent-subtle);
+  color: var(--ies-accent);
+}
+
+.filter-count {
+  padding: 2px 8px;
+  font-size: var(--ies-text-xs);
+  font-weight: 600;
+  background: var(--ies-bg-muted);
+  border-radius: var(--ies-radius-full);
+}
+
+.library-filter-btn.active .filter-count {
+  background: var(--ies-accent);
+  color: white;
+}
+
+/* ============================================
+   CONTENT AREA
+   ============================================ */
+
+.library-content {
+  flex: 1;
+  padding: var(--ies-space-6) var(--ies-space-4);
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ============================================
+   BOOK GRID
+   ============================================ */
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ies-space-4);
+}
+
+@media (min-width: 480px) {
+  .library-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ies-space-5);
+  }
+}
+
+@media (min-width: 768px) {
+  .library-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--ies-space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .library-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .library-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ============================================
+   BOOK CARD
+   ============================================ */
+
+.book-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--ies-bg-surface);
+  border-radius: var(--ies-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--ies-shadow-book);
+  transition: transform var(--ies-duration-base) var(--ies-ease-default),
+              box-shadow var(--ies-duration-base) var(--ies-ease-default);
+  cursor: pointer;
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--ies-shadow-lg);
+}
+
+.book-card:focus-visible {
+  outline: 2px solid var(--ies-accent);
+  outline-offset: 2px;
+}
+
+.book-card-cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background: var(--ies-bg-muted);
+  overflow: hidden;
+}
+
+.book-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity var(--ies-duration-slow) var(--ies-ease-out);
+}
+
+.book-card-skeleton,
+.book-card-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ies-text-subtle);
+}
+
+.book-card-badge {
+  position: absolute;
+  top: var(--ies-space-2);
+  right: var(--ies-space-2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: var(--ies-text-xs);
+  font-weight: 600;
+  color: white;
+  background: var(--ies-accent);
+  border-radius: var(--ies-radius-full);
+  box-shadow: var(--ies-shadow-sm);
+}
+
+.book-card-info {
+  padding: var(--ies-space-3);
+}
+
+.book-card-title {
+  margin: 0 0 var(--ies-space-1);
+  font-family: var(--ies-font-display);
+  font-size: var(--ies-text-sm);
+  font-weight: 600;
+  color: var(--ies-text-primary);
+  line-height: var(--ies-leading-tight);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.book-card-author {
+  margin: 0;
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Skeleton loading state */
+.book-card-skeleton-wrapper {
+  display: flex;
+  flex-direction: column;
+  background: var(--ies-bg-surface);
+  border-radius: var(--ies-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--ies-shadow-sm);
+}
+
+.book-card-skeleton-wrapper .book-card-cover {
+  aspect-ratio: 2 / 3;
+}
+
+.book-card-skeleton-wrapper .book-card-info {
+  padding: var(--ies-space-3);
+}
+
+/* ============================================
+   EMPTY & ERROR STATES
+   ============================================ */
+
+.library-empty,
+.library-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ies-space-16) var(--ies-space-4);
+  text-align: center;
+  color: var(--ies-text-muted);
+}
+
+.library-empty h3,
+.library-error h3 {
+  margin: var(--ies-space-4) 0 var(--ies-space-2);
+  font-family: var(--ies-font-display);
+  font-size: var(--ies-text-xl);
+  color: var(--ies-text-primary);
+}
+
+.library-empty p,
+.library-error p {
+  max-width: 400px;
+  margin: 0 0 var(--ies-space-6);
+  font-size: var(--ies-text-sm);
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+
+.library-footer {
+  padding: var(--ies-space-6) var(--ies-space-4);
+  padding-bottom: calc(var(--ies-space-6) + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  background: var(--ies-bg-surface);
+  border-top: 1px solid var(--ies-border-subtle);
+}
+
+.library-footer p {
+  margin: 0;
+  font-size: var(--ies-text-sm);
+  color: var(--ies-text-muted);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (min-width: 768px) {
+  .library-header {
+    padding: var(--ies-space-8) var(--ies-space-6);
+  }
+
+  .library-controls {
+    padding: var(--ies-space-4) var(--ies-space-6);
+  }
+
+  .library-content {
+    padding: var(--ies-space-8) var(--ies-space-6);
+  }
+
+  .library-subtitle {
+    font-size: var(--ies-text-base);
+  }
+}
