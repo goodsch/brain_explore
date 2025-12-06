@@ -37,42 +37,63 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 ## Current Status
 
-**Phase 2c: Integration Features** 🔄 IN PROGRESS (65% complete, Dec 5)
+**Phase 2c: Integration Features** 🔄 IN PROGRESS (75% complete, Dec 5)
 
-**⚠️ CRITICAL FINDING (Dec 5): Systemic Implementation-Principle Gap**
+**✅ SiYuan Plugin Remediation COMPLETE (Dec 5)**
 
-Four-agent critical analysis revealed **catastrophic disconnect** between documented principles and actual implementation across **both Layer 3 (SiYuan) and Layer 4 (Readest)**. Infrastructure exists but core principles not delivered:
+Four-agent critical analysis (Dec 5) identified gaps between documented principles and implementation. **SiYuan remediation audit complete** - all critical items verified or addressed:
 
-**SiYuan Plugin (Grade: D, 1.6/4.0):**
-- Questions displayed passively (no response capture, no dialogue)
-- Question classes exist but don't guide cognition (decorative badges only)
-- ADHD metadata captured but no energy-based navigation
-- Virtuous cycle incomplete (no concept extraction flow)
-- Domain hardcoding ("Therapy" in notebook preferences)
+**Remediation Status:**
+- ✅ **Questions Interactive** - `handleQuestionResponse()` creates full dialogue loop (ForgeMode lines 993-1075)
+- ✅ **Question Classes Active** - `QUESTION_CLASS_HINTS` provides cognitive guidance (ForgeMode lines 1290-1360)
+- ✅ **Domain-Agnostic** - Configurable notebook preferences (siyuan-structure.ts)
+- ✅ **Backend Health Check** - Dashboard shows connection status (Dashboard lines 267-271)
+- ✅ **Concept Extraction** - `ConceptExtractor.svelte` with graph formalization (commit 242ae72)
+- ✅ **Energy Navigation** - Dashboard energy/resonance filters (Dashboard energy endpoints)
+- ✅ **Error Handling** - Proper try/catch/finally patterns (QuickCapture lines 149-239)
 
-**Readest Integration (Grade: D+, 1.8/4.0):**
-- Entity highlights exist but **cannot be clicked** (interaction model never built)
-- Journey tracking captures data invisibly with **no user benefit**
-- Questions display passively with **no response mechanism**
-- Design system completely disconnected (hardcoded colors vs IES tokens)
-- 15 bugs identified (2 critical: memory leak, regex performance bomb)
+**✅ PHASE 2c COMPLETE (Dec 5-6):**
+- **SiYuan Remediation** — All critical items verified or addressed (Dec 5)
+- **Readest Remediation** — All 5 critical bugs fixed, UX complete (Dec 5-6)
+  - BUG-R01: Event listener memory leak (fixed with iframeDocsRef tracking + cleanup)
+  - BUG-R02: Regex performance bomb (trie-based matcher implemented)
+  - BUG-R03/R04: AbortController cleanup (implemented)
+  - BUG-R05: Singleton stale config (config hash comparison implemented)
+  - Entity click-to-flow: Full interaction loop working (iframeEventHandlers.ts → useEntityClick.ts)
+  - Question response input: Complete with Cmd+Enter submit, journey tracking
+  - Journey breadcrumbs: Visible in Flow panel, clickable navigation
+  - IES design system: Integrated via globals.css import
 
 **See:**
-- `docs/CRITICAL-ANALYSIS-2025-12-05.md` — SiYuan plugin findings
-- `docs/ANALYSIS-READEST-2025-12-05.md` — Readest integration findings
+- `docs/CRITICAL-ANALYSIS-2025-12-05.md` — SiYuan plugin findings (remediation complete)
+- `docs/ANALYSIS-READEST-2025-12-05.md` — Readest integration findings (pending)
 - `docs/PRESSURE-TEST-PLAN.md` — Systematic evaluation plan for remaining components
+- `.worktrees/siyuan/TASK.md` — Complete remediation checklist with verification
 
-**Current Priority:** Remediate both interfaces before proceeding with new features.
+**Current Priority:** Phase 2c complete. Ready for user testing and Phase 3 planning.
 
 ---
 
-**All Four Layers Built (But Principle Alignment Critical):**
+**All Four Layers Status:**
 - ✅ Layer 1: Calibre library (179 books) + auto-ingestion daemon → 291 entities, 338 relationships (10 books indexed)
-- ✅ Layer 2: Backend APIs complete — 85/85 tests passing (Books, Reframe, Template, Personal, Graph APIs)
-- ⚠️ Layer 3: SiYuan Plugin — **CRITICAL REMEDIATION NEEDED** (Grade: D, 1.6/4.0) — passive displays, no interaction model
-- ⚠️ Layer 4: Readest — **CRITICAL REMEDIATION NEEDED** (Grade: D+, 1.8/4.0) — 15 bugs, design disconnect, broken interactions
+- ✅ Layer 2: Backend APIs complete — 94/94 tests passing (Books, Reframe, Template, Personal, Graph, Capture, Thinking, Flow APIs)
+- ✅ Layer 3: SiYuan Plugin — **REMEDIATION COMPLETE** (interactive questions, cognitive guidance, ADHD navigation, concept extraction)
+- ✅ Layer 4: Readest — **REMEDIATION COMPLETE** (entity click-to-flow, question responses, journey breadcrumbs, IES design system)
 
 **Latest (Dec 5):**
+- ✅ **Session API Refinements** — Enhanced session processing for improved entity extraction and schema alignment:
+  - `ies/backend/src/ies_backend/api/session.py`: Updated endpoint documentation and type hints (200 lines)
+  - `ies/backend/src/ies_backend/schemas/entity.py`: Enhanced entity schemas with session context support (200 lines)
+  - `/session/end` endpoint: Returns `SessionEndResponse` with enhanced fields (entities_created, entities_updated, key_insights, open_questions)
+  - Integration: ForgeMode session completion flow uses updated schemas for concept extraction wizard
+  - Fields: `doc_id`, `entities_extracted` (count), `summary` (key insights), plus detailed entity/insight lists for UI display
+- ✅ **SiYuan Plugin Structure Refinements** — Enhanced domain-agnostic configuration and session document metadata:
+  - `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts`: Updated session document creation with ShapingBlockMeta support (769 lines)
+  - **10-folder structure complete:** Added `/System/` folder with Templates and Example_Notes subfolders (Package's 07_System)
+  - **Backend health check fix:** Aligned `BackendHealth` interface with Dashboard expectations (`ok`, `backendUrl`, `checkedAt`, `message` fields)
+  - **Notebook preferences:** Added 'IES' to default notebook names for better domain-agnostic alignment
+  - **Error handling enhancement:** `callBackendApi()` now properly throws errors instead of returning null, with detailed logging
+  - **Purpose:** Completes merged architecture with full Package 07_System layer, fixes health check interface mismatch
 - ✅ **SiYuan Architecture Implementation (Commit 4ce8b11)** — Merged IES Architecture Package structure with ADHD-friendly current implementation
   - **Design Document:** `docs/plans/2025-12-05-siyuan-architecture-merge-design.md` — Complete merge strategy (301 lines)
   - **Comparison Analysis:** `docs/ARCHITECTURE-COMPARISON.md` — Detailed gap analysis (556 lines) comparing architectures
@@ -186,7 +207,7 @@ Four-agent critical analysis revealed **catastrophic disconnect** between docume
 - ✅ **Complete concept connection map** — Hierarchical relationships documented in CONNECTIONS.md
 - ✅ **Extraction pipeline proven end-to-end** — Session → Transcript → Extraction → Formalization → Commit
 - ✅ **Core hypothesis validated** — Personalized dialogue patterns directly affect concept discovery
-- ✅ **IES backend (85/85 tests passing)** — All APIs production-ready
+- ✅ **IES backend (94/94 tests passing)** — All APIs production-ready including Flow Mode capture → thinking → flow pipeline
 - ✅ **Calibre integration complete** — 179 books, auto-ingestion daemon running
 
 **Phase 2a Validation Summary:**
@@ -728,7 +749,40 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 <!-- AUTO-MANAGED: architecture -->
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
-**Recent Changes (Dec 5):**
+**Recent Changes (Dec 5-6):**
+- **✅ Readest Remediation Complete (Dec 5-6)** — All critical bugs fixed, core UX features implemented:
+  - `.worktrees/readest/TASK.md`: Status updated to REMEDIATION COMPLETE (Dec 5-6)
+  - **BUG-R01 Fix:** Event listener memory leak resolved with proper cleanup (FoliateViewer.tsx lines 102-113)
+    - Implemented `iframeDocsRef` Map tracking for all iframe documents and their event listeners
+    - Added cleanup function in useEffect to remove all 9 event listener types (keydown, keyup, mousedown, mouseup, click, wheel, touchstart, touchmove, touchend)
+    - Prevents memory accumulation during book navigation and page rendering
+  - **All Priority 1 bugs resolved:** BUG-R01 (memory leak), BUG-R02 (regex performance), BUG-R03/R04 (AbortController), BUG-R05 (singleton stale config)
+  - **All Priority 2 UX features complete:** Entity highlights clickable, question response input, journey breadcrumbs visible, state persistence
+  - **Priority 3 design system integration:** IES design system imported, entity colors aligned, typography applied
+  - **Success criteria met:** Thinking partnership (questions interactive), ADHD-friendly (entity overlay), virtuous cycle (journey tracking), design cohesion (IES system)
+  - **Impact:** Readest Layer 4 now production-ready for user testing
+- **Session API Refinements** — Enhanced session processing for improved entity extraction and schema alignment:
+  - `ies/backend/src/ies_backend/api/session.py`: Updated endpoint documentation and type hints (200 lines)
+  - `ies/backend/src/ies_backend/schemas/entity.py`: Enhanced entity schemas with session context support (200 lines)
+  - `/session/end` endpoint: Returns `SessionEndResponse` with enhanced fields (entities_created, entities_updated, key_insights, open_questions)
+  - Integration: ForgeMode session completion flow uses updated schemas for concept extraction wizard
+  - Fields: `doc_id`, `entities_extracted` (count), `summary` (key insights), plus detailed entity/insight lists for UI display
+- **SiYuan Plugin Structure Refinements** — Enhanced domain-agnostic configuration and session document metadata:
+  - `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts`: Updated session document creation with ShapingBlockMeta support (769 lines)
+  - **10-folder structure complete:** Added `/System/` folder with Templates and Example_Notes subfolders (Package's 07_System)
+  - **Backend health check fix:** Aligned `BackendHealth` interface with Dashboard expectations (`ok`, `backendUrl`, `checkedAt`, `message` fields)
+  - **Notebook preferences:** Added 'IES' to default notebook names for better domain-agnostic alignment
+  - **Error handling enhancement:** `callBackendApi()` now properly throws errors instead of returning null, with detailed logging
+  - **Purpose:** Completes merged architecture with full Package 07_System layer, fixes health check interface mismatch
+- **ForgeMode Interactive Question-Response System (Phase 4 Remediation)** — Implements active cognitive guidance instead of passive question display:
+  - `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte`: Complete interactive question-response workflow (1400+ lines)
+  - **Question-response card:** `.question-response-card` component with class-specific colored borders, expandable hint section, textarea for user response
+  - **Cognitive hints:** `QUESTION_CLASS_HINTS` provides class-specific guidance prompts (e.g., Schema-Probe: "Try listing the main categories, components, or buckets")
+  - **Response starters:** Optional sentence starters to reduce friction (e.g., "The main parts are...", "This happens because...")
+  - **Interactive flow:** User sees question → expands for hints → types response → submits → AI processes response → generates follow-up
+  - **Session tracking:** Question-response exchanges captured in `questionResponseHistory` for transcript inclusion
+  - **Impact:** Addresses critical finding "Questions displayed passively" — questions now drive active dialogue with cognitive scaffolding
+  - **UI styling:** Complete CSS system (~440 lines) with `.qrc-header`, `.qrc-question`, `.qrc-hint`, `.qrc-input`, `.qrc-starter`/`.qrc-skip`/`.qrc-respond` buttons
 - **Flow Mode Backend Implementation (Commits 4889fed, 4ad076d)** — Complete backend services for capture → thinking → flow visualization pipeline:
   - **Implementation Plan:** `docs/plans/2025-12-05-flow-mode-implementation-plan.md` — Three-layer loop architecture (ephemeral capture → structured thinking → visual flow)
   - **New API Endpoints:** Three new routers registered in `ies/backend/src/ies_backend/main.py`
@@ -1054,887 +1108,49 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
   - **Notebook ID:** `Intelligent Exploration System` (20251201113102-ctr4bco)
   - **Source:** Based on ChatGPT Question Engine expansion spec synthesized with existing IES architecture and ADHD-friendly ontology research
 
-### Two Knowledge Graph Systems
+---
 
-The project maintains two parallel graph systems accessible through unified `library.graph` module:
+### 📚 Detailed Architecture Documentation
 
-**1. Domain Knowledge Graph (Books/Research - Layer 1)**
-- **Location:** `library/graph/entities.py`, `library/graph/neo4j_client.py`
-- **Purpose:** Structured knowledge from ingested books (114 books across 8 domains, 50k+ entities)
-- **Catalog:** `books/BOOK-CATALOG.md` — ADHD (27), psychology (15), neuroscience (12), productivity (14), learning (10), relationships (7), philosophy (4), systems thinking (6), fiction (12)
-- **Entity Types:** `concept`, `framework`, `theory`, `mechanism`, `phenomenon`, `pattern`, `distinction`, `person`, `book`, `assessment`
-- **Relationships:** Standard academic relationships (`cites`, `supports`, `contradicts`, `operationalizes`, `component_of`, `develops`)
-- **Access:** Via `KnowledgeGraph` client and backend GraphService API
+**Full architecture documentation lives in SiYuan for better organization and searchability.**
 
-**2. Personal Knowledge Graph (ADHD-Friendly - Layers 3/4)**
-- **Location:** `library/graph/adhd_ontology.py`, `library/graph/adhd_graph_client.py`
-- **Purpose:** Personal thinking artifacts captured during exploration/reading
-- **Entity Types:** `spark` (raw resonance), `insight` (processed meaning), `thread` (exploration path), `favorite_problem` (anchor question)
-- **Metadata:** Resonance signals (emotional retrieval cues), energy levels (mood-appropriate access), status lifecycle (`captured → exploring → anchored`)
-- **Relationships:** Discovery flow (`sparked_by`, `led_to_discovery`, `addresses_problem`), energy mapping (`energy_toward`, `energy_away`)
-- **Schema Versioning:** All nodes tagged with `schema_version` (currently `0.1.0`) for future migration support
-- **Access:** Via `ADHDKnowledgeGraph` client with schema management capabilities
+> **📖 Access:** Open SiYuan → IES notebook → `/System/` folder
+> - **Backend API Reference** — All 6 backend APIs with endpoints, schemas, and integration points
+> - **Knowledge Graph Architecture** — Domain vs Personal graph systems, entity types, relationships
+> - **Calibre Integration** — Book catalog, ingestion pipeline, Readest library browser
+> - **SiYuan Plugin Architecture** — Folder structure, block types, ForgeMode, Dashboard
 
-### Design Rationale
+**Quick Reference (for immediate context):**
 
-Based on ADHD cognition research (`.interleaved-thinking/final-answer.md`):
-- **Capture what resonates** (Tiago Forte) - `spark` entities for low-friction capture without forced classification
-- **Interest-based nervous system** (Tamara Rosier) - Energy levels enable mood-appropriate navigation
-- **Emotional retrieval cues** (Gabor Maté) - Resonance signals (`curious`, `excited`, `surprised`, `moved`, `disturbed`, `unclear`, `connected`, `validated`) support ADHD memory retrieval
-- **Non-judgmental lifecycle** - Growth metaphor avoids shame (`captured → exploring → anchored` not "incomplete")
-- **Favorite problems as anchors** (Feynman) - Stable navigation points for wandering minds
-- **Visit tracking** - Exploration visits tracked on entities to support recency-based navigation
+| System | Purpose | Key Files |
+|--------|---------|-----------|
+| Domain Graph | Books/research (179 books, 291 entities) | `library/graph/neo4j_client.py` |
+| Personal Graph | ADHD-friendly sparks/insights | `library/graph/adhd_graph_client.py` |
+| Backend APIs | 6 routers: reframe, personal, template, question-engine, books, concepts | `ies/backend/src/ies_backend/api/` |
+| SiYuan Plugin | 9-folder structure, 6 block types, ForgeMode | `.worktrees/siyuan/ies/plugin/` |
+| Calibre | Single source of truth, calibre_id universal | `scripts/ingest_calibre.py` |
 
-### Integration Points
+### Layer 3 & 4: SiYuan + Readest Architecture
 
-- **Layers 3/4 (SiYuan/Readest)** use `ADHDKnowledgeGraph` for personal capture during exploration
-- **Layer 1 domain graph** remains canonical source for ingested book knowledge
-- **Cross-linking:** Personal insights can reference domain concepts via `source_id` property; exploration breadcrumbs preserve journey context
-- **The virtuous cycle:** Personal artifacts (sparks/insights) can be formalized and added to domain graph
-
-### Key Files & Module Structure
-
-```
-library/graph/
-├── entities.py              # Domain knowledge extraction (books)
-├── neo4j_client.py         # Domain knowledge graph client
-├── adhd_ontology.py        # ADHD-friendly entity/relationship types
-├── adhd_graph_client.py    # Personal knowledge graph client with schema versioning
-└── __init__.py             # Unified export: both systems accessible from library.graph
-```
-
-**Exported from `library.graph`:**
-- Domain: `Entity`, `Relationship`, `ExtractionResult`, `EntityExtractor`, `deduplicate_entities`, `KnowledgeGraph`
-- ADHD: `EntityType`, `ResonanceSignal`, `EnergyLevel`, `EntityStatus`, `ADHDEntity`, `ADHDRelationship`, `RelationshipType`, `FavoriteProblem`, `Thread`, `ADHDKnowledgeGraph`, `SCHEMA_VERSION`
-
-### Usage Example
-
-```python
-from library.graph import (
-    KnowledgeGraph,           # Domain knowledge
-    ADHDKnowledgeGraph,       # Personal knowledge
-    ResonanceSignal,
-    EnergyLevel
-)
-
-# Domain knowledge (books)
-kg = KnowledgeGraph()
-concepts = kg.search_entities("executive function")
-
-# Personal knowledge (sparks/insights)
-adhd_kg = ADHDKnowledgeGraph()
-spark_id = adhd_kg.capture_spark(
-    title="Connection between EF and shame",
-    content="Reading Barkley - realized shame blocks EF access",
-    resonance_signal=ResonanceSignal.SURPRISED,
-    energy_level=EnergyLevel.MEDIUM,
-    source_id="concept_123"  # Link to domain concept
-)
-
-# Visit tracking for recency-based navigation
-adhd_kg.visit_spark(spark_id)
-```
-
-### Schema Management
-
-The `ADHDKnowledgeGraph` client includes schema versioning to support future migrations:
-- All nodes created with `schema_version` property (currently `0.1.0`)
-- Use `get_schema_info()` to check version and node counts
-- Use `migrate_schema()` when upgrading (migrations defined in `MIGRATIONS` dict)
-- Indexes created for status, resonance, energy, recency queries
-
-### Layer 3: SiYuan Plugin Architecture (Phase 2c - Dec 5)
-
-**Dashboard Enhancement: Energy-Based Navigation (Uncommitted - Dec 5):**
-
-The Dashboard now includes ADHD-friendly energy-based navigation for sparks with dynamic backend configuration:
-
-**Energy-Based Spark Filtering:**
-- **Energy filters:** All, Low (🔋), Medium (⚡), High (🔥) - Mood-appropriate navigation
-- **Resonance filters:** 8 emotional signals (curious, excited, surprised, moved, disturbed, unclear, connected, validated)
-- **Mutually exclusive filters:** Selecting energy clears resonance, and vice versa
-- **Emotional retrieval cues:** Resonance signals support ADHD memory retrieval patterns
-- **API endpoints:** `/personal/sparks/by-energy/{level}`, `/personal/sparks/by-resonance/{signal}`
-- **Empty state:** Shows friendly message when filters return no results, with "Show all sparks" option
-
-**Backend Health Checking:**
-- **Dynamic configuration:** Uses `getConfiguredBackendUrl()` from siyuan-structure.ts (configurable via localStorage)
-- **Health status display:** Connected (green dot), Checking (spinner), Disconnected (red dot) with backend URL
-- **Retry functionality:** Manual refresh button when disconnected, force health check on retry
-- **Status caching:** 30-second TTL reduces API overhead (implemented in siyuan-structure.ts)
-- **onMount behavior:** Calls `refreshBackendStatus()` instead of direct data load - ensures backend is checked first
-
-**Flow Mode Concept Navigation:**
-- **Suggestion chips:** Clicking suggestions in "Most Connected" or "Novel Concepts" now passes concept name to FlowMode
-- **Direct navigation:** `navigateTo('flow', conceptName)` pre-selects entity for exploration
-- **State management:** `selectedConcept` variable tracks concept for FlowMode initialization
-
-**Implementation:**
-- `.worktrees/siyuan/ies/plugin/src/views/Dashboard.svelte` — Energy filters (lines 69-88), backend status (98-102), filter handlers (207-256), UI (475-621, 1397-1550)
-- Filter pills with energy-specific colors: Low (#6b8e9f), Medium (#c98b2f), High (#d94f5c)
-- Resonance dropdown with emoji labels matching 8 ADHD-friendly signals
-- Backend status indicator with retry button and connection messages
-
-**Settings Panel Implementation (Dec 5):**
-
-Configuration panel for plugin preferences with centralized settings store:
-
-**Core Features:**
-- **Ollama Integration** — Local AI for chat + embeddings (auto-discover models via API)
-- **Cloud Providers** — OpenAI/Anthropic API key + model selection
-- **Connection Management** — Backend URL + Ollama URL configuration with live health checks
-- **Notebook Preferences** — User-configurable preferred notebooks (domain-agnostic defaults)
-- **Display Options** — Question badges, auto-save sessions, user ID
-
-**Settings Architecture:**
-- **Primary Source:** Svelte store (`settingsStore`) with reactive subscriptions
-- **Persistence:** Plugin data (`plugin.saveData('settings.json')`) for workspace persistence
-- **Fallback Chain:** Settings store → localStorage (backward compat) → hardcoded defaults
-- **Initialization:** `initializeSettings()` merges loaded data with defaults on plugin mount
-- **Runtime Access:** `getSettingsSync()` for synchronous reads, `updateSettings()` for partial updates
-
-**Settings Schema:**
-```typescript
-interface IESSettings {
-  backendUrl: string;              // Backend API connection (default: http://192.168.86.60:8081)
-  ollamaUrl: string;               // Local Ollama instance (default: http://localhost:11434)
-  chatProvider: 'ollama' | 'openai' | 'anthropic';  // Default: openai
-  chatModel: string;               // Auto-populated from provider (default: gpt-4o)
-  embeddingProvider: 'ollama' | 'openai';  // Default: openai
-  embeddingModel: string;          // Default: text-embedding-3-small
-  openaiApiKey: string;            // Stored locally, never sent to backend
-  anthropicApiKey: string;
-  preferredNotebooks: string[];    // Domain-agnostic notebook list
-  userId: string;                  // Default: 'chris'
-  showQuestionBadges: boolean;     // Default: true
-  autoSaveSessions: boolean;       // Default: true
-}
-```
-
-**UI Design:**
-- Gear icon in Dashboard header → modal with collapsible sections
-- **Connection status indicators:** Live health checks with color-coded status (green = connected, red = disconnected, spinner = checking)
-- **Auto-discovery:** Ollama models fetched from `/api/tags` endpoint, filtered by type (chat vs embedding)
-- **Health checking:** Backend and Ollama connections validated on mount and URL change (500ms debounce)
-- **Provider switching:** Changing chat/embedding provider auto-selects first available model from that provider
-- **API keys:** Masked password fields, stored in SiYuan plugin data (never sent to backend)
-- **Settings persist:** Saved to workspace via `plugin.saveData()` on every change
-
-**Implementation Files:**
-- `stores/settings.ts` (150 lines) — Svelte writable store, schema definitions, DEFAULT_SETTINGS, model lists, helper functions
-- `utils/ollama.ts` (129 lines) — Ollama API client with health checks, model fetching, chat/embedding filtering
-- `components/SettingsPanel.svelte` (200+ lines) — Modal UI with collapsible sections, connection testing, debounced URL changes
-- `views/Dashboard.svelte` — Gear icon button, SettingsPanel integration, settings persistence via plugin instance
-- `index.ts` — Plugin lifecycle: loads settings on init, passes plugin instance to Dashboard for saveData access
-
-**Integration Points:**
-- **siyuan-structure.ts:** `getBackendUrl()` and `getPreferredNotebookNames()` now check settings store first, fall back to localStorage
-- **Dashboard.svelte:** Uses `settingsStore` for backend URL, initializes settings from plugin data on mount
-- **ForgeMode (future):** Will consume `chatProvider` and `chatModel` for dialogue generation
-- **QuickCapture (future):** Will consume `embeddingProvider` and `embeddingModel` for entity extraction
-
-**Backward Compatibility:**
-- Functions like `getBackendUrl()` check settings store first, then localStorage for migration
-- Settings initialized with defaults merged with loaded data (missing fields get default values)
-- No breaking changes to existing code - settings store is additive enhancement
-
-**Design Document:** `docs/plans/2025-12-05-siyuan-settings-panel-design.md` (177 lines) — Complete specification with schema, UI layout, integration points, implementation order
+> **📖 See SiYuan:** IES notebook → `/System/SiYuan Plugin Architecture`
+>
+> Covers: 9-folder structure, 6 block types, Dashboard energy navigation, Settings panel, ForgeMode, Question Engine integration
 
 ---
 
-**SiYuan Architecture Merge Implementation (Dec 5):**
+### Layer 2: Backend APIs
 
-**Complete Folder Structure Implementation:** `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` (lines 32-71)
-
-The STRUCTURE_FOLDERS array now defines a unified 9-folder hierarchy merging IES Architecture Package with ADHD-friendly current implementation:
-
-```typescript
-const STRUCTURE_FOLDERS = [
-    // Daily quick captures (Package's 00_Inbox)
-    { path: 'Daily', title: 'Daily' },
-
-    // Seedlings - atomic ideas (Package's 01_Seedlings)
-    { path: 'Seedlings', title: 'Seedlings' },
-    { path: 'Seedlings/Questions', title: 'Seedlings – Questions' },
-    { path: 'Seedlings/Observations', title: 'Seedlings – Observations' },
-    { path: 'Seedlings/Moments', title: 'Seedlings – Moments' },
-    { path: 'Seedlings/Schemas', title: 'Seedlings – Schemas' },
-    { path: 'Seedlings/Contradictions', title: 'Seedlings – Contradictions' },
-    { path: 'Seedlings/What_Ifs', title: 'Seedlings – What Ifs' },
-    { path: 'Seedlings/Insights', title: 'Seedlings – Insights' },
-
-    // Sessions by thinking mode (Package's 02_Shaping)
-    { path: 'Sessions', title: 'Sessions' },
-    { path: 'Sessions/Learning', title: 'Learning Sessions' },
-    { path: 'Sessions/Articulating', title: 'Articulating Sessions' },
-    { path: 'Sessions/Planning', title: 'Planning Sessions' },
-    { path: 'Sessions/Ideating', title: 'Ideating Sessions' },
-    { path: 'Sessions/Reflecting', title: 'Reflecting Sessions' },
-
-    // Flow Maps - visual maps (Package's 03_Flow_Maps)
-    { path: 'Flow_Maps', title: 'Flow Maps' },
-
-    // Concepts - canonical concepts (Package's 04_Concepts)
-    { path: 'Concepts', title: 'Concepts' },
-
-    // Promoted/validated insights (current ADHD structure)
-    { path: 'Insights', title: 'Insights' },
-
-    // ADHD anchor questions (current structure)
-    { path: 'Favorite_Problems', title: 'Favorite Problems' },
-
-    // Projects - active work (Package's 05_Projects)
-    { path: 'Projects', title: 'Projects' },
-
-    // Archive - retired material (Package's 06_Archive)
-    { path: 'Archive', title: 'Archive' },
-];
-```
-
-**Block Type System Implementation:** `.worktrees/siyuan/ies/plugin/src/types/blocks.ts` (250 lines)
-
-Complete TypeScript type system for merged block schemas:
-
-**Status Types:**
-- `CaptureStatus`: `'raw' | 'classified' | 'processed'` — AI processing state
-- `UserStatus`: `'captured' | 'exploring' | 'anchored'` — User engagement state
-
-**ADHD Extensions:**
-- `ResonanceSignal`: 8 emotional retrieval cues (spark, curiosity, delight, concern, tension, dread, clarity, stuck)
-- `EnergyLevel`: 3 levels for mood-appropriate navigation (low, medium, high)
-
-**Seedling Types:**
-- `IdeaType`: 7 atomic idea categories (question, insight, observation, moment, schema, contradiction, what_if)
-- `ClarityLevel`: Fuzzy-to-clear progression (fuzzy, partial, clear)
-- `ConfidenceLevel`: Idea strength (low, medium, high)
-
-**Capture Channels:**
-- `CaptureChannel`: How captured (phone, readest, web, voice, other)
-- `CaptureSource`: Specific tool (ios_shortcut, readest, browser_extension, mcp_tool, manual, other)
-
-**Block Types:**
-- `BlockType`: 6 formal types (seed, shaping, map, concept, decision, log_entry)
-
-**Block Metadata Interfaces:**
-1. `BaseMeta` — Common fields (block_type, be_id, be_type, resonance_signal, energy_level, status, exploration_visits, timestamps)
-2. `QuickCaptureMeta` — Raw captures with AI classification fields (auto_summary, auto_labels, linked_concepts, book metadata)
-3. `SeedBlockMeta` — Atomic ideas with idea_type, domain, source, clarity, confidence
-4. `ShapingBlockMeta` — Dialogue segments with session_id, speaker, phase
-5. `MapBlockMeta` — Visual maps with map_type, focus, entry_points
-6. `ConceptBlockMeta` — Canonical concepts with concept_id, concept_name, version
-7. `DecisionBlockMeta` — Project decisions with decision_status, rationale
-8. `LogEntryMeta` — Activity logs with context, summary
-
-**Helper Constants:**
-- `IDEA_TYPE_LABELS`: Human-readable names
-- `IDEA_TYPE_ICONS`: Emoji icons (❓ Question, 💡 Insight, 👁️ Observation, ⏱️ Moment, 🏗️ Schema, ⚡ Contradiction, 🔮 What If)
-- `CAPTURE_STATUS_LABELS`: Status display names
-- `USER_STATUS_LABELS`: User status display names
-- `SEEDLING_FOLDER_MAP`: Maps idea types to Seedlings subfolders
-
-**Key Design Decisions:**
-- Two separate status fields: `capture_status` (AI) vs `status` (user) to distinguish AI processing from user engagement
-- Dual Insights folders: `Seedlings/Insights` (raw "aha" moments) vs `/Insights/` (promoted/validated insights)
-- Metadata in both YAML frontmatter AND SiYuan attributes (synced for SQL queries)
-- ADHD features preserved: energy_level, resonance_signal, exploration_visits, backend linking (be_id, be_type)
-
-**Repository Guidelines:** `AGENTS.md` created to document IES SiYuan Architecture Package expert context for AI agents working with the merged structure.
+> **📖 See SiYuan:** IES notebook → `/System/Backend API Reference`
+>
+> Covers: Reframe API, Personal Graph API, Template API, Question Engine API, Books API, Concept API
 
 ---
 
-**AST Folder Structure (Previous):**
-
-The plugin creates an ADHD-friendly folder hierarchy in SiYuan notebooks for session persistence and knowledge organization:
-
-```
-/Daily/                   # Daily log for low-friction capture
-/Insights/                # Promoted insights from sparks
-/Threads/                 # Active exploration threads
-/Favorite Problems/       # Anchor questions (Feynman-inspired)
-/Concepts/                # Formalized concepts
-/Sessions/                # AST session documents (mode-specific)
-  ├── Learning/           # Learning mode sessions
-  ├── Articulating/       # Articulating mode sessions
-  ├── Planning/           # Planning mode sessions
-  ├── Ideating/           # Ideating mode sessions
-  └── Reflecting/         # Reflecting mode sessions
-```
-
-**Question Class Tracking in ForgeMode (Dec 5):**
-
-ForgeMode now tracks which question classes are used during sessions and displays them with visual badges:
-
-**Question Class Labels:**
-- **Schema-Probe (🏗️)** — Structure questions (blue #4a90d9)
-- **Boundary (🔲)** — Edge/limit questions (purple #7b68ee)
-- **Dimensional (📐)** — Spectrum questions (teal #20b2aa)
-- **Causal (⚡)** — Mechanism questions (tan #f4a460)
-- **Counterfactual (🔮)** — What-if questions (orchid #da70d6)
-- **Anchor (⚓)** — Concrete example questions (green #3cb371)
-- **Perspective-Shift (👁️)** — Viewpoint change questions (brown #cd853f)
-- **Meta-Cognitive (🧠)** — Thinking pattern questions (gray #778899)
-- **Reflective-Synthesis (🔗)** — Integration questions (blue #6495ed)
-
-**Features:**
-- Questions generated with classified question classes from Question Engine
-- Visual emoji badges displayed inline with questions during session
-- `questionClassesUsed` array tracks all classes used in session
-- `lastQuestionClass` stores most recent question class
-- Question classes included in session document frontmatter
-- Session results display question types with human-readable labels
-
-**Implementation:**
-- `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` lines 107-127 (QUESTION_CLASS_LABELS), 405-415 (tracking), 437-445 (display)
-- Question class tracking integrated with Question Engine API calls
-- Supports both classified_questions (new format) and fallback to plain questions array
-
-**Usage Flow:**
-1. ForgeMode detects user state from recent messages
-2. Selects inquiry approach based on state + thinking mode
-3. Generates question using approach + context (topic, section, user/AI messages)
-4. Question tagged with QuestionClass for mode transition decisions
-5. Session document records question classes for analysis
-
-**Session Document Creation (ForgeMode):**
-
-When a ForgeMode session completes, `createSessionDocument()` saves structured documents with:
-
-**Frontmatter (YAML):**
-```yaml
-be_type: "session"
-be_id: "session_abc123"
-mode: "learning"
-topic: "Understanding executive function"
-status: "completed"
-created: "2025-12-05T01:42:00Z"
-template_id: "learning-mechanism-map"
-template_name: "Mechanism Map"
-entities_extracted: 12
-graph_mapping_executed: true
-question_classes_used: ["schema_probe", "causal", "anchor"]
-```
-
-**Document Contents:**
-1. **Topic Section** — Session topic, thinking mode, template name (if applicable), date
-2. **Section Responses** — Template-driven responses by section ID (if template-based session)
-   - Section IDs formatted as human-readable headings
-   - Example: "understanding_prerequisites" → "Understanding Prerequisites"
-3. **Conversation Transcript** — Full user/AI message exchange with role labels
-   - Formatted: **You:** / **AI:** with horizontal rules between messages
-   - Includes thinking partner questions with emoji badges
-4. **Session Results** — Summary of session outcomes
-   - Entities extracted count
-   - Graph mapping status (✓ if executed)
-   - Question types used with human-readable labels (Structure, Causal, Anchor, etc.)
-
-**Implementation:**
-- `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts` — Core utility module (769 lines) for SiYuan notebook structure and backend integration
-  - **Folder Structure:** STRUCTURE_FOLDERS array defines ADHD-friendly hierarchy (Daily, Insights, Threads, Favorite Problems, Concepts, Sessions/{mode})
-  - **Backend Integration:** callBackendApi() generic function for SiYuan forwardProxy requests to backend APIs at configurable URL (default: http://192.168.86.60:8081)
-  - **Domain-Agnostic Notebook Selection:** getPreferredNotebookNames() supports user-configurable preferences
-    - **Primary source:** Settings store (`getSettingsSync().preferredNotebooks`) for reactive workspace-persisted preferences
-    - **Fallback:** localStorage `ies.preferredNotebooks` for backward compatibility with pre-settings-store code
-    - **Default:** `['Personal', 'Knowledge', 'Notes', 'Intelligent Exploration System']` if neither source available
-    - resolveStructureNotebook() resolves to first matching open notebook, falls back to first available
-  - **Session Document Creation:** createSessionDocument() (lines 557-679) saves ForgeMode sessions with full metadata
-    - MODE_FOLDER_MAP: Maps thinking modes to folder paths (learning→Sessions/Learning, articulating→Sessions/Articulating, etc.)
-    - SessionDocumentOptions interface: Full type safety for session data
-    - serializeFrontmatter(): YAML serialization with proper type handling (arrays, objects, dates, nested structures)
-    - Question class labels: Converts snake_case to readable names (schema_probe→Structure, causal→Causal, anchor→Anchor, etc.)
-    - Document naming: `{folderPath}/{YYYY-MM-DD-HHMM-topic}.md` with safe filename sanitization
-  - **Personal Graph Integration:** Helper functions for backend Personal Graph API
-    - createSparkWithBackend(): Creates spark in backend + daily log block, bidirectional linking with custom-be_id block attributes
-    - promoteToInsight(): Promotes spark to insight in both backend and SiYuan (moves document to Insights folder, updates status)
-    - getPersonalStats(): Fetches personal graph statistics (spark count, insight count, status distribution)
-    - visitSpark(): Records visit for recency-based navigation
-  - **Configuration Management:**
-    - **getBackendUrl():** Checks settings store first (`getSettingsSync().backendUrl`), falls back to localStorage, then hardcoded default
-    - **checkBackendHealth():** Health monitoring with 30-second TTL cache to reduce API overhead
-    - Backward compatible with pre-settings-store code via localStorage fallback
-- `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` — Calls `createSessionDocument()` on session end
-  - Passes template data, section responses, transcript, question classes used
-  - Displays success message with entity count and question types
-- File path: `/Sessions/{mode}/{YYYY-MM-DD-HHMM-topic}.md`
-- Block attributes: `custom-be_type`, `custom-be_id`, `custom-mode`, `custom-status` for backend linking
-
-**Purpose:**
-- Persistent record of thinking sessions for later review
-- Breadcrumb trail showing evolution of understanding
-- Raw material for concept extraction and formalization
-- Training data for Mode Transition Engine pattern learning
-- Question class analytics for understanding thinking patterns
-
----
-
-### Layer 2: Phase 2c Backend APIs (COMPLETE - Dec 4)
-
-Five integrated backend services addressing critical gaps #1-#3, all registered in `ies/backend/src/ies_backend/main.py`:
-
-**1. Reframe API** (`/reframes`) — Makes domain concepts accessible via metaphors, analogies, stories, patterns, and contrasts
-
-**Endpoints:**
-- `GET /concepts/{concept_id}/reframes` - Retrieve cached reframes
-- `POST /concepts/{concept_id}/reframes/generate` - Generate 1-10 reframes via Claude Sonnet 4
-- `POST /reframes/{reframe_id}/feedback` - Vote helpful/confusing
-
-**Entity Type:** `Reframe` (Neo4j, linked to concepts via `HAS_REFRAME`)
-
-**Reframe Types:** `metaphor`, `analogy`, `story`, `pattern`, `contrast`
-
-**Implementation:**
-- `ies/backend/src/ies_backend/api/reframe.py` - FastAPI router (55 lines)
-- `ies/backend/src/ies_backend/services/reframe_service.py` - Service with Claude Sonnet 4 integration
-- `ies/backend/src/ies_backend/schemas/reframe.py` - Pydantic schemas
-- `ies/backend/tests/test_reframe_service.py` - Unit tests
-
-**Frontend Integration:**
-- SiYuan: `.worktrees/siyuan/ies/plugin/src/components/ReframesTab.svelte`
-- Readest: `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/ReframesSection.tsx`
-
----
-
-**2. Personal Graph API** (`/personal`) — ADHD-friendly personal knowledge capture with emotional resonance and energy tracking
-
-**Core Endpoints:**
-- `POST /personal/sparks` - Create spark (raw resonance capture with optional SiYuan block linking)
-- `GET /personal/sparks/{spark_id}` - Retrieve spark by ID
-- `POST /personal/sparks/{spark_id}/visit` - Record visit for recency tracking
-- `POST /personal/sparks/{spark_id}/promote` - Promote spark to insight (status: captured → anchored)
-
-**ADHD-Friendly Retrieval:**
-- `GET /personal/sparks/by-resonance/{signal}` - Find by emotional state (8 signals: curious, excited, surprised, moved, disturbed, unclear, connected, validated)
-- `GET /personal/sparks/by-energy/{level}` - Find by energy level (low/medium/high) for mood-appropriate navigation
-- `GET /personal/sparks/unvisited` - Surface forgotten captures
-
-**Statistics:**
-- `GET /personal/stats` - Personal graph stats (spark count, insight count, resonance distribution)
-
-**Implementation:**
-- `ies/backend/src/ies_backend/api/personal.py` - FastAPI router (130 lines)
-- `ies/backend/src/ies_backend/services/personal_graph_service.py` - Service layer (leverages `library.graph.ADHDKnowledgeGraph`)
-- `ies/backend/src/ies_backend/schemas/personal.py` - Pydantic schemas
-
----
-
-**3. Template API** (`/templates`) — JSON-based thinking templates with validation and graph mapping
-
-**Endpoints:**
-- `GET /templates/{template_id}` - Retrieve thinking template by ID (returns `ThinkingTemplate` schema)
-
-**Available Templates:**
-- `learning-mechanism-map` - Learning mode: understand how something works
-- `articulating-clarify-intuition` - Articulating mode: clarify vague intuitions
-
-**Features:**
-- JSON Schema validation (`schemas/thinking-template.schema.json`)
-- Template loading with Pydantic validation fallback
-- Graph mapping execution (`create_or_link`, `update_journey` actions)
-- Two reference templates provided:
-  - `schemas/templates/learning-mechanism-map.json` - Learning mode: mechanism map
-  - `schemas/templates/articulating-clarify-intuition.json` - Articulating mode: clarify intuition
-
-**Implementation:**
-- `ies/backend/src/ies_backend/api/template.py` - FastAPI router (24 lines) with GET endpoint
-- `ies/backend/src/ies_backend/services/template_service.py` - Template loading and execution (150 lines)
-- `ies/backend/src/ies_backend/schemas/template.py` - Template structure definitions
-- `ies/backend/tests/test_template_service.py` - Unit tests
-- Registered in `ies/backend/src/ies_backend/main.py` with `/templates` prefix
-
-**Frontend Integration:**
-- SiYuan: `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte` - Fetches templates via `apiGet()` with SiYuan forwardProxy
-- Template-driven session state: currentSectionIndex, sectionResponses tracking
-- Thinking modes mapped to template IDs: `learning` → `learning-mechanism-map`, `articulating` → `articulating-clarify-intuition`
-
-**JSON Schema:** `schemas/thinking-template.schema.json` defines:
-- 5 thinking modes: `learning`, `articulating`, `planning`, `ideating`, `reflecting`
-- Section structure: `id`, `prompt`, `input_type` (concept_search/freeform/selection), `ai_behavior`, `required`
-- Graph mapping actions: `create_or_link`, `update_journey` with metadata and relationship specs
-
----
-
-**3b. Question Engine API** (`/question-engine`) — Adaptive question generation with nine cognitive function classes (Dec 5)
-
-**Nine Question Classes (IES Question Engine expansion):**
-
-Each class has distinct cognitive function and maps to specific AST thinking modes:
-
-1. **Schema-Probe** — Surfaces hidden structure (lists, buckets, taxonomies)
-   - Maps to: Discovery, Learning modes
-   - Example: "What are the main categories here?", "What's the underlying structure?"
-
-2. **Boundary** — Clarifies edges/limits to avoid scope creep
-   - Maps to: Discovery, Articulating modes
-   - Example: "What's NOT included?", "Where does this end?"
-
-3. **Dimensional** — Introduces spectra/coordinates for precise positioning
-   - Maps to: Discovery, Planning modes
-   - Example: "On a spectrum from X to Y, where is this?", "What dimensions matter here?"
-
-4. **Causal** — Pushes for mechanisms, prerequisites, sequences
-   - Maps to: Dialogue, Learning modes
-   - Example: "What causes this?", "What has to happen first?", "How does A lead to B?"
-
-5. **Counterfactual** — "What if" deviations to expose assumptions
-   - Maps to: Dialogue, Ideating modes
-   - Example: "What if the opposite were true?", "Imagine this failed - why?"
-
-6. **Anchor** — Grounds abstractions in concrete instances
-   - Maps to: Dialogue, Reflecting modes
-   - Example: "Can you give a specific example?", "When did you experience this?"
-
-7. **Perspective-Shift** — Forces viewpoint changes (roles, time, system level)
-   - Maps to: Flow, Ideating modes
-   - Example: "How would X see this?", "Zoom out - what's the bigger picture?"
-
-8. **Meta-Cognitive** — Checks thinking patterns directly
-   - Maps to: AST, Reflecting modes
-   - Example: "How confident are you?", "Where do you feel stuck?", "What's your energy level?"
-
-9. **Reflective-Synthesis** — Integration statements tying threads together
-   - Maps to: AST, Articulating modes
-   - Example: "What's the main insight here?", "How do these pieces connect?"
-
-**Endpoints:**
-- `POST /question-engine/detect-state` - Detect user cognitive/emotional state (flowing, stuck, overwhelmed, exploring, etc.)
-- `POST /question-engine/select-approach` - Select inquiry approach based on state (Socratic, Solution-Focused, Phenomenological, Systems, Metacognitive)
-- `GET /question-engine/templates/{approach}` - Get question templates for specific approach
-- `POST /question-engine/generate-questions` - Generate profile-adapted questions (orchestrates full pipeline)
-- `GET /question-engine/question-classes` - List all 9 question classes with descriptions
-- `GET /question-engine/approach-classes` - Show approach→class mappings
-
-**APPROACH_TO_CLASSES Mapping:**
-- **Socratic** → Schema-Probe, Boundary, Causal
-- **Solution-Focused** → Anchor, Dimensional
-- **Phenomenological** → Anchor, Meta-Cognitive
-- **Systems** → Causal, Perspective-Shift, Dimensional
-- **Metacognitive** → Meta-Cognitive, Reflective-Synthesis
-
-**Implementation:**
-- `ies/backend/src/ies_backend/api/question_engine.py` - FastAPI router with question class endpoints (400 lines)
-  - Endpoints: detect-state, select-approach, templates/{approach}, generate-questions, approaches, categories, question-classes, approach-classes
-  - Full pipeline orchestration with profile adaptation and question classification
-- `ies/backend/src/ies_backend/schemas/question_engine.py` - QuestionClass enum, ClassifiedQuestion, APPROACH_TO_CLASSES, CLASS_TO_MODES mappings (251 lines)
-  - Nine question classes with descriptions and mode mappings
-  - APPROACH_TO_CLASSES: Maps inquiry approaches to question classes they generate
-  - STATE_TO_APPROACHES: Maps user states to recommended inquiry approaches
-- `ies/backend/src/ies_backend/services/state_detection_service.py` - State detection logic
-- `ies/backend/src/ies_backend/services/approach_selection_service.py` - Approach selection logic
-- `ies/backend/src/ies_backend/services/question_templates_service.py` - Template library
-
-**ForgeMode Integration (SiYuan Plugin):**
-- State detection: analyzes last 3 user messages → determines cognitive state
-- Approach selection: maps thinking mode to inquiry approach with hints (learning→socratic, articulating→phenomenological, etc.)
-- Question generation: generates 1 thinking partner question per AI response using detected state + selected approach
-- Questions are classified with QuestionClass tags for Mode Transition Engine tracking
-- Session documents record question classes used for pattern analysis
-
-**Usage Flow:**
-1. ForgeMode detects user state from recent messages
-2. Selects inquiry approach based on state + thinking mode
-3. Generates question using approach + context (topic, section, user/AI messages)
-4. Question tagged with QuestionClass for mode transition decisions
-5. Session document records question classes for analysis
-
----
-
-**4. Entity Overlay API** (`/graph/entities/by-book`) — Real-time entity highlighting for reading interface
-
-**Current Implementation:**
-- `GET /graph/entities/by-book/{book_hash}` - Retrieve all entities mentioned in a specific book
-- Query parameters: `title` (optional fallback), `types` (optional filter), `limit` (default 500, max 1000)
-- Matching strategy: Primary by `hash` property, fallback to title substring match
-- **Fixed:** Query pattern now uses direct Book-MENTIONS->Entity relationships (aligned with ingestion pipeline)
-
-**Migration to Calibre Integration (Dec 4):**
-- **New endpoint:** `GET /graph/entities/by-calibre-id/{calibre_id}` - Direct lookup by Calibre book ID
-- Eliminates hash/title matching fragility by using Calibre as single source of truth
-- See Calibre Integration section below for complete architecture
-
-**Response Format:**
-```json
-{
-  "book_hash": "string",
-  "entities": [
-    {
-      "name": "Executive Function",
-      "type": "Concept",
-      "mention_count": 142
-    }
-  ],
-  "total": 500
-}
-```
-
-**Implementation:**
-- `ies/backend/src/ies_backend/api/book_entities.py` - FastAPI router (51 lines) with title query parameter
-- `ies/backend/src/ies_backend/services/graph_service.py` - `get_entities_by_book()` method with dual matching strategy (hash OR title)
-- `ies/backend/tests/test_book_entities.py` - 3 unit tests (all passing)
-
-**Frontend Integration (Readest):**
-- `.worktrees/readest/readest/apps/readest-app/src/services/transformers/entity.ts` - HTML transformer wraps entity names in styled `<span>` elements
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/EntityTypeFilter.tsx` - Enhanced pill-based UI component (122 lines, Dec 4 redesign)
-  - **Master toggle:** ON/OFF button with eye icons (LuEye/LuEyeOff) replacing checkbox
-  - **Pill controls:** Interactive type-specific pills replace traditional checkboxes (5 types: Concept, Person, Theory, Framework, Assessment)
-  - **Visual feedback:** Active pills show type-specific colors with 12% opacity backgrounds, inactive pills are muted
-  - **Status indicator:** Centered display shows entity count, loading spinner, error message, or "Book not indexed" warning
-  - **Disabled state:** Pills are disabled when overlay is off, preventing interaction confusion
-  - **CSS integration:** Uses `.entity-type-pill` classes with color variants (`.entity-type-concept`, `.entity-type-person`, etc.)
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/FlowPanel.tsx` - Main flow panel container with EntityTypeFilter integrated at top (lines 156-159)
-  - EntityTypeFilter always visible above entity content for quick overlay control
-  - Positioned before entity details section for immediate access
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/EntitySection.tsx` - Entity header card with type-specific badges (53 lines)
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/RelationshipsSection.tsx` - Grouped relationship display with type badges (104 lines)
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/SourcesSection.tsx` - Source book links with chapter and page info (65 lines)
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/QuestionsSection.tsx` - Expandable thinking partner questions with type labels (136 lines)
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/flowpanel/Header.tsx` - Flow panel header with pin/close controls (58 lines)
-- `.worktrees/readest/readest/apps/readest-app/src/store/flowModeStore.ts` - Comprehensive Zustand state management (380+ lines)
-  - Entity overlay state: enabled, entities array, visible types, loading, error
-  - Actions: setEntityOverlayEnabled, toggleEntityType, setVisibleTypes
-  - fetchEntitiesForBook() with dynamic API host resolution (localhost or network IP)
-  - Journey tracking integration (breadcrumb journey with dwell time)
-- `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/FoliateViewer.tsx` - Auto-fetches entities on book load, applies transformer
-- `.worktrees/readest/readest/apps/readest-app/src/styles/globals.css` - Complete entity overlay styling system (lines 559-618, 756-855)
-  - **Filter controls:** `.entity-filter-container`, `.flow-master-toggle` for overlay UI
-  - **Type pills:** `.entity-type-pill` base class with `:hover`, `.active`, `.disabled` states
-  - **Type-specific colors:** Blue (Concept), Green (Person), Purple (Theory), Orange (Framework), Red (Assessment)
-  - **Inline highlights:** `.entity-concept`, `.entity-person`, `.entity-theory`, `.entity-framework`, `.entity-assessment` for text overlay
-  - **Hover effects:** Underline decoration appears on hover, type-specific color changes
-
-**Network Access Support:**
-- `fetchEntitiesForBook()` dynamically determines API host based on `window.location.hostname`
-- When accessed via network IP (e.g., `192.168.86.60:3002`), uses same hostname for backend API (`192.168.86.60:8081`)
-- Localhost access continues to use `localhost:8081` for API calls
-- Enables entity overlay when accessing Readest from other devices on the network (e.g., iPad)
-
-**Usage Flow:**
-1. Book loads in Readest reader
-2. FoliateViewer fetches entities from backend using `book_hash` and `title` (dual identifier strategy)
-3. flowModeStore resolves API host dynamically (localhost or network IP)
-4. Backend attempts hash match first, falls back to title-based matching if needed
-5. Entity transformer processes HTML content, wrapping entity names in styled spans
-6. User toggles overlay on/off and filters visible entity types via EntityTypeFilter component
-7. Entities highlighted inline in text according to type (color-coded)
-
----
-
-### Calibre Integration: Single Source of Truth (Phase 2 Backend Complete - Dec 4)
-
-**Problem Solved:** Books exist with different identifiers (Calibre integer ID, Neo4j file path, Readest UUID), causing entity overlay failures when identifiers don't match.
-
-**Solution:** Calibre library as canonical book source with `calibre_id` as universal identifier across all systems.
-
-**Architecture:**
-
-```
-Calibre (Source of Truth)
-├── metadata.db (SQLite catalog) - 179 books
-└── Author/Book folders (epub/pdf files)
-         │
-         ├─→ Ingestion Pipeline → Neo4j (Book nodes with calibre_id) [Phase 3]
-         ├─→ IES Backend → Book catalog API + entity lookup by calibre_id [COMPLETE]
-         └─→ Readest → Browse books, open files, entity overlay [Phase 4]
-```
-
-**Docker Service (Already Running):**
-- Container: `calibre-web-automated` (Up 23+ hours)
-- Port: 8083 (web UI)
-- Library: `/home/chris/Documents/calibre` (179 books)
-- Ingest: `/home/chris/Documents/ingest`
-
-**Backend APIs (PHASE 2 COMPLETE - Dec 4, Commit 9542ec2):**
-
-**5. Books API** (`/books`) — Calibre library catalog access
-
-**Endpoints:**
-- `GET /books` - List all books from Calibre (default limit 100, max 500)
-- `GET /books?search=ADHD` - Search books by title/author
-- `GET /books/{calibre_id}` - Get single book by Calibre ID
-- `GET /books/{calibre_id}/cover` - Fetch book cover image (JPEG)
-- `HEAD /books/{calibre_id}/file` - Get file metadata (size, type) without body for size checking
-- `GET /books/{calibre_id}/file` - Serve book file (epub or pdf) for web browser access
-- `GET /graph/entities/by-calibre-id/{calibre_id}` - Entity lookup by Calibre ID (new endpoint in book_entities.py)
-
-**Implementation:**
-- `ies/backend/src/ies_backend/services/calibre_service.py` - CalibreService queries metadata.db (128 lines)
-  - `list_books(search, limit)` - Query books table with optional title/author search
-  - `get_book(calibre_id)` - Fetch single book by ID
-  - `get_cover_path(calibre_id)` - Locate cover.jpg in book folder
-  - `get_book_file_path(calibre_id)` - Locate epub/pdf file in book folder (prefers epub)
-- `ies/backend/src/ies_backend/api/books.py` - FastAPI router (125 lines)
-  - Library path: `/home/chris/Documents/calibre` (hardcoded, TODO: environment variable)
-  - HEAD endpoint returns Content-Length, Content-Type, Content-Disposition headers for file metadata
-  - GET endpoint serves files with proper media types (application/epub+zip or application/pdf)
-  - All endpoints properly handle 404s for missing books/covers/files
-- `ies/backend/src/ies_backend/schemas/calibre.py` - Book schema (Pydantic, 13 lines)
-- `ies/backend/src/ies_backend/services/graph_service.py` - Added `get_entities_by_calibre_id()` method (47 lines)
-  - Queries Neo4j: `MATCH (b:Book) WHERE b.calibre_id = $calibre_id`
-  - Returns entities with mention counts sorted by frequency
-- `ies/backend/src/ies_backend/api/book_entities.py` - Added `/entities/by-calibre-id/{calibre_id}` endpoint (20 lines)
-  - Returns `CalibreEntitiesResponse` with calibre_id, entities list, total count
-- `ies/backend/tests/test_calibre_service.py` - 6 unit tests (mocked SQLite)
-- `ies/backend/tests/test_books_api.py` - 6 unit tests (mocked service)
-- `ies/backend/tests/test_book_entities.py` - 3 new tests for calibre_id endpoint
-- Tests: 85/85 passing (15 new Calibre-related tests)
-
-**Schema:**
-```python
-class Book(BaseModel):
-    calibre_id: int
-    title: str
-    author: str
-    path: str
-```
-
-**Migration Script (Ready to Run):**
-- `scripts/match_calibre_ids.py` — One-time migration to add `calibre_id` to existing Neo4j Book nodes (167 lines)
-- **Matching Strategy:**
-  - Normalizes titles (removes subtitles, punctuation, lowercase)
-  - Calculates string similarity (SequenceMatcher 0-1 score)
-  - Boosts score +0.1 if author names overlap
-  - Auto-matches if score >= 0.7 (configurable `MATCH_THRESHOLD`)
-- **Process:**
-  1. Load all books from Calibre `metadata.db`
-  2. Load all Book nodes from Neo4j
-  3. Find best match for each Neo4j book using similarity scoring
-  4. Display matched pairs with scores for review
-  5. Prompt for confirmation before updating
-  6. Execute Cypher: `MATCH (b:Book) WHERE elementId(b) = $id SET b.calibre_id = $calibre_id`
-- **Usage:** `python scripts/match_calibre_ids.py` (interactive, requires confirmation)
-
-**Multi-Pass Ingestion Pipeline (Phase 3 - COMPLETE):**
-
-**Ingestion Script:** `scripts/ingest_calibre.py` (263 lines) — Extracts entities from Calibre books and stores in Neo4j
-
-**Auto Ingestion Daemon:** `scripts/auto_ingest_daemon.py` (272 lines) — Continuous background processing with proper Book-Entity relationships
-
-**Pass 1 (Structure) - IMPLEMENTED:**
-- Create Book node with `calibre_id` as primary identifier
-- Extract text and chunk (max 512 tokens, 50 token overlap)
-- Extract entities via OpenAI (Concept, Person, Theory, Framework, Assessment)
-- **FIXED (Dec 4):** Create MENTIONS relationships between Book and Entity nodes (lines 150-156)
-- Status: `pending → chunked → entities_extracted`
-
-**Pass 2 (Relationships) - FUTURE:**
-- Extract causal relationships (CAUSES, ENABLES)
-- Extract component relationships (PART_OF)
-- Extract contrast relationships (CONTRASTS_WITH)
-- Status: `entities_extracted → relationships_mapped`
-
-**Pass 3 (Enrichment - LLM) - FUTURE:**
-- Generate reframes via Reframe API
-- Extract mechanisms and patterns
-- Add rich descriptions
-- Status: `relationships_mapped → enriched`
-
-**CLI Usage:**
-```bash
-# Manual ingestion
-python scripts/ingest_calibre.py               # Process all books
-python scripts/ingest_calibre.py --id 42       # Process single book by calibre_id
-python scripts/ingest_calibre.py --test        # Test with one book
-python scripts/ingest_calibre.py --status      # Show processing stats
-python scripts/ingest_calibre.py --limit 10    # Process 10 books
-
-# Automated daemon (RECOMMENDED)
-python scripts/auto_ingest_daemon.py &         # Background daemon (5-minute polls)
-python scripts/auto_ingest_daemon.py --once    # Single batch run
-python scripts/auto_ingest_daemon.py --batch-size 10  # Custom batch size
-
-# Management utilities
-python scripts/manage_ingestion.py start       # Start daemon + watcher
-python scripts/manage_ingestion.py stop        # Stop all services
-python scripts/manage_ingestion.py status      # Show running services
-python scripts/check_ingestion.py              # View processing status table
-python scripts/calibre_watcher.py &            # Watch for Calibre library changes
-```
-
-**Features:**
-- Skips books already processed (checks `book_exists(calibre_id)`)
-- Progress tracking with Rich console output
-- Chunk limit (50 chunks per book to avoid excessive API calls)
-- Stats tracking: sections extracted, chunks created, entities found, relationships added
-- Status updates: `update_book_status(calibre_id, status)`
-- **Auto daemon:** Continuous polling, background processing, comprehensive logging
-
-**Management Scripts (Added Dec 4):**
-- `scripts/manage_ingestion.py` — Start/stop/status for automated ingestion services (80 lines)
-- `scripts/check_ingestion.py` — Display Rich table of book processing status with entity counts (80 lines)
-- `scripts/calibre_watcher.py` — File system watcher for Calibre metadata.db and ingest directory changes (120 lines)
-
-**Neo4j Schema (Updated):**
-```cypher
-(:Book {
-  calibre_id: 42,              # Primary identifier (integer)
-  title: "...",
-  author: "...",
-  path: "/calibre-library/Author/Title (42)/book.epub",
-  processing_status: "entities_extracted",  # pending → chunked → entities_extracted
-  has_entities: true
-})
-```
-
-**KnowledgeGraph Client Updates:**
-- `add_book(title, author, path, calibre_id, processing_status)` - Accepts `calibre_id` parameter
-- `book_exists(calibre_id)` - Checks if book with `calibre_id` exists
-- `update_book_status(calibre_id, status)` - Updates processing status
-
-**Readest Integration (Phase 4 - COMPLETE - Dec 4, Commit 51b8ee3):**
-
-**User Flow:**
-- **Import Menu:** Import menu → "From Calibre Library" → Modal with searchable book grid → Click book → Opens in reader with entity overlay
-- **Settings Menu:** Settings (gear icon) → "Calibre Library" → Modal with searchable book grid → Click book → Opens in reader with entity overlay
-
-**UI Components (Implemented):**
-- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/CalibreDialog.tsx` — Main modal with book grid, search, filtering (238 lines)
-  - Fetches full catalog on open (`GET /books?limit=500`)
-  - Correctly parses API response: `setBooks(data.books || [])` (API returns `{ books: [...], total: N }`, not raw array)
-  - Batched entity count fetching (10 books at a time to avoid API overload)
-  - Client-side search filtering (catalog is ~179 books)
-  - "Has entities only" checkbox filter
-  - Opens book via backend URL (`/books/{calibre_id}/file`) enabling web browser access (no filesystem dependency)
-- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/CalibreBookCard.tsx` — Individual card with cover, title, author, entity badge (98 lines)
-  - Cover image with loading spinner and error fallback
-  - Entity badge: green dot + count (>= 0), or "Not indexed" (-1), or spinner (null)
-  - Responsive design with hover states
-- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/CalibreSearchBar.tsx` — Search input + "Has entities only" filter (69 lines)
-  - Debounced search (300ms)
-  - Clear button when search active
-  - Filter toggle with result count display
-
-**Key Features:**
-- Search books by title/author (debounced 300ms)
-- "Has entities" filter shows only indexed books
-- Entity badge: green dot + count, or gray "Not indexed"
-- Responsive grid (4 cols desktop, 2 cols mobile)
-- Click book → fetches file via backend API (`/books/{calibre_id}/file`) for web browser compatibility
-- `calibre_id` stored in Readest Book object
-- Entity overlay uses calibreId for reliable entity fetching
-- Dynamic API host resolution (localhost or network IP, same as flowModeStore)
-- Backend serves epub/pdf files with correct media types for browser download/viewing
-
-**Modified Files:**
-- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/ImportMenu.tsx` — Added "From Calibre Library" menu item with IoLibrary icon (71 lines total)
-- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/SettingsMenu.tsx` — Added "Calibre Library" menu item and `onOpenCalibreLibrary` callback handler (200+ lines total)
-- `.worktrees/readest/readest/apps/readest-app/src/app/library/components/LibraryHeader.tsx` — Wired up `onOpenCalibreLibrary` callback to SettingsMenu (100+ lines total)
-- `.worktrees/readest/readest/apps/readest-app/src/app/library/page.tsx` — Added `showCalibreDialog` state and CalibreDialog render (500+ lines total)
-- `.worktrees/readest/readest/apps/readest-app/src/types/book.ts` — Added `calibreId?: number` to Book interface (46 lines total)
-- `.worktrees/readest/readest/apps/readest-app/src/store/flowModeStore.ts` — Updated `fetchEntitiesForBook()` to use calibreId parameter for entity lookup (380+ lines total)
-
-**Implementation Phases:**
-- **Phase 1:** Docker infrastructure + Calibre service setup ✅ (already running)
-- **Phase 2:** Backend APIs (`/books`, `/books/{id}/cover`, `/books/{id}/file`, calibre_id entity endpoint) ✅ COMPLETE
-- **Phase 3:** Ingestion pipeline (Pass 1: entity extraction) ✅ COMPLETE
-- **Phase 4:** Readest Library view + calibre_id integration + web browser book access ✅ COMPLETE (Dec 4, Commit 51b8ee3)
-- **Phase 5:** Enrichment passes (Pass 2: relationships, Pass 3: reframes) — NOT STARTED
-
-**Design Documents:**
-- `docs/plans/2025-12-04-calibre-integration-design.md` — Overall architecture
-- `docs/plans/2025-12-04-readest-calibre-library-view.md` — Phase 4 UI design and implementation plan (Dec 4)
-
-**Related:**
-- Reframe API (Phase 2c) will be used by Pass 3 enrichment
-- Ingestion pipeline integrates with existing `library/graph/entities.py` extraction logic
-- Serena memory: `calibre-integration-design-dec4.md`
+### Calibre Integration
+
+> **📖 See SiYuan:** IES notebook → `/System/Calibre Integration`
+>
+> Covers: Book catalog (179 books), ingestion pipeline, Readest library browser, calibre_id universal identifier
 
 <!-- END AUTO-MANAGED -->
 

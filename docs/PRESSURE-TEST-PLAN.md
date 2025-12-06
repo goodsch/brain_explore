@@ -311,7 +311,7 @@ After full pressure testing, the system should demonstrate:
 | Component | Status | Analysis Date | Grade | Remediation |
 |-----------|--------|---------------|-------|-------------|
 | SiYuan Plugin | **COMPLETE** | 2025-12-05 | C→B+ | ✅ All critical items fixed |
-| Readest Integration | **PARTIAL** | 2025-12-05 | D+ | 4/15 bugs fixed, UX pending |
+| Readest Integration | **PARTIAL** | 2025-12-05 | D+→B- | 4/15 bugs fixed, ALL Core UX features VERIFIED working (overlay default-off), design system pending |
 | Question Engine | Pending | - | - | - |
 | Knowledge Graph | Pending | - | - | - |
 | Personal Graph | Pending | - | - | - |
@@ -344,7 +344,9 @@ Verified via code audit:
 | BUG-R06-15 | Med/Low | ⚠️ OPEN | Various UX and edge cases |
 
 **Remaining Readest Work:**
-- Core UX: Entity highlights clickable, question response input, journey breadcrumbs visible
+- ✅ Entity highlights clickable (VERIFIED Dec 5) — Full chain implemented: entity.ts creates spans → iframeEventHandlers.ts dispatches events → useEntityClick.ts opens Flow panel. Overlay defaults to disabled; enable via EntityTypeFilter toggle.
+- ✅ Question response input (VERIFIED Dec 5) — QuestionsSection.tsx: expandable questions, textarea input, Cmd+Enter shortcut, journey tracking via addThinkingPartnerExchange, bookmark feature
+- ✅ Journey breadcrumbs visible (VERIFIED Dec 5) — JourneyBreadcrumb.tsx: step navigation, dwell time display, +N overflow, notes counter, rendered in FlowPanel.tsx line 163
 - Design system integration (IES tokens → Readest)
 
 ### Issue Tracking

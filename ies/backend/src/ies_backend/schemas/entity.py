@@ -228,3 +228,8 @@ class SessionEndResponse(BaseModel):
     doc_id: str | None = None
     entities_extracted: int = 0
     summary: str | None = None
+    # Enhanced fields for concept extraction flow
+    entities_created: list[str] = Field(default_factory=list)
+    entities_updated: list[str] = Field(default_factory=list)
+    key_insights: list[str] = Field(default_factory=list)
+    open_questions: list[str] = Field(default_factory=list)

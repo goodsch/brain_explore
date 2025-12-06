@@ -164,6 +164,11 @@ async def end_session(request: SessionEndRequest) -> SessionEndResponse:
             doc_id=response.session_doc_id,
             entities_extracted=len(response.entities_created) + len(response.entities_updated),
             summary=response.summary.key_insights[0] if response.summary.key_insights else None,
+            # Enhanced fields for concept extraction flow
+            entities_created=response.entities_created,
+            entities_updated=response.entities_updated,
+            key_insights=response.summary.key_insights,
+            open_questions=response.summary.open_questions,
         )
 
     except Exception as e:
