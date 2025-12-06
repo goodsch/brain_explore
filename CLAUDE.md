@@ -37,7 +37,7 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 ## Current Status
 
-**Phase 2c: Integration Features** 🔄 IN PROGRESS (75% complete, Dec 5)
+**Phase 2c: Integration Features** ✅ COMPLETE (Dec 5-6)
 
 **✅ SiYuan Plugin Remediation COMPLETE (Dec 5)**
 
@@ -66,7 +66,7 @@ Four-agent critical analysis (Dec 5) identified gaps between documented principl
 
 **See:**
 - `docs/CRITICAL-ANALYSIS-2025-12-05.md` — SiYuan plugin findings (remediation complete)
-- `docs/ANALYSIS-READEST-2025-12-05.md` — Readest integration findings (pending)
+- `docs/ANALYSIS-READEST-2025-12-05.md` — Readest integration findings (remediation complete)
 - `docs/PRESSURE-TEST-PLAN.md` — Systematic evaluation plan for remaining components
 - `.worktrees/siyuan/TASK.md` — Complete remediation checklist with verification
 
@@ -750,6 +750,15 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 5-6):**
+- **Tauri Dynamic Import Pattern (Dec 6)** — Fixed static Tauri imports breaking web mode across auth and settings:
+  - `.worktrees/readest/readest/apps/readest-app/src/app/auth/utils/nativeAuth.ts`: Removed static `import { type as osType }`, replaced with dynamic `await import('@tauri-apps/plugin-os')` inside `authWithSafari()` function (lines 13-14)
+  - `.worktrees/readest/readest/apps/readest-app/src/app/auth/utils/appleIdAuth.ts`: Same pattern in `getAppleIdAuth()` function (lines 27-28)
+  - `.worktrees/readest/readest/apps/readest-app/src/app/reader/components/KOSyncSettings.tsx`: Dynamic import inside `getOsName()` async function with fallback to `getOSPlatform()` for web (lines 91-92)
+  - **Problem:** Static Tauri imports execute module-level code requiring Tauri APIs, causing crashes when running in browser context (`pnpm dev` for web debugging)
+  - **Solution:** Dynamic imports `await import('@tauri-apps/plugin-os')` only execute when functions are called in actual Tauri environment
+  - **Pattern:** Move Tauri imports inside async functions that only run in Tauri context, with graceful fallback for web
+  - **Impact:** Readest can now run in both Tauri (desktop/mobile apps) and web modes without crashes
+  - **Related:** Follows same pattern as `nativeAppService.ts` (commit 51b8ee3) and `environment.ts` (commit 7c9ca46) for Tauri/web compatibility
 - **✅ Readest Remediation Complete (Dec 5-6)** — All critical bugs fixed, core UX features implemented:
   - `.worktrees/readest/TASK.md`: Status updated to REMEDIATION COMPLETE (Dec 5-6)
   - **BUG-R01 Fix:** Event listener memory leak resolved with proper cleanup (FoliateViewer.tsx lines 102-113)
