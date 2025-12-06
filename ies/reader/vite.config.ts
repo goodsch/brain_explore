@@ -158,6 +158,11 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true,
       },
+      // Health check proxy
+      '/health': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
     },
   },
   build: {

@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ReactReader } from 'react-reader';
 import type { Rendition } from 'epubjs';
-import { ArrowLeft, Globe, Loader2 } from 'lucide-react';
+import { ArrowLeft, Globe, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { FlowPanel } from './flow/FlowPanel';
 import { useFlowStore } from '../store/flowStore';
 import { useEntityLookup } from '../hooks/useEntityLookup';
@@ -18,7 +18,22 @@ interface ReaderProps {
 export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps) {
   const [location, setLocation] = useState<string | number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
+
+  // Loading timeout - if book doesn't load in 15 seconds, show error
+  useEffect(() => {
+    if (!isLoading || loadError) return;
+
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        setLoadError('Book took too long to load. Please check your connection and try again.');
+        setIsLoading(false);
+      }
+    }, 15000);
+
+    return () => clearTimeout(timeout);
+  }, [isLoading, loadError, url]);
   const {
     isFlowPanelOpen,
     setFlowPanelOpen,
@@ -121,30 +136,66 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
       </header>
 
       {/* Loading overlay */}
-      {isLoading && (
+      {isLoading && !loadError && (
         <div className="reader-loading">
           <Loader2 size={32} className="reader-loading-spinner" />
           <span>Loading book...</span>
         </div>
       )}
 
+      {/* Error state */}
+      {loadError && (
+        <div className="reader-error">
+          <AlertCircle size={48} strokeWidth={1.5} />
+          <h3>Failed to load book</h3>
+          <p>{loadError}</p>
+          <div className="reader-error-actions">
+            <button
+              className="ies-btn ies-btn-primary"
+              onClick={() => {
+                setLoadError(null);
+                setIsLoading(true);
+                // Force re-render by toggling location
+                setLocation(0);
+              }}
+            >
+              <RefreshCw size={16} />
+              Try Again
+            </button>
+            {onClose && (
+              <button className="ies-btn ies-btn-ghost" onClick={onClose}>
+                Back to Library
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Reader area */}
-      <div
-        className="reader-content"
-        style={{
-          marginRight: isFlowPanelOpen ? flowPanelWidth : 0,
-        }}
-      >
-        <ReactReader
-          url={url}
-          location={location}
-          locationChanged={locationChanged}
-          getRendition={getRendition}
-          epubOptions={{
-            allowScriptedContent: true,
+      {!loadError && (
+        <div
+          className="reader-content"
+          style={{
+            marginRight: isFlowPanelOpen ? flowPanelWidth : 0,
           }}
-        />
-      </div>
+        >
+          <ReactReader
+            url={url}
+            location={location}
+            locationChanged={locationChanged}
+            getRendition={getRendition}
+            epubOptions={{
+              allowScriptedContent: true,
+            }}
+            loadingView={
+              <div className="reader-loading">
+                <Loader2 size={32} className="reader-loading-spinner" />
+                <span>Loading book...</span>
+              </div>
+            }
+          />
+        </div>
+      )}
 
       {/* Flow Panel */}
       <FlowPanel />

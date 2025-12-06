@@ -127,6 +127,57 @@
 }
 
 /* ============================================
+   ERROR STATE
+   ============================================ */
+
+.reader-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ies-space-4);
+  padding: var(--ies-space-6);
+  background: var(--ies-bg-base);
+  text-align: center;
+  z-index: var(--ies-z-modal);
+}
+
+.reader-error svg {
+  color: var(--ies-error);
+}
+
+.reader-error h3 {
+  margin: 0;
+  font-family: var(--ies-font-display);
+  font-size: var(--ies-text-xl);
+  font-weight: 600;
+  color: var(--ies-text-primary);
+}
+
+.reader-error p {
+  margin: 0;
+  max-width: 400px;
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-base);
+  color: var(--ies-text-muted);
+  line-height: var(--ies-leading-relaxed);
+}
+
+.reader-error-actions {
+  display: flex;
+  gap: var(--ies-space-3);
+  margin-top: var(--ies-space-2);
+}
+
+.reader-error-actions button {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+}
+
+/* ============================================
    READER CONTENT AREA
    ============================================ */
 

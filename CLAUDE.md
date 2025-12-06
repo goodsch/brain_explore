@@ -764,7 +764,88 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 <!-- AUTO-MANAGED: architecture -->
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
-**Recent Changes (Dec 5-6):**
+**Recent Changes (Dec 6):**
+- **✅ IES Reader Wave 1 Complete (Dec 6)** — Standalone React app transformed into production-ready PWA with Calibre library integration:
+  - **Commit:** `5329ec2: feat(reader): Wave 1 enhancement - Library browser, PWA, design system`
+  - **Total changes:** 23 files, +9,038 lines, -2,761 lines (net +6,277 lines)
+  - **Package updates:** Added `vite-plugin-pwa@1.2.0`, `lucide-react@0.556.0`, `@types/node@24.10.1`
+  - **New components (library/):**
+    - `LibraryBrowser.tsx` (222 lines) — Grid view with search, filter controls, install prompt
+    - `BookCard.tsx` (60 lines) — Cover images, entity count badges, loading states
+    - `SearchBar.tsx` (79 lines) — Debounced search with responsive styling
+    - `index.ts` (3 lines) — Clean module exports
+  - **PWA Configuration (vite.config.ts):**
+    - Full PWA manifest with 192px/512px icons, splash screens, theme colors
+    - Workbox runtime caching: book files (CacheFirst, 30 days), covers (CacheFirst, 7 days), API (NetworkFirst, 1 hour)
+    - Service worker auto-update with dev mode enabled
+    - Backend proxy: `/books`, `/graph`, `/profile`, `/question-engine`, `/journeys` all route to localhost:8081
+  - **Design System Integration:**
+    - `src/styles/design-system.css` (561 lines) — Complete IES Design System tokens
+    - Typography: Crimson Pro (display), Nunito (body), Inter (UI), JetBrains Mono (code)
+    - Colors: Warm paper tones (#FDFBF7), amber accent (#D4A574), entity-specific colors
+    - Spacing: 8px base unit with 11-step scale, 6-level shadow system
+    - Animations: 4 durations (instant/fast/base/slow) with consistent easing
+  - **App Architecture Refactor:**
+    - `App.tsx` (99 lines) — State machine: login → library browser → reader
+    - Login flow with automatic device ID generation
+    - Calibre book selection vs local file upload
+    - Proper URL cleanup for blob URLs on book close
+  - **Reader Updates:**
+    - `Reader.tsx` (131 lines) — Accept `calibreId` prop for backend integration
+    - `Reader.css` (133 lines) — Responsive toolbar, Flow Panel toggle, mobile-friendly
+  - **Flow Panel Enhancements:**
+    - `FlowPanel.tsx` (194 lines) — Improved empty states, loading indicators
+    - `FlowPanel.css` (368 lines) — IES Design System integration, smooth transitions
+  - **Library Browser Features:**
+    - Grid/list view toggle (responsive breakpoints: mobile 1 col, tablet 2 cols, desktop 3-4 cols)
+    - Real-time search with debouncing (500ms delay)
+    - Filter: "All books" vs "Indexed only" (entity_count > 0)
+    - Backend availability indicator (online/offline status)
+    - PWA install prompt with "Add to Home Screen" button
+    - Empty states for no books/no indexed books
+  - **GraphClient Updates:**
+    - `graphClient.ts` (185 lines total, +65 lines) — New Calibre integration
+    - `CalibreBook` interface: calibre_id, title, author, path, format, cover_url, file_url, entity_count, indexed
+    - `BooksResponse` interface for paginated results
+    - `getBooks(search?)` method for catalog retrieval
+    - `getBookCoverUrl(calibre_id)` helper for cover images
+    - `getBookFileUrl(calibre_id)` helper for epub/pdf download
+  - **State Management:**
+    - `flowStore.ts` (154 lines, +7 lines) — Enhanced journey tracking with Calibre context
+  - **Styling System:**
+    - `App.css` (34 lines) — Loading screen, library layout, responsive grid
+    - `index.css` (32 lines) — Global resets, design system imports, font loading
+    - `LibraryBrowser.css` (413 lines) — Complete library UI with header, grid, cards, filters
+  - **Assets:**
+    - `/public/icons/icon.svg` (39 lines) — Brain icon with gradient
+    - `/public/icons/icon-192.png`, `icon-512.png` — PWA icons
+    - `/public/apple-touch-icon.png` — iOS home screen icon
+  - **Performance Optimizations:**
+    - Manual chunk splitting: `react-vendor`, `epub-vendor` bundles
+    - Lazy image loading with skeleton states
+    - Memoized BookCard components
+    - Service worker caching strategies per content type
+  - **Mobile Support:**
+    - `vite dev --host` exposes dev server on network for mobile testing
+    - Responsive breakpoints: 480px (mobile), 768px (tablet), 1024px (desktop)
+    - Touch-friendly card interactions
+    - Bottom-sheet style Flow Panel on mobile (future: Wave 2)
+  - **Code Quality:**
+    - TypeScript strict mode throughout
+    - Accessibility: ARIA labels, semantic HTML, keyboard navigation
+    - Error boundaries: offline handling, missing covers, backend unavailable
+    - Loading states: skeletons, spinners, connection indicators
+  - **Line Count Breakdown:**
+    - TypeScript: 1,368 lines (12 files)
+    - CSS: 1,308 lines (6 files)
+    - Total: 2,676 lines in `ies/reader/src/`
+  - **Impact:** IES Reader is now a fully installable PWA with offline reading support, Calibre library integration, and professional UX matching IES Design System
+  - **Wave 1 Success Criteria Met:**
+    - ✅ Calibre library browser with search/filter
+    - ✅ PWA installable with service worker caching
+    - ✅ IES Design System applied throughout
+    - ✅ Responsive layout (mobile/tablet/desktop)
+    - ✅ Production-ready code quality
 - **Tauri Dynamic Import Pattern (Dec 6)** — Fixed static Tauri imports breaking web mode across auth and settings:
   - `.worktrees/readest/readest/apps/readest-app/src/app/auth/utils/nativeAuth.ts`: Removed static `import { type as osType }`, replaced with dynamic `await import('@tauri-apps/plugin-os')` inside `authWithSafari()` function (lines 13-14)
   - `.worktrees/readest/readest/apps/readest-app/src/app/auth/utils/appleIdAuth.ts`: Same pattern in `getAppleIdAuth()` function (lines 27-28)
