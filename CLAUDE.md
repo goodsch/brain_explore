@@ -554,20 +554,40 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 5):**
-- **ForgeMode Interactive Question-Response CSS (Commit c68cd13)** — Complete styling system for question-response interaction UI:
-  - `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte`: Added 393 lines of CSS for interactive thinking partner questions
-  - **Question-response card styling:** `.question-response-card` with class-colored borders, elevated background, medium shadow
-  - **Header components:** `.qrc-header` with icon, question class label, "Thinking Partner" badge
-  - **Question display:** `.qrc-question` with left-border accent matching question class color, base background
-  - **Cognitive hints:** `.qrc-hint` section with secondary color background for guidance text
-  - **Response input:** `.qrc-input` textarea with focus state (class-colored border, 20% opacity shadow ring)
-  - **Action buttons:** `.qrc-starter` (response starters), `.qrc-skip`, `.qrc-respond` with hover/active/disabled states
-  - **History tracking:** `.qrc-history` displays session exchange count
-  - **Supporting styles:** Message bubbles, conversation container, input area, template progress bar, session summary
-  - **Design system integration:** Uses CSS custom properties (--accent, --secondary, --bg-elevated, --radius-md, --space-N, --shadow-md)
-  - **Interactive functionality:** Pairs with `handleQuestionResponse()` function (line 793) for full question-answer dialogue workflow
-  - **State management:** Question class tracking, response history, cognitive state detection, approach selection
-  - **Impact:** Moves ForgeMode from "questions displayed passively" (critical analysis finding) toward interactive dialogue capability
+- **Backend Health Check Bug Fix** — Fixed `checkBackendHealth()` function interface alignment with Dashboard component:
+  - `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts`: Updated `BackendHealth` interface and function signature
+  - **Interface change:** From `{ status: string, timestamp?: string }` to `{ ok: boolean, backendUrl: string, checkedAt: number, message?: string }`
+  - **Signature change:** From `checkBackendHealth(force = false)` to `checkBackendHealth(options: { force?: boolean } = {})`
+  - **Return value:** Now consistently returns `BackendHealth` object with `ok` (boolean), `backendUrl` (string), `checkedAt` (timestamp), and optional `message`
+  - **Impact:** Fixes Dashboard.svelte which calls `checkBackendHealth({ force })` and expects `ok`, `backendUrl`, `message` properties
+  - **Cache behavior:** 30-second TTL caching unchanged, maintains reduced API overhead
+- **Concept Extraction and Formalization (Commit 242ae72)** — Completes the IES virtuous cycle: sessions → extract entities → formalize concepts → enrich knowledge graph
+  - **Backend API:** New `/concepts` endpoint (POST, GET, GET/{name}) with Neo4j persistence
+  - **Schemas:** `CreateConceptRequest`, `ConceptResponse`, `ConceptType` enum (concept, theory, framework, mechanism, pattern, distinction), `RelationshipType` enum (supports, contradicts, component_of, operationalizes, develops, enables, contrasts_with)
+  - **ConceptService:** `ies/backend/src/ies_backend/services/concept_service.py` (200 lines) — Neo4j integration for concept persistence with relationship creation
+  - **ConceptExtractor Component:** `.worktrees/siyuan/ies/plugin/src/components/ConceptExtractor.svelte` (600+ lines) — 4-step wizard interface
+    - **Step 1 - Select:** Choose from extracted entities or start from scratch
+    - **Step 2 - Define:** Concept type, name, description, aliases
+    - **Step 3 - Relate:** Add relationships to existing concepts with evidence
+    - **Step 4 - Review:** Confirm before dual save (Neo4j + SiYuan)
+  - **ForgeMode Integration:** Session completion flow now offers concept extraction for each entity
+    - "Quick" button: Simple name+description dialog for rapid capture
+    - "Advanced" button: Full wizard with relationships and aliases
+  - **createConceptDocument():** New function in `siyuan-structure.ts` creates `/Concepts/` documents with ConceptBlockMeta frontmatter (block_type: 'concept', concept_id, concept_type, related_concepts, version)
+  - **Dual Save Pattern:** Concept saved to both Neo4j graph (with relationships) AND SiYuan document (for editing/expansion)
+  - **Session Evidence:** Supports source_session_id and source_quotes linking concepts back to the session where they emerged
+  - **Impact:** Addresses critical finding "Virtuous cycle incomplete" — thinking sessions now feed back into Layer 1 knowledge graph
+- **ForgeMode Comprehensive UI Styling (Commit 25a4f21)** — Complete CSS system for all ForgeMode components (~440 lines total):
+  - `.worktrees/siyuan/ies/plugin/src/views/ForgeMode.svelte`: Comprehensive styling addressing all previously unstyled components
+  - **Setup section:** `.forge-setup`, `.mode-selector`, `.mode-option` (selected/hover states), `.topic-input`, `.start-btn`
+  - **Conversation area:** `.forge-main`, `.forge-conversation`, `.forge-msg` (user/assistant variants), `.forge-loading` (spinner animation), `.forge-error`, `.forge-actions`
+  - **Template progress panel:** `.forge-progress`, `.progress-header`, `.progress-sections`, `.progress-section` (current/completed states), `.progress-footer`, `.progress-actions`
+  - **Question class system:** `.question-class-badges`, `.question-class-badge`, `.question-classes-bar` for visual tracking
+  - **Cognitive coverage:** `.cognitive-coverage`, `.coverage-bars`, `.coverage-bar` (label/track/fill components), `.coverage-percent`
+  - **Interactive question-response card:** `.question-response-card` with class-colored borders, `.qrc-header`, `.qrc-question`, `.qrc-hint` (cognitive guidance), `.qrc-input` (focus states), `.qrc-starter`/`.qrc-skip`/`.qrc-respond` buttons, `.qrc-history`
+  - **Design system integration:** Uses CSS custom properties (--accent, --secondary, --bg-elevated, --radius-md, --space-N, --shadow-md), dark theme support
+  - **Interactive functionality:** Pairs with `handleQuestionResponse()` function for full question-answer dialogue workflow
+  - **Impact:** Addresses critical analysis finding - all UI components now properly styled, moving from "passive display" to complete interactive system
 - **IES AST Mode Documentation** (commit 3b347fc) — Comprehensive SiYuan notebook structure defining assisted structured thinking architecture:
   - `IES AST SiYuan structure.md`: Tracking document for 20 new SiYuan pages across 6 sections (Modes, Question Engine, Data Schemas, Specs, Templates, Workflows)
   - **Four thinking modes:** Discovery (schema surfacing), Dialogue (model building), Flow (associative exploration), AST (assisted structured thinking)
@@ -894,9 +914,9 @@ question_classes_used: ["schema_probe", "causal", "anchor"]
 
 ---
 
-### Layer 2: Phase 2c Backend APIs (COMPLETE - Dec 4)
+### Layer 2: Phase 2c Backend APIs (Dec 5)
 
-Five integrated backend services addressing critical gaps #1-#3, all registered in `ies/backend/src/ies_backend/main.py`:
+Six integrated backend services addressing critical gaps #1-#3, all registered in `ies/backend/src/ies_backend/main.py`:
 
 **1. Reframe API** (`/reframes`) — Makes domain concepts accessible via metaphors, analogies, stories, patterns, and contrasts
 
@@ -1065,7 +1085,45 @@ Each class has distinct cognitive function and maps to specific AST thinking mod
 
 ---
 
-**4. Entity Overlay API** (`/graph/entities/by-book`) — Real-time entity highlighting for reading interface
+**4. Concept API** (`/concepts`) — Knowledge graph formalization (completes virtuous cycle)
+
+**Endpoints:**
+- `POST /concepts` - Create new concept with relationships (returns `ConceptResponse`)
+- `GET /concepts` - List concepts with optional search/filter (search, concept_type, limit params)
+- `GET /concepts/{concept_name}` - Get concept details with relationships
+
+**Concept Types:** `concept`, `theory`, `framework`, `mechanism`, `pattern`, `distinction`
+
+**Relationship Types:** `supports`, `contradicts`, `component_of`, `operationalizes`, `develops`, `enables`, `contrasts_with`
+
+**Features:**
+- Neo4j persistence with automatic node label mapping (Concept/Theory/Framework)
+- Relationship creation between concepts with evidence field
+- Source tracking: links concepts back to session_id and source_quotes from thinking sessions
+- Alias support for alternative concept names
+- Duplicate detection prevents concept name collisions
+
+**Implementation:**
+- `ies/backend/src/ies_backend/api/concept.py` - FastAPI router (74 lines)
+- `ies/backend/src/ies_backend/services/concept_service.py` - ConceptService with Neo4j integration (200+ lines)
+- `ies/backend/src/ies_backend/schemas/concept.py` - CreateConceptRequest, ConceptResponse, ConceptType, RelationshipType enums
+- Registered in `ies/backend/src/ies_backend/main.py` with `/concepts` prefix
+
+**Frontend Integration:**
+- SiYuan: `.worktrees/siyuan/ies/plugin/src/components/ConceptExtractor.svelte` - 4-step wizard for concept formalization
+- ForgeMode: Integrated into session completion flow (Quick + Advanced buttons per entity)
+- Dual save: Neo4j graph node + SiYuan document in `/Concepts/` folder
+
+**Virtuous Cycle:**
+1. Thinking session generates entities
+2. User formalizes entities into concepts (with wizard)
+3. Concepts saved to Neo4j with relationships
+4. Next session can reference formalized concepts
+5. Knowledge graph grows from thinking artifacts
+
+---
+
+**5. Entity Overlay API** (`/graph/entities/by-book`) — Real-time entity highlighting for reading interface
 
 **Current Implementation:**
 - `GET /graph/entities/by-book/{book_hash}` - Retrieve all entities mentioned in a specific book

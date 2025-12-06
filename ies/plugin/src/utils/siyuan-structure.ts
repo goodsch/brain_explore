@@ -6,7 +6,7 @@
  *
  * Key Features:
  * - Domain-agnostic notebook configuration (user-configurable preferences)
- * - Merged 9-folder structure (Daily, Seedlings, Sessions, Flow_Maps, Concepts, Insights, Favorite_Problems, Projects, Archive)
+ * - Merged 10-folder structure (Daily, Seedlings, Sessions, Flow_Maps, Concepts, Insights, Favorite_Problems, Projects, Archive, System)
  * - Backend integration via forwardProxy (Personal Graph API, Journey API)
  * - Session document creation with ShapingBlockMeta support (block_type, session_id, thinking_mode, phase)
  * - Block attributes syncing for backend linking (be_id, be_type, status)
@@ -27,6 +27,7 @@ import { getSettingsSync } from '../stores/settings';
  * Users can customize via setPreferredNotebooks() or settings store.
  */
 const DEFAULT_NOTEBOOK_NAMES = [
+    'IES',
     'Personal',
     'Knowledge',
     'Notes',
@@ -34,7 +35,7 @@ const DEFAULT_NOTEBOOK_NAMES = [
 ];
 
 /**
- * Merged 9-folder structure combining IES Architecture Package with ADHD-friendly features.
+ * Merged 10-folder structure combining IES Architecture Package with ADHD-friendly features.
  *
  * Folder Structure:
  * - /Daily/: Quick captures (Package's 00_Inbox)
@@ -42,10 +43,11 @@ const DEFAULT_NOTEBOOK_NAMES = [
  * - /Sessions/: Mode-specific thinking (Learning, Articulating, Planning, Ideating, Reflecting)
  * - /Flow_Maps/: Visual maps (Package's 03_Flow_Maps)
  * - /Concepts/: Canonical concepts (Package's 04_Concepts)
- * - /Insights/: Promoted/validated insights (current)
- * - /Favorite_Problems/: ADHD anchor questions (current)
+ * - /Insights/: Promoted/validated insights (ADHD extension)
+ * - /Favorite_Problems/: ADHD anchor questions (ADHD extension)
  * - /Projects/: Active work (Package's 05_Projects)
  * - /Archive/: Retired material (Package's 06_Archive)
+ * - /System/: Meta-layer with Templates, Example_Notes (Package's 07_System)
  */
 const STRUCTURE_FOLDERS = [
     // Daily quick captures (Package's 00_Inbox)
@@ -86,6 +88,11 @@ const STRUCTURE_FOLDERS = [
 
     // Archive - retired material (Package's 06_Archive)
     { path: 'Archive', title: 'Archive' },
+
+    // System - meta-layer with templates, schemas, directives (Package's 07_System)
+    { path: 'System', title: 'System' },
+    { path: 'System/Templates', title: 'System – Templates' },
+    { path: 'System/Example_Notes', title: 'System – Example Notes' },
 ];
 
 /**
@@ -151,30 +158,48 @@ let cachedHealthStatus: BackendHealth | null = null;
 let cachedHealthTimestamp = 0;
 const HEALTH_CACHE_TTL_MS = 30000; // 30 seconds
 
-interface BackendHealth {
-    status: string;
-    timestamp?: string;
+export interface BackendHealth {
+    ok: boolean;
+    backendUrl: string;
+    checkedAt: number;
+    message?: string;
 }
 
 /**
  * Check if backend is reachable.
  * Uses cached result if within TTL (30 seconds) to reduce API overhead.
+ * @param options - { force?: boolean } to bypass cache
  */
-export async function checkBackendHealth(force = false): Promise<BackendHealth | null> {
+export async function checkBackendHealth(options: { force?: boolean } = {}): Promise<BackendHealth> {
+    const force = options.force ?? false;
     const now = Date.now();
+    const backendUrl = getBackendUrl();
+
     if (!force && cachedHealthStatus && (now - cachedHealthTimestamp < HEALTH_CACHE_TTL_MS)) {
         return cachedHealthStatus;
     }
 
     try {
-        const health = await callBackendApi<BackendHealth>('GET', '/health');
-        cachedHealthStatus = health;
+        const response = await callBackendApi<{ status: string }>('GET', '/health');
+        const result: BackendHealth = {
+            ok: response?.status === 'healthy',
+            backendUrl,
+            checkedAt: now,
+            message: response?.status === 'healthy' ? 'Backend reachable' : 'Unexpected response'
+        };
+        cachedHealthStatus = result;
         cachedHealthTimestamp = now;
-        return health;
+        return result;
     } catch (err) {
-        cachedHealthStatus = null;
+        const result: BackendHealth = {
+            ok: false,
+            backendUrl,
+            checkedAt: now,
+            message: err?.message || 'No response from backend'
+        };
+        cachedHealthStatus = result;
         cachedHealthTimestamp = now;
-        return null;
+        return result;
     }
 }
 
@@ -313,6 +338,8 @@ export async function callBackendApi<T = any>(
     const backendUrl = getBackendUrl();
     const url = `${backendUrl}${endpoint}`;
 
+    console.log('[IES] callBackendApi:', method, url);
+
     const payload: any = {
         url: url,
         method: method.toUpperCase(),
@@ -325,26 +352,33 @@ export async function callBackendApi<T = any>(
         payload.payload = body;
     }
 
-    const response = await fetchSyncPost('/api/network/forwardProxy', payload);
+    try {
+        const response = await fetchSyncPost('/api/network/forwardProxy', payload);
+        console.log('[IES] forwardProxy response:', JSON.stringify(response));
 
-    if (response.code !== 0) {
-        console.error('[IES] Proxy error:', response.msg);
-        return null;
+        if (response.code !== 0) {
+            console.error('[IES] Proxy error:', response.code, response.msg);
+            throw new Error(`Proxy error: ${response.msg}`);
+        }
+
+        const proxyData = response.data;
+        if (!proxyData) {
+            console.error('[IES] Proxy returned empty data');
+            throw new Error('Proxy returned empty data');
+        }
+
+        if (proxyData.status < 200 || proxyData.status >= 300) {
+            console.error('[IES] Backend error:', proxyData.status, proxyData.body);
+            throw new Error(`Backend returned ${proxyData.status}`);
+        }
+
+        const result = typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
+        console.log('[IES] Backend result:', result);
+        return result as T;
+    } catch (err) {
+        console.error('[IES] callBackendApi failed:', err);
+        throw err;
     }
-
-    const proxyData = response.data;
-    if (!proxyData) {
-        console.error('[IES] Proxy returned empty data');
-        return null;
-    }
-
-    if (proxyData.status < 200 || proxyData.status >= 300) {
-        console.error('[IES] Backend error:', proxyData.status, proxyData.body);
-        return null;
-    }
-
-    const result = typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
-    return result as T;
 }
 
 // === Date/Path Utilities ===
