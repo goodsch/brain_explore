@@ -13,7 +13,7 @@ const RETRY_DELAYS = [5000, 30000, 120000]; // 5s, 30s, 2min
 export interface QueuedOperation {
   id: string;
   userId: string;
-  operationType: 'journey' | 'profile' | 'feedback';
+  operationType: 'journey' | 'profile' | 'feedback' | 'note';
   payload: any;
   endpoint: string;
   timestamp: string;

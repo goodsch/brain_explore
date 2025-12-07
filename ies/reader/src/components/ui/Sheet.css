@@ -1,13 +1,8 @@
-/* ============================================
-   SHEET COMPONENT
-   Mobile-friendly bottom sheet pattern
-   ============================================ */
-
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: var(--ies-z-modal, 1000);
+  background: black;
+  z-index: var(--ies-z-modal, 100);
 }
 
 .sheet {
@@ -15,75 +10,22 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--ies-bg-surface);
-  border-radius: var(--ies-radius-xl, 16px) var(--ies-radius-xl, 16px) 0 0;
-  box-shadow: var(--ies-shadow-xl, 0 -4px 20px rgba(0, 0, 0, 0.15));
-  z-index: calc(var(--ies-z-modal, 1000) + 1);
+  background: var(--ies-bg-surface, white);
+  border-top-left-radius: var(--ies-radius-lg, 16px);
+  border-top-right-radius: var(--ies-radius-lg, 16px);
+  box-shadow: var(--ies-shadow-xl, 0 -4px 6px -1px rgba(0, 0, 0, 0.1));
+  z-index: calc(var(--ies-z-modal, 100) + 1);
   display: flex;
   flex-direction: column;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-.sheet-handle-container {
-  display: flex;
-  justify-content: center;
-  padding: var(--ies-space-3, 12px) 0;
-  cursor: grab;
-}
-
-.sheet-handle-container:active {
-  cursor: grabbing;
+  max-height: 95vh;
+  touch-action: none;
 }
 
 .sheet-handle {
   width: 40px;
   height: 4px;
-  background: var(--ies-border-strong, #ccc);
-  border-radius: var(--ies-radius-full, 9999px);
-}
-
-.sheet-header {
-  padding: 0 var(--ies-space-4, 16px) var(--ies-space-3, 12px);
-  border-bottom: 1px solid var(--ies-border-subtle, #eee);
-}
-
-.sheet-title {
-  margin: 0;
-  font-family: var(--ies-font-display, system-ui);
-  font-size: var(--ies-text-lg, 18px);
-  font-weight: 600;
-  color: var(--ies-text-primary, #1a1a1a);
-}
-
-.sheet-content {
-  flex: 1;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--ies-space-4, 16px);
-  padding-bottom: calc(var(--ies-space-4, 16px) + env(safe-area-inset-bottom, 0px));
-}
-
-/* Desktop: Use modal instead of bottom sheet */
-@media (min-width: 768px) {
-  .sheet-backdrop {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(4px);
-  }
-
-  .sheet {
-    top: 50%;
-    bottom: auto;
-    left: 50%;
-    right: auto;
-    transform: translate(-50%, -50%);
-    max-width: 480px;
-    width: calc(100% - 48px);
-    max-height: 80vh;
-    border-radius: var(--ies-radius-xl, 16px);
-  }
-
-  .sheet-handle-container {
-    display: none;
-  }
+  background: var(--ies-border-default, #e5e7eb);
+  border-radius: 2px;
+  margin: var(--ies-space-3, 12px) auto;
+  flex-shrink: 0;
 }

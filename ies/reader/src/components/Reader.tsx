@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ReactReader } from 'react-reader';
 import type { Rendition } from 'epubjs';
-import { ArrowLeft, Globe, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Globe, Loader2, AlertCircle, RefreshCw, PenLine } from 'lucide-react';
 import { FlowPanel } from './flow/FlowPanel';
+import { NotesSheet } from './flow/NotesSheet';
 import { useFlowStore } from '../store/flowStore';
 import { useEntityLookup } from '../hooks/useEntityLookup';
 import { useEntityOverlay } from '../hooks/useEntityOverlay';
@@ -22,6 +23,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
+  const [showNotesSheet, setShowNotesSheet] = useState(false);
   const renditionRef = useRef<Rendition | null>(null);
 
   // Debug: Log URL and verify it's accessible
@@ -236,6 +238,20 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
 
       {/* Flow Panel */}
       <FlowPanel />
+
+      {/* Mobile Note FAB */}
+      <button
+        className="reader-fab-note"
+        onClick={() => setShowNotesSheet(true)}
+        aria-label="Quick capture"
+      >
+        <PenLine size={24} />
+      </button>
+
+      <NotesSheet 
+        isOpen={showNotesSheet} 
+        onClose={() => setShowNotesSheet(false)} 
+      />
     </div>
   );
 }

@@ -239,4 +239,28 @@
   .reader-content button[aria-label*="Next"] {
     display: none !important;
   }
+
+  .reader-fab-note {
+    position: fixed;
+    right: var(--ies-space-4);
+    bottom: calc(var(--ies-space-4) + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--ies-accent);
+    color: white;
+    box-shadow: var(--ies-shadow-lg);
+    z-index: var(--ies-z-fab, 100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+@media (min-width: 768px) {
+  .reader-fab-note {
+    display: none;
+  }
 }

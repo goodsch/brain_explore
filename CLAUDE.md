@@ -70,21 +70,103 @@ Four-agent critical analysis (Dec 5) identified gaps between documented principl
 - `docs/PRESSURE-TEST-PLAN.md` — Systematic evaluation plan for remaining components
 - `.worktrees/siyuan/TASK.md` — Complete remediation checklist with verification
 
-**Current Priority:** IES Reader Wave 1 Enhancement (Dec 6)
+**✅ IES Reader Wave 1 COMPLETE (Dec 6)** — Calibre library browser, PWA, IES design system, responsive layout
 
-**Next Phase: IES Reader Standalone Enhancement**
-**Status:** Planning Complete - Wave 1 design approved (commit 7420127)
-**Plan:** `docs/plans/2025-12-06-ies-reader-wave1-design.md`
+**✅ IES Reader Wave 2 COMPLETE (Dec 7)** — Interactive reading features with thinking partnership integration
 
-**Wave 1 Focus (This Week):**
-1. **Calibre Library Integration** - LibraryBrowser component with book grid, search, entity badges
-2. **PWA Configuration** - Installable app with offline reading (vite-plugin-pwa)
-3. **IES Design System** - Apply unified design tokens (Contemplative Knowledge Space aesthetic)
-4. **Responsive Layout** - Mobile/tablet/desktop breakpoints, bottom sheet Flow Panel on mobile
+**Commit:** `cbfeca0: feat(reader): Wave 2 - Interactive reading features`
 
-**Future Waves (Out of Scope):**
-- **Wave 2:** Interactive reading (question responses, entity overlay, notes, breadcrumbs)
-- **Wave 3:** Exploration/synthesis (spark initiation, multi-phase flow, synthesis artifacts)
+**All Wave 2 Features Complete:**
+1. ✅ **Entity Overlay Toggle** — Flow Panel UI controls with master switch and type-specific pills (commit 9b72827)
+2. ✅ **Ingestion Queue Management** — Queue books for entity extraction from library browser (commit 9b72827)
+3. ✅ **Queue Status Display** — Visual indicators showing queued/processing books with filter (commit 9b72827)
+4. ✅ **Question Response Input** — Interactive question-answer dialogue in Flow Panel (commit cbfeca0)
+5. ✅ **Journey Breadcrumbs** — Visible navigation trail showing exploration path (commit cbfeca0)
+6. ✅ **Notes & Annotations** — Quick capture for thoughts during reading sessions (commit cbfeca0)
+
+**Implementation Summary:**
+- **InteractiveQuestions.tsx (236 lines)** — Expandable questions with Cmd+Enter submit, bookmark feature
+- **JourneyBreadcrumb.tsx (84 lines)** — Last 5 steps with dwell time, clickable navigation
+- **NotesCapture.tsx (148 lines)** — Quick capture with entity context, session notes list
+- **FlowPanel.tsx (248 lines)** — Integrated all components with entity overlay controls
+- **FlowPanel.css** — Complete styling for questions, journey, notes, sync badges
+
+**Success Criteria Met:**
+- ✅ Thinking partnership — Active cognitive guidance, not passive display
+- ✅ ADHD-friendly — Low friction, visual feedback, keyboard shortcuts
+- ✅ Journey visible — Navigation trail with dwell time and clickable steps
+- ✅ Insights captured — Quick notes with entity context and journey tracking
+
+**🔄 IES Reader Wave 3 Implementation In Progress (Dec 7):**
+- **Status:** Section 2 (Ingestion Queue UI) complete, Sections 1/3/4 pending
+- **Focus:** Mobile optimization, ingestion queue UI, notes UX refinement
+- **Design:** `docs/plans/2025-12-07-ies-reader-wave3-design.md` (652 lines)
+- **Wave progression:** Wave 1 (library/PWA/design) → Wave 2 (interactive features) → Wave 3 (mobile-first polish)
+- **Section 2 Complete:** Full queue management system with bottom sheet interface, polling, optimistic updates
+- **Remaining:** Section 1 (hide nav arrows CSS), Section 3 (mobile notes FAB/sheet), Section 4 (touch target audit)
+
+**Section 2 Complete: Ingestion Queue UI** — Full queue management system with bottom sheet interface
+- **IngestionQueueSheet.tsx (231 lines)** — Modal bottom sheet for queue management
+  - Queue stats summary bar: Processing/Queued/Completed/Failed counts with color-coded badges
+  - Status-grouped item lists: Processing → Queued → Failed → Completed (recent 5)
+  - Per-item actions: Cancel (Trash2) for queued items, Retry (RotateCcw) for failed items
+  - Status icons with animations: Clock (queued), Loader2 with spinning (processing), CheckCircle (completed), XCircle (failed)
+  - Error message display for failed items with inline error_message field
+  - Empty state UI: Clock icon + "No books in queue" message with friendly copy
+  - Loading state: Spinner + "Loading queue..." message during initial fetch
+  - Status configuration object: Maps each status to label/icon/className for consistent rendering
+- **Sheet.tsx (116 lines)** — Reusable bottom sheet component with framer-motion
+  - Drag-to-dismiss gesture handling with velocity detection (500px/s threshold)
+  - Multi-snap-point support: Default 50%/80% height with smooth spring animations
+  - Backdrop overlay with click-to-close (motion.div with opacity fade)
+  - Visual drag handle: 32px wide x 4px tall rounded pill at top
+  - Body scroll lock when sheet is open (document.body.overflow = 'hidden')
+  - Type-safe props: isOpen, onClose, snapPoints, title, children
+  - Smooth spring transitions: damping 30, stiffness 400 for natural feel
+  - Drag constraints: top/bottom bounds with elastic resistance (top: 0.1, bottom: 0.5)
+- **useIngestionQueue.ts (115 lines)** — Hook for queue state with auto-polling
+  - Configurable polling: pollIntervalMs (default 10s), autoStart (default true), pollOnlyWhenActive (default true)
+  - Optimized polling: Only polls when active items present (queued or processing)
+  - Helper methods: isBookQueued(calibreId), getBookQueueStatus(calibreId)
+  - Computed stats: hasItems, hasActiveItems for conditional UI rendering
+  - Unified interface exposes items, stats, actions (queue/cancel/retry), and helpers
+  - Auto-start mode: Initial fetch + interval setup with cleanup on unmount
+- **ingestionQueueStore.ts (152 lines)** — Zustand store for queue state management
+  - Queue state: items[], isLoading, lastFetch, error with derived stats (queuedCount, processingCount, failedCount, completedCount)
+  - Optimistic updates: queueBook/cancelBook/retryBook modify state immediately, rollback on error
+  - Actions: fetchQueue(), queueBook(calibreId), cancelBook(calibreId), retryBook(calibreId), clearError()
+  - Stats computation: Helper function computeStats() derives counts from items array on each update
+  - GraphClient integration: Calls queueBookForIngestion(), getIngestionQueue(), removeFromIngestionQueue()
+  - Error handling: Captures error messages, provides clearError() for dismissing warnings
+- **LibraryBrowser.tsx enhancements (lines 26-44):**
+  - Queue sheet toggle button in header with badge showing active count (queuedCount + processingCount)
+  - useIngestionQueue hook integration with 10s polling, optimized for active items only
+  - Backward-compatible queuedBookIds Set derived from queue items (lines 40-44)
+  - Sheet state management: showQueueSheet boolean with setShowQueueSheet toggle
+  - Queue filter integration: 'queued' filter option shows only queued/processing books (line 74-76)
+- **graphClient.ts additions (lines 380-410):**
+  - IngestionQueueItem interface: calibre_id, title, author, queued_at, status, error_message? (lines 404-410)
+  - IngestionQueueResponse interface: items[], total with proper typing
+  - queueBookForIngestion() method: POST /books/{id}/queue-ingest, returns calibre_id/message/queued_at
+  - getIngestionQueue() method: GET /books/ingestion-queue, fetches full queue with items array
+  - removeFromIngestionQueue() method: DELETE /books/{id}/queue-ingest for cancel operation
+- **Styling system (IngestionQueueSheet.css + Sheet.css):**
+  - Queue stats bar: Horizontal stat cards with large numbers and muted labels
+  - Queue items: Flex layout with icon (20px) + content + actions, 16px padding, 8px gap
+  - Status-specific colors: Gray (queued), Blue (processing), Green (completed), Red (failed)
+  - Queue actions: Cancel (red hover), Retry (blue hover), Trash2/RotateCcw icons at 16px
+  - Sheet styling: Fixed positioning, rounded top corners (16px), safe-area-inset support
+  - Drag handle: Centered 32x4px pill with var(--ies-text-muted) color
+  - Backdrop: Semi-transparent overlay (opacity 0.5) with fade transitions
+- **Dependencies added:** framer-motion@^11.18.2 (package.json line 14) for sheet animations
+- **Reader.css updates (lines 133+):** Media query foundation for hiding nav arrows on mobile (pending full Section 1 implementation)
+
+**Impact:** Users can now track entity extraction progress, see real-time queue status, cancel/retry failed books, and manage ingestion queue from library browser with professional mobile-first UI. Queue polling is optimized to only run when books are actively processing, reducing unnecessary backend calls.
+
+**Remaining:** Section 1 (hide nav arrows CSS), Section 3 (mobile notes FAB/sheet), Section 4 (touch target audit)
+
+**Future Waves (Deferred):**
+- **Wave 4+:** Cross-device sync, spark initiation from reading, multi-phase flow exploration, synthesis artifacts
 
 ---
 
@@ -551,6 +633,7 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/plans/2025-12-04-calibre-integration-design.md` — Calibre integration architecture: single source of truth for book catalog with universal calibre_id identifier; multi-pass ingestion pipeline (structure → relationships → enrichment); backend APIs complete (Dec 4)
 - `docs/plans/2025-12-04-readest-calibre-library-view.md` — **Phase 4 UI design**: Readest library browser modal with search, entity badge filter, and direct book opening (Dec 4)
 - `docs/plans/2025-12-06-ies-reader-wave1-design.md` — **IES Reader Wave 1 Enhancement**: Calibre library integration, PWA configuration, IES design system application, responsive layout (Dec 6)
+- `docs/plans/2025-12-07-ies-reader-wave3-design.md` — **IES Reader Wave 3 Enhancement** (652 lines): Mobile optimization (remove nav arrows, FAB for notes, bottom sheets), ingestion queue UI (status indicator, polling, cancel/retry), touch-friendly annotation UX (text selection bar, swipe-to-delete), 44px touch targets, safe area handling (Dec 7)
 - `docs/plans/UNIFIED-DESIGN-SYSTEM.md` — **Complete design system specification** (801 lines): "Contemplative Knowledge Space" aesthetic with typography system, color palette, spacing scale, shadows, animations, component patterns; CSS custom properties for Svelte/React compatibility
 - `docs/plans/2025-12-03-integrated-reading-knowledge-system.md` — Four-layer architecture design
 - `docs/PHASE-1-WORKFLOW.md` — Complete operational guide for running dialogue sessions (proven, reusable for Phase 2+ exploration)
@@ -764,6 +847,118 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 <!-- AUTO-MANAGED: architecture -->
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
+**Recent Changes (Dec 7):**
+- **🔄 IES Reader Wave 3 Implementation In Progress (Dec 7)** — Mobile optimization + ingestion queue UI + notes UX refinement:
+  - **Status:** Section 2 (Ingestion Queue UI) complete, Sections 1/3/4 pending
+  - **Focus:** Mobile optimization, ingestion queue UI, notes UX refinement
+  - **Design:** `docs/plans/2025-12-07-ies-reader-wave3-design.md` (652 lines)
+  - **Section 2 Complete: Ingestion Queue UI** — Full queue management system with bottom sheet interface
+    - **IngestionQueueSheet.tsx (231 lines)** — Modal bottom sheet for queue management
+      - Queue stats summary bar: Processing/Queued/Completed/Failed counts with color-coded badges
+      - Status-grouped item lists: Processing → Queued → Failed → Completed (recent 5)
+      - Per-item actions: Cancel (Trash2) for queued items, Retry (RotateCcw) for failed items
+      - Status icons with animations: Clock (queued), Loader2 with spinning (processing), CheckCircle (completed), XCircle (failed)
+      - Error message display for failed items with inline error_message field
+      - Empty state UI: Clock icon + "No books in queue" message with friendly copy
+      - Loading state: Spinner + "Loading queue..." message during initial fetch
+      - Status configuration object: Maps each status to label/icon/className for consistent rendering
+    - **Sheet.tsx (116 lines)** — Reusable bottom sheet component with framer-motion
+      - Drag-to-dismiss gesture handling with velocity detection (500px/s threshold)
+      - Multi-snap-point support: Default 50%/80% height with smooth spring animations
+      - Backdrop overlay with click-to-close (motion.div with opacity fade)
+      - Visual drag handle: 32px wide x 4px tall rounded pill at top
+      - Body scroll lock when sheet is open (document.body.overflow = 'hidden')
+      - Type-safe props: isOpen, onClose, snapPoints, title, children
+      - Smooth spring transitions: damping 30, stiffness 400 for natural feel
+      - Drag constraints: top/bottom bounds with elastic resistance (top: 0.1, bottom: 0.5)
+    - **useIngestionQueue.ts (115 lines)** — Hook for queue state with auto-polling
+      - Configurable polling: pollIntervalMs (default 10s), autoStart (default true), pollOnlyWhenActive (default true)
+      - Optimized polling: Only polls when active items present (queued or processing)
+      - Helper methods: isBookQueued(calibreId), getBookQueueStatus(calibreId)
+      - Computed stats: hasItems, hasActiveItems for conditional UI rendering
+      - Unified interface exposes items, stats, actions (queue/cancel/retry), and helpers
+      - Auto-start mode: Initial fetch + interval setup with cleanup on unmount
+    - **ingestionQueueStore.ts (152 lines)** — Zustand store for queue state management
+      - Queue state: items[], isLoading, lastFetch, error with derived stats (queuedCount, processingCount, failedCount, completedCount)
+      - Optimistic updates: queueBook/cancelBook/retryBook modify state immediately, rollback on error
+      - Actions: fetchQueue(), queueBook(calibreId), cancelBook(calibreId), retryBook(calibreId), clearError()
+      - Stats computation: Helper function computeStats() derives counts from items array on each update
+      - GraphClient integration: Calls queueBookForIngestion(), getIngestionQueue(), removeFromIngestionQueue()
+      - Error handling: Captures error messages, provides clearError() for dismissing warnings
+    - **LibraryBrowser.tsx enhancements (lines 26-44):**
+      - Queue sheet toggle button in header with badge showing active count (queuedCount + processingCount)
+      - useIngestionQueue hook integration with 10s polling, optimized for active items only
+      - Backward-compatible queuedBookIds Set derived from queue items (lines 40-44)
+      - Sheet state management: showQueueSheet boolean with setShowQueueSheet toggle
+      - Queue filter integration: 'queued' filter option shows only queued/processing books (line 74-76)
+    - **graphClient.ts additions (lines 380-410):**
+      - IngestionQueueItem interface: calibre_id, title, author, queued_at, status, error_message? (lines 404-410)
+      - IngestionQueueResponse interface: items[], total with proper typing
+      - queueBookForIngestion() method: POST /books/{id}/queue-ingest, returns calibre_id/message/queued_at
+      - getIngestionQueue() method: GET /books/ingestion-queue, fetches full queue with items array
+      - removeFromIngestionQueue() method: DELETE /books/{id}/queue-ingest for cancel operation
+    - **Styling system (IngestionQueueSheet.css + Sheet.css):**
+      - Queue stats bar: Horizontal stat cards with large numbers and muted labels
+      - Queue items: Flex layout with icon (20px) + content + actions, 16px padding, 8px gap
+      - Status-specific colors: Gray (queued), Blue (processing), Green (completed), Red (failed)
+      - Queue actions: Cancel (red hover), Retry (blue hover), Trash2/RotateCcw icons at 16px
+      - Sheet styling: Fixed positioning, rounded top corners (16px), safe-area-inset support
+      - Drag handle: Centered 32x4px pill with var(--ies-text-muted) color
+      - Backdrop: Semi-transparent overlay (opacity 0.5) with fade transitions
+    - **Dependencies added:** framer-motion@^11.18.2 (package.json line 14) for sheet animations
+    - **Reader.css updates (lines 133+):** Media query foundation for hiding nav arrows on mobile (pending full Section 1 implementation)
+  - **Impact:** Users can now track entity extraction progress, see real-time queue status, cancel/retry failed books, and manage ingestion queue from library browser with professional mobile-first UI. Queue polling is optimized to only run when books are actively processing, reducing unnecessary backend calls.
+  - **Remaining:** Section 1 (hide nav arrows CSS), Section 3 (mobile notes FAB/sheet), Section 4 (touch target audit)
+
+- **✅ IES Reader Wave 2 COMPLETE (Dec 7)** — Interactive reading features with thinking partnership integration:
+  - **Commit:** `cbfeca0: feat(reader): Wave 2 - Interactive reading features`
+  - **Total changes:** 5 files modified, complete Wave 2 feature set delivered
+  - **Flow Panel Component Refactor (FlowPanel.tsx, 248 lines):**
+    - Integrated three new interactive components: JourneyBreadcrumb, InteractiveQuestions, NotesCapture
+    - Enhanced entity overlay controls with master toggle and type-specific pills
+    - Sync status badge for offline queue management (pending/synced/error/offline states)
+    - Loader2 spinner during entity fetch with "Searching knowledge graph..." message
+  - **Interactive Questions Component (InteractiveQuestions.tsx, 236 lines):**
+    - Expandable question cards with click-to-reveal response input
+    - Three question types: clarifying, connecting, challenging (type-specific styling)
+    - Cmd/Ctrl+Enter keyboard shortcut to submit responses
+    - Auto-focus textarea when expanding questions for immediate input
+    - Question-response exchanges tracked in journey breadcrumb
+    - Bookmark feature saves questions as journey marks for later reflection
+    - Related entities displayed as chips when available
+    - Submitted responses shown in green success card
+  - **Journey Breadcrumb Component (JourneyBreadcrumb.tsx, 84 lines):**
+    - Displays last 5 journey steps with entity names and dwell time
+    - Clickable steps navigate back to previous entities
+    - Dwell time indicators (seconds/minutes) with Clock icon
+    - Overflow handling shows "+N more" when path exceeds 5 steps
+    - Addresses critical UX gap: journeys tracked but never shown
+  - **Notes Capture Component (NotesCapture.tsx, 148 lines):**
+    - Quick capture UI for thoughts and annotations during reading
+    - Single input field with entity context ("Note about [entity name]...")
+    - Cmd/Ctrl+Enter submit with journey tracking
+    - Captured notes list shows count, content, entity context, timestamp
+    - Delete button for each note (Trash2 icon)
+    - ADHD-friendly design: low friction capture
+  - **CSS Enhancements (FlowPanel.css):**
+    - Question card styling with type-specific borders (clarifying/connecting/challenging)
+    - Expandable question states (header, content, expanded, submitted)
+    - Journey breadcrumb path styling with chevrons, step buttons, overflow indicators
+    - Notes capture input, footer, list, and item styles
+    - Sync badge states (pending, synced, error, offline) with color coding
+  - **Flow Store Integration:**
+    - thinkingPartnerQuestions array with type, text, relatedEntities fields
+    - currentJourney with path array (entityId, entityName, sourcePassage, dwellTimeSeconds)
+    - addJourneyStep() action for tracking question responses and notes
+    - isLoadingQuestions state for async question generation
+  - **Success Criteria Met:**
+    - ✅ Question response input — Interactive dialogue with Cmd+Enter submit
+    - ✅ Journey breadcrumbs — Visible navigation trail with clickable steps
+    - ✅ Notes & annotations — Quick capture with entity context
+    - ✅ Thinking partnership — Active cognitive guidance, not passive display
+    - ✅ ADHD-friendly — Low friction, visual feedback, keyboard shortcuts
+  - **Impact:** IES Reader Wave 2 transforms passive reading into active knowledge exploration with thinking partnership — journey visible, questions interactive, insights captured
+
 **Recent Changes (Dec 6):**
 - **StreamingResponse Book File Delivery (Dec 6)** — Final fix for epub.js inline reading compatibility:
   - **Commit:** `6062a4a: fix(reader): StreamingResponse for epub.js inline reading`
@@ -924,6 +1119,69 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
     - ✅ IES Design System applied throughout
     - ✅ Responsive layout (mobile/tablet/desktop)
     - ✅ Production-ready code quality
+- **🔄 IES Reader Wave 2 In Progress (Dec 7)** — Entity overlay controls and ingestion queue management:
+  - **Commit:** `9b72827: feat(reader): Wave 2 - Entity overlay toggle and ingestion queue UI`
+  - **Total changes:** 11 files modified with entity overlay UI and queue management features
+  - **Entity Overlay Controls (FlowPanel.tsx):**
+    - New "Entity Overlay" section in Flow Panel header (lines 117-162)
+    - Master ON/OFF toggle switch with Eye icon (lucide-react)
+    - Entity count display: "X entities" with indexed/not-indexed styling
+    - Type filter pills: Concept, Person, Theory, Framework, Assessment (lines 147-160)
+    - Pills disabled when overlay is OFF to prevent confusion
+    - Loading state: Spinner + "Loading..." text while fetching entities
+    - Empty state: "No book open" when currentBookCalibreId is null
+  - **Flow Store Enhancements (flowStore.ts):**
+    - New overlay state: `isOverlayEnabled`, `overlayEntities`, `overlayEntityTypes`, `isLoadingOverlay`, `currentBookCalibreId`
+    - `OverlayEntity` interface: name, type (EntityType), mention_count
+    - `setOverlayEnabled()`, `toggleEntityType()`, `setCurrentBookCalibreId()`, `setOverlayEntities()`, `setIsLoadingOverlay()` actions
+    - Initial overlay state: all entity types enabled by default
+  - **useEntityOverlay Hook (useEntityOverlay.ts, 87 lines):**
+    - Auto-fetches entities when calibreId changes
+    - Transforms backend entities to OverlayEntity format
+    - Auto-enables overlay if book has entities (lines 45-48)
+    - Provides `refreshEntities()` for manual refresh
+    - Cleanup on book change or unmount
+  - **Reader Integration (Reader.tsx):**
+    - Imports and calls `useEntityOverlay(calibreId)` hook (line 75)
+    - Passes calibreId prop from App component
+    - Entity overlay state managed centrally in flowStore
+  - **Ingestion Queue Backend (books.py):**
+    - New JSON-based queue storage: `/home/chris/dev/projects/codex/brain_explore/data/ingestion_queue.json`
+    - `IngestionQueueItem` schema: calibre_id, title, author, queued_at, status (queued/processing/completed/failed)
+    - **POST** `/books/{calibre_id}/queue-ingest` — Queue book for entity extraction (lines 184-214)
+    - **GET** `/books/ingestion-queue` — Retrieve all queued items (lines 217-239)
+    - **DELETE** `/books/{calibre_id}/queue-ingest` — Remove from queue (lines 242-253)
+    - Queue persistence: `_load_ingestion_queue()`, `_save_ingestion_queue()` helpers (lines 65-80)
+  - **GraphClient Queue Methods (graphClient.ts, lines 373-410):**
+    - `queueBookForIngestion(calibreId)` — Queue book via POST endpoint (lines 380-384)
+    - `getIngestionQueue()` — Fetch current queue with items and total count (lines 389-391)
+    - `removeFromIngestionQueue(calibreId)` — Remove book from queue via DELETE (lines 396-400)
+    - `IngestionQueueItem` TypeScript interface: calibre_id, title, author, queued_at, status enum (lines 404-410)
+  - **BookCard Queue Button (BookCard.tsx, 132 lines):**
+    - New "Index" button for non-indexed books (lines 95-127)
+    - Four button states: idle (Database icon), loading (Loader2 spinner), success (Check icon), error (retry)
+    - `handleQueueForIngestion()` callback with 2s success display, 3s error display
+    - `isQueued` prop from parent shows "Queued" badge with Clock icon
+    - Memoized component for performance
+  - **LibraryBrowser Queue Integration (LibraryBrowser.tsx, 264 lines):**
+    - New filter: "Queued" button alongside "All Books" and "Indexed" (lines 182-191)
+    - Queue status fetching via `refreshQueueStatus()` callback (lines 32-44)
+    - `queuedBookIds` Set tracked in state (line 24)
+    - Filter UI shows queued count with Clock icon
+    - BookCard receives `isQueued` prop and `onQueueStatusChange` callback
+    - Filter logic: `filter === 'queued' ? books.filter(b => queuedBookIds.has(b.calibre_id))` (lines 74-76)
+  - **Flow Panel CSS Updates (FlowPanel.css):**
+    - `.flow-overlay-section` styles for new overlay controls section
+    - `.flow-overlay-toggle` switch component with active state
+    - `.flow-overlay-type-pill` styles for entity type filter buttons
+    - Type-specific pill colors matching entity type design system
+  - **Library Browser CSS Updates (LibraryBrowser.css):**
+    - `.book-card-badge-queued` styles for queued badge display
+    - `.book-card-queue-btn` with state-specific styling (idle/loading/success/error)
+    - `.library-filter-btn-queued` for queue filter button with Clock icon
+    - Hover and active states for queue-related UI elements
+  - **Impact:** Users can now toggle entity highlights on/off, filter by entity type, and queue unindexed books for background processing — completing core Wave 2 interactive features
+  - **Remaining Wave 2:** Question response input, journey breadcrumb visualization, notes/annotations capture
 - **Tauri Dynamic Import Pattern (Dec 6)** — Fixed static Tauri imports breaking web mode across auth and settings:
   - `.worktrees/readest/readest/apps/readest-app/src/app/auth/utils/nativeAuth.ts`: Removed static `import { type as osType }`, replaced with dynamic `await import('@tauri-apps/plugin-os')` inside `authWithSafari()` function (lines 13-14)
   - `.worktrees/readest/readest/apps/readest-app/src/app/auth/utils/appleIdAuth.ts`: Same pattern in `getAppleIdAuth()` function (lines 27-28)
