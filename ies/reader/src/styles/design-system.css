@@ -1,0 +1,561 @@
+/**
+ * IES Reader Design System
+ *
+ * Aesthetic: "The Reading Room"
+ * A contemplative knowledge space where scholarly elegance meets modern digital reading.
+ * Paper-like warmth, focused clarity, and tactile presence.
+ *
+ * Based on: E-Ink/Paper style + Academic/Research typography
+ * Accessibility: WCAG AAA compliant
+ */
+
+/* ============================================
+   FONTS
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ============================================
+   CSS CUSTOM PROPERTIES
+   ============================================ */
+:root {
+  /* === Colors: Paper & Ink === */
+  --ies-bg-deep: #FDFBF7;           /* Off-white paper */
+  --ies-bg-surface: #FFFFFF;         /* Clean white for cards */
+  --ies-bg-elevated: #FFF9F0;        /* Warm elevated surface */
+  --ies-bg-muted: #F5F3EF;           /* Subtle distinction */
+
+  --ies-text-primary: #1A1A1A;       /* Ink black */
+  --ies-text-secondary: #4A4A4A;     /* Soft black */
+  --ies-text-muted: #6B6B6B;         /* Gray for hints */
+  --ies-text-subtle: #8B8B8B;        /* Lightest readable */
+
+  --ies-border-default: #E8E4DC;     /* Warm border */
+  --ies-border-subtle: #F0EDE6;      /* Barely visible */
+  --ies-border-strong: #D4CFC4;      /* Pronounced border */
+
+  /* === Accent Colors === */
+  --ies-accent: #C4956A;             /* Warm amber - primary action */
+  --ies-accent-hover: #B5864D;       /* Darker amber on hover */
+  --ies-accent-subtle: rgba(196, 149, 106, 0.12);
+
+  --ies-secondary: #7A9987;          /* Sage green */
+  --ies-secondary-hover: #6A8977;
+  --ies-secondary-subtle: rgba(122, 153, 135, 0.12);
+
+  --ies-tertiary: #9D8FB5;           /* Soft violet */
+  --ies-tertiary-subtle: rgba(157, 143, 181, 0.12);
+
+  /* === Entity Type Colors === */
+  --ies-entity-concept: #2563EB;     /* Blue */
+  --ies-entity-person: #059669;      /* Green */
+  --ies-entity-theory: #7C3AED;      /* Purple */
+  --ies-entity-framework: #EA580C;   /* Orange */
+  --ies-entity-assessment: #DC2626;  /* Red */
+
+  /* === Semantic Colors === */
+  --ies-success: #16A34A;
+  --ies-success-subtle: rgba(22, 163, 74, 0.1);
+  --ies-warning: #CA8A04;
+  --ies-warning-subtle: rgba(202, 138, 4, 0.1);
+  --ies-error: #DC2626;
+  --ies-error-subtle: rgba(220, 38, 38, 0.1);
+  --ies-info: #2563EB;
+  --ies-info-subtle: rgba(37, 99, 235, 0.1);
+
+  /* === Typography === */
+  --ies-font-display: 'Crimson Pro', Georgia, serif;
+  --ies-font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --ies-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Type Scale: Major Third (1.25) */
+  --ies-text-xs: 0.75rem;      /* 12px */
+  --ies-text-sm: 0.875rem;     /* 14px */
+  --ies-text-base: 1rem;       /* 16px */
+  --ies-text-lg: 1.125rem;     /* 18px */
+  --ies-text-xl: 1.25rem;      /* 20px */
+  --ies-text-2xl: 1.5rem;      /* 24px */
+  --ies-text-3xl: 1.875rem;    /* 30px */
+  --ies-text-4xl: 2.25rem;     /* 36px */
+  --ies-text-5xl: 3rem;        /* 48px */
+
+  --ies-leading-tight: 1.25;
+  --ies-leading-normal: 1.5;
+  --ies-leading-relaxed: 1.75;
+
+  /* === Spacing (8px base) === */
+  --ies-space-0: 0;
+  --ies-space-1: 0.25rem;      /* 4px */
+  --ies-space-2: 0.5rem;       /* 8px */
+  --ies-space-3: 0.75rem;      /* 12px */
+  --ies-space-4: 1rem;         /* 16px */
+  --ies-space-5: 1.25rem;      /* 20px */
+  --ies-space-6: 1.5rem;       /* 24px */
+  --ies-space-8: 2rem;         /* 32px */
+  --ies-space-10: 2.5rem;      /* 40px */
+  --ies-space-12: 3rem;        /* 48px */
+  --ies-space-16: 4rem;        /* 64px */
+  --ies-space-20: 5rem;        /* 80px */
+  --ies-space-24: 6rem;        /* 96px */
+
+  /* === Border Radius === */
+  --ies-radius-sm: 0.25rem;    /* 4px */
+  --ies-radius-md: 0.5rem;     /* 8px */
+  --ies-radius-lg: 0.75rem;    /* 12px */
+  --ies-radius-xl: 1rem;       /* 16px */
+  --ies-radius-2xl: 1.5rem;    /* 24px */
+  --ies-radius-full: 9999px;
+
+  /* === Shadows (subtle, paper-like) === */
+  --ies-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --ies-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --ies-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --ies-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --ies-shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05);
+  --ies-shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  /* Book shadow - for book cards */
+  --ies-shadow-book:
+    0 4px 6px rgba(0, 0, 0, 0.07),
+    0 10px 20px rgba(0, 0, 0, 0.04),
+    4px 0 8px rgba(0, 0, 0, 0.02);
+
+  /* === Transitions === */
+  --ies-duration-fast: 150ms;
+  --ies-duration-base: 200ms;
+  --ies-duration-slow: 300ms;
+  --ies-duration-slower: 500ms;
+
+  --ies-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ies-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ies-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ies-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* === Z-Index Scale === */
+  --ies-z-base: 0;
+  --ies-z-dropdown: 100;
+  --ies-z-sticky: 200;
+  --ies-z-drawer: 300;
+  --ies-z-modal: 400;
+  --ies-z-toast: 500;
+  --ies-z-tooltip: 600;
+
+  /* === Breakpoints (as reference) === */
+  --ies-bp-sm: 640px;
+  --ies-bp-md: 768px;
+  --ies-bp-lg: 1024px;
+  --ies-bp-xl: 1280px;
+
+  /* === Layout === */
+  --ies-content-max-width: 720px;     /* Optimal reading width */
+  --ies-sidebar-width: 400px;         /* Flow panel desktop */
+  --ies-sidebar-width-mobile: 100%;   /* Flow panel mobile */
+  --ies-header-height: 56px;
+  --ies-bottom-sheet-peek: 64px;
+
+  /* === Paper Texture (subtle) === */
+  --ies-texture-paper: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+[data-theme="dark"] {
+  --ies-bg-deep: #121212;
+  --ies-bg-surface: #1E1E1E;
+  --ies-bg-elevated: #252525;
+  --ies-bg-muted: #2A2A2A;
+
+  --ies-text-primary: #F5F5F5;
+  --ies-text-secondary: #D4D4D4;
+  --ies-text-muted: #A3A3A3;
+  --ies-text-subtle: #737373;
+
+  --ies-border-default: #333333;
+  --ies-border-subtle: #2A2A2A;
+  --ies-border-strong: #404040;
+
+  --ies-accent: #D4A574;
+  --ies-accent-hover: #E5B685;
+
+  --ies-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --ies-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --ies-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --ies-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.35);
+  --ies-shadow-book:
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 10px 20px rgba(0, 0, 0, 0.2),
+    4px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-base);
+  line-height: var(--ies-leading-normal);
+  color: var(--ies-text-primary);
+  background-color: var(--ies-bg-deep);
+}
+
+/* Subtle paper texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--ies-texture-paper);
+  opacity: 0.015;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ============================================
+   TYPOGRAPHY UTILITIES
+   ============================================ */
+.ies-heading {
+  font-family: var(--ies-font-display);
+  font-weight: 600;
+  line-height: var(--ies-leading-tight);
+  color: var(--ies-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.ies-heading-1 { font-size: var(--ies-text-4xl); }
+.ies-heading-2 { font-size: var(--ies-text-3xl); }
+.ies-heading-3 { font-size: var(--ies-text-2xl); }
+.ies-heading-4 { font-size: var(--ies-text-xl); }
+.ies-heading-5 { font-size: var(--ies-text-lg); }
+
+.ies-body {
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-base);
+  line-height: var(--ies-leading-relaxed);
+}
+
+.ies-caption {
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
+  color: var(--ies-text-muted);
+}
+
+.ies-mono {
+  font-family: var(--ies-font-mono);
+  font-size: 0.9em;
+}
+
+/* ============================================
+   COMPONENT PATTERNS
+   ============================================ */
+
+/* Cards */
+.ies-card {
+  background: var(--ies-bg-surface);
+  border: 1px solid var(--ies-border-subtle);
+  border-radius: var(--ies-radius-lg);
+  box-shadow: var(--ies-shadow-sm);
+  transition: box-shadow var(--ies-duration-base) var(--ies-ease-default),
+              transform var(--ies-duration-base) var(--ies-ease-default);
+}
+
+.ies-card:hover {
+  box-shadow: var(--ies-shadow-md);
+}
+
+.ies-card-interactive {
+  cursor: pointer;
+}
+
+.ies-card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+/* Book Card (special treatment) */
+.ies-book-card {
+  background: var(--ies-bg-surface);
+  border-radius: var(--ies-radius-md);
+  box-shadow: var(--ies-shadow-book);
+  overflow: hidden;
+  transition: box-shadow var(--ies-duration-base) var(--ies-ease-default),
+              transform var(--ies-duration-base) var(--ies-ease-default);
+  cursor: pointer;
+}
+
+.ies-book-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--ies-shadow-lg);
+}
+
+/* Buttons */
+.ies-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ies-space-2);
+  padding: var(--ies-space-3) var(--ies-space-5);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
+  font-weight: 600;
+  line-height: 1;
+  border: none;
+  border-radius: var(--ies-radius-md);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+  min-height: 44px; /* Touch target */
+}
+
+.ies-btn-primary {
+  background: var(--ies-accent);
+  color: white;
+}
+
+.ies-btn-primary:hover {
+  background: var(--ies-accent-hover);
+}
+
+.ies-btn-secondary {
+  background: var(--ies-bg-muted);
+  color: var(--ies-text-primary);
+  border: 1px solid var(--ies-border-default);
+}
+
+.ies-btn-secondary:hover {
+  background: var(--ies-border-subtle);
+  border-color: var(--ies-border-strong);
+}
+
+.ies-btn-ghost {
+  background: transparent;
+  color: var(--ies-text-secondary);
+}
+
+.ies-btn-ghost:hover {
+  background: var(--ies-bg-muted);
+  color: var(--ies-text-primary);
+}
+
+/* Entity Badges */
+.ies-entity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ies-space-1);
+  padding: var(--ies-space-1) var(--ies-space-2);
+  font-size: var(--ies-text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--ies-radius-sm);
+}
+
+.ies-entity-badge[data-type="concept"] {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--ies-entity-concept);
+}
+
+.ies-entity-badge[data-type="person"] {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--ies-entity-person);
+}
+
+.ies-entity-badge[data-type="theory"] {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--ies-entity-theory);
+}
+
+.ies-entity-badge[data-type="framework"] {
+  background: rgba(234, 88, 12, 0.1);
+  color: var(--ies-entity-framework);
+}
+
+.ies-entity-badge[data-type="assessment"] {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--ies-entity-assessment);
+}
+
+/* Input Fields */
+.ies-input {
+  width: 100%;
+  padding: var(--ies-space-3) var(--ies-space-4);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-base);
+  color: var(--ies-text-primary);
+  background: var(--ies-bg-surface);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-md);
+  transition: border-color var(--ies-duration-fast) var(--ies-ease-default),
+              box-shadow var(--ies-duration-fast) var(--ies-ease-default);
+  min-height: 44px;
+}
+
+.ies-input:focus {
+  outline: none;
+  border-color: var(--ies-accent);
+  box-shadow: 0 0 0 3px var(--ies-accent-subtle);
+}
+
+.ies-input::placeholder {
+  color: var(--ies-text-subtle);
+}
+
+/* Skeleton Loading */
+.ies-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--ies-bg-muted) 0%,
+    var(--ies-bg-elevated) 50%,
+    var(--ies-bg-muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: ies-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--ies-radius-sm);
+}
+
+@keyframes ies-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================
+   LAYOUT UTILITIES
+   ============================================ */
+.ies-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--ies-space-4);
+}
+
+@media (min-width: 768px) {
+  .ies-container {
+    padding: 0 var(--ies-space-6);
+  }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes ies-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ies-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ies-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ies-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ies-animate-fade-in {
+  animation: ies-fade-in var(--ies-duration-base) var(--ies-ease-out);
+}
+
+.ies-animate-slide-up {
+  animation: ies-slide-up var(--ies-duration-slow) var(--ies-ease-out);
+}
+
+/* Staggered children animation */
+.ies-stagger-children > * {
+  opacity: 0;
+  animation: ies-slide-up var(--ies-duration-slow) var(--ies-ease-out) forwards;
+}
+
+.ies-stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.ies-stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.ies-stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.ies-stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.ies-stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.ies-stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.ies-stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.ies-stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   RESPONSIVE HELPERS
+   ============================================ */
+.ies-hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .ies-hide-mobile {
+    display: block;
+  }
+  .ies-hide-desktop {
+    display: none;
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ies-border-strong);
+  border-radius: var(--ies-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ies-text-subtle);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ies-border-strong) transparent;
+}

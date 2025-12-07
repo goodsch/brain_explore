@@ -43,6 +43,7 @@ export interface BreadcrumbJourney {
   entryPoint: {
     type: 'book' | 'search' | 'dashboard';
     reference: string;
+    calibreId?: number;
   };
   path: JourneyStep[];
 }
@@ -91,7 +92,7 @@ interface FlowModeState {
   setQueuedOperationsCount: (count: number) => void;
 
   // Journey actions
-  startJourney: (bookTitle: string) => void;
+  startJourney: (bookTitle: string, calibreId?: number) => void;
   addJourneyStep: (entityId: string, entityName: string, sourcePassage?: string) => void;
   endJourney: () => BreadcrumbJourney | null;
 
@@ -135,12 +136,12 @@ export const useFlowStore = create<FlowModeState>((set, get) => ({
   setQueuedOperationsCount: (count) => set({ queuedOperationsCount: count }),
 
   // Journey actions
-  startJourney: (bookTitle) => {
+  startJourney: (bookTitle, calibreId) => {
     const now = Date.now();
     const journey: BreadcrumbJourney = {
       id: `journey-${now}-${Math.random().toString(36).substr(2, 9)}`,
       startedAt: new Date(now).toISOString(),
-      entryPoint: { type: 'book', reference: bookTitle },
+      entryPoint: { type: 'book', reference: bookTitle, calibreId },
       path: [],
     };
     set({ currentJourney: journey, currentStepStartTime: now });

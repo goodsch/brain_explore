@@ -7,7 +7,25 @@ import type {
 } from '../store/flowStore';
 import { offlineQueue } from './offlineQueue';
 
-const API_BASE = 'http://localhost:8081';
+const API_BASE = '';  // Use Vite proxy - relative URLs
+
+// Book from Calibre library
+export interface CalibreBook {
+  calibre_id: number;
+  title: string;
+  author: string;
+  path: string;
+  format: string;
+  cover_url: string;
+  file_url: string;
+  entity_count?: number;
+  indexed?: boolean;
+}
+
+interface BooksResponse {
+  books: CalibreBook[];
+  total: number;
+}
 
 // Device ID for anonymous users (persisted in localStorage)
 function getDeviceId(): string {
@@ -214,6 +232,51 @@ class GraphClient {
    */
   getOfflineQueueStatus() {
     return offlineQueue.getStatus();
+  }
+
+  // ========================================
+  // Calibre Library Methods
+  // ========================================
+
+  /**
+   * Get all books from Calibre library
+   */
+  async getBooks(search?: string): Promise<BooksResponse> {
+    const params = search ? `?search=${encodeURIComponent(search)}` : '';
+    return this.fetch<BooksResponse>(`/books${params}`);
+  }
+
+  /**
+   * Get a single book by Calibre ID
+   */
+  async getBook(calibreId: number): Promise<CalibreBook> {
+    return this.fetch<CalibreBook>(`/books/${calibreId}`);
+  }
+
+  /**
+   * Get the cover image URL for a book
+   */
+  getBookCoverUrl(calibreId: number): string {
+    return `${API_BASE}/books/${calibreId}/cover`;
+  }
+
+  /**
+   * Get the EPUB file URL for a book
+   */
+  getBookFileUrl(calibreId: number): string {
+    return `${API_BASE}/books/${calibreId}/file`;
+  }
+
+  /**
+   * Get entity count for a book (to show indexed badge)
+   */
+  async getBookEntityCount(calibreId: number): Promise<number> {
+    try {
+      const result = await this.getEntitiesByBook(calibreId);
+      return result.total || result.entities.length;
+    } catch {
+      return 0;
+    }
   }
 }
 
