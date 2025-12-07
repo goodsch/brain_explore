@@ -765,6 +765,75 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 6):**
+- **Flow Orientation Service (New Backend Feature)** — Context-aware exploration strand generation for Flow Mode initiation:
+  - `ies/backend/src/ies_backend/services/flow_orientation_service.py`: New service for generating exploration strands from spark context (194 lines)
+  - **Purpose:** Analyzes note content, text selections, or thoughts to suggest 3-5 exploration paths through knowledge graph
+  - **Three-step process:**
+    1. Extract text from OrientationRequest (selected text → note title → empty)
+    2. Search knowledge graph for matching entities via GraphService.search_concepts()
+    3. Generate strands based on entity types and relationships
+  - **Strand generation strategies:**
+    - Primary concept deep dive (first matched entity + top 3 connections)
+    - Connecting the dots (relationships between top 4 entities)
+    - Type-specific perspective (Person/Framework/Theory lens)
+    - Practical application (mechanisms and patterns)
+  - **Default strands:** Free Exploration, Recent Discoveries, Core Frameworks (when no entities match)
+  - **Entity matching:** Tries full text search first, falls back to individual word matching for longer text (>3 words)
+  - **Deduplication:** Tracks seen entity IDs to prevent duplicate strand suggestions
+  - **Integration:** New `/flow/orientation` endpoint in flow_session.py API router
+  - **Schemas:** OrientationRequest (spark context), OrientationResponse (entities + strands), Strand, EntitySummary
+  - **Impact:** Enables ADHD-friendly Flow initiation from SiYuan notes with low-friction context capture
+- **Inbox Service (New Backend Feature)** — Quick capture processing with AI entity extraction and placement suggestions:
+  - `ies/backend/src/ies_backend/services/inbox_service.py`: New service for processing inbox items with AI-powered entity extraction (200+ lines)
+  - **Purpose:** Processes quick captures (notes, thoughts, highlights) to extract entities and suggest SiYuan folder placements
+  - **Two extraction modes:**
+    - AI-powered (Anthropic Claude Sonnet 4): Extracts entities with type/confidence, generates summary, tags
+    - Simple fallback: Regex-based capitalized phrase extraction when ANTHROPIC_API_KEY unavailable
+  - **Entity extraction format:** `ENTITIES: [name]: [type] (confidence 0-1)` with types: concept, person, theory, framework, practice
+  - **Graph matching:** Cross-references extracted entities with knowledge graph via GraphService.search_concepts()
+  - **Placement suggestions:** Recommends SiYuan folders based on content analysis and graph context
+  - **Schemas:** InboxProcessRequest, InboxProcessResponse, ExtractedEntity (with graph_match flag), SuggestedPlacement
+  - **Keyword detection:** Hardcoded therapy/psychology keywords for tag extraction (acceptance, grief, shame, etc.)
+  - **TODO:** Make keyword detection domain-agnostic or user-configurable
+  - **Integration:** Supports Quick Capture workflow (Daily folder → classification → placement)
+  - **Impact:** Reduces friction in ADHD capture-to-organization pipeline with intelligent routing
+- **Flow Session API Enhancement** — Added orientation endpoint for Flow Mode spark context analysis:
+  - `ies/backend/src/ies_backend/api/flow_session.py`: New POST `/flow/orientation` endpoint (lines 66-77)
+  - **Purpose:** Generate exploration strand proposals from current context (note, selection, thought)
+  - **Request schema:** OrientationRequest with spark_type, user_id, and optional context fields (note_id, note_title, text, block_ids, book_id, location)
+  - **Response schema:** OrientationResponse with extracted_entities and suggested_strands arrays
+  - **Integration:** FlowOrientationService.generate_orientation() orchestrates entity extraction and strand generation
+  - **Use case:** User right-clicks SiYuan note → "Start Flow from this note" → Backend analyzes note context → Suggests 3-5 exploration paths
+- **Flow Session Schemas Extension** — New schemas for orientation phase:
+  - `ies/backend/src/ies_backend/schemas/flow_session.py`: Added orientation-specific schemas (lines 114-168)
+  - **Strand schema:** id, name (e.g., "The Shame Loop"), description, starting_entities list
+  - **EntitySummary schema:** id, name, type, summary, connection_count (lightweight for UI display)
+  - **OrientationRequest:** Captures spark context with flexible field support (at least one context field required)
+  - **OrientationResponse:** Returns extracted entities and suggested strands for UI presentation
+  - **Naming convention:** All field aliases use camelCase for JavaScript/TypeScript frontend compatibility
+- **SiYuan Plugin Context Menu Integration** — Flow initiation from document titles with orientation support:
+  - `.worktrees/siyuan/ies/plugin/src/index.ts`: Context menu handler for "Start Flow from this note" (lines 176-200)
+  - **User flow:** Right-click note title → Select "Start Flow from this note" → Opens IES with Flow Mode pre-loaded
+  - **Context capture:** Extracts noteId (protyle.block.rootID), noteTitle (protyle.title.editElement.textContent), notebookId
+  - **State management:** Updates noteContext store with current note before opening Flow
+  - **Integration:** Calls openFlowWithContext() to transition to Flow view with orientation request
+  - **Icon:** Uses 'iconFlow' custom SVG icon in context menu
+  - **Purpose:** Low-friction Flow initiation directly from SiYuan documents (no manual navigation required)
+- **Dashboard Quick Capture Queue** — Enhanced capture status filtering with visual status indicators:
+  - `.worktrees/siyuan/ies/plugin/src/views/Dashboard.svelte`: Added capture_status filtering for Quick Capture queue (lines 104-141)
+  - **Filter options:** All, Raw (⬜), Classified (🔄), Processed (✅) with emoji indicators
+  - **CaptureStatus type:** Imported from types/blocks with CAPTURE_STATUS_LABELS mapping
+  - **Computed filter:** Reactive `filteredCaptureQueue` based on captureStatusFilter selection
+  - **Queue display:** Shows title, content_preview, captured_at, capture_status, resonance_signal, energy_level
+  - **Integration:** Supports Quick Capture → Inbox workflow with AI classification tracking
+  - **Purpose:** ADHD-friendly queue management with visual status progression (raw → classified → processed)
+- **Context Store (SiYuan Plugin)** — New reactive store for tracking current note context:
+  - `.worktrees/siyuan/ies/plugin/src/stores/contextStore.ts`: Writable store for noteContext with helper functions
+  - **State fields:** noteId (SiYuan block ID), noteTitle (document title), notebookId (parent notebook)
+  - **Exported helpers:** hasNoteOpen (derived store checking if noteId exists), currentNoteTitle (derived store for title access)
+  - **Context tracking:** initContextTracking() and destroyContextTracking() lifecycle hooks
+  - **Integration:** Used by context menu handlers and Flow Mode for orientation request building
+  - **Purpose:** Preserves user's current location when initiating Flow from notes
 - **Backend Book Streaming Fix (Dec 6)** — Fixed epub.js inline reading with StreamingResponse:
   - **Commit:** `72f6228: fix(reader): Add missing proxy config and error handling for book loading`
   - **Problem:** FileResponse with Content-Disposition header caused epub.js to download instead of reading inline

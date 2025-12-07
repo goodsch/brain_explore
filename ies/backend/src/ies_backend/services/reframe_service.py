@@ -144,6 +144,83 @@ class ReframeService:
         if not results:
             raise ValueError(f"Reframe '{reframe_id}' was not found")
 
+    async def get_user_reframe_preferences(self, user_id: str) -> dict:
+        """Get user's preferred reframe types and domains based on feedback history.
+
+        Analyzes helpful vs confusing votes to determine what resonates with the user.
+
+        Args:
+            user_id: The user to get preferences for
+
+        Returns:
+            Dict with preferred_types, preferred_domains, and avoid_types
+        """
+        # Query user's feedback patterns from reframes they've voted on
+        query = """
+        MATCH (rf:ReframeFeedback)-[:VOTED_ON]->(r:Reframe)
+        WHERE rf.user_id = $user_id
+        WITH r.type as type, r.domain as domain,
+             sum(CASE WHEN rf.vote = 'helpful' THEN 1 ELSE 0 END) as helpful,
+             count(rf) as total
+        RETURN type, domain, helpful, total
+        ORDER BY total DESC
+        """
+
+        results = await Neo4jClient.execute_query(query, {"user_id": user_id})
+
+        if not results:
+            return {
+                "preferred_types": [],
+                "preferred_domains": [],
+                "avoid_types": [],
+            }
+
+        # Calculate preferences (helpful rate > 60% = preferred, < 30% = avoid)
+        type_scores: dict[str, tuple[int, int]] = {}  # type -> (helpful, total)
+        domain_scores: dict[str, tuple[int, int]] = {}  # domain -> (helpful, total)
+
+        for row in results:
+            rtype = row["type"]
+            domain = row["domain"]
+            helpful = row["helpful"]
+            total = row["total"]
+
+            # Aggregate by type
+            if rtype in type_scores:
+                prev_h, prev_t = type_scores[rtype]
+                type_scores[rtype] = (prev_h + helpful, prev_t + total)
+            else:
+                type_scores[rtype] = (helpful, total)
+
+            # Aggregate by domain
+            if domain in domain_scores:
+                prev_h, prev_t = domain_scores[domain]
+                domain_scores[domain] = (prev_h + helpful, prev_t + total)
+            else:
+                domain_scores[domain] = (helpful, total)
+
+        # Calculate preferred and avoid lists
+        preferred_types = []
+        avoid_types = []
+        for rtype, (helpful, total) in type_scores.items():
+            rate = helpful / total if total > 0 else 0
+            if rate >= 0.6:
+                preferred_types.append(rtype)
+            elif rate < 0.3:
+                avoid_types.append(rtype)
+
+        preferred_domains = []
+        for domain, (helpful, total) in domain_scores.items():
+            rate = helpful / total if total > 0 else 0
+            if rate >= 0.6:
+                preferred_domains.append(domain)
+
+        return {
+            "preferred_types": preferred_types,
+            "preferred_domains": preferred_domains,
+            "avoid_types": avoid_types,
+        }
+
     async def _get_concept_context(self, concept_id: str) -> dict[str, Any] | None:
         """Load core metadata + related names for prompt construction."""
         query = f"""

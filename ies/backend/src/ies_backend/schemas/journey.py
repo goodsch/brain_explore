@@ -156,3 +156,12 @@ class JourneyUpdateRequest(BaseModel):
     title: str | None = None
     tags: list[str] | None = None
     notes: str | None = None
+
+
+class JourneySynthesisResponse(BaseModel):
+    """Response after synthesizing a journey's insights."""
+
+    synthesis: str
+    journey: BreadcrumbJourney
+    insights: list[str] = Field(default_factory=list)
+    connections_discovered: int = 0

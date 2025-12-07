@@ -109,3 +109,59 @@ class FlowSynthesisResponse(BaseModel):
     flow_session: FlowSession = Field(alias="flowSession")
 
     model_config = {"populate_by_name": True}
+
+
+# ============ Orientation Phase Schemas ============
+
+
+class Strand(BaseModel):
+    """A potential exploration path suggested during orientation."""
+
+    id: str
+    name: str  # e.g., "The Shame Loop", "Executive Pathway"
+    description: str
+    starting_entities: list[str] = Field(default_factory=list, alias="startingEntities")
+
+    model_config = {"populate_by_name": True}
+
+
+class EntitySummary(BaseModel):
+    """Lightweight entity info for orientation display."""
+
+    id: str
+    name: str
+    type: str | None = None
+    summary: str | None = None
+    connection_count: int = Field(default=0, alias="connectionCount")
+
+    model_config = {"populate_by_name": True}
+
+
+class OrientationRequest(BaseModel):
+    """Request to generate strand proposals from spark context."""
+
+    spark_type: str = Field(alias="sparkType")  # note, selection, highlight, thought
+    user_id: str = Field(alias="userId")
+
+    # Context fields (at least one required)
+    note_id: str | None = Field(default=None, alias="noteId")
+    note_title: str | None = Field(default=None, alias="noteTitle")
+    text: str | None = None  # Selected text or thought content
+    block_ids: list[str] | None = Field(default=None, alias="blockIds")
+    book_id: str | None = Field(default=None, alias="bookId")
+    location: str | None = None  # e.g., page, chapter
+
+    model_config = {"populate_by_name": True}
+
+
+class OrientationResponse(BaseModel):
+    """Response with extracted entities and suggested exploration strands."""
+
+    extracted_entities: list[EntitySummary] = Field(
+        default_factory=list, alias="extractedEntities"
+    )
+    suggested_strands: list[Strand] = Field(
+        default_factory=list, alias="suggestedStrands"
+    )
+
+    model_config = {"populate_by_name": True}

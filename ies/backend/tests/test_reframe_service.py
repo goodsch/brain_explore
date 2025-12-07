@@ -131,3 +131,46 @@ async def test_record_feedback_updates_votes(monkeypatch):
     execute_write.assert_awaited_once()
     called_params = execute_write.await_args.args[1]
     assert called_params["vote"] == "helpful"
+
+
+@pytest.mark.asyncio
+async def test_get_user_reframe_preferences(monkeypatch):
+    """get_user_reframe_preferences should return preferred types and domains."""
+    # Mock Neo4j results showing user preference pattern
+    execute_query = AsyncMock(return_value=[
+        {"type": "metaphor", "domain": "therapy", "helpful": 8, "total": 10},
+        {"type": "analogy", "domain": "personal", "helpful": 6, "total": 8},
+        {"type": "story", "domain": "meta", "helpful": 1, "total": 5},
+    ])
+    monkeypatch.setattr(
+        "ies_backend.services.reframe_service.Neo4jClient.execute_query",
+        execute_query,
+    )
+
+    service = ReframeService(anthropic_client=AsyncMock())
+    prefs = await service.get_user_reframe_preferences("user-123")
+
+    # User prefers metaphor (80% helpful) and analogy (75% helpful)
+    assert "metaphor" in prefs["preferred_types"]
+    assert "analogy" in prefs["preferred_types"]
+    # Story has low helpful rate (20%), should be in avoid list
+    assert "story" in prefs.get("avoid_types", [])
+    # Domains should also be tracked
+    assert "therapy" in prefs["preferred_domains"]
+
+
+@pytest.mark.asyncio
+async def test_get_user_reframe_preferences_empty_history(monkeypatch):
+    """get_user_reframe_preferences should return empty prefs for new users."""
+    execute_query = AsyncMock(return_value=[])
+    monkeypatch.setattr(
+        "ies_backend.services.reframe_service.Neo4jClient.execute_query",
+        execute_query,
+    )
+
+    service = ReframeService(anthropic_client=AsyncMock())
+    prefs = await service.get_user_reframe_preferences("new-user")
+
+    assert prefs["preferred_types"] == []
+    assert prefs["preferred_domains"] == []
+    assert prefs.get("avoid_types", []) == []

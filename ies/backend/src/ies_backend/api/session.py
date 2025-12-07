@@ -157,8 +157,8 @@ async def end_session(request: SessionEndRequest) -> SessionEndResponse:
         # Process via existing flow
         response = await process_session(process_request)
 
-        # Cleanup session from memory
-        chat_service.end_session(request.session_id)
+        # Cleanup session from Redis
+        await chat_service.end_session(request.session_id)
 
         return SessionEndResponse(
             doc_id=response.session_doc_id,
@@ -352,4 +352,59 @@ async def get_entity_page_data(user_id: str, entity_name: str) -> EntityPageData
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get entity page data: {str(e)}",
+        )
+
+
+# Session persistence endpoints (Redis-backed)
+
+@router.get("/list/{user_id}")
+async def list_user_sessions(user_id: str) -> list[dict]:
+    """List all active sessions for a user.
+
+    Returns session summaries with id, started_at, last_activity, and message_count.
+    Sessions are stored in Redis with 24-hour TTL and expire automatically.
+
+    Args:
+        user_id: User whose sessions to list
+
+    Returns:
+        List of session summaries, sorted by last activity (most recent first)
+    """
+    try:
+        sessions = await chat_service.list_sessions(user_id)
+        return sessions
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to list sessions: {str(e)}",
+        )
+
+
+@router.get("/resume/{session_id}")
+async def resume_session(session_id: str) -> dict:
+    """Resume an existing session.
+
+    Returns full session context including messages for continuation.
+    Extends the session TTL on access.
+
+    Args:
+        session_id: Session to resume
+
+    Returns:
+        Session data with messages for resumption
+    """
+    try:
+        session = await chat_service.resume_session(session_id)
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Session not found or expired: {session_id}",
+            )
+        return session
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to resume session: {str(e)}",
         )

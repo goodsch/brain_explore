@@ -12,7 +12,7 @@
 
     import ForgeMode from './ForgeMode.svelte';
     import FlowMode from './FlowMode.svelte';
-    import QuickCapture from './QuickCapture.svelte';
+    import Inbox from './Inbox.svelte';
 
     // Backend configuration
     const BACKEND_HOST = '192.168.86.60';
@@ -21,7 +21,7 @@
     const USER_ID = 'chris';
 
     // View state
-    type ViewMode = 'dashboard' | 'structured-thinking' | 'flow' | 'capture';
+    type ViewMode = 'dashboard' | 'structured-thinking' | 'flow' | 'inbox';
     let currentView: ViewMode = 'dashboard';
     let selectedJourneyId: string | null = null;
 
@@ -47,13 +47,28 @@
         path: Array<{entity_name: string}>;
     }> = [];
 
-    // Quick Capture queue
-    let captureQueue: Array<{
+    // Inbox queue
+    let inboxQueue: Array<{
         id: string;
-        content_preview: string;
+        text: string;
+        source: string;
         captured_at: string;
         status: string;
     }> = [];
+
+    // Source icon mapping
+    function getSourceIcon(source: string): string {
+        switch (source) {
+            case 'ios_shortcut': return '📱';
+            case 'browser': return '🌐';
+            case 'voice': return '🎤';
+            case 'siyuan': return '📝';
+            case 'ies_reader': return '📖';
+            case 'email': return '✉️';
+            case 'phone': return '📱';  // Legacy
+            default: return '📥';
+        }
+    }
 
     let isLoading = true;
     let error: string | null = null;
@@ -88,16 +103,17 @@
         error = null;
 
         try {
-            const [statsData, suggestionsData, journeysData] = await Promise.all([
+            const [statsData, suggestionsData, journeysData, inboxData] = await Promise.all([
                 apiGet('/graph/stats'),
                 apiGet('/graph/suggestions'),
-                apiGet(`/journeys/user/${USER_ID}`).catch(() => ({ journeys: [] }))
+                apiGet(`/journeys/user/${USER_ID}`).catch(() => ({ journeys: [] })),
+                apiGet('/inbox?status=queued').catch(() => ({ items: [] }))
             ]);
 
             stats = statsData;
             suggestions = suggestionsData;
             recentJourneys = journeysData.journeys || [];
-            captureQueue = [];
+            inboxQueue = inboxData.items || [];
         } catch (err) {
             error = err.message;
             console.error('[IES] Dashboard load error:', err);
@@ -241,7 +257,7 @@
                         <span class="mode-subtitle">Navigate concepts</span>
                     </button>
 
-                    <button class="mode-card mode-card--capture" on:click={() => navigateTo('capture')}>
+                    <button class="mode-card mode-card--inbox" on:click={() => navigateTo('inbox')}>
                         <div class="mode-glow"></div>
                         <div class="mode-icon">
                             <svg viewBox="0 0 24 24" width="28" height="28">
@@ -250,8 +266,8 @@
                                 <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
                             </svg>
                         </div>
-                        <span class="mode-title">Capture</span>
-                        <span class="mode-subtitle">Quick thoughts</span>
+                        <span class="mode-title">Inbox</span>
+                        <span class="mode-subtitle">Process captures</span>
                     </button>
                 </div>
 
@@ -284,18 +300,19 @@
                     </section>
                 {/if}
 
-                <!-- Capture Queue -->
-                {#if captureQueue.length > 0}
+                <!-- Inbox Queue -->
+                {#if inboxQueue.length > 0}
                     <section class="section">
                         <h3 class="section-title">
-                            Capture Queue
-                            <span class="queue-badge">{captureQueue.length}</span>
+                            Inbox
+                            <span class="queue-badge">{inboxQueue.length}</span>
                         </h3>
-                        <div class="capture-list">
-                            {#each captureQueue.slice(0, 3) as item}
-                                <div class="capture-card">
-                                    <span class="capture-preview">{item.content_preview}</span>
-                                    <span class="capture-time">{formatRelativeTime(item.captured_at)}</span>
+                        <div class="inbox-list">
+                            {#each inboxQueue.slice(0, 3) as item}
+                                <div class="inbox-card" on:click={() => navigateTo('inbox')}>
+                                    <span class="inbox-source" title={item.source}>{getSourceIcon(item.source)}</span>
+                                    <span class="inbox-preview">{item.text.slice(0, 80)}{item.text.length > 80 ? '...' : ''}</span>
+                                    <span class="inbox-time">{formatRelativeTime(item.captured_at)}</span>
                                 </div>
                             {/each}
                         </div>
@@ -339,8 +356,8 @@
         <ForgeMode backendUrl={BACKEND_URL} on:back={handleBack} />
     {:else if currentView === 'flow'}
         <FlowMode backendUrl={BACKEND_URL} journeyId={selectedJourneyId} on:back={handleBack} />
-    {:else if currentView === 'capture'}
-        <QuickCapture backendUrl={BACKEND_URL} on:back={handleBack} />
+    {:else if currentView === 'inbox'}
+        <Inbox backendUrl={BACKEND_URL} on:back={handleBack} />
     {/if}
 </div>
 
@@ -625,8 +642,8 @@
     .mode-card--explore:hover { border-color: var(--secondary); }
     .mode-card--explore:hover .mode-glow { background: radial-gradient(circle at center, var(--secondary-lighter) 0%, transparent 70%); }
 
-    .mode-card--capture:hover { border-color: var(--tertiary); }
-    .mode-card--capture:hover .mode-glow { background: radial-gradient(circle at center, var(--tertiary-light) 0%, transparent 70%); }
+    .mode-card--inbox:hover { border-color: var(--tertiary); }
+    .mode-card--inbox:hover .mode-glow { background: radial-gradient(circle at center, var(--tertiary-light) 0%, transparent 70%); }
 
     .mode-icon {
         position: relative;
@@ -637,7 +654,7 @@
 
     .mode-card--think:hover .mode-icon { color: var(--accent); }
     .mode-card--explore:hover .mode-icon { color: var(--secondary); }
-    .mode-card--capture:hover .mode-icon { color: var(--tertiary); }
+    .mode-card--inbox:hover .mode-icon { color: var(--tertiary); }
 
     .mode-title {
         position: relative;
@@ -768,35 +785,48 @@
         transform: translateX(0);
     }
 
-    /* Capture Cards */
-    .capture-list {
+    /* Inbox Cards */
+    .inbox-list {
         display: flex;
         flex-direction: column;
         gap: var(--space-2);
     }
 
-    .capture-card {
+    .inbox-card {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: var(--space-3);
         padding: var(--space-3) var(--space-4);
         background: var(--bg-elevated);
         border: 1px solid var(--border-subtle);
         border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
     }
 
-    .capture-preview {
+    .inbox-card:hover {
+        border-color: var(--tertiary);
+        background: var(--bg-surface);
+    }
+
+    .inbox-source {
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .inbox-preview {
+        flex: 1;
         font-size: 13px;
         color: var(--text-secondary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 180px;
     }
 
-    .capture-time {
+    .inbox-time {
         font-size: 11px;
         color: var(--text-muted);
+        flex-shrink: 0;
     }
 
     /* Suggestions */

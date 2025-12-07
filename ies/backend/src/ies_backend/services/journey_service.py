@@ -4,9 +4,14 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+import os
+
+import anthropic
+
 from ..schemas.journey import (
     BreadcrumbJourney,
     JourneyCreateRequest,
+    JourneySynthesisResponse,
     JourneyUpdateRequest,
 )
 from .neo4j_client import Neo4jClient
@@ -358,3 +363,134 @@ class JourneyService:
         """
         result = await Neo4jClient.execute_write(query, {"id": journey_id})
         return result is not None
+
+    @staticmethod
+    def _get_anthropic_client() -> anthropic.AsyncAnthropic | None:
+        """Get Anthropic client if API key is available."""
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            return None
+        return anthropic.AsyncAnthropic(api_key=api_key)
+
+    @staticmethod
+    async def generate_synthesis(journey_id: str) -> JourneySynthesisResponse | None:
+        """Generate an AI-powered synthesis of the journey's insights.
+
+        Analyzes the exploration path, marks, and thinking partner exchanges
+        to produce a coherent narrative of what was discovered.
+        """
+        journey = await JourneyService.get_journey(journey_id)
+        if not journey:
+            return None
+
+        # Build journey narrative from steps
+        path_summary = []
+        for step in journey.path:
+            entry = f"- {step.entity_name}"
+            if step.dwell_time_seconds > 60:
+                entry += f" (explored for {int(step.dwell_time_seconds / 60)} min)"
+            if step.source_passage:
+                entry += f": \"{step.source_passage[:100]}...\""
+            path_summary.append(entry)
+
+        # Gather marks (highlights, annotations)
+        marks_summary = []
+        for mark in journey.marks:
+            marks_summary.append(f"- [{mark.type.value}] {mark.content}")
+
+        # Gather thinking partner exchanges
+        exchanges_summary = []
+        for exchange in journey.thinking_partner_exchanges:
+            q = exchange.question[:100] + "..." if len(exchange.question) > 100 else exchange.question
+            exchanges_summary.append(f"- Q: {q}")
+            if exchange.response:
+                r = exchange.response[:100] + "..." if len(exchange.response) > 100 else exchange.response
+                exchanges_summary.append(f"  A: {r}")
+
+        # Construct prompt
+        entry_type = journey.entry_point.type.value
+        entry_ref = journey.entry_point.reference
+
+        prompt = f"""Analyze this exploration journey and provide insights.
+
+Entry point: Started from {entry_type} - "{entry_ref}"
+
+Exploration path ({len(journey.path)} steps):
+{chr(10).join(path_summary) or "No steps recorded"}
+
+Marks made ({len(journey.marks)}):
+{chr(10).join(marks_summary) or "No marks"}
+
+Thinking partner exchanges ({len(journey.thinking_partner_exchanges)}):
+{chr(10).join(exchanges_summary) or "No exchanges"}
+
+Provide:
+1. A 2-3 sentence synthesis of what was discovered
+2. 3-5 key insights as bullet points
+3. Count of meaningful connections discovered between concepts
+
+Format your response as:
+SYNTHESIS: [your synthesis]
+INSIGHTS:
+- [insight 1]
+- [insight 2]
+...
+CONNECTIONS: [number]"""
+
+        client = JourneyService._get_anthropic_client()
+        if not client:
+            # Fallback without AI
+            return JourneySynthesisResponse(
+                synthesis=f"Explored {len(journey.path)} concepts starting from {entry_ref}",
+                journey=journey,
+                insights=[f"Visited: {', '.join(s.entity_name for s in journey.path[:5])}"],
+                connections_discovered=max(0, len(journey.path) - 1),
+            )
+
+        try:
+            message = await client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=600,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            response_text = message.content[0].text if message and message.content else ""
+
+            # Parse response
+            synthesis = ""
+            insights = []
+            connections = 0
+
+            lines = response_text.split("\n")
+            current_section = None
+            for line in lines:
+                line = line.strip()
+                if line.startswith("SYNTHESIS:"):
+                    synthesis = line[10:].strip()
+                    current_section = "synthesis"
+                elif line.startswith("INSIGHTS:"):
+                    current_section = "insights"
+                elif line.startswith("CONNECTIONS:"):
+                    try:
+                        connections = int(line[12:].strip())
+                    except ValueError:
+                        connections = len(journey.path) - 1
+                elif current_section == "insights" and line.startswith("-"):
+                    insights.append(line[1:].strip())
+                elif current_section == "synthesis" and line:
+                    synthesis += " " + line
+
+            return JourneySynthesisResponse(
+                synthesis=synthesis or f"Explored {len(journey.path)} concepts",
+                journey=journey,
+                insights=insights or [f"Visited {len(journey.path)} concepts"],
+                connections_discovered=connections or max(0, len(journey.path) - 1),
+            )
+
+        except Exception:
+            # Fallback on error
+            return JourneySynthesisResponse(
+                synthesis=f"Explored {len(journey.path)} concepts starting from {entry_ref}",
+                journey=journey,
+                insights=[f"Visited: {', '.join(s.entity_name for s in journey.path[:5])}"],
+                connections_discovered=max(0, len(journey.path) - 1),
+            )

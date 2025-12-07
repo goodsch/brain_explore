@@ -227,6 +227,38 @@ STATE_TO_APPROACHES: dict[UserState, list[InquiryApproach]] = {
 }
 
 
+# Feedback types for question effectiveness tracking
+class FeedbackType(str, Enum):
+    """User feedback on question effectiveness."""
+
+    HELPFUL = "helpful"           # Question was useful
+    NOT_HELPFUL = "not_helpful"   # Question wasn't useful
+    LED_TO_INSIGHT = "led_to_insight"  # Question triggered a breakthrough
+    SKIP = "skip"                 # User skipped the question
+
+
+class QuestionFeedbackRequest(BaseModel):
+    """Request to record feedback on a question."""
+
+    question_id: str | None = Field(None, description="Optional unique ID for the question")
+    user_id: str = Field(..., description="User providing feedback")
+    entity_id: str | None = Field(None, description="Entity the question was about")
+    question_text: str = Field(..., description="The actual question text")
+    question_class: QuestionClass | None = Field(None, description="Question class if known")
+    feedback_type: FeedbackType = Field(..., description="Type of feedback")
+    response_text: str | None = Field(None, description="Optional user comment")
+    session_id: str | None = Field(None, description="Session where question was asked")
+    timestamp: str | None = Field(None, description="When feedback was given (ISO format)")
+
+
+class QuestionFeedbackResponse(BaseModel):
+    """Response after recording question feedback."""
+
+    feedback_id: str = Field(..., description="Unique ID for this feedback record")
+    recorded: bool = Field(True, description="Whether feedback was successfully recorded")
+    message: str | None = Field(None, description="Optional status message")
+
+
 # Approach descriptions for system prompts
 APPROACH_DESCRIPTIONS: dict[InquiryApproach, str] = {
     InquiryApproach.SOCRATIC: """Socratic inquiry uses clarifying questions to surface assumptions,

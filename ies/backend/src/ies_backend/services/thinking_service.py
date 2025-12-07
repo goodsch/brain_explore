@@ -1,4 +1,4 @@
-"""Service for Thinking Sessions derived from capture items."""
+"""Service for Thinking Sessions derived from inbox items."""
 
 import json
 import uuid
@@ -8,7 +8,7 @@ from typing import Any
 from anthropic import AsyncAnthropic
 
 from ies_backend.config import settings
-from ies_backend.schemas.capture import CaptureStatus
+from ies_backend.schemas.inbox import InboxStatus
 from ies_backend.schemas.thinking import (
     Angle,
     Breadcrumb,
@@ -20,8 +20,8 @@ from ies_backend.schemas.thinking import (
     ThinkingStatus,
     ThinkingStepRequest,
 )
-from ies_backend.services.capture_service import CaptureService
-from ies_backend.schemas.capture import CaptureUpdateRequest
+from ies_backend.services.inbox_service import InboxService
+from ies_backend.schemas.inbox import InboxUpdateRequest
 from ies_backend.services.neo4j_client import Neo4jClient
 
 
@@ -35,21 +35,21 @@ class ThinkingService:
     # ------------------------------------------------------------------
     @classmethod
     async def start_session(cls, request: ThinkingStartRequest) -> ThinkingStartResponse:
-        """Start a thinking session from a capture."""
-        capture = await CaptureService.get_capture(request.capture_id)
-        if not capture:
-            raise ValueError(f"Capture not found: {request.capture_id}")
+        """Start a thinking session from an inbox item."""
+        inbox = await InboxService.get_inbox(request.capture_id)
+        if not inbox:
+            raise ValueError(f"Inbox item not found: {request.capture_id}")
 
-        await CaptureService.update_capture(
-            request.capture_id, CaptureUpdateRequest(status=CaptureStatus.IN_THINKING)
+        await InboxService.update_inbox(
+            request.capture_id, InboxUpdateRequest(status=InboxStatus.IN_THINKING)
         )
 
         session_id = f"thinking_{uuid.uuid4().hex[:12]}"
         created_at = datetime.now(timezone.utc)
-        entities = capture.auto_extracted.entities if capture.auto_extracted else []
+        entities = inbox.auto_extracted.entities if inbox.auto_extracted else []
 
-        angles = await cls._generate_angles(capture.raw_text, entities)
-        siyuan_note_id = cls._build_note_id(capture, entities, session_id)
+        angles = await cls._generate_angles(inbox.raw_text, entities)
+        siyuan_note_id = cls._build_note_id(inbox, entities, session_id)
         breadcrumbs: list[Breadcrumb] = []
 
         await cls._ensure_schema()
@@ -64,8 +64,8 @@ class ThinkingService:
                 t.entities = $entities,
                 t.breadcrumbs_json = $breadcrumbs_json
             WITH t
-            MATCH (c:CaptureItem {id: $capture_id})
-            MERGE (t)-[:FROM_CAPTURE]->(c)
+            MATCH (c:InboxItem {id: $capture_id})
+            MERGE (t)-[:FROM_INBOX]->(c)
             """,
             {
                 "id": session_id,
@@ -90,7 +90,7 @@ class ThinkingService:
             breadcrumbs=breadcrumbs,
         )
 
-        template = cls._suggest_template(capture.raw_text, entities, angles)
+        template = cls._suggest_template(inbox.raw_text, entities, angles)
 
         return ThinkingStartResponse(session=session, siyuanTemplateSuggestion=template)
 
@@ -156,7 +156,7 @@ class ThinkingService:
     async def complete_session(
         cls, session_id: str, request: ThinkingCompleteRequest
     ) -> ThinkingSession | None:
-        """Mark a session as completed and integrate capture."""
+        """Mark a session as completed and integrate inbox item."""
         session = await cls.get_session(session_id)
         if not session:
             return None
@@ -178,9 +178,9 @@ class ThinkingService:
             },
         )
 
-        # Promote capture to integrated when thinking session completes
-        await CaptureService.update_capture(
-            session.capture_id, CaptureUpdateRequest(status=CaptureStatus.INTEGRATED)
+        # Promote inbox item to integrated when thinking session completes
+        await InboxService.update_inbox(
+            session.capture_id, InboxUpdateRequest(status=InboxStatus.INTEGRATED)
         )
 
         session.status = ThinkingStatus.COMPLETED
@@ -295,12 +295,12 @@ Generate 3-5 concise exploration angles as JSON:
         )
 
     @staticmethod
-    def _build_note_id(capture: Any, entities: list[str], session_id: str) -> str:
+    def _build_note_id(inbox: Any, entities: list[str], session_id: str) -> str:
         """Build a human-friendly note ID for SiYuan integration."""
         if entities:
             slug = entities[0].lower().replace(" ", "-")
             return f"note-think-{slug}"
-        text = getattr(capture, "raw_text", "thinking").split()
+        text = getattr(inbox, "raw_text", "thinking").split()
         slug = "-".join(text[:3]).lower() if text else session_id
         return f"note-think-{slug}"
 

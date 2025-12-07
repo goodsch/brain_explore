@@ -10,11 +10,14 @@ from ies_backend.schemas.question_engine import (
     InquiryApproach,
     QuestionBatch,
     QuestionClass,
+    QuestionFeedbackRequest,
+    QuestionFeedbackResponse,
     QuestionTemplate,
     StateDetection,
     UserState,
 )
 from ies_backend.services.approach_selection_service import ApproachSelectionService
+from ies_backend.services.feedback_service import FeedbackService
 from ies_backend.services.profile_service import ProfileService
 from ies_backend.services.question_templates_service import QuestionTemplatesService
 from ies_backend.services.state_detection_service import StateDetectionService
@@ -26,6 +29,7 @@ state_detection_service = StateDetectionService()
 approach_selection_service = ApproachSelectionService()
 question_templates_service = QuestionTemplatesService()
 profile_service = ProfileService()
+feedback_service = FeedbackService()
 
 
 # Request/Response models
@@ -398,3 +402,89 @@ async def list_approach_to_classes() -> dict[str, list[str]]:
         approach.value: [qc.value for qc in classes]
         for approach, classes in APPROACH_TO_CLASSES.items()
     }
+
+
+@router.post("/feedback", response_model=QuestionFeedbackResponse)
+async def record_feedback(request: QuestionFeedbackRequest) -> QuestionFeedbackResponse:
+    """
+    Record feedback on a question's effectiveness.
+
+    Captures user feedback on whether a question was helpful, not helpful,
+    led to an insight, or was skipped. This data is used to improve question
+    selection and understand which question types are most effective.
+
+    The feedback is stored in Neo4j with relationships to:
+    - UserProfile (who gave the feedback)
+    - Entity (what concept/entity the question was about)
+    - Session (where the question was asked)
+
+    Args:
+        request: Feedback request with question text, type, and optional context
+
+    Returns:
+        QuestionFeedbackResponse with feedback ID and confirmation
+    """
+    try:
+        response = await feedback_service.record_feedback(request)
+        return response
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to record feedback: {str(e)}",
+        )
+
+
+@router.get("/feedback/stats")
+async def get_feedback_stats(
+    user_id: str | None = Query(None, description="Filter stats by user ID"),
+) -> dict:
+    """
+    Get aggregated feedback statistics.
+
+    Returns counts of feedback by type and question class, plus the
+    overall insight rate (ratio of questions that led to insights).
+
+    Args:
+        user_id: Optional filter to get stats for a specific user
+
+    Returns:
+        Dictionary with total, by_type, by_class, and insight_rate
+    """
+    try:
+        stats = await feedback_service.get_feedback_stats(user_id=user_id)
+        return stats
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve feedback stats: {str(e)}",
+        )
+
+
+@router.get("/feedback/effective-classes")
+async def get_effective_question_classes(
+    min_rate: float = Query(0.2, ge=0, le=1, description="Minimum insight rate threshold"),
+) -> list[str]:
+    """
+    Get question classes that frequently lead to insights.
+
+    Returns question class names that have an insight rate at or above
+    the specified threshold. Useful for prioritizing question types
+    that have historically led to breakthroughs.
+
+    Args:
+        min_rate: Minimum ratio of insights to total feedback (default 0.2 = 20%)
+
+    Returns:
+        List of effective question class names
+    """
+    try:
+        classes = await feedback_service.get_effective_question_classes(min_insight_rate=min_rate)
+        return classes
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve effective classes: {str(e)}",
+        )

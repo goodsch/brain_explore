@@ -160,6 +160,11 @@ class UserProfile(BaseModel):
     sessions_completed: int = 0
     last_updated: str | None = None
 
+    # Learning data
+    approach_effectiveness: dict[str, "ApproachEffectivenessEntry"] = Field(
+        default_factory=dict, description="Tracked effectiveness per approach type"
+    )
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -238,3 +243,21 @@ class ProfileObservation(BaseModel):
     suggested_updates: dict[str, str] = Field(
         default_factory=dict, description="AI-suggested profile updates based on session"
     )
+    # Engagement metrics for learning
+    time_per_entity: dict[str, int] = Field(
+        default_factory=dict, description="Seconds spent per entity/topic"
+    )
+    thinking_partner_exchanges: int = Field(
+        default=0, description="Number of thinking partner question exchanges"
+    )
+    insights_count: int = Field(
+        default=0, description="Number of insights reported during session"
+    )
+
+
+class ApproachEffectivenessEntry(BaseModel):
+    """Tracks effectiveness of a questioning approach for a user."""
+
+    average_score: float = Field(default=0.0, ge=0, le=10)
+    sample_size: int = Field(default=0, ge=0)
+    last_updated: str | None = None

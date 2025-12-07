@@ -8,8 +8,11 @@ from ies_backend.schemas.flow_session import (
     FlowSession,
     FlowStepRequest,
     FlowSynthesisResponse,
+    OrientationRequest,
+    OrientationResponse,
 )
 from ies_backend.services.flow_session_service import FlowSessionService
+from ies_backend.services.flow_orientation_service import FlowOrientationService
 
 router = APIRouter(prefix="/flow", tags=["flow"])
 
@@ -58,3 +61,17 @@ async def get_flow_journey(session_id: str) -> FlowSession:
     if not session:
         raise HTTPException(status_code=404, detail="Flow session not found")
     return session
+
+
+@router.post("/orientation", response_model=OrientationResponse)
+async def get_orientation(request: OrientationRequest) -> OrientationResponse:
+    """Generate strand proposals from spark context.
+
+    Analyzes the provided context (note, selection, or thought) to:
+    1. Extract entities from the text
+    2. Match entities to knowledge graph
+    3. Generate 3-5 exploration strands based on graph relationships
+
+    Each strand represents a potential exploration path through the knowledge graph.
+    """
+    return await FlowOrientationService.generate_orientation(request)

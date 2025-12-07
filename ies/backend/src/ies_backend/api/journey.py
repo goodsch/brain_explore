@@ -7,6 +7,7 @@ from ..schemas.journey import (
     JourneyCreateRequest,
     JourneyCreateResponse,
     JourneyListResponse,
+    JourneySynthesisResponse,
     JourneyUpdateRequest,
 )
 from ..services.journey_service import JourneyService
@@ -89,3 +90,21 @@ async def delete_journey(journey_id: str) -> dict:
     if not success:
         raise HTTPException(status_code=404, detail="Journey not found")
     return {"message": "Journey deleted successfully"}
+
+
+@router.post("/{journey_id}/synthesize", response_model=JourneySynthesisResponse)
+async def synthesize_journey(journey_id: str) -> JourneySynthesisResponse:
+    """Generate an AI-powered synthesis of a journey.
+
+    Analyzes the exploration path, marks made, and thinking partner exchanges
+    to produce:
+    - A narrative synthesis of what was discovered
+    - Key insights as bullet points
+    - Count of meaningful connections discovered
+
+    Falls back to basic summary if AI is unavailable.
+    """
+    response = await JourneyService.generate_synthesis(journey_id)
+    if not response:
+        raise HTTPException(status_code=404, detail="Journey not found")
+    return response

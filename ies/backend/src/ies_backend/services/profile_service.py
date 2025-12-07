@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from ies_backend.schemas.profile import (
+    ApproachEffectivenessEntry,
     AttentionProfile,
     CapacityCheckIn,
     CommunicationProfile,
@@ -16,6 +17,12 @@ from ies_backend.schemas.profile import (
     SensoryProfile,
     UserProfile,
 )
+
+# Constants for engagement thresholds
+DEEP_ENGAGEMENT_SECONDS = 300  # 5 minutes per entity = deep engagement
+MIN_EXCHANGES_FOR_ENGAGEMENT = 3  # At least 3 thinking partner exchanges
+HIGH_ENERGY_SIGNALS = {"hyperfocused", "deep_engagement", "flow", "energized"}
+MAX_HYPERFOCUS_TRIGGERS = 20
 from ies_backend.services.neo4j_client import Neo4jClient
 
 
@@ -34,6 +41,19 @@ class ProfileService:
 
         node = results[0]["p"]
         return self._node_to_profile(node)
+
+    async def get_or_create_profile(
+        self, user_id: str, display_name: str | None = None
+    ) -> UserProfile:
+        """Get existing profile or create new one (upsert behavior).
+
+        This is the primary method for frontend auth flow - ensures a profile
+        exists for any user_id (whether Supabase UUID, device ID, or custom).
+        """
+        existing = await self.get_profile(user_id)
+        if existing:
+            return existing
+        return await self.create_profile(user_id, display_name)
 
     async def create_profile(
         self, user_id: str, display_name: str | None = None
@@ -57,7 +77,8 @@ class ProfileService:
             masking: $masking,
             onboarding_complete: $onboarding_complete,
             sessions_completed: $sessions_completed,
-            last_updated: $last_updated
+            last_updated: $last_updated,
+            approach_effectiveness: $approach_effectiveness
         })
         RETURN p
         """
@@ -76,6 +97,7 @@ class ProfileService:
                 "onboarding_complete": profile.onboarding_complete,
                 "sessions_completed": profile.sessions_completed,
                 "last_updated": profile.last_updated,
+                "approach_effectiveness": json.dumps({}),
             },
         )
 
@@ -177,6 +199,7 @@ class ProfileService:
         """Apply session observations to update profile.
 
         This is where the system learns about the user over time.
+        Implements Wave 4 learning: engagement tracking, hyperfocus triggers, approach effectiveness.
         """
         profile = await self.get_profile(user_id)
         if not profile:
@@ -185,21 +208,53 @@ class ProfileService:
         # Increment session count
         profile.sessions_completed += 1
 
-        # Update hyperfocus triggers if new topics engaged deeply
+        # Calculate engagement and update hyperfocus triggers
+        high_energy = bool(set(observation.energy_signals) & HIGH_ENERGY_SIGNALS)
+        has_exchanges = observation.thinking_partner_exchanges >= MIN_EXCHANGES_FOR_ENGAGEMENT
+        has_insights = observation.insights_count > 0
+
         for topic in observation.topics_explored:
-            if topic not in profile.attention.hyperfocus_triggers:
-                # TODO: Only add if session showed deep engagement
-                pass
+            if topic in profile.attention.hyperfocus_triggers:
+                continue  # Already tracked
 
-        # Track approach effectiveness for future question selection
-        # TODO: Store this in a separate analytics structure
+            # Check engagement criteria
+            time_spent = observation.time_per_entity.get(topic, 0)
+            deeply_engaged = time_spent >= DEEP_ENGAGEMENT_SECONDS
 
-        profile.last_updated = datetime.now(timezone.utc).isoformat()
+            # Add to triggers if deep engagement detected
+            if deeply_engaged or (high_energy and has_exchanges) or has_insights:
+                profile.attention.hyperfocus_triggers.append(topic)
+
+        # Cap triggers at maximum, keeping most recent
+        if len(profile.attention.hyperfocus_triggers) > MAX_HYPERFOCUS_TRIGGERS:
+            profile.attention.hyperfocus_triggers = profile.attention.hyperfocus_triggers[
+                -MAX_HYPERFOCUS_TRIGGERS:
+            ]
+
+        # Track approach effectiveness (running average)
+        now = datetime.now(timezone.utc).isoformat()
+        for approach, score in observation.approach_effectiveness.items():
+            if approach in profile.approach_effectiveness:
+                entry = profile.approach_effectiveness[approach]
+                # Calculate running average
+                total = entry.average_score * entry.sample_size + score
+                entry.sample_size += 1
+                entry.average_score = total / entry.sample_size
+                entry.last_updated = now
+            else:
+                profile.approach_effectiveness[approach] = ApproachEffectivenessEntry(
+                    average_score=float(score),
+                    sample_size=1,
+                    last_updated=now,
+                )
+
+        profile.last_updated = now
 
         query = """
         MATCH (p:UserProfile {user_id: $user_id})
         SET p.sessions_completed = $sessions_completed,
             p.attention = $attention,
+            p.approach_effectiveness = $approach_effectiveness,
             p.last_updated = $last_updated
         RETURN p
         """
@@ -210,6 +265,9 @@ class ProfileService:
                 "user_id": user_id,
                 "sessions_completed": profile.sessions_completed,
                 "attention": json.dumps(profile.attention.model_dump()),
+                "approach_effectiveness": json.dumps(
+                    {k: v.model_dump() for k, v in profile.approach_effectiveness.items()}
+                ),
                 "last_updated": profile.last_updated,
             },
         )
@@ -248,6 +306,14 @@ class ProfileService:
         executive_data = json.loads(node.get("executive", "{}"))
         sensory_data = json.loads(node.get("sensory", "{}"))
         masking_data = node.get("masking")
+        approach_effectiveness_data = node.get("approach_effectiveness")
+
+        # Parse approach effectiveness
+        approach_effectiveness = {}
+        if approach_effectiveness_data:
+            raw_data = json.loads(approach_effectiveness_data)
+            for approach, entry_data in raw_data.items():
+                approach_effectiveness[approach] = ApproachEffectivenessEntry(**entry_data)
 
         return UserProfile(
             user_id=node["user_id"],
@@ -261,4 +327,5 @@ class ProfileService:
             onboarding_complete=node.get("onboarding_complete", False),
             sessions_completed=node.get("sessions_completed", 0),
             last_updated=node.get("last_updated"),
+            approach_effectiveness=approach_effectiveness,
         )

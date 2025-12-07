@@ -1,12 +1,12 @@
-"""Schemas for Quick Capture processing and capture queue management."""
+"""Schemas for Quick Inbox processing and inbox queue management."""
 
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
 
 
-class CaptureType(str, Enum):
-    """Type of captured content."""
+class InboxType(str, Enum):
+    """Type of inbox content."""
 
     TEXT = "text"
     VOICE = "voice"  # Transcribed audio
@@ -15,7 +15,7 @@ class CaptureType(str, Enum):
 
 
 class PlacementType(str, Enum):
-    """Where to place the captured content."""
+    """Where to place the inbox content."""
 
     NOTE = "note"           # Append to existing note
     CONCEPT = "concept"     # Link to concept/entity
@@ -23,16 +23,47 @@ class PlacementType(str, Enum):
     NEW_NOTE = "new_note"   # Create new note
 
 
+class DialogueRole(str, Enum):
+    """Role in a dialogue message."""
+
+    ASSISTANT = "assistant"
+    USER = "user"
+
+
+class DialogueSuggestion(BaseModel):
+    """A suggestion offered by the assistant in dialogue."""
+
+    label: str
+    action: str  # e.g., "link_to_concept", "create_note", "explore_in_flow"
+    target_id: str | None = Field(default=None, alias="targetId")
+    target_name: str | None = Field(default=None, alias="targetName")
+    confidence: float = 0.5
+
+    model_config = {"populate_by_name": True}
+
+
+class DialogueMessage(BaseModel):
+    """A message in the collaborative processing dialogue."""
+
+    role: DialogueRole
+    content: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    suggestions: list[DialogueSuggestion] | None = None  # For assistant messages
+
+    model_config = {"populate_by_name": True}
+
+
 class ExtractedEntity(BaseModel):
-    """An entity extracted from captured content."""
+    """An entity extracted from inbox content."""
 
     name: str
     type: str  # concept, person, theory, etc.
     confidence: float = Field(ge=0.0, le=1.0)
+    graph_match: bool = False  # Whether entity exists in knowledge graph
 
 
 class SuggestedPlacement(BaseModel):
-    """A suggested placement for the captured content."""
+    """A suggested placement for the inbox content."""
 
     target_type: PlacementType
     target_id: str | None = None  # Note ID, concept ID, or journey ID
@@ -42,18 +73,19 @@ class SuggestedPlacement(BaseModel):
     rationale: str  # Why this placement is suggested
 
 
-class CaptureProcessRequest(BaseModel):
-    """Request to process captured content."""
+class InboxProcessRequest(BaseModel):
+    """Request to process inbox content."""
 
     content: str
-    type: CaptureType = CaptureType.TEXT
+    type: InboxType = Field(default=InboxType.TEXT, alias="inbox_type")
     context: dict | None = None  # Optional context (current note, journey, etc.)
 
     model_config = {
+        "populate_by_name": True,
         "json_schema_extra": {
             "example": {
                 "content": "Just realized acceptance isn't about giving up - it's about engaging with what is. This connects to the metabolization idea.",
-                "type": "text",
+                "inbox_type": "text",
                 "context": {
                     "current_note_id": "note_123",
                     "current_journey_id": "journey_456",
@@ -63,22 +95,23 @@ class CaptureProcessRequest(BaseModel):
     }
 
 
-class CaptureProcessResponse(BaseModel):
-    """Response from processing captured content."""
+class InboxProcessResponse(BaseModel):
+    """Response from processing inbox content."""
 
-    extracted_entities: list[ExtractedEntity]
-    suggested_placements: list[SuggestedPlacement]
+    extracted_entities: list[ExtractedEntity] = Field(serialization_alias="entities")
+    suggested_placements: list[SuggestedPlacement] = Field(serialization_alias="placements")
     summary: str | None = None  # AI-generated summary of the content
-    tags: list[str] = Field(default_factory=list)  # Suggested tags
+    tags: list[str] = Field(default_factory=list, serialization_alias="suggested_tags")
 
     model_config = {
+        "populate_by_name": True,
         "json_schema_extra": {
             "example": {
-                "extracted_entities": [
+                "entities": [
                     {"name": "Acceptance", "type": "concept", "confidence": 0.95},
                     {"name": "Metabolization", "type": "concept", "confidence": 0.8},
                 ],
-                "suggested_placements": [
+                "placements": [
                     {
                         "target_type": "note",
                         "target_id": "note_123",
@@ -89,21 +122,21 @@ class CaptureProcessResponse(BaseModel):
                     }
                 ],
                 "summary": "Insight about acceptance as active engagement rather than resignation",
-                "tags": ["acceptance", "metabolization", "insight"],
+                "suggested_tags": ["acceptance", "metabolization", "insight"],
             }
         }
     }
 
 
-class CaptureRouteRequest(BaseModel):
-    """Request to route captured content to a specific location."""
+class InboxRouteRequest(BaseModel):
+    """Request to route inbox content to a specific location."""
 
-    capture_id: str  # From previous process response
+    inbox_id: str  # From previous process response
     placement: SuggestedPlacement  # Selected placement
 
 
-class CaptureRouteResponse(BaseModel):
-    """Response after routing captured content."""
+class InboxRouteResponse(BaseModel):
+    """Response after routing inbox content."""
 
     success: bool
     target_id: str
@@ -111,29 +144,39 @@ class CaptureRouteResponse(BaseModel):
 
 
 # ============================================================================
-# Flow Mode Capture Queue Schemas
+# Flow Mode Inbox Queue Schemas
 # ============================================================================
 
 
-class CaptureStatus(str, Enum):
-    """Status of a captured item."""
+class InboxStatus(str, Enum):
+    """Status of an inbox item."""
 
     QUEUED = "queued"
     IN_THINKING = "in_thinking"
     INTEGRATED = "integrated"
 
 
-class CaptureSource(str, Enum):
-    """Source of a captured spark."""
+class InboxSource(str, Enum):
+    """Source of an inbox item (where the capture originated)."""
 
-    PHONE = "phone"
+    # Primary external sources
+    IOS_SHORTCUT = "ios_shortcut"
+    BROWSER = "browser"
+    VOICE = "voice"
+    EMAIL = "email"
+
+    # App sources
     SIYUAN = "siyuan"
-    READEST = "readest"
-    ASSISTANT_INTERRUPTION = "assistant-interruption"
+    IES_READER = "ies_reader"
+
+    # Legacy (backward compatibility)
+    PHONE = "phone"  # Maps to ios_shortcut
+    READEST = "readest"  # Maps to ies_reader
+    ASSISTANT_INTERRUPTION = "assistant_interruption"
 
 
 class SparkType(str, Enum):
-    """Type of the spark that triggered capture."""
+    """Type of the spark that triggered inbox."""
 
     NOTE = "note"
     SELECTION = "selection"
@@ -166,31 +209,32 @@ class Spark(BaseModel):
 
 
 class AutoExtracted(BaseModel):
-    """Automatically extracted metadata for a capture."""
+    """Automatically extracted metadata for an inbox item."""
 
     entities: list[str] = Field(default_factory=list)
     topics: list[str] = Field(default_factory=list)
 
 
-class CaptureItem(BaseModel):
-    """Capture queue item stored in Neo4j."""
+class InboxItem(BaseModel):
+    """Inbox queue item stored in Neo4j."""
 
     id: str
     raw_text: str = Field(alias="rawText")
-    source: CaptureSource
+    source: InboxSource
     captured_at: datetime = Field(alias="capturedAt")
-    status: CaptureStatus = CaptureStatus.QUEUED
+    status: InboxStatus = InboxStatus.QUEUED
     context_snippet: str | None = Field(default=None, alias="contextSnippet")
     auto_extracted: AutoExtracted | None = Field(default=None, alias="autoExtracted")
     spark: Spark | None = None
+    dialogue: list[DialogueMessage] = Field(default_factory=list)
 
     model_config = {
         "populate_by_name": True,
         "json_schema_extra": {
             "example": {
-                "id": "capture_123",
+                "id": "inbox_123",
                 "rawText": "Flow doesn't start from zero...",
-                "source": "assistant-interruption",
+                "source": "assistant_interruption",
                 "capturedAt": "2025-12-05T10:30:00Z",
                 "status": "queued",
                 "contextSnippet": "During discussion about architecture",
@@ -198,16 +242,17 @@ class CaptureItem(BaseModel):
                     "entities": ["entry-point dependence"],
                     "topics": ["ADHD", "tool-design"],
                 },
+                "dialogue": [],
             }
         },
     }
 
 
-class CaptureCreateRequest(BaseModel):
-    """Request to create a capture item."""
+class InboxCreateRequest(BaseModel):
+    """Request to create an inbox item."""
 
     raw_text: str = Field(alias="rawText")
-    source: CaptureSource
+    source: InboxSource
     context_snippet: str | None = Field(default=None, alias="contextSnippet")
     auto_extracted: AutoExtracted | None = Field(default=None, alias="autoExtracted")
     spark: Spark | None = None
@@ -228,17 +273,66 @@ class CaptureCreateRequest(BaseModel):
     }
 
 
-class CaptureUpdateRequest(BaseModel):
-    """Request to update a capture item."""
+class InboxUpdateRequest(BaseModel):
+    """Request to update an inbox item."""
 
-    status: CaptureStatus | None = None
+    status: InboxStatus | None = None
     auto_extracted: AutoExtracted | None = Field(default=None, alias="autoExtracted")
 
     model_config = {"populate_by_name": True}
 
 
-class CaptureListResponse(BaseModel):
-    """Response wrapper for a list of captures."""
+class InboxListResponse(BaseModel):
+    """Response wrapper for a list of inbox items."""
 
-    items: list[CaptureItem]
+    items: list[InboxItem]
     total: int
+
+
+class DialogueMessageRequest(BaseModel):
+    """Request to add a user message to inbox dialogue."""
+
+    content: str = Field(min_length=1, max_length=2000)
+
+
+class DialogueResponse(BaseModel):
+    """Response from adding a message (includes AI response)."""
+
+    user_message: DialogueMessage = Field(alias="userMessage")
+    assistant_message: DialogueMessage = Field(alias="assistantMessage")
+    inbox_item: InboxItem = Field(alias="inboxItem")
+
+    model_config = {"populate_by_name": True}
+
+
+class ResolutionAction(str, Enum):
+    """Action to take when resolving an inbox item."""
+
+    LINK_TO_CONCEPT = "link_to_concept"
+    CREATE_NOTE = "create_note"
+    ADD_TO_NOTE = "add_to_existing_note"
+    EXPLORE_IN_FLOW = "explore_in_flow"
+    LINK_TO_JOURNEY = "link_to_journey"
+
+
+class ResolveRequest(BaseModel):
+    """Request to resolve an inbox item to a destination."""
+
+    action: ResolutionAction
+    target_id: str | None = Field(default=None, alias="targetId")
+    target_name: str | None = Field(default=None, alias="targetName")
+
+    model_config = {"populate_by_name": True}
+
+
+class ResolveResponse(BaseModel):
+    """Response after resolving an inbox item."""
+
+    success: bool
+    action: ResolutionAction
+    message: str
+    target_id: str | None = Field(default=None, alias="targetId")
+    target_name: str | None = Field(default=None, alias="targetName")
+    note_id: str | None = Field(default=None, alias="noteId")  # If note created/modified
+
+    model_config = {"populate_by_name": True}

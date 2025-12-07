@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     neo4j_user: str = "neo4j"
     neo4j_password: str = ""
 
+    # Redis
+    redis_url: str = "redis://localhost:6379"
+
     # SiYuan
     siyuan_host: str = "192.168.86.60"
     siyuan_port: int = 6806

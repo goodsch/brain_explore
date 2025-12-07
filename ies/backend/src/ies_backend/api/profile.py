@@ -14,6 +14,19 @@ router = APIRouter()
 profile_service = ProfileService()
 
 
+@router.post("/login", response_model=UserProfile)
+async def login(user_id: str, display_name: str | None = None) -> UserProfile:
+    """Get or create profile for user (upsert behavior).
+
+    This is the primary entry point for frontend auth flow. Accepts any user_id
+    format (Supabase UUID, device ID, username, etc.) and ensures a profile exists.
+
+    Frontends should call this on initialization and use the returned user_id
+    for all subsequent API calls.
+    """
+    return await profile_service.get_or_create_profile(user_id, display_name)
+
+
 @router.get("/{user_id}", response_model=UserProfile)
 async def get_profile(user_id: str) -> UserProfile:
     """Get user profile by ID."""

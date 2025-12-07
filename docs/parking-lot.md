@@ -19,6 +19,12 @@
   - Defer until: After therapy exploration workflow proven
 
 ### Medium Priority
+- **Plugin Model Selection Implementation** (4-6 hours)
+  - Settings panel has model dropdowns but they're decorative
+  - Backend uses hardcoded models (claude-3-5-sonnet, claude-sonnet-4)
+  - Need: Backend accepts model param, plugin passes settings.chatModel
+  - Defer until: Core features stable, model flexibility actually needed
+
 - **MCP Server Integration** (15-20 hours)
   - Expose IES backend as MCP server
   - Enable Claude app voice interaction

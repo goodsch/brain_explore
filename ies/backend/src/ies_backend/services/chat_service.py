@@ -9,6 +9,7 @@ from ies_backend.config import settings
 from ies_backend.schemas.entity import ChatMessage, SessionContext
 from ies_backend.services.profile_service import ProfileService
 from ies_backend.services.session_context_service import session_context_service
+from ies_backend.services.session_store import session_store
 from ies_backend.services.state_detection_service import StateDetectionService
 from ies_backend.services.approach_selection_service import ApproachSelectionService
 
@@ -19,10 +20,11 @@ approach_selection_service = ApproachSelectionService()
 
 
 class ChatService:
-    """Service for handling IES chat conversations."""
+    """Service for handling IES chat conversations.
 
-    # In-memory session storage (would use Redis in production)
-    _sessions: dict[str, dict] = {}
+    Uses Redis-backed session store for persistent session management.
+    Sessions survive server restarts with 24-hour TTL.
+    """
 
     def __init__(self):
         self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
@@ -55,13 +57,25 @@ class ChatService:
         # Generate greeting based on context
         greeting = self._generate_greeting(context)
 
-        # Store session
-        self._sessions[session_id] = {
-            "user_id": user_id,
-            "context": context,
-            "messages": [],
-            "started_at": None,  # Would use datetime in production
+        # Serialize context for Redis storage
+        context_data = {
+            "profile_summary": context.profile_summary,
+            "recent_sessions": [
+                {
+                    "topic": s.topic,
+                    "entities": s.entities,
+                    "hanging_question": s.hanging_question,
+                }
+                for s in (context.recent_sessions or [])
+            ],
         }
+
+        # Store session in Redis with 24-hour TTL
+        await session_store.create(
+            session_id=session_id,
+            user_id=user_id,
+            context_data=context_data,
+        )
 
         return {
             "session_id": session_id,
@@ -103,13 +117,16 @@ class ChatService:
         Yields:
             str chunks of the assistant's response
         """
-        session = self._sessions.get(session_id)
+        session = await session_store.get(session_id)
         if not session:
             yield "Session not found. Please start a new session."
             return
 
+        # Reconstruct context from stored data
+        context_data = session.get("context", {})
+
         # Build system prompt with IES context
-        system_prompt = self._build_system_prompt(session)
+        system_prompt = self._build_system_prompt_from_data(context_data)
 
         # Convert messages to Claude format
         claude_messages = [
@@ -142,6 +159,7 @@ class ChatService:
         full_system = f"{system_prompt}\n\n{approach_guidance}"
 
         # Stream response from Claude
+        full_response = ""
         with self.client.messages.stream(
             model="claude-sonnet-4-20250514",
             max_tokens=1024,
@@ -149,16 +167,22 @@ class ChatService:
             messages=claude_messages,
         ) as stream:
             for text in stream.text_stream:
+                full_response += text
                 yield text
 
-    def _build_system_prompt(self, session: dict) -> str:
-        """Build the system prompt for Claude."""
-        context = session["context"]
+        # Store messages in session history
+        await session_store.add_message(session_id, "user", message)
+        await session_store.add_message(session_id, "assistant", full_response)
+
+    def _build_system_prompt_from_data(self, context_data: dict) -> str:
+        """Build the system prompt from stored context data."""
+        profile_summary = context_data.get("profile_summary", "No profile available.")
+        recent_sessions = context_data.get("recent_sessions", [])
 
         return f"""You are an IES (Intelligent Exploration System) guide helping a user explore ideas through Socratic dialogue.
 
 USER PROFILE:
-{context.profile_summary}
+{profile_summary}
 
 YOUR ROLE:
 - Guide exploration through thoughtful questions
@@ -176,20 +200,22 @@ GUIDELINES:
 - If they seem overwhelmed, slow down and ground
 
 RECENT CONTEXT:
-{self._format_recent_context(context)}"""
+{self._format_recent_sessions(recent_sessions)}"""
 
-    def _format_recent_context(self, context: SessionContext) -> str:
-        """Format recent context for the system prompt."""
-        if not context.recent_sessions:
+    def _format_recent_sessions(self, sessions: list[dict]) -> str:
+        """Format recent sessions for the system prompt."""
+        if not sessions:
             return "This is a new user with no previous sessions."
 
         parts = []
-        for session in context.recent_sessions[:3]:
-            part = f"- {session.topic}"
-            if session.entities:
-                part += f" (explored: {', '.join(session.entities[:3])})"
-            if session.hanging_question:
-                part += f" [open: {session.hanging_question}]"
+        for session in sessions[:3]:
+            part = f"- {session.get('topic', 'Unknown topic')}"
+            entities = session.get("entities", [])
+            if entities:
+                part += f" (explored: {', '.join(entities[:3])})"
+            hanging = session.get("hanging_question")
+            if hanging:
+                part += f" [open: {hanging}]"
             parts.append(part)
 
         return "\n".join(parts) if parts else "No recent sessions."
@@ -240,16 +266,47 @@ RECENT CONTEXT:
 
         return base
 
-    def get_session(self, session_id: str) -> dict | None:
-        """Get session data."""
-        return self._sessions.get(session_id)
+    async def get_session(self, session_id: str) -> dict | None:
+        """Get session data from Redis."""
+        return await session_store.get(session_id)
 
-    def end_session(self, session_id: str) -> bool:
+    async def end_session(self, session_id: str) -> bool:
         """End and cleanup a session."""
-        if session_id in self._sessions:
-            del self._sessions[session_id]
-            return True
-        return False
+        return await session_store.delete(session_id)
+
+    async def list_sessions(self, user_id: str) -> list[dict]:
+        """List all active sessions for a user.
+
+        Args:
+            user_id: User whose sessions to list
+
+        Returns:
+            List of session summaries
+        """
+        return await session_store.list_user_sessions(user_id)
+
+    async def resume_session(self, session_id: str) -> dict | None:
+        """Resume an existing session.
+
+        Args:
+            session_id: Session to resume
+
+        Returns:
+            Session data with context for resumption, or None if not found
+        """
+        session = await session_store.get(session_id)
+        if not session:
+            return None
+
+        # Return resumption context
+        return {
+            "session_id": session["session_id"],
+            "user_id": session["user_id"],
+            "started_at": session.get("started_at"),
+            "last_activity": session.get("last_activity"),
+            "message_count": len(session.get("messages", [])),
+            "messages": session.get("messages", []),
+        }
 
 
 # Singleton instance
