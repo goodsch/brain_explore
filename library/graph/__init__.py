@@ -33,6 +33,9 @@ from library.graph.adhd_graph_client import ADHDKnowledgeGraph, SCHEMA_VERSION
 # Reframe Layer (Pass 2 cross-domain mapping)
 from library.graph.reframe_mapper import ReframeMapper, ResonanceMatch
 
+# Reframe Layer (Pass 3 generative reframe creation)
+from library.graph.reframe_generator import ReframeGenerator, GeneratedReframe
+
 __all__ = [
     # Original (book ingestion)
     "Entity",
@@ -58,4 +61,6 @@ __all__ = [
     # Reframe Layer
     "ReframeMapper",
     "ResonanceMatch",
+    "ReframeGenerator",
+    "GeneratedReframe",
 ]

@@ -11,12 +11,12 @@
 | Step | Description | Status |
 |------|-------------|--------|
 | Step 1 | Structural & Thematic Extraction | ✅ Complete (`library/graph/entities.py`) |
-| Step 2 | Cross-Domain Mapping ("ADHD Leap") | ❌ Not started |
-| Step 3 | Generative Reframe Creation | ❌ Not started |
+| Step 2 | Cross-Domain Mapping ("ADHD Leap") | ✅ Complete (`library/graph/reframe_mapper.py`) |
+| Step 3 | Generative Reframe Creation | ✅ Complete (`library/graph/reframe_generator.py`) |
 | Step 4 | Classification by Pattern Type | ❌ Not started |
 
-**Pass 1 complete:** 9 entity types + 11 relationship types in extraction prompt.
-**Passes 2-3 pending:** Resonance check and generative reframe creation.
+**Passes 1-3 complete:** Entity extraction + cross-domain mapping + generative reframes.
+**Pass 4 pending:** Pattern type classification (optional enrichment).
 
 ---
 
