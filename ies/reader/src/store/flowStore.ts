@@ -51,6 +51,16 @@ export interface BreadcrumbJourney {
 // Sync status for backend operations
 export type SyncStatus = 'idle' | 'pending' | 'synced' | 'error' | 'offline';
 
+// Entity types that can be overlaid
+export type EntityType = 'Concept' | 'Person' | 'Theory' | 'Framework' | 'Assessment';
+
+// Entity from the overlay (simplified for display)
+export interface OverlayEntity {
+  name: string;
+  type: EntityType;
+  mention_count: number;
+}
+
 interface FlowModeState {
   // User identity
   userId: string | null;
@@ -78,6 +88,13 @@ interface FlowModeState {
   lastSyncError: string | null;
   queuedOperationsCount: number;
 
+  // Entity overlay
+  isOverlayEnabled: boolean;
+  overlayEntities: OverlayEntity[];
+  overlayEntityTypes: Record<EntityType, boolean>;
+  isLoadingOverlay: boolean;
+  currentBookCalibreId: number | null;
+
   // Actions
   setUserId: (userId: string) => void;
   setFlowPanelOpen: (open: boolean) => void;
@@ -95,6 +112,13 @@ interface FlowModeState {
   startJourney: (bookTitle: string, calibreId?: number) => void;
   addJourneyStep: (entityId: string, entityName: string, sourcePassage?: string) => void;
   endJourney: () => BreadcrumbJourney | null;
+
+  // Entity overlay actions
+  setOverlayEnabled: (enabled: boolean) => void;
+  setOverlayEntities: (entities: OverlayEntity[]) => void;
+  toggleEntityType: (type: EntityType) => void;
+  setIsLoadingOverlay: (loading: boolean) => void;
+  setCurrentBookCalibreId: (calibreId: number | null) => void;
 
   // Clear state
   clearEntity: () => void;
@@ -116,6 +140,19 @@ export const useFlowStore = create<FlowModeState>((set, get) => ({
   syncStatus: 'idle',
   lastSyncError: null,
   queuedOperationsCount: 0,
+
+  // Entity overlay initial state
+  isOverlayEnabled: false,
+  overlayEntities: [],
+  overlayEntityTypes: {
+    Concept: true,
+    Person: true,
+    Theory: true,
+    Framework: true,
+    Assessment: true,
+  },
+  isLoadingOverlay: false,
+  currentBookCalibreId: null,
 
   // User actions
   setUserId: (userId) => set({ userId }),
@@ -192,6 +229,19 @@ export const useFlowStore = create<FlowModeState>((set, get) => ({
     set({ currentJourney: null, currentStepStartTime: null });
     return completedJourney;
   },
+
+  // Entity overlay actions
+  setOverlayEnabled: (enabled) => set({ isOverlayEnabled: enabled }),
+  setOverlayEntities: (entities) => set({ overlayEntities: entities }),
+  toggleEntityType: (type) =>
+    set((state) => ({
+      overlayEntityTypes: {
+        ...state.overlayEntityTypes,
+        [type]: !state.overlayEntityTypes[type],
+      },
+    })),
+  setIsLoadingOverlay: (loading) => set({ isLoadingOverlay: loading }),
+  setCurrentBookCalibreId: (calibreId) => set({ currentBookCalibreId: calibreId }),
 
   clearEntity: () =>
     set({

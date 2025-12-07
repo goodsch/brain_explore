@@ -5,6 +5,8 @@ import { ArrowLeft, Globe, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { FlowPanel } from './flow/FlowPanel';
 import { useFlowStore } from '../store/flowStore';
 import { useEntityLookup } from '../hooks/useEntityLookup';
+import { useEntityOverlay } from '../hooks/useEntityOverlay';
+import { useEntityHighlighter } from '../hooks/useEntityHighlighter';
 import { graphClient } from '../services/graphClient';
 import './Reader.css';
 
@@ -19,6 +21,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   const [location, setLocation] = useState<string | number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [rendition, setRendition] = useState<Rendition | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
 
   // Debug: Log URL and verify it's accessible
@@ -68,6 +71,12 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   } = useFlowStore();
   const { lookupEntity } = useEntityLookup();
 
+  // Fetch entities for overlay when book opens
+  useEntityOverlay(calibreId);
+
+  // Apply entity highlighting to epub content
+  useEntityHighlighter(rendition);
+
   // Handle location changes
   const locationChanged = useCallback((epubcfi: string) => {
     setLocation(epubcfi);
@@ -75,13 +84,14 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
 
   // Get rendition ref for text selection handling
   const getRendition = useCallback(
-    (rendition: Rendition) => {
+    (rend: Rendition) => {
       console.log('[Reader] getRendition called - book loaded successfully!');
-      renditionRef.current = rendition;
+      renditionRef.current = rend;
+      setRendition(rend);
       setIsLoading(false);
 
       // Apply reading styles
-      rendition.themes.default({
+      rend.themes.default({
         body: {
           'font-family': "'Crimson Pro', 'Georgia', serif",
           'line-height': '1.8',
@@ -96,7 +106,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
       });
 
       // Add text selection handler
-      rendition.on('selected', (_cfiRange: string, contents: any) => {
+      rend.on('selected', (_cfiRange: string, contents: any) => {
         const selection = contents.window.getSelection();
         const selectedText = selection?.toString().trim();
 

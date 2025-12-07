@@ -278,6 +278,44 @@ class GraphClient {
       return 0;
     }
   }
+
+  // ========================================
+  // Ingestion Queue Methods
+  // ========================================
+
+  /**
+   * Queue a book for entity extraction
+   */
+  async queueBookForIngestion(calibreId: number): Promise<{ calibre_id: number; message: string; queued_at: string }> {
+    return this.fetch(`/books/${calibreId}/queue-ingest`, {
+      method: 'POST',
+    });
+  }
+
+  /**
+   * Get the current ingestion queue
+   */
+  async getIngestionQueue(): Promise<{ items: IngestionQueueItem[]; total: number }> {
+    return this.fetch('/books/ingestion-queue');
+  }
+
+  /**
+   * Remove a book from the ingestion queue
+   */
+  async removeFromIngestionQueue(calibreId: number): Promise<void> {
+    await this.fetch(`/books/${calibreId}/queue-ingest`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+// Ingestion queue item type
+export interface IngestionQueueItem {
+  calibre_id: number;
+  title: string;
+  author: string;
+  queued_at: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
 }
 
 export const graphClient = new GraphClient();

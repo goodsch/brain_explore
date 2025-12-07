@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Library, Upload, Wifi, WifiOff, Download } from 'lucide-react';
+import { Library, Upload, Wifi, WifiOff, Download, Clock } from 'lucide-react';
 import { graphClient, type CalibreBook } from '../../services/graphClient';
 import { BookCard } from './BookCard';
 import { SearchBar } from './SearchBar';
@@ -10,7 +10,7 @@ interface LibraryBrowserProps {
   onLocalFileSelect: (file: File) => void;
 }
 
-type ViewFilter = 'all' | 'indexed';
+type ViewFilter = 'all' | 'indexed' | 'queued';
 
 export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrowserProps) {
   const [books, setBooks] = useState<CalibreBook[]>([]);
@@ -21,11 +21,32 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
   const [isOnline, setIsOnline] = useState(true);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [queuedBookIds, setQueuedBookIds] = useState<Set<number>>(new Set());
 
   // Check backend availability
   useEffect(() => {
     graphClient.isBackendAvailable().then(setIsOnline);
   }, []);
+
+  // Fetch ingestion queue status
+  const refreshQueueStatus = useCallback(async () => {
+    try {
+      const response = await graphClient.getIngestionQueue();
+      const queuedIds = new Set(
+        response.items
+          .filter(item => item.status === 'queued' || item.status === 'processing')
+          .map(item => item.calibre_id)
+      );
+      setQueuedBookIds(queuedIds);
+    } catch (err) {
+      console.error('Failed to fetch ingestion queue:', err);
+    }
+  }, []);
+
+  // Fetch queue status on mount
+  useEffect(() => {
+    refreshQueueStatus();
+  }, [refreshQueueStatus]);
 
   // Fetch books
   useEffect(() => {
@@ -50,6 +71,8 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
   // Filter books
   const filteredBooks = filter === 'indexed'
     ? books.filter((b) => b.entity_count && b.entity_count > 0)
+    : filter === 'queued'
+    ? books.filter((b) => queuedBookIds.has(b.calibre_id))
     : books;
 
   // Handle file input
@@ -156,6 +179,16 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
               </span>
             )}
           </button>
+          {queuedBookIds.size > 0 && (
+            <button
+              className={`library-filter-btn library-filter-btn-queued ${filter === 'queued' ? 'active' : ''}`}
+              onClick={() => setFilter('queued')}
+            >
+              <Clock size={14} />
+              Queued
+              <span className="filter-count">{queuedBookIds.size}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -193,13 +226,21 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
                 ? `No books match "${searchQuery}"`
                 : filter === 'indexed'
                 ? 'No indexed books yet. Run the ingestion pipeline to index your library.'
+                : filter === 'queued'
+                ? 'No books are currently queued for indexing.'
                 : 'Your library is empty. Add some books to Calibre to get started.'}
             </p>
           </div>
         ) : (
           <div className="library-grid ies-stagger-children">
             {filteredBooks.map((book) => (
-              <BookCard key={book.calibre_id} book={book} onSelect={onBookSelect} />
+              <BookCard
+                key={book.calibre_id}
+                book={book}
+                onSelect={onBookSelect}
+                isQueued={queuedBookIds.has(book.calibre_id)}
+                onQueueStatusChange={refreshQueueStatus}
+              />
             ))}
           </div>
         )}

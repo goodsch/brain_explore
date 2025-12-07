@@ -1,8 +1,10 @@
-import { X, Cloud, CloudOff, AlertCircle, Loader2, BookOpen, Link2, HelpCircle } from 'lucide-react';
-import { useFlowStore } from '../../store/flowStore';
+import { X, Cloud, CloudOff, AlertCircle, Loader2, BookOpen, Link2, HelpCircle, Eye } from 'lucide-react';
+import { useFlowStore, type EntityType } from '../../store/flowStore';
 import { useEntityLookup } from '../../hooks/useEntityLookup';
 import { graphClient } from '../../services/graphClient';
 import './FlowPanel.css';
+
+const ENTITY_TYPES: EntityType[] = ['Concept', 'Person', 'Theory', 'Framework', 'Assessment'];
 
 export function FlowPanel() {
   const {
@@ -21,6 +23,14 @@ export function FlowPanel() {
     queuedOperationsCount,
     setSyncStatus,
     setQueuedOperationsCount,
+    // Entity overlay state
+    isOverlayEnabled,
+    overlayEntities,
+    overlayEntityTypes,
+    isLoadingOverlay,
+    currentBookCalibreId,
+    setOverlayEnabled,
+    toggleEntityType,
   } = useFlowStore();
 
   // Handle retry sync for offline queue
@@ -102,6 +112,54 @@ export function FlowPanel() {
           <X size={20} />
         </button>
       </header>
+
+      {/* Entity Overlay Controls */}
+      <section className="flow-overlay-section">
+        <div className="flow-overlay-header">
+          <span className="flow-overlay-title">
+            <Eye size={14} />
+            Entity Overlay
+          </span>
+          <div className="flow-overlay-toggle">
+            {isLoadingOverlay ? (
+              <div className="flow-overlay-loading">
+                <Loader2 size={14} className="flow-loading-spinner" />
+                <span>Loading...</span>
+              </div>
+            ) : currentBookCalibreId !== null ? (
+              <>
+                <span className={`flow-overlay-count ${overlayEntities.length > 0 ? 'indexed' : ''}`}>
+                  {overlayEntities.length} entities
+                </span>
+                <button
+                  className={`flow-overlay-switch ${isOverlayEnabled ? 'active' : ''}`}
+                  onClick={() => setOverlayEnabled(!isOverlayEnabled)}
+                  aria-label={isOverlayEnabled ? 'Disable overlay' : 'Enable overlay'}
+                  disabled={overlayEntities.length === 0}
+                />
+              </>
+            ) : (
+              <span className="flow-overlay-not-indexed">No book open</span>
+            )}
+          </div>
+        </div>
+        {currentBookCalibreId !== null && overlayEntities.length > 0 && (
+          <div className="flow-overlay-types">
+            {ENTITY_TYPES.map((type) => (
+              <button
+                key={type}
+                className={`flow-overlay-type-pill type-${type.toLowerCase()} ${
+                  overlayEntityTypes[type] ? 'active' : ''
+                }`}
+                onClick={() => toggleEntityType(type)}
+                disabled={!isOverlayEnabled}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Content */}
       <div className="flow-panel-content">

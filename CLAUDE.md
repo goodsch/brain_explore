@@ -765,6 +765,32 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 6):**
+- **StreamingResponse Book File Delivery (Dec 6)** — Final fix for epub.js inline reading compatibility:
+  - **Commit:** `6062a4a: fix(reader): StreamingResponse for epub.js inline reading`
+  - **Critical Fix:** Replaced `FileResponse` with `StreamingResponse` to eliminate Content-Disposition header
+  - **Problem:** `FileResponse` automatically adds `Content-Disposition: attachment` header, forcing browsers to download files instead of reading inline
+  - **Solution (books.py, lines 104-131):**
+    - Changed `get_book_file()` return type from `FileResponse` to `StreamingResponse`
+    - Generator function `file_iterator()` yields 64KB chunks for memory-efficient streaming
+    - Headers: Only `Content-Type` (application/epub+zip or application/pdf) and `Content-Length` — no Content-Disposition
+    - No Content-Disposition header = browser treats as readable resource instead of downloadable file
+  - **Reader.tsx Enhancements (lines 24-59):**
+    - Pre-flight URL check with `fetch(url, { method: 'HEAD' })` before epub.js attempts load
+    - Error state detection: Sets `loadError` if server returns non-200 status or fetch fails
+    - 15-second loading timeout with console debugging markers
+    - Timeout cleanup prevents stale error messages after component unmount
+  - **Error Recovery UI (lines 170-196):**
+    - Dedicated error overlay with AlertCircle icon and specific error messages
+    - "Try Again" button resets state and forces ReactReader re-mount by setting location to 0
+    - "Back to Library" button when `onClose` callback provided
+    - State reset pattern: `setLoadError(null)`, `setIsLoading(true)`, `setLocation(0)`
+  - **Vite Config Updates (vite.config.ts, lines 130-166):**
+    - All backend proxies now use `127.0.0.1` instead of `localhost` to avoid IPv6 `::1` resolution issues
+    - Consistent proxy configuration across `/api`, `/books`, `/graph`, `/profile`, `/question-engine`, `/journeys`, `/health`
+  - **Styling Refinements:**
+    - `App.css`: IES Design System tokens for loading screen (var(--ies-bg-deep), var(--ies-text-muted), var(--ies-accent))
+    - `index.css`: Global styles with design system imports, focus-visible outlines, selection colors, link transitions
+  - **Impact:** epub.js now opens book files directly in browser without download prompts — production-ready inline reading experience
 - **Backend Book Streaming Fix (Dec 6)** — Fixed epub.js inline reading with StreamingResponse:
   - **Commit:** `72f6228: fix(reader): Add missing proxy config and error handling for book loading`
   - **Problem:** FileResponse with Content-Disposition header caused epub.js to download instead of reading inline
