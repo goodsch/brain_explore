@@ -1,10 +1,41 @@
-# AGENTS — Codex Operating Guide
+# GEMINI — Gemini CLI Operating Guide
 
-This repo is stewarded by Claude; Codex should follow these rules to stay in sync with current development.
+This repo is stewarded by Claude; Gemini should follow these rules for parallel work.
 
-## Purpose
-- Mirror CLAUDE.md priorities while giving Codex concrete steps to ship work safely.
-- Keep work scoped to the correct worktree and run the right checks before handoff.
+## Cross-Agent Communication
+
+**CHECK INBOX ON SESSION START:**
+```bash
+python scripts/agent_comm.py inbox --agent gemini
+```
+
+**Post updates/questions:**
+```bash
+python scripts/agent_comm.py post --from gemini --to claude --type update --subject "Task complete" --body "Details..."
+```
+
+**Update your status:**
+```bash
+python scripts/agent_comm.py status --agent gemini --task "Working on X" --status active
+```
+
+**Shared context:** `.agents/context/` contains decisions, blockers, and learnings.
+
+---
+
+## Gemini's Strengths
+
+Use Gemini for:
+- **Web research** — Google Search integration for current docs/practices
+- **Codebase analysis** — `codebase_investigator` for architecture understanding
+- **Parallel exploration** — Can run searches while other agents work
+- **Second opinions** — Code review from different perspective
+
+## Current Assignment
+
+**IES Reader development** in `.worktrees/ies-reader/`
+
+Branch: `feature/ies-reader`
 
 ## Current Phase (Dec 7, 2025)
 
@@ -12,155 +43,69 @@ This repo is stewarded by Claude; Codex should follow these rules to stay in syn
 
 | Component | Status |
 |-----------|--------|
-| Backend APIs | 185 tests passing |
 | IES Reader Wave 1 | ✅ Complete (library, PWA, design system) |
 | IES Reader Wave 2 | ✅ Complete (interactive features) |
-| IES Reader Wave 3 | 🔄 Section 2 done, Sections 1/3/4 pending |
-| Reframe Layer Pass 1 | ✅ Entity extraction (9 types) |
-| Reframe Layer Pass 2 | ✅ Cross-domain mapping |
-| Reframe Layer Pass 3 | ✅ Generative reframes |
-| Cross-app sync | ⏳ Pending |
+| IES Reader Wave 3 | 🔄 In progress (mobile optimization) |
 
-## Worktrees & Branching
+## Worktrees
 
-**Use worktrees, not master, for feature work:**
+**Use worktrees, not master:**
 
 | Worktree | Branch | Purpose |
 |----------|--------|---------|
-| `.worktrees/siyuan/` | `feature/siyuan-evolution` | SiYuan plugin (Layer 3) |
-| `.worktrees/readest/` | `feature/readest-integration` | Readest fork (Layer 4) |
-| `.worktrees/ies-reader/` | `feature/ies-reader` | Standalone IES Reader |
-| `.worktrees/ux-dev/` | `feature/ux-development` | Design system work |
-| `.worktrees/flowmode/` | varies | Flow mode features |
+| `.worktrees/ies-reader/` | `feature/ies-reader` | **Your primary workspace** |
+| `.worktrees/siyuan/` | `feature/siyuan-evolution` | SiYuan plugin |
+| `.worktrees/readest/` | `feature/readest-integration` | Readest fork |
 
-**Master branch is for backend only; do not land feature work there.**
-
-Always check `git status` before edits; never revert unrelated changes.
-
-## Stack Quickstart
+## Quick Commands
 
 ```bash
-# Infrastructure
-docker compose up -d
-
-# Backend dev (port 8081)
-cd ies/backend && uv run uvicorn ies_backend.main:app --reload --port 8081
-
-# Backend tests
-cd ies/backend && uv run pytest
-
 # IES Reader dev
 cd .worktrees/ies-reader/ies/reader && pnpm dev
 
-# SiYuan plugin dev
-cd .worktrees/siyuan/ies/plugin && pnpm dev
+# Check status
+python scripts/agent_comm.py status --show
 
-# Readest dev
-cd .worktrees/readest/readest/apps/readest-app && pnpm dev
+# Post completion update
+python scripts/agent_comm.py post --from gemini --to claude --type handoff \
+  --subject "Wave 3 Section X complete" \
+  --body "Implemented mobile nav. Ready for review."
 ```
-
-## Serena Memories
-
-**Always check relevant memories before starting work:**
-
-| Memory | Purpose |
-|--------|---------|
-| `ies_architecture` | Current 4-layer architecture, API routes, entity types, Docker services |
-| `true_vision` | Core project vision (meta-cognitive exploration system) |
-| `configuration_impact` | Configuration decisions and their effects |
-| `books-to-download` | Book acquisition queue |
-
-**Usage:**
-```
-mcp__serena__read_memory(memory_file_name="ies_architecture")
-```
-
-## Reframe Layer Pipeline
-
-The enrichment pipeline for ADHD-friendly knowledge graph:
-
-| Pass | File | Purpose |
-|------|------|---------|
-| Pass 1 | `library/graph/entities.py` | Extract 9 entity types from text |
-| Pass 2 | `library/graph/reframe_mapper.py` | Cross-domain resonance check |
-| Pass 3 | `library/graph/reframe_generator.py` | Generate reframes for dense concepts |
-
-**Entity types:** concept, researcher, theory, assessment, pattern, dynamic_pattern, story_insight, schema_break, reframe
-
-**Integration:** `scripts/auto_ingest_daemon.py` runs Pass 1 + Pass 2 automatically.
 
 ## Key Documentation
 
 | Resource | Purpose |
 |----------|---------|
-| `CLAUDE.md` | Full project instructions (read at session start) |
-| `docs/SYSTEM-DESIGN.md` | Architecture and data flows |
-| `docs/CHANGELOG.md` | Development history |
-| `docs/plans/` | Feature design documents |
-| `docs/plans/2025-12-07-reframe-layer-methodology.md` | Reframe Layer design |
+| `CLAUDE.md` | Full project instructions |
 | `docs/plans/2025-12-07-ies-reader-wave3-design.md` | IES Reader Wave 3 spec |
+| `.agents/context/decisions.md` | Architecture decisions |
+| `.agents/context/learnings.md` | Shared patterns |
 
 ## Guardrails
 
-- **DO NOT** hardcode therapy-specific logic; system stays domain-agnostic.
-- **DO NOT** commit secrets, book files, or session data.
-- **DO** run relevant tests before handoff (backend: `uv run pytest`).
-- **DO** prefer small, focused commits with imperative prefixes (`fix:`, `feat:`, `docs:`).
+- **DO NOT** work on master branch
+- **DO NOT** commit secrets or book files
+- **DO** update status when starting/completing work
+- **DO** post handoff messages when completing tasks
+- **DO** check `.agents/context/blockers.md` for known issues
 
-## Coding Conventions
+## Communication Protocol
 
-**Python (backend/library):**
-- PEP 8, 4-space indents, snake_case
-- Typed dataclasses/Pydantic models
-- Small public API surface, documented
+When you complete work or need help:
 
-**TypeScript/Svelte (plugin/reader):**
-- ES modules, camelCase vars, PascalCase components
-- State in stores/modules
-- Co-located component styles
+1. **Handoff:** Post message with `--type handoff` summarizing what's done
+2. **Blocked:** Post message with `--type blocker` describing the issue
+3. **Question:** Post message with `--type question` for decisions needing input
 
-**Tests:**
-- Mirror module paths (`tests/services/test_foo.py`)
-- Deterministic fixtures over live API calls
+**Claude checks the queue regularly and will respond or coordinate.**
 
-## How Codex Should Operate
+## IES Reader Wave 3 Tasks
 
-1. **Start session:** Read `CLAUDE.md`, check Serena memories (`ies_architecture`, `true_vision`)
-2. **Before edits:** `git status` to understand current state
-3. **Navigate code:** Use Serena symbolic tools (`find_symbol`, `get_symbols_overview`, `search_for_pattern`)
-4. **Make changes:** Scoped to correct worktree, run targeted checks
-5. **Finish:** Summarize changes and next steps
+From the design doc:
 
-**If unexpected repo changes appear, pause and ask the user rather than cleaning them.**
+1. **Section 1:** Mobile navigation (hide arrows, FAB for notes)
+2. **Section 2:** Touch targets and gestures ✅
+3. **Section 3:** Responsive layout refinements
+4. **Section 4:** Performance optimization for mobile
 
-## Current Focus Areas
-
-1. **IES Reader Wave 3** — Mobile optimization (hide nav arrows, FAB for notes, touch targets)
-2. **Cross-app sync** — SiYuan ↔ Readest state sharing
-3. **Pass 4** — Pattern type classification (deferred/optional)
-
-## Backend API Routes
-
-| Route | Purpose |
-|-------|---------|
-| `/graph` | Entity search, exploration, relationships |
-| `/session` | Thinking sessions, ForgeMode |
-| `/journeys` | Breadcrumb tracking, synthesis |
-| `/profile` | User profiles, login |
-| `/books` | Calibre catalog, covers, files, ingestion queue |
-| `/templates` | Thinking mode templates |
-| `/reframes` | Concept metaphors/analogies |
-| `/personal` | Sparks, insights, ADHD-friendly capture |
-| `/flow` | Flow session lifecycle |
-| `/capture` | Quick capture queue |
-| `/thinking` | Thinking session lifecycle |
-
-## Docker Services
-
-```
-brain_explore_neo4j     # 7474, 7687
-brain_explore_qdrant    # 6333, 6334
-brain_explore_redis     # 6379
-brain_explore_calibre   # 8083
-brain_explore_siyuan    # 6806
-```
+Pick up where previous work left off. Check git log for recent changes.

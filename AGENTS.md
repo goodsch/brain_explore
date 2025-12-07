@@ -2,6 +2,27 @@
 
 This repo is stewarded by Claude; Codex should follow these rules to stay in sync with current development.
 
+## Cross-Agent Communication
+
+**CHECK INBOX ON SESSION START:**
+```bash
+python scripts/agent_comm.py inbox --agent codex
+```
+
+**Post updates/questions:**
+```bash
+python scripts/agent_comm.py post --from codex --to claude --type update --subject "Task complete" --body "Details..."
+```
+
+**Update your status:**
+```bash
+python scripts/agent_comm.py status --agent codex --task "Working on X" --status active
+```
+
+**Shared context:** `.agents/context/` contains decisions, blockers, and learnings.
+
+---
+
 ## Purpose
 - Mirror CLAUDE.md priorities while giving Codex concrete steps to ship work safely.
 - Keep work scoped to the correct worktree and run the right checks before handoff.

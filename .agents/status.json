@@ -1,0 +1,31 @@
+{
+  "last_updated": "2025-12-07T20:30:00Z",
+  "agents": {
+    "claude": {
+      "status": "active",
+      "current_task": "Implementing cross-agent communication system",
+      "branch": "master",
+      "last_active": "2025-12-07T20:30:00Z",
+      "recent_commits": [
+        "329f821 fix: Query reframe sources by label not type property",
+        "242e29d test: Add tests for Pass 2/3 enrichment modules"
+      ]
+    },
+    "codex": {
+      "status": "completed",
+      "current_task": "Pass 4: Pattern Type Classification",
+      "branch": "master",
+      "last_active": "2025-12-07T20:00:00Z",
+      "recent_commits": []
+    },
+    "gemini": {
+      "status": "active",
+      "current_task": "IES Reader development",
+      "branch": "feature/ies-reader",
+      "last_active": "2025-12-07T20:00:00Z",
+      "recent_commits": []
+    }
+  },
+  "project_phase": "2c",
+  "project_completion": "75%"
+}
