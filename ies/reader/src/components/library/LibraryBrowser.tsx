@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Library, Upload, Wifi, WifiOff, Download, Clock } from 'lucide-react';
+import { Library, Upload, Wifi, WifiOff, Download, Clock, Loader2, AlertCircle } from 'lucide-react';
 import { graphClient, type CalibreBook } from '../../services/graphClient';
+import { useIngestionQueue } from '../../hooks/useIngestionQueue';
 import { BookCard } from './BookCard';
 import { SearchBar } from './SearchBar';
+import { IngestionQueueSheet } from './IngestionQueueSheet';
 import './LibraryBrowser.css';
 
 interface LibraryBrowserProps {
@@ -21,32 +23,30 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
   const [isOnline, setIsOnline] = useState(true);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [queuedBookIds, setQueuedBookIds] = useState<Set<number>>(new Set());
+  const [showQueueSheet, setShowQueueSheet] = useState(false);
+
+  // Use the ingestion queue hook for automatic polling
+  const {
+    items: queueItems,
+    queuedCount,
+    processingCount,
+    failedCount,
+    hasActiveItems,
+    isBookQueued,
+    refresh: refreshQueueStatus,
+  } = useIngestionQueue({ pollIntervalMs: 10000, pollOnlyWhenActive: true });
+
+  // Derive queuedBookIds set for backward compatibility with BookCard
+  const queuedBookIds = new Set(
+    queueItems
+      .filter(item => item.status === 'queued' || item.status === 'processing')
+      .map(item => item.calibre_id)
+  );
 
   // Check backend availability
   useEffect(() => {
     graphClient.isBackendAvailable().then(setIsOnline);
   }, []);
-
-  // Fetch ingestion queue status
-  const refreshQueueStatus = useCallback(async () => {
-    try {
-      const response = await graphClient.getIngestionQueue();
-      const queuedIds = new Set(
-        response.items
-          .filter(item => item.status === 'queued' || item.status === 'processing')
-          .map(item => item.calibre_id)
-      );
-      setQueuedBookIds(queuedIds);
-    } catch (err) {
-      console.error('Failed to fetch ingestion queue:', err);
-    }
-  }, []);
-
-  // Fetch queue status on mount
-  useEffect(() => {
-    refreshQueueStatus();
-  }, [refreshQueueStatus]);
 
   // Fetch books
   useEffect(() => {
@@ -128,6 +128,30 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
             >
               {isOnline ? <Wifi size={18} /> : <WifiOff size={18} />}
             </div>
+
+            {/* Queue indicator - shows when there are items in queue */}
+            {(hasActiveItems || failedCount > 0) && (
+              <button
+                className={`library-queue-indicator ${failedCount > 0 ? 'has-failed' : processingCount > 0 ? 'processing' : ''}`}
+                title={`${queuedCount} queued, ${processingCount} processing${failedCount > 0 ? `, ${failedCount} failed` : ''}`}
+                onClick={() => setShowQueueSheet(true)}
+              >
+                {processingCount > 0 ? (
+                  <Loader2 size={16} className="spinning" />
+                ) : failedCount > 0 ? (
+                  <AlertCircle size={16} />
+                ) : (
+                  <Clock size={16} />
+                )}
+                <span>
+                  {processingCount > 0
+                    ? `${processingCount}/${queuedCount + processingCount}`
+                    : failedCount > 0
+                    ? `${failedCount} failed`
+                    : queuedCount}
+                </span>
+              </button>
+            )}
 
             {/* Install button */}
             {showInstallPrompt && (
@@ -252,6 +276,12 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
           Select text while reading to explore related concepts in the knowledge graph.
         </p>
       </footer>
+
+      {/* Ingestion Queue Sheet */}
+      <IngestionQueueSheet
+        isOpen={showQueueSheet}
+        onClose={() => setShowQueueSheet(false)}
+      />
     </div>
   );
 }

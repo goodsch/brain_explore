@@ -54,6 +54,19 @@ interface EntityDetailsResult {
   sources: BookSource[];
 }
 
+// Backend response from /graph/explore/{concept}
+interface BackendExploreResponse {
+  concept: string;
+  nodes: Array<{ name: string; type: string; labels: string[] }>;
+  relationships: Array<{ start: string; type: string; end: string }>;
+}
+
+// Backend response from /graph/sources/{concept}
+interface BackendSourcesResponse {
+  concept: string;
+  sources: Array<{ text: string; book: string; author?: string; chapter?: string }>;
+}
+
 class GraphClient {
   private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${API_BASE}${path}`, {
@@ -98,25 +111,103 @@ class GraphClient {
 
   /**
    * Search for entities by text (e.g., selected text from reader)
+   * Transforms backend search response to frontend format
    */
   async searchEntities(query: string): Promise<EntitySearchResult> {
-    return this.fetch<EntitySearchResult>(
-      `/graph/search?q=${encodeURIComponent(query)}&limit=10`
-    );
+    // Backend returns: { query, results: [{ name, type, score }] }
+    const backendResponse = await this.fetch<{
+      query: string;
+      results: Array<{ name: string; type: string; score: number }>;
+    }>(`/graph/search?q=${encodeURIComponent(query)}&limit=10`);
+
+    // Transform to frontend format: { entities: GraphEntity[], total }
+    const entities: GraphEntity[] = backendResponse.results.map((r) => ({
+      id: r.name, // Use name as ID since Neo4j uses name as identifier
+      name: r.name,
+      type: r.type,
+      summary: '', // Search doesn't return summaries
+    }));
+
+    return {
+      entities,
+      total: entities.length,
+    };
   }
 
   /**
-   * Get entity details by ID
+   * Get entity details by name (entities use name as identifier in Neo4j)
+   * Note: In this system, entityId IS the entity name since Neo4j uses names as identifiers
    */
-  async getEntity(entityId: string): Promise<GraphEntity> {
-    return this.fetch<GraphEntity>(`/graph/entity/${entityId}`);
+  async getEntity(entityNameOrId: string): Promise<GraphEntity> {
+    // Search for the entity by name
+    const searchResult = await this.searchEntities(entityNameOrId);
+
+    if (searchResult.entities.length === 0) {
+      throw new Error(`Entity not found: ${entityNameOrId}`);
+    }
+
+    // Return the first match
+    return searchResult.entities[0];
   }
 
   /**
    * Get entity with relationships and sources
+   * Transforms backend's name-based response to frontend's expected format
    */
-  async exploreEntity(entityId: string): Promise<EntityDetailsResult> {
-    return this.fetch<EntityDetailsResult>(`/graph/explore/${entityId}`);
+  async exploreEntity(entityNameOrId: string): Promise<EntityDetailsResult> {
+    // URL-encode the entity name for the path parameter
+    const encodedName = encodeURIComponent(entityNameOrId);
+
+    // Fetch relationships from backend (uses concept NAME as path param)
+    const exploreResponse = await this.fetch<BackendExploreResponse>(
+      `/graph/explore/${encodedName}`
+    );
+
+    // Fetch sources from backend
+    let sourcesResponse: BackendSourcesResponse = { concept: entityNameOrId, sources: [] };
+    try {
+      sourcesResponse = await this.fetch<BackendSourcesResponse>(
+        `/graph/sources/${encodedName}`
+      );
+    } catch {
+      // Sources endpoint might fail if no chunks exist - that's OK
+    }
+
+    // Build the entity object (using name as ID since that's our identifier)
+    const entity: GraphEntity = {
+      id: entityNameOrId,
+      name: entityNameOrId,
+      type: 'Concept', // Default type - could be enriched from search
+      summary: '', // Backend explore endpoint doesn't return summaries
+    };
+
+    // Transform backend relationships to frontend format
+    // Backend returns: { start, type, end } - we want: { type, target: GraphEntity }
+    const relationships: EntityRelationship[] = exploreResponse.nodes.map((node) => {
+      // Find the relationship for this node
+      const rel = exploreResponse.relationships.find(
+        (r) => r.end === node.name || r.start === node.name
+      );
+
+      return {
+        type: rel?.type || 'RELATED_TO',
+        target: {
+          id: node.name,
+          name: node.name,
+          type: node.type || 'Concept',
+          summary: '',
+        },
+      };
+    });
+
+    // Transform backend sources to frontend format
+    const sources: BookSource[] = sourcesResponse.sources.map((s) => ({
+      bookId: s.book,
+      bookTitle: s.book,
+      chapter: s.chapter,
+    }));
+
+    return { entity, relationships, sources };
   }
 
   /**

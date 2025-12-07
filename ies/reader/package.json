@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "epubjs": "^0.3.93",
+    "framer-motion": "^11.18.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-reader": "^2.0.15",

@@ -231,4 +231,12 @@
   .reader-content {
     margin-right: 0 !important;
   }
+
+  /* Hide react-reader nav arrows on mobile - swipe gestures work natively */
+  .reader-content button[aria-label*="previous"],
+  .reader-content button[aria-label*="next"],
+  .reader-content button[aria-label*="Previous"],
+  .reader-content button[aria-label*="Next"] {
+    display: none !important;
+  }
 }

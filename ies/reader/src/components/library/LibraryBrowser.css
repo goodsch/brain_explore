@@ -67,6 +67,44 @@
   background: var(--ies-warning-subtle);
 }
 
+/* Queue Indicator */
+.library-queue-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+  padding: var(--ies-space-2) var(--ies-space-3);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
+  font-weight: 500;
+  color: var(--ies-warning, #f59e0b);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--ies-radius-full);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.library-queue-indicator:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.library-queue-indicator.processing {
+  color: var(--ies-accent);
+  background: var(--ies-accent-subtle);
+  border-color: var(--ies-accent);
+}
+
+.library-queue-indicator.has-failed {
+  color: var(--ies-error, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.library-queue-indicator .spinning {
+  animation: spin 1s linear infinite;
+}
+
 .library-upload-btn {
   cursor: pointer;
 }
@@ -487,5 +525,36 @@
 
   .library-subtitle {
     font-size: var(--ies-text-base);
+  }
+}
+
+/* ============================================
+   MOBILE TOUCH TARGET COMPLIANCE (44px min)
+   ============================================ */
+
+@media (max-width: 767px) {
+  /* Filter buttons - ensure 44px touch targets */
+  .library-filter-btn {
+    min-height: 44px;
+    padding: var(--ies-space-3) var(--ies-space-4);
+  }
+
+  /* Queue indicator - ensure 44px touch target */
+  .library-queue-indicator {
+    min-height: 44px;
+    padding: var(--ies-space-3) var(--ies-space-4);
+  }
+
+  /* Install button - ensure 44px touch target */
+  .library-install-btn {
+    min-height: 44px;
+    padding: var(--ies-space-3) var(--ies-space-4);
+  }
+
+  /* Book card index button - ensure 44px touch target */
+  .book-card-queue-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: var(--ies-space-3);
   }
 }
