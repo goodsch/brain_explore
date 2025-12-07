@@ -62,7 +62,7 @@ async def _backend_post(path: str, data: dict[str, Any]) -> dict[str, Any]:
 async def _load_template(template_id: str) -> dict[str, Any] | None:
     """Load template from backend."""
     try:
-        return await _backend_get(f"/templates/templates/{template_id}")
+        return await _backend_get(f"/templates/{template_id}")
     except httpx.HTTPStatusError:
         return None
 
