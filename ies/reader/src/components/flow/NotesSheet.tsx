@@ -8,6 +8,7 @@ import './NotesSheet.css';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  initialText?: string; // New prop
 }
 
 // Map UI note types to backend resonance signals (best effort)
@@ -30,10 +31,18 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-export function NotesSheet({ isOpen, onClose }: Props) {
+export function NotesSheet({ isOpen, onClose, initialText }: Props) {
   const { currentEntity, userId } = useFlowStore();
-  const [noteInput, setNoteInput] = useState('');
+  const [noteInput, setNoteInput] = useState(initialText || '');
   const [noteType, setNoteType] = useState<NoteType>('thought');
+
+  useEffect(() => {
+    if (initialText) {
+      setNoteInput(initialText);
+    } else {
+      setNoteInput(''); // Clear if initialText becomes null/undefined
+    }
+  }, [initialText]);
 
   const handleSubmit = () => {
     if (!noteInput.trim()) return;

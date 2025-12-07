@@ -264,3 +264,48 @@
     display: none;
   }
 }
+
+.reader-selection-bar {
+  position: absolute;
+  top: 0; /* Will be overridden by inline style */
+  left: 0; /* Will be overridden by inline style */
+  background: var(--ies-bg-surface);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-md);
+  box-shadow: var(--ies-shadow-md);
+  padding: var(--ies-space-2);
+  display: flex;
+  gap: var(--ies-space-2);
+  z-index: var(--ies-z-popover);
+  transform: translate(-50%, -120%); /* Adjust to appear above selection */
+}
+
+.reader-selection-bar button {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-1);
+  font-size: var(--ies-text-sm);
+  padding: var(--ies-space-1) var(--ies-space-2);
+  white-space: nowrap;
+}
+
+/* ============================================
+   MOBILE UX IMPROVEMENTS
+   ============================================ */
+
+/* Ensure 44px minimum touch targets */
+.ies-btn,
+.flow-relationship-link,
+.notes-chip, /* Modified from .notes-type-chips button to .notes-chip for NotesSheet.tsx */
+.library-filter-btn,
+.book-card {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Increase tap area without changing visual size */
+.flow-section-title button::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
