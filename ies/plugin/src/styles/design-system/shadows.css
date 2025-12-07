@@ -1,132 +1,121 @@
 /**
- * IES Design System - Shadows
- * Philosophy: Cupertino-inspired layered shadows for depth and tactile feel
+ * IES Design System v2 - Shadows
+ * Philosophy: Modern Information Space - subtle depth for dark surfaces
  *
- * Shadows are composed of multiple layers for realistic depth perception
+ * Dark mode first: Shadows are optimized for dark backgrounds
+ * Light mode overrides provided for optional light theme
  */
 
 :root {
   /* ==========================================================================
-     SHADOW SCALE - Cupertino layered shadow system
+     SHADOW SCALE - Optimized for dark backgrounds
      ========================================================================== */
-
-  /* Tactile shadow - Subtle pressed-in feel for inputs and buttons */
-  --ies-shadow-tactile: 0 1px 1px rgba(45, 42, 38, 0.05),
-                        0 2px 1px rgba(45, 42, 38, 0.04);
 
   /* Extra small - Subtle lift */
-  --ies-shadow-xs: 0 1px 2px rgba(45, 42, 38, 0.05);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
 
   /* Small - Cards at rest, default elevation */
-  --ies-shadow-sm: 0 1px 2px rgba(45, 42, 38, 0.04),
-                   0 2px 4px rgba(45, 42, 38, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2),
+               0 2px 6px rgba(0, 0, 0, 0.15);
 
   /* Medium - Hovered cards, dropdowns */
-  --ies-shadow-md: 0 2px 4px rgba(45, 42, 38, 0.04),
-                   0 4px 8px rgba(45, 42, 38, 0.06),
-                   0 8px 16px rgba(45, 42, 38, 0.06);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2),
+               0 8px 16px rgba(0, 0, 0, 0.15);
 
   /* Large - Modals, popovers */
-  --ies-shadow-lg: 0 4px 8px rgba(45, 42, 38, 0.04),
-                   0 8px 16px rgba(45, 42, 38, 0.06),
-                   0 16px 32px rgba(45, 42, 38, 0.08);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2),
+               0 16px 32px rgba(0, 0, 0, 0.2);
 
   /* Extra large - High elevation overlays */
-  --ies-shadow-xl: 0 8px 16px rgba(45, 42, 38, 0.06),
-                   0 16px 32px rgba(45, 42, 38, 0.08),
-                   0 32px 64px rgba(45, 42, 38, 0.10);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.25),
+               0 32px 64px rgba(0, 0, 0, 0.2);
 
   /* ==========================================================================
-     GLOW EFFECTS - For focus states and highlights
+     GLOW EFFECTS - Entity-colored accents for focus states
      ========================================================================== */
 
-  /* Accent glow - Primary action focus */
-  --ies-shadow-glow: 0 0 20px rgba(201, 135, 46, 0.2);
-  --ies-shadow-glow-accent: 0 0 0 3px var(--ies-accent-muted);
+  /* Entity glows - For focus and highlight states */
+  --shadow-glow-concept: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  --shadow-glow-person: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  --shadow-glow-theory: 0 0 0 2px rgba(139, 92, 246, 0.3);
+  --shadow-glow-framework: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  --shadow-glow-assessment: 0 0 0 2px rgba(239, 68, 68, 0.3);
 
-  /* Secondary glow - Knowledge/growth emphasis */
-  --ies-shadow-glow-secondary: 0 0 20px rgba(90, 138, 122, 0.2);
+  /* Semantic glows */
+  --shadow-glow-success: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  --shadow-glow-warning: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  --shadow-glow-error: 0 0 0 2px rgba(239, 68, 68, 0.3);
+  --shadow-glow-info: 0 0 0 2px rgba(59, 130, 246, 0.3);
 
-  /* Tertiary glow - Reflection/depth emphasis */
-  --ies-shadow-glow-tertiary: 0 0 20px rgba(139, 122, 160, 0.2);
-
-  /* Error glow - Error state focus */
-  --ies-shadow-glow-error: 0 0 0 3px var(--ies-error-muted);
+  /* Default focus glow (concept blue) */
+  --shadow-focus: var(--shadow-glow-concept);
 
   /* ==========================================================================
      SEMANTIC SHADOWS - Named for component use
      ========================================================================== */
 
   /* Button shadows */
-  --ies-shadow-button: var(--ies-shadow-tactile);
-  --ies-shadow-button-hover: var(--ies-shadow-sm);
-  --ies-shadow-button-active: inset 0 1px 2px rgba(45, 42, 38, 0.1);
+  --shadow-button: var(--shadow-xs);
+  --shadow-button-hover: var(--shadow-sm);
+  --shadow-button-active: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 
   /* Card shadows */
-  --ies-shadow-card: var(--ies-shadow-sm);
-  --ies-shadow-card-hover: var(--ies-shadow-md);
+  --shadow-card: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-md);
 
   /* Input shadows */
-  --ies-shadow-input: var(--ies-shadow-tactile);
-  --ies-shadow-input-focus: var(--ies-shadow-glow-accent);
+  --shadow-input: var(--shadow-xs);
+  --shadow-input-focus: var(--shadow-focus);
 
   /* Modal/overlay shadows */
-  --ies-shadow-modal: var(--ies-shadow-lg);
-  --ies-shadow-dropdown: var(--ies-shadow-md);
-  --ies-shadow-tooltip: var(--ies-shadow-sm);
+  --shadow-modal: var(--shadow-xl);
+  --shadow-dropdown: var(--shadow-md);
+  --shadow-tooltip: var(--shadow-sm);
+  --shadow-popover: var(--shadow-lg);
 
   /* ==========================================================================
      INSET SHADOWS - For pressed/inset states
      ========================================================================== */
-  --ies-shadow-inset-sm: inset 0 1px 2px rgba(45, 42, 38, 0.06);
-  --ies-shadow-inset-md: inset 0 2px 4px rgba(45, 42, 38, 0.08);
-  --ies-shadow-inset-lg: inset 0 4px 8px rgba(45, 42, 38, 0.10);
+  --shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-inset-lg: inset 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
 /* ==========================================================================
-   DARK THEME SHADOWS
+   LIGHT THEME SHADOWS - Optional override
    ========================================================================== */
-[data-theme-mode="dark"],
-.dark {
-  /* Darker shadows for dark backgrounds */
-  --ies-shadow-tactile: 0 1px 1px rgba(0, 0, 0, 0.15),
-                        0 2px 1px rgba(0, 0, 0, 0.12);
+:root.light,
+[data-theme-mode="light"] {
+  /* Lighter shadows for light backgrounds */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
 
-  --ies-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04),
+               0 2px 4px rgba(0, 0, 0, 0.04);
 
-  --ies-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15),
-                   0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.04),
+               0 4px 8px rgba(0, 0, 0, 0.06),
+               0 8px 16px rgba(0, 0, 0, 0.06);
 
-  --ies-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.15),
-                   0 4px 8px rgba(0, 0, 0, 0.2),
-                   0 8px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.04),
+               0 8px 16px rgba(0, 0, 0, 0.06),
+               0 16px 32px rgba(0, 0, 0, 0.08);
 
-  --ies-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15),
-                   0 8px 16px rgba(0, 0, 0, 0.2),
-                   0 16px 32px rgba(0, 0, 0, 0.25);
-
-  --ies-shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.2),
-                   0 16px 32px rgba(0, 0, 0, 0.25),
-                   0 32px 64px rgba(0, 0, 0, 0.3);
-
-  /* Brighter glows on dark */
-  --ies-shadow-glow: 0 0 24px rgba(212, 149, 47, 0.3);
-  --ies-shadow-glow-secondary: 0 0 24px rgba(106, 154, 138, 0.3);
-  --ies-shadow-glow-tertiary: 0 0 24px rgba(155, 138, 176, 0.3);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.06),
+               0 16px 32px rgba(0, 0, 0, 0.08),
+               0 32px 64px rgba(0, 0, 0, 0.10);
 
   /* Inset shadows */
-  --ies-shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.2);
-  --ies-shadow-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.25);
-  --ies-shadow-inset-lg: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-inset-lg: inset 0 4px 8px rgba(0, 0, 0, 0.10);
 }
 
 /* ==========================================================================
    UTILITY CLASSES
    ========================================================================== */
-.ies-shadow-none { box-shadow: none; }
-.ies-shadow-xs { box-shadow: var(--ies-shadow-xs); }
-.ies-shadow-sm { box-shadow: var(--ies-shadow-sm); }
-.ies-shadow-md { box-shadow: var(--ies-shadow-md); }
-.ies-shadow-lg { box-shadow: var(--ies-shadow-lg); }
-.ies-shadow-xl { box-shadow: var(--ies-shadow-xl); }
-.ies-shadow-glow { box-shadow: var(--ies-shadow-glow); }
+.shadow-none { box-shadow: none; }
+.shadow-xs { box-shadow: var(--shadow-xs); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }

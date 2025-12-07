@@ -1,43 +1,39 @@
 /**
- * IES Explorer Design System
- * Aesthetic: "Hybrid Contemplative"
+ * IES Design System v2 - SCSS Extensions
+ * Aesthetic: "Modern Information Space"
  *
- * A refined, scholarly environment for deep thought.
- * Combines Scholar's Library warmth, Cupertino refinement,
- * Neurogarden ADHD-friendly patterns, and Asri modern geometry.
+ * A sleek, modern interface inspired by Linear, Raycast, and Arc.
+ * Dark mode first with entity colors as primary accents.
  *
- * This file imports the unified design system tokens and extends
- * them with SCSS-specific features for the SiYuan plugin.
+ * This file provides SCSS-specific features (@extend, loops, nesting)
+ * that extend the CSS custom properties defined in design-system/*.css
  */
 
 // ============================================
 // UNIFIED DESIGN SYSTEM TOKENS
 // ============================================
-
-// Design system tokens imported from index.scss
-// (CSS imports have path resolution issues when nested in SCSS)
+// CSS tokens imported via index.css in the design-system folder
+// This file extends those tokens with SCSS features
 
 // ============================================
-// SCSS EXTENSIONS
+// ROOT ELEMENT STYLING
 // ============================================
-// These classes use SCSS features like @extend and @for loops
-// that cannot be expressed in pure CSS
 
 .ies-root {
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-base);
-  line-height: var(--ies-leading-body);
-  color: var(--ies-text-primary);
-  background: var(--ies-bg-deep);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  color: var(--text-primary);
+  background: var(--bg-primary);
 
   // Smooth font rendering
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  // Selection color
+  // Selection color (entity concept blue)
   ::selection {
-    background: var(--ies-accent-muted);
-    color: var(--ies-text-primary);
+    background: rgba(59, 130, 246, 0.3);
+    color: var(--text-primary);
   }
 }
 
@@ -46,42 +42,42 @@
 // ============================================
 
 .ies-heading {
-  font-family: var(--ies-font-display);
-  font-weight: var(--ies-font-semibold);
-  letter-spacing: var(--ies-tracking-tight);
-  line-height: var(--ies-leading-tight);
+  font-family: var(--font-sans);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
 }
 
 .ies-heading-xl {
   @extend .ies-heading;
-  font-size: var(--ies-text-4xl);
+  font-size: var(--text-3xl);
 }
 
 .ies-heading-lg {
   @extend .ies-heading;
-  font-size: var(--ies-text-3xl);
+  font-size: var(--text-2xl);
 }
 
 .ies-heading-md {
   @extend .ies-heading;
-  font-size: var(--ies-text-2xl);
+  font-size: var(--text-xl);
 }
 
 .ies-heading-sm {
   @extend .ies-heading;
-  font-size: var(--ies-text-xl);
+  font-size: var(--text-lg);
 }
 
 .ies-label {
-  font-size: var(--ies-text-xs);
-  font-weight: var(--ies-font-bold);
-  letter-spacing: var(--ies-tracking-widest);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
-  color: var(--ies-text-muted);
+  color: var(--text-muted);
 }
 
 .ies-mono {
-  font-family: var(--ies-font-mono);
+  font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
@@ -94,32 +90,33 @@
 
   &:hover {
     transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
   }
 
   &:active {
     transform: translateY(0);
-    box-shadow: var(--ies-shadow-card);
+    box-shadow: var(--shadow-card);
   }
 }
 
 .ies-card--accent {
-  border-left: 3px solid var(--ies-accent);
+  border-left: 3px solid var(--entity-concept);
 }
 
 .ies-card--secondary {
-  border-left: 3px solid var(--ies-secondary);
+  border-left: 3px solid var(--entity-theory);
 }
 
 .ies-chip--accent {
-  background: var(--ies-accent-muted);
-  border-color: var(--ies-accent);
-  color: var(--ies-accent);
+  background: var(--entity-concept-bg);
+  border-color: var(--entity-concept);
+  color: var(--entity-concept);
 }
 
 .ies-chip--secondary {
-  background: var(--ies-secondary-muted);
-  border-color: var(--ies-secondary);
-  color: var(--ies-secondary);
+  background: var(--entity-theory-bg);
+  border-color: var(--entity-theory);
+  color: var(--entity-theory);
 }
 
 .ies-btn--ghost {
@@ -128,38 +125,38 @@
   box-shadow: none;
 
   &:hover:not(:disabled) {
-    background: var(--ies-bg-deep);
+    background: var(--bg-hover);
     border-color: transparent;
   }
 }
 
 .ies-btn--icon {
-  padding: var(--ies-space-2);
-  border-radius: var(--ies-radius-button);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
 }
 
 .ies-textarea {
   width: 100%;
-  padding: var(--ies-input-padding-y) var(--ies-input-padding-x);
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-base);
-  color: var(--ies-text-primary);
-  background: var(--ies-bg-base);
-  border: 1px solid var(--ies-border-light);
-  border-radius: var(--ies-radius-input);
-  box-shadow: var(--ies-shadow-input);
-  transition: var(--ies-transition-all);
+  padding: var(--input-padding-y) var(--input-padding-x);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-input);
+  transition: var(--transition-all);
   resize: none;
   line-height: 1.5;
 
   &::placeholder {
-    color: var(--ies-text-subtle);
+    color: var(--text-muted);
   }
 
   &:focus {
     outline: none;
-    border-color: var(--ies-accent);
-    box-shadow: var(--ies-shadow-input-focus);
+    border-color: var(--entity-concept);
+    box-shadow: var(--shadow-input-focus);
   }
 }
 
@@ -168,43 +165,43 @@
 // ============================================
 
 .ies-fade-in {
-  animation: ies-fade-in var(--ies-duration-base) var(--ies-ease-cupertino);
+  animation: fade-in var(--duration-base) var(--ease-out);
 }
 
 .ies-slide-up {
-  animation: ies-slide-up var(--ies-duration-slow) var(--ies-ease-cupertino);
+  animation: slide-up var(--duration-slow) var(--ease-out);
 }
 
 .ies-stagger {
-  animation: ies-slide-up var(--ies-duration-slow) var(--ies-ease-cupertino) backwards;
+  animation: slide-up var(--duration-slow) var(--ease-out) backwards;
 
   @for $i from 1 through 10 {
     &:nth-child(#{$i}) {
-      animation-delay: #{$i * 50}ms;
+      animation-delay: #{$i * 40}ms;
     }
   }
 }
 
 .ies-loading {
-  animation: ies-pulse-soft 1.5s var(--ies-ease-in-out) infinite;
+  animation: pulse-soft 1.5s var(--ease-in-out) infinite;
 }
 
 .ies-shimmer {
   background: linear-gradient(
     90deg,
-    var(--ies-bg-base) 0%,
-    var(--ies-bg-elevated) 50%,
-    var(--ies-bg-base) 100%
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 100%
   );
   background-size: 200% 100%;
-  animation: ies-shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
-// Scrollbar styling
+// Scrollbar styling (modern minimal)
 .ies-scrollable {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--ies-border-medium) transparent;
+  scrollbar-color: var(--bg-hover) transparent;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -215,11 +212,11 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--ies-border-medium);
+    background: var(--bg-hover);
     border-radius: 3px;
 
     &:hover {
-      background: var(--ies-text-subtle);
+      background: var(--bg-active);
     }
   }
 }
@@ -231,36 +228,36 @@
 .ies-entity-chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--ies-space-1);
-  padding: var(--ies-space-1) var(--ies-space-2);
-  font-size: var(--ies-text-xs);
-  font-weight: var(--ies-font-semibold);
-  border-radius: var(--ies-radius-chip);
-  transition: var(--ies-transition-fast);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-chip);
+  transition: var(--transition-fast);
 
   &--concept {
-    color: var(--ies-entity-concept);
-    background: var(--ies-entity-concept-bg);
+    color: var(--entity-concept);
+    background: var(--entity-concept-bg);
   }
 
   &--person {
-    color: var(--ies-entity-person);
-    background: var(--ies-entity-person-bg);
+    color: var(--entity-person);
+    background: var(--entity-person-bg);
   }
 
   &--theory {
-    color: var(--ies-entity-theory);
-    background: var(--ies-entity-theory-bg);
+    color: var(--entity-theory);
+    background: var(--entity-theory-bg);
   }
 
   &--framework {
-    color: var(--ies-entity-framework);
-    background: var(--ies-entity-framework-bg);
+    color: var(--entity-framework);
+    background: var(--entity-framework-bg);
   }
 
   &--assessment {
-    color: var(--ies-entity-assessment);
-    background: var(--ies-entity-assessment-bg);
+    color: var(--entity-assessment);
+    background: var(--entity-assessment-bg);
   }
 }
 
@@ -271,24 +268,24 @@
 .ies-qc-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--ies-space-1);
-  padding: 2px var(--ies-space-2);
-  font-size: var(--ies-text-xs);
-  font-weight: var(--ies-font-medium);
-  border-radius: var(--ies-radius-sm);
-  background: var(--ies-bg-base);
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
   border: 1px solid currentColor;
   opacity: 0.9;
 
-  &--schema-probe { color: var(--ies-q-schema); }
-  &--boundary { color: var(--ies-q-boundary); }
-  &--dimensional { color: var(--ies-q-dimensional); }
-  &--causal { color: var(--ies-q-causal); }
-  &--counterfactual { color: var(--ies-q-counterfactual); }
-  &--anchor { color: var(--ies-q-anchor); }
-  &--perspective-shift { color: var(--ies-q-perspective); }
-  &--meta-cognitive { color: var(--ies-q-meta); }
-  &--reflective-synthesis { color: var(--ies-q-synthesis); }
+  &--schema-probe { color: var(--q-schema); }
+  &--boundary { color: var(--q-boundary); }
+  &--dimensional { color: var(--q-dimensional); }
+  &--causal { color: var(--q-causal); }
+  &--counterfactual { color: var(--q-counterfactual); }
+  &--anchor { color: var(--q-anchor); }
+  &--perspective-shift { color: var(--q-perspective); }
+  &--meta-cognitive { color: var(--q-meta); }
+  &--reflective-synthesis { color: var(--q-synthesis); }
 }
 
 // ============================================
@@ -298,25 +295,25 @@
 .ies-energy-indicator {
   display: inline-flex;
   align-items: center;
-  gap: var(--ies-space-1);
-  padding: var(--ies-space-1) var(--ies-space-2);
-  font-size: var(--ies-text-xs);
-  font-weight: var(--ies-font-semibold);
-  border-radius: var(--ies-radius-chip);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-chip);
 
   &--low {
-    color: var(--ies-energy-low);
-    background: var(--ies-energy-low-bg);
+    color: var(--energy-low);
+    background: var(--energy-low-bg);
   }
 
   &--medium {
-    color: var(--ies-energy-medium);
-    background: var(--ies-energy-medium-bg);
+    color: var(--energy-medium);
+    background: var(--energy-medium-bg);
   }
 
   &--high {
-    color: var(--ies-energy-high);
-    background: var(--ies-energy-high-bg);
+    color: var(--energy-high);
+    background: var(--energy-high-bg);
   }
 }
 
@@ -326,14 +323,14 @@
   border-radius: 50%;
 
   // Map resonance signals to question class colors for consistency
-  &--curious { background: var(--ies-q-schema); }
-  &--excited { background: var(--ies-q-causal); }
-  &--surprised { background: var(--ies-q-counterfactual); }
-  &--moved { background: var(--ies-q-perspective); }
-  &--disturbed { background: var(--ies-energy-high); }
-  &--unclear { background: var(--ies-q-meta); }
-  &--connected { background: var(--ies-q-anchor); }
-  &--validated { background: var(--ies-accent); }
+  &--curious { background: var(--q-schema); }
+  &--excited { background: var(--q-causal); }
+  &--surprised { background: var(--q-counterfactual); }
+  &--moved { background: var(--q-perspective); }
+  &--disturbed { background: var(--energy-high); }
+  &--unclear { background: var(--q-meta); }
+  &--connected { background: var(--q-anchor); }
+  &--validated { background: var(--entity-concept); }
 }
 
 // ============================================
@@ -343,7 +340,15 @@
 // Integrate with SiYuan's dark mode
 [data-theme-mode="dark"] {
   .ies-root {
-    background: var(--ies-bg-deep);
-    color: var(--ies-text-primary);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+}
+
+// Integrate with SiYuan's light mode
+[data-theme-mode="light"] {
+  .ies-root {
+    background: var(--bg-primary);
+    color: var(--text-primary);
   }
 }

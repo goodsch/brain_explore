@@ -1,0 +1,394 @@
+/**
+ * IES Modern Theme for SiYuan
+ * Aesthetic: "Modern Information Space"
+ *
+ * A sleek, high-contrast design inspired by Linear, Raycast, and Arc.
+ * Dark mode first with entity colors as primary accents.
+ */
+
+/* ==========================================================================
+   DARK MODE (Default)
+   ========================================================================== */
+
+.b3-theme-dark {
+  /* --------------------------------------------------------------------------
+     BACKGROUNDS - Near-black with warm undertone
+     -------------------------------------------------------------------------- */
+  --b3-theme-background: #0f0f10;
+  --b3-theme-background-light: #1a1a1c;
+  --b3-theme-surface: #1a1a1c;
+  --b3-theme-surface-light: #252528;
+  --b3-theme-surface-lighter: #2a2a2e;
+
+  /* Cards and panels */
+  --b3-card-background: #252528;
+  --b3-list-hover: #2a2a2e;
+
+  /* --------------------------------------------------------------------------
+     TEXT HIERARCHY - Clear contrast for dark backgrounds
+     -------------------------------------------------------------------------- */
+  --b3-theme-on-background: #f5f5f7;
+  --b3-theme-on-background-light: #a1a1a6;
+  --b3-theme-on-surface: #f5f5f7;
+  --b3-theme-on-surface-light: #a1a1a6;
+
+  /* --------------------------------------------------------------------------
+     ACCENT COLORS - Entity colors as primary accents
+     -------------------------------------------------------------------------- */
+  /* Primary: Concept Blue */
+  --b3-theme-primary: #3b82f6;
+  --b3-theme-primary-light: rgba(59, 130, 246, 0.15);
+  --b3-theme-primary-lighter: rgba(59, 130, 246, 0.08);
+  --b3-theme-primary-lightest: rgba(59, 130, 246, 0.04);
+  --b3-theme-on-primary: #ffffff;
+
+  /* Secondary: Theory Purple */
+  --b3-theme-secondary: #8b5cf6;
+  --b3-theme-on-secondary: #ffffff;
+
+  /* --------------------------------------------------------------------------
+     SEMANTIC COLORS
+     -------------------------------------------------------------------------- */
+  --b3-theme-success: #10b981;
+  --b3-theme-success-light: rgba(16, 185, 129, 0.15);
+  --b3-theme-warning: #f59e0b;
+  --b3-theme-warning-light: rgba(245, 158, 11, 0.15);
+  --b3-theme-error: #ef4444;
+  --b3-theme-error-light: rgba(239, 68, 68, 0.15);
+  --b3-theme-info: #3b82f6;
+  --b3-theme-info-light: rgba(59, 130, 246, 0.15);
+
+  /* --------------------------------------------------------------------------
+     BORDERS
+     -------------------------------------------------------------------------- */
+  --b3-border-color: rgba(255, 255, 255, 0.1);
+  --b3-border-color-light: rgba(255, 255, 255, 0.05);
+  --b3-border-color-trans: transparent;
+
+  /* --------------------------------------------------------------------------
+     SCROLLBARS - Modern minimal
+     -------------------------------------------------------------------------- */
+  --b3-scroll-color: rgba(255, 255, 255, 0.15);
+  --b3-scroll-color-hover: rgba(255, 255, 255, 0.25);
+
+  /* --------------------------------------------------------------------------
+     SHADOWS - Elevated surfaces
+     -------------------------------------------------------------------------- */
+  --b3-point-color: #3b82f6;
+  --b3-dialog-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --b3-menu-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+
+  /* --------------------------------------------------------------------------
+     TOOLTIPS
+     -------------------------------------------------------------------------- */
+  --b3-tooltips-color: #252528;
+
+  /* --------------------------------------------------------------------------
+     PROTYLE (Editor) - Near-black backgrounds
+     -------------------------------------------------------------------------- */
+  --b3-protyle-background: #0f0f10;
+  --b3-protyle-inline-background: #252528;
+  --b3-protyle-code-background: #1a1a1c;
+
+  /* --------------------------------------------------------------------------
+     GLASS EFFECT - For floating panels
+     -------------------------------------------------------------------------- */
+  --b3-mask-background: rgba(15, 15, 16, 0.85);
+
+  /* --------------------------------------------------------------------------
+     FONT COLORS - Refined hierarchy
+     -------------------------------------------------------------------------- */
+  --b3-font-color1: #f5f5f7;
+  --b3-font-color2: #a1a1a6;
+  --b3-font-color3: #6e6e73;
+  --b3-font-color4: #48484a;
+
+  /* --------------------------------------------------------------------------
+     HIGHLIGHTS & MARKS
+     -------------------------------------------------------------------------- */
+  --b3-font-background1: rgba(239, 68, 68, 0.2);
+  --b3-font-background2: rgba(245, 158, 11, 0.2);
+  --b3-font-background3: rgba(132, 204, 22, 0.2);
+  --b3-font-background4: rgba(59, 130, 246, 0.2);
+  --b3-font-background5: rgba(139, 92, 246, 0.2);
+  --b3-font-background6: rgba(236, 72, 153, 0.2);
+  --b3-font-background7: rgba(6, 182, 212, 0.2);
+  --b3-font-background8: rgba(16, 185, 129, 0.2);
+  --b3-font-background9: rgba(249, 115, 22, 0.2);
+  --b3-font-background10: rgba(107, 114, 128, 0.2);
+
+  /* Highlight colors (solid) */
+  --b3-font-color5: #ef4444;
+  --b3-font-color6: #f59e0b;
+  --b3-font-color7: #84cc16;
+  --b3-font-color8: #3b82f6;
+  --b3-font-color9: #8b5cf6;
+  --b3-font-color10: #ec4899;
+  --b3-font-color11: #06b6d4;
+  --b3-font-color12: #10b981;
+  --b3-font-color13: #f97316;
+
+  /* --------------------------------------------------------------------------
+     EMPTY BACKGROUNDS (Placeholders)
+     -------------------------------------------------------------------------- */
+  --b3-empty-color: #6e6e73;
+
+  /* --------------------------------------------------------------------------
+     GRAPH (Knowledge graph visualization)
+     -------------------------------------------------------------------------- */
+  --b3-graph-line: rgba(255, 255, 255, 0.1);
+  --b3-graph-p-point: #3b82f6;
+  --b3-graph-hl-point: #ef4444;
+  --b3-graph-ref-point: #8b5cf6;
+  --b3-graph-tag-point: #10b981;
+  --b3-graph-asset-point: #f59e0b;
+}
+
+/* ==========================================================================
+   LIGHT MODE
+   ========================================================================== */
+
+.b3-theme-light {
+  /* --------------------------------------------------------------------------
+     BACKGROUNDS - Clean white with subtle warmth
+     -------------------------------------------------------------------------- */
+  --b3-theme-background: #ffffff;
+  --b3-theme-background-light: #f5f5f7;
+  --b3-theme-surface: #f5f5f7;
+  --b3-theme-surface-light: #e5e5e7;
+  --b3-theme-surface-lighter: #d1d1d6;
+
+  /* Cards and panels */
+  --b3-card-background: #ffffff;
+  --b3-list-hover: #f5f5f7;
+
+  /* --------------------------------------------------------------------------
+     TEXT HIERARCHY
+     -------------------------------------------------------------------------- */
+  --b3-theme-on-background: #1d1d1f;
+  --b3-theme-on-background-light: #6e6e73;
+  --b3-theme-on-surface: #1d1d1f;
+  --b3-theme-on-surface-light: #6e6e73;
+
+  /* --------------------------------------------------------------------------
+     ACCENT COLORS - Same entity colors, work well on light
+     -------------------------------------------------------------------------- */
+  --b3-theme-primary: #2563eb;
+  --b3-theme-primary-light: rgba(37, 99, 235, 0.12);
+  --b3-theme-primary-lighter: rgba(37, 99, 235, 0.06);
+  --b3-theme-primary-lightest: rgba(37, 99, 235, 0.03);
+  --b3-theme-on-primary: #ffffff;
+
+  --b3-theme-secondary: #7c3aed;
+  --b3-theme-on-secondary: #ffffff;
+
+  /* --------------------------------------------------------------------------
+     SEMANTIC COLORS
+     -------------------------------------------------------------------------- */
+  --b3-theme-success: #059669;
+  --b3-theme-success-light: rgba(5, 150, 105, 0.12);
+  --b3-theme-warning: #d97706;
+  --b3-theme-warning-light: rgba(217, 119, 6, 0.12);
+  --b3-theme-error: #dc2626;
+  --b3-theme-error-light: rgba(220, 38, 38, 0.12);
+  --b3-theme-info: #2563eb;
+  --b3-theme-info-light: rgba(37, 99, 235, 0.12);
+
+  /* --------------------------------------------------------------------------
+     BORDERS
+     -------------------------------------------------------------------------- */
+  --b3-border-color: rgba(0, 0, 0, 0.1);
+  --b3-border-color-light: rgba(0, 0, 0, 0.05);
+  --b3-border-color-trans: transparent;
+
+  /* --------------------------------------------------------------------------
+     SCROLLBARS
+     -------------------------------------------------------------------------- */
+  --b3-scroll-color: rgba(0, 0, 0, 0.15);
+  --b3-scroll-color-hover: rgba(0, 0, 0, 0.25);
+
+  /* --------------------------------------------------------------------------
+     SHADOWS
+     -------------------------------------------------------------------------- */
+  --b3-point-color: #2563eb;
+  --b3-dialog-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  --b3-menu-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  /* --------------------------------------------------------------------------
+     TOOLTIPS
+     -------------------------------------------------------------------------- */
+  --b3-tooltips-color: #1d1d1f;
+
+  /* --------------------------------------------------------------------------
+     PROTYLE (Editor)
+     -------------------------------------------------------------------------- */
+  --b3-protyle-background: #ffffff;
+  --b3-protyle-inline-background: #f5f5f7;
+  --b3-protyle-code-background: #f5f5f7;
+
+  /* --------------------------------------------------------------------------
+     GLASS EFFECT
+     -------------------------------------------------------------------------- */
+  --b3-mask-background: rgba(255, 255, 255, 0.85);
+
+  /* --------------------------------------------------------------------------
+     FONT COLORS
+     -------------------------------------------------------------------------- */
+  --b3-font-color1: #1d1d1f;
+  --b3-font-color2: #6e6e73;
+  --b3-font-color3: #8e8e93;
+  --b3-font-color4: #aeaeb2;
+
+  /* --------------------------------------------------------------------------
+     HIGHLIGHTS & MARKS (Slightly bolder for light mode)
+     -------------------------------------------------------------------------- */
+  --b3-font-background1: rgba(239, 68, 68, 0.15);
+  --b3-font-background2: rgba(245, 158, 11, 0.15);
+  --b3-font-background3: rgba(132, 204, 22, 0.15);
+  --b3-font-background4: rgba(59, 130, 246, 0.15);
+  --b3-font-background5: rgba(139, 92, 246, 0.15);
+  --b3-font-background6: rgba(236, 72, 153, 0.15);
+  --b3-font-background7: rgba(6, 182, 212, 0.15);
+  --b3-font-background8: rgba(16, 185, 129, 0.15);
+  --b3-font-background9: rgba(249, 115, 22, 0.15);
+  --b3-font-background10: rgba(107, 114, 128, 0.15);
+
+  /* Highlight colors (solid) */
+  --b3-font-color5: #dc2626;
+  --b3-font-color6: #d97706;
+  --b3-font-color7: #65a30d;
+  --b3-font-color8: #2563eb;
+  --b3-font-color9: #7c3aed;
+  --b3-font-color10: #db2777;
+  --b3-font-color11: #0891b2;
+  --b3-font-color12: #059669;
+  --b3-font-color13: #ea580c;
+
+  /* --------------------------------------------------------------------------
+     EMPTY BACKGROUNDS
+     -------------------------------------------------------------------------- */
+  --b3-empty-color: #8e8e93;
+
+  /* --------------------------------------------------------------------------
+     GRAPH
+     -------------------------------------------------------------------------- */
+  --b3-graph-line: rgba(0, 0, 0, 0.1);
+  --b3-graph-p-point: #2563eb;
+  --b3-graph-hl-point: #dc2626;
+  --b3-graph-ref-point: #7c3aed;
+  --b3-graph-tag-point: #059669;
+  --b3-graph-asset-point: #d97706;
+}
+
+/* ==========================================================================
+   SHARED STYLES (Both modes)
+   ========================================================================== */
+
+/* Typography - Inter for UI */
+:root {
+  --b3-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  --b3-font-family-code: "JetBrains Mono", "Fira Code", Consolas, Monaco, "Courier New", monospace;
+}
+
+/* Smooth font rendering */
+.b3-theme-dark,
+.b3-theme-light {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus ring - uses primary color */
+.b3-theme-dark :focus-visible,
+.b3-theme-light :focus-visible {
+  outline: 2px solid var(--b3-theme-primary);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+.b3-theme-dark ::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #f5f5f7;
+}
+
+.b3-theme-light ::selection {
+  background: rgba(37, 99, 235, 0.2);
+  color: #1d1d1f;
+}
+
+/* Smoother transitions */
+.b3-theme-dark,
+.b3-theme-light {
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Enhanced scrollbar styling */
+.b3-theme-dark ::-webkit-scrollbar,
+.b3-theme-light ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.b3-theme-dark ::-webkit-scrollbar-track,
+.b3-theme-light ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.b3-theme-dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.b3-theme-dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.b3-theme-light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+.b3-theme-light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================================
+   IES ENTITY TYPE COLORS (Available as CSS custom properties)
+   ========================================================================== */
+
+:root {
+  /* Entity type colors - bold, not muted */
+  --ies-entity-concept: #3b82f6;
+  --ies-entity-person: #10b981;
+  --ies-entity-theory: #8b5cf6;
+  --ies-entity-framework: #f59e0b;
+  --ies-entity-assessment: #ef4444;
+  --ies-entity-spark: #ec4899;
+  --ies-entity-insight: #06b6d4;
+  --ies-entity-thread: #84cc16;
+
+  /* Entity backgrounds (15% opacity) */
+  --ies-entity-concept-bg: rgba(59, 130, 246, 0.15);
+  --ies-entity-person-bg: rgba(16, 185, 129, 0.15);
+  --ies-entity-theory-bg: rgba(139, 92, 246, 0.15);
+  --ies-entity-framework-bg: rgba(245, 158, 11, 0.15);
+  --ies-entity-assessment-bg: rgba(239, 68, 68, 0.15);
+  --ies-entity-spark-bg: rgba(236, 72, 153, 0.15);
+  --ies-entity-insight-bg: rgba(6, 182, 212, 0.15);
+  --ies-entity-thread-bg: rgba(132, 204, 22, 0.15);
+
+  /* Question class colors */
+  --ies-q-schema: #3b82f6;
+  --ies-q-boundary: #8b5cf6;
+  --ies-q-dimensional: #14b8a6;
+  --ies-q-causal: #f59e0b;
+  --ies-q-counterfactual: #ec4899;
+  --ies-q-anchor: #10b981;
+  --ies-q-perspective: #f97316;
+  --ies-q-meta: #6b7280;
+  --ies-q-synthesis: #6366f1;
+
+  /* Energy levels */
+  --ies-energy-low: #6b7280;
+  --ies-energy-medium: #f59e0b;
+  --ies-energy-high: #ef4444;
+}

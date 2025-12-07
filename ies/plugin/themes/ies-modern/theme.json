@@ -1,0 +1,8 @@
+{
+  "name": "IES Modern",
+  "author": "IES Project",
+  "url": "https://github.com/brain_explore",
+  "version": "1.0.0",
+  "modes": ["dark", "light"],
+  "description": "Modern Information Space - A sleek, high-contrast design inspired by Linear, Raycast, and Arc. Dark mode first with entity colors as primary accents."
+}

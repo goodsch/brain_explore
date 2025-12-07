@@ -1,95 +1,69 @@
 /**
- * IES Design System - Typography
- * Philosophy: Intellectual warmth with clear hierarchy
+ * IES Design System v2 - Typography
+ * Philosophy: Modern Information Space - clean sans-serif, clear hierarchy
  *
- * Display: Crimson Pro (scholarly elegance)
- * Body: Nunito (friendly readability)
- * Mono: JetBrains Mono (technical clarity)
+ * Primary: Inter (UI and body)
+ * Mono: JetBrains Mono (code)
  */
 
-/* Google Fonts - Load required font families */
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Google Fonts - Inter and JetBrains Mono */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   /* ==========================================================================
      FONT FAMILIES
      ========================================================================== */
-  --ies-font-display: 'Crimson Pro', Georgia, 'Times New Roman', serif;
-  --ies-font-body: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --ies-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 
   /* System font stack fallback */
-  --ies-font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 
   /* ==========================================================================
-     TYPE SCALE - Major Third (1.25 ratio), 15px base
+     TYPE SCALE - Major Third (1.25 ratio), 16px base
      ========================================================================== */
-  --ies-text-xs: 0.75rem;      /* 12px - Small labels, badges */
-  --ies-text-sm: 0.875rem;     /* 14px - Secondary text, captions */
-  --ies-text-base: 1rem;       /* 16px - Body text (adjusted from 15px for rem alignment) */
-  --ies-text-lg: 1.125rem;     /* 18px - Large body, emphasized text */
-  --ies-text-xl: 1.25rem;      /* 20px - Section headings */
-  --ies-text-2xl: 1.5rem;      /* 24px - Card headings */
-  --ies-text-3xl: 1.875rem;    /* 30px - Page headings */
-  --ies-text-4xl: 2.25rem;     /* 36px - Large headings */
-  --ies-text-5xl: 3rem;        /* 48px - Hero headings */
+  --text-xs: 0.75rem;      /* 12px - Small labels, badges */
+  --text-sm: 0.875rem;     /* 14px - Secondary text, captions */
+  --text-base: 1rem;       /* 16px - Body text */
+  --text-lg: 1.125rem;     /* 18px - Large body, emphasized text */
+  --text-xl: 1.25rem;      /* 20px - Section headings */
+  --text-2xl: 1.5rem;      /* 24px - Card headings */
+  --text-3xl: 1.875rem;    /* 30px - Page headings */
+  --text-4xl: 2.25rem;     /* 36px - Large headings */
+  --text-5xl: 3rem;        /* 48px - Hero headings */
 
   /* ==========================================================================
      FONT WEIGHTS
      ========================================================================== */
-  --ies-font-normal: 400;
-  --ies-font-medium: 500;
-  --ies-font-semibold: 600;
-  --ies-font-bold: 700;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
 
   /* ==========================================================================
      LINE HEIGHTS - Optimized for readability
      ========================================================================== */
-  --ies-leading-none: 1;
-  --ies-leading-tight: 1.25;
-  --ies-leading-snug: 1.375;
-  --ies-leading-normal: 1.5;
-  --ies-leading-relaxed: 1.625;
-  --ies-leading-loose: 2;
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
 
   /* Semantic line heights */
-  --ies-leading-heading: 1.25;
-  --ies-leading-body: 1.6;
-  --ies-leading-code: 1.5;
+  --leading-heading: 1.25;
+  --leading-body: 1.6;
+  --leading-code: 1.5;
 
   /* ==========================================================================
      LETTER SPACING
      ========================================================================== */
-  --ies-tracking-tighter: -0.05em;
-  --ies-tracking-tight: -0.025em;
-  --ies-tracking-normal: 0;
-  --ies-tracking-wide: 0.025em;
-  --ies-tracking-wider: 0.05em;
-  --ies-tracking-widest: 0.1em;
-
-  /* ==========================================================================
-     SEMANTIC TYPOGRAPHY COMPOSITIONS
-     ========================================================================== */
-
-  /* Display headings (Crimson Pro) */
-  --ies-heading-display: var(--ies-font-medium) var(--ies-text-4xl)/var(--ies-leading-heading) var(--ies-font-display);
-  --ies-heading-1: var(--ies-font-medium) var(--ies-text-3xl)/var(--ies-leading-heading) var(--ies-font-display);
-  --ies-heading-2: var(--ies-font-medium) var(--ies-text-2xl)/var(--ies-leading-heading) var(--ies-font-display);
-  --ies-heading-3: var(--ies-font-medium) var(--ies-text-xl)/var(--ies-leading-snug) var(--ies-font-display);
-  --ies-heading-4: var(--ies-font-semibold) var(--ies-text-lg)/var(--ies-leading-snug) var(--ies-font-body);
-
-  /* Body text (Nunito) */
-  --ies-body-lg: var(--ies-font-normal) var(--ies-text-lg)/var(--ies-leading-body) var(--ies-font-body);
-  --ies-body-base: var(--ies-font-normal) var(--ies-text-base)/var(--ies-leading-body) var(--ies-font-body);
-  --ies-body-sm: var(--ies-font-normal) var(--ies-text-sm)/var(--ies-leading-body) var(--ies-font-body);
-
-  /* UI text */
-  --ies-ui-base: var(--ies-font-medium) var(--ies-text-base)/var(--ies-leading-normal) var(--ies-font-body);
-  --ies-ui-sm: var(--ies-font-medium) var(--ies-text-sm)/var(--ies-leading-normal) var(--ies-font-body);
-  --ies-ui-xs: var(--ies-font-medium) var(--ies-text-xs)/var(--ies-leading-normal) var(--ies-font-body);
-
-  /* Code */
-  --ies-code: var(--ies-font-normal) 0.9em/var(--ies-leading-code) var(--ies-font-mono);
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
 }
 
 /* ==========================================================================
@@ -97,28 +71,27 @@
    ========================================================================== */
 
 /* Font families */
-.ies-font-display { font-family: var(--ies-font-display); }
-.ies-font-body { font-family: var(--ies-font-body); }
-.ies-font-mono { font-family: var(--ies-font-mono); }
+.font-sans { font-family: var(--font-sans); }
+.font-mono { font-family: var(--font-mono); }
 
 /* Text sizes */
-.ies-text-xs { font-size: var(--ies-text-xs); }
-.ies-text-sm { font-size: var(--ies-text-sm); }
-.ies-text-base { font-size: var(--ies-text-base); }
-.ies-text-lg { font-size: var(--ies-text-lg); }
-.ies-text-xl { font-size: var(--ies-text-xl); }
-.ies-text-2xl { font-size: var(--ies-text-2xl); }
-.ies-text-3xl { font-size: var(--ies-text-3xl); }
-.ies-text-4xl { font-size: var(--ies-text-4xl); }
-.ies-text-5xl { font-size: var(--ies-text-5xl); }
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+.text-5xl { font-size: var(--text-5xl); }
 
 /* Font weights */
-.ies-font-normal { font-weight: var(--ies-font-normal); }
-.ies-font-medium { font-weight: var(--ies-font-medium); }
-.ies-font-semibold { font-weight: var(--ies-font-semibold); }
-.ies-font-bold { font-weight: var(--ies-font-bold); }
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
 
 /* Line heights */
-.ies-leading-tight { line-height: var(--ies-leading-tight); }
-.ies-leading-normal { line-height: var(--ies-leading-normal); }
-.ies-leading-relaxed { line-height: var(--ies-leading-relaxed); }
+.leading-tight { line-height: var(--leading-tight); }
+.leading-normal { line-height: var(--leading-normal); }
+.leading-relaxed { line-height: var(--leading-relaxed); }
