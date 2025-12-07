@@ -68,6 +68,44 @@
   background: rgba(245, 158, 11, 0.1);
 }
 
+/* Queue Indicator */
+.library-queue-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+  padding: var(--ies-space-2) var(--ies-space-3);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
+  font-weight: 500;
+  color: var(--ies-warning, #f59e0b);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--ies-radius-full);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.library-queue-indicator:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.library-queue-indicator.processing {
+  color: var(--ies-accent);
+  background: var(--ies-accent-subtle);
+  border-color: var(--ies-accent);
+}
+
+.library-queue-indicator.has-failed {
+  color: var(--ies-error, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.library-queue-indicator .spinning {
+  animation: spin 1s linear infinite;
+}
+
 .library-upload-btn {
   cursor: pointer;
 }
@@ -185,6 +223,27 @@
   color: white;
 }
 
+/* Queued filter variant */
+.library-filter-btn-queued {
+  border: 1px dashed var(--ies-warning, #f59e0b);
+}
+
+.library-filter-btn-queued.active {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--ies-warning, #f59e0b);
+  border-style: solid;
+}
+
+.library-filter-btn-queued .filter-count {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--ies-warning, #f59e0b);
+}
+
+.library-filter-btn-queued.active .filter-count {
+  background: var(--ies-warning, #f59e0b);
+  color: white;
+}
+
 /* ============================================
    CONTENT AREA
    ============================================ */
@@ -299,6 +358,10 @@
   box-shadow: var(--shadow-sm);
 }
 
+.book-card-badge-queued {
+  background: var(--ies-warning, #f59e0b);
+}
+
 .book-card-info {
   padding: var(--space-3);
 }
@@ -323,6 +386,59 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Queue for indexing button */
+.book-card-queue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--ies-space-2);
+  padding: 4px 8px;
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-xs);
+  font-weight: 500;
+  color: var(--ies-text-secondary);
+  background: var(--ies-bg-muted);
+  border-radius: var(--ies-radius-sm);
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.book-card-queue-btn:hover:not(:disabled) {
+  background: var(--ies-accent-subtle);
+  color: var(--ies-accent);
+}
+
+.book-card-queue-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.book-card-queue-btn.loading {
+  color: var(--ies-accent);
+}
+
+.book-card-queue-btn.success {
+  background: var(--ies-success-subtle, rgba(16, 185, 129, 0.1));
+  color: var(--ies-success, #10b981);
+}
+
+.book-card-queue-btn.error {
+  background: var(--ies-error-subtle, rgba(239, 68, 68, 0.1));
+  color: var(--ies-error, #ef4444);
+}
+
+.book-card-queue-btn .spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Skeleton loading state */
@@ -411,5 +527,36 @@
 
   .library-subtitle {
     font-size: var(--text-base);
+  }
+}
+
+/* ============================================
+   MOBILE TOUCH TARGET COMPLIANCE (44px min)
+   ============================================ */
+
+@media (max-width: 767px) {
+  /* Filter buttons - ensure 44px touch targets */
+  .library-filter-btn {
+    min-height: 44px;
+    padding: var(--ies-space-3) var(--ies-space-4);
+  }
+
+  /* Queue indicator - ensure 44px touch target */
+  .library-queue-indicator {
+    min-height: 44px;
+    padding: var(--ies-space-3) var(--ies-space-4);
+  }
+
+  /* Install button - ensure 44px touch target */
+  .library-install-btn {
+    min-height: 44px;
+    padding: var(--ies-space-3) var(--ies-space-4);
+  }
+
+  /* Book card index button - ensure 44px touch target */
+  .book-card-queue-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: var(--ies-space-3);
   }
 }

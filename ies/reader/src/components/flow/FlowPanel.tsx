@@ -1,8 +1,13 @@
-import { X, Cloud, CloudOff, AlertCircle, Loader2, BookOpen, Link2, HelpCircle } from 'lucide-react';
-import { useFlowStore } from '../../store/flowStore';
+import { X, Cloud, CloudOff, AlertCircle, Loader2, BookOpen, Link2, Eye, HelpCircle } from 'lucide-react';
+import { useFlowStore, type EntityType } from '../../store/flowStore';
 import { useEntityLookup } from '../../hooks/useEntityLookup';
 import { graphClient } from '../../services/graphClient';
+import { JourneyBreadcrumb } from './JourneyBreadcrumb';
+import { InteractiveQuestions } from './InteractiveQuestions';
+import { NotesCapture } from './NotesCapture';
 import './FlowPanel.css';
+
+const ENTITY_TYPES: EntityType[] = ['Concept', 'Person', 'Theory', 'Framework', 'Assessment'];
 
 export function FlowPanel() {
   const {
@@ -11,9 +16,7 @@ export function FlowPanel() {
     currentEntity,
     relationships,
     bookSources,
-    thinkingPartnerQuestions,
     isLoadingEntity,
-    isLoadingQuestions,
     setFlowPanelOpen,
     clearEntity,
     syncStatus,
@@ -21,6 +24,14 @@ export function FlowPanel() {
     queuedOperationsCount,
     setSyncStatus,
     setQueuedOperationsCount,
+    // Entity overlay state
+    isOverlayEnabled,
+    overlayEntities,
+    overlayEntityTypes,
+    isLoadingOverlay,
+    currentBookCalibreId,
+    setOverlayEnabled,
+    toggleEntityType,
   } = useFlowStore();
 
   // Handle retry sync for offline queue
@@ -103,6 +114,54 @@ export function FlowPanel() {
         </button>
       </header>
 
+      {/* Entity Overlay Controls */}
+      <section className="flow-overlay-section">
+        <div className="flow-overlay-header">
+          <span className="flow-overlay-title">
+            <Eye size={14} />
+            Entity Overlay
+          </span>
+          <div className="flow-overlay-toggle">
+            {isLoadingOverlay ? (
+              <div className="flow-overlay-loading">
+                <Loader2 size={14} className="flow-loading-spinner" />
+                <span>Loading...</span>
+              </div>
+            ) : currentBookCalibreId !== null ? (
+              <>
+                <span className={`flow-overlay-count ${overlayEntities.length > 0 ? 'indexed' : ''}`}>
+                  {overlayEntities.length} entities
+                </span>
+                <button
+                  className={`flow-overlay-switch ${isOverlayEnabled ? 'active' : ''}`}
+                  onClick={() => setOverlayEnabled(!isOverlayEnabled)}
+                  aria-label={isOverlayEnabled ? 'Disable overlay' : 'Enable overlay'}
+                  disabled={overlayEntities.length === 0}
+                />
+              </>
+            ) : (
+              <span className="flow-overlay-not-indexed">No book open</span>
+            )}
+          </div>
+        </div>
+        {currentBookCalibreId !== null && overlayEntities.length > 0 && (
+          <div className="flow-overlay-types">
+            {ENTITY_TYPES.map((type) => (
+              <button
+                key={type}
+                className={`flow-overlay-type-pill type-${type.toLowerCase()} ${
+                  overlayEntityTypes[type] ? 'active' : ''
+                }`}
+                onClick={() => toggleEntityType(type)}
+                disabled={!isOverlayEnabled}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Content */}
       <div className="flow-panel-content">
         {isLoadingEntity ? (
@@ -164,34 +223,14 @@ export function FlowPanel() {
               </section>
             )}
 
-            {/* Thinking Partner Questions */}
-            <section className="flow-section">
-              <h4 className="flow-section-title">
-                <HelpCircle size={14} />
-                Thinking Partner
-              </h4>
-              {isLoadingQuestions ? (
-                <div className="flow-loading flow-loading-inline">
-                  <Loader2 size={16} className="flow-loading-spinner" />
-                  <span>Generating questions...</span>
-                </div>
-              ) : thinkingPartnerQuestions.length > 0 ? (
-                <ul className="flow-questions">
-                  {thinkingPartnerQuestions.map((q, idx) => (
-                    <li key={idx} className="flow-question-item">
-                      <span className={`flow-question-type flow-question-${q.type}`}>
-                        {q.type}
-                      </span>
-                      <p className="flow-question-text">{q.text}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="flow-empty-hint">
-                  Select text to explore related concepts
-                </p>
-              )}
-            </section>
+            {/* Journey Breadcrumb */}
+            <JourneyBreadcrumb />
+
+            {/* Interactive Thinking Partner Questions */}
+            <InteractiveQuestions />
+
+            {/* Quick Notes Capture */}
+            <NotesCapture />
           </>
         ) : (
           <div className="flow-empty">

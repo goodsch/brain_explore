@@ -415,6 +415,175 @@
 }
 
 /* ============================================
+   ENTITY OVERLAY CONTROLS
+   ============================================ */
+
+.flow-overlay-section {
+  padding: var(--ies-space-3) var(--ies-space-4);
+  background: var(--ies-bg-muted);
+  border-bottom: 1px solid var(--ies-border-subtle);
+}
+
+.flow-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--ies-space-2);
+}
+
+.flow-overlay-title {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+  font-family: var(--ies-font-ui);
+  font-size: var(--ies-text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ies-text-muted);
+}
+
+.flow-overlay-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+}
+
+.flow-overlay-toggle-label {
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+}
+
+.flow-overlay-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: var(--ies-bg-base);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-full);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.flow-overlay-switch.active {
+  background: var(--ies-accent);
+  border-color: var(--ies-accent);
+}
+
+.flow-overlay-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--ies-duration-fast) var(--ies-ease-default);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.flow-overlay-switch.active::after {
+  transform: translateX(18px);
+}
+
+.flow-overlay-count {
+  font-family: var(--ies-font-ui);
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+  background: var(--ies-bg-base);
+  padding: 2px 8px;
+  border-radius: var(--ies-radius-full);
+}
+
+.flow-overlay-count.indexed {
+  background: var(--ies-success-subtle);
+  color: var(--ies-success);
+}
+
+.flow-overlay-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ies-space-2);
+  margin-top: var(--ies-space-2);
+}
+
+.flow-overlay-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-family: var(--ies-font-ui);
+  font-size: var(--ies-text-xs);
+  font-weight: 500;
+  border-radius: var(--ies-radius-full);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+  border: 1px solid transparent;
+  background: var(--ies-bg-base);
+  color: var(--ies-text-muted);
+  opacity: 0.6;
+}
+
+.flow-overlay-type-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.flow-overlay-type-pill.active {
+  opacity: 1;
+}
+
+.flow-overlay-type-pill.active.type-concept {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--ies-entity-concept);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.flow-overlay-type-pill.active.type-person {
+  background: rgba(5, 150, 105, 0.12);
+  color: var(--ies-entity-person);
+  border-color: rgba(5, 150, 105, 0.3);
+}
+
+.flow-overlay-type-pill.active.type-theory {
+  background: rgba(124, 58, 237, 0.12);
+  color: var(--ies-entity-theory);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+.flow-overlay-type-pill.active.type-framework {
+  background: rgba(234, 88, 12, 0.12);
+  color: var(--ies-entity-framework);
+  border-color: rgba(234, 88, 12, 0.3);
+}
+
+.flow-overlay-type-pill.active.type-assessment {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--ies-entity-assessment);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.flow-overlay-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+}
+
+.flow-overlay-loading .flow-loading-spinner {
+  width: 14px;
+  height: 14px;
+}
+
+.flow-overlay-not-indexed {
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+  font-style: italic;
+}
+
+/* ============================================
    MOBILE BOTTOM SHEET
    ============================================ */
 
@@ -475,4 +644,470 @@
   .flow-panel {
     width: min(var(--panel-width, 400px), 50vw);
   }
+}
+
+/* ============================================
+   JOURNEY BREADCRUMB
+   ============================================ */
+
+.flow-journey {
+  background: var(--ies-bg-base);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-md);
+  padding: var(--ies-space-3);
+}
+
+.journey-breadcrumb-container {
+  margin-top: var(--ies-space-2);
+}
+
+.journey-breadcrumb-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.journey-overflow {
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-subtle);
+}
+
+.journey-chevron {
+  flex-shrink: 0;
+  color: var(--ies-text-subtle);
+}
+
+.journey-step-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.journey-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-family: var(--ies-font-ui);
+  font-size: var(--ies-text-xs);
+  font-weight: 500;
+  background: var(--ies-accent-subtle);
+  color: var(--ies-accent);
+  border: none;
+  border-radius: var(--ies-radius-full);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.journey-step:hover {
+  background: rgba(212, 165, 116, 0.25);
+}
+
+.journey-step-name {
+  max-width: 96px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.journey-step-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ies-text-muted);
+  font-size: 10px;
+}
+
+.journey-step:hover .journey-step-time {
+  color: var(--ies-accent);
+}
+
+/* ============================================
+   INTERACTIVE QUESTIONS
+   ============================================ */
+
+.flow-question-card {
+  background: var(--ies-bg-base);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-md);
+  overflow: hidden;
+  transition: border-color var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.flow-question-card:hover {
+  border-color: var(--ies-border-strong);
+}
+
+.flow-question-card.type-clarifying {
+  border-left: 3px solid var(--ies-success);
+}
+
+.flow-question-card.type-connecting {
+  border-left: 3px solid var(--ies-warning);
+}
+
+.flow-question-card.type-challenging {
+  border-left: 3px solid #c62828;
+}
+
+.flow-question-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ies-space-3);
+  padding: var(--ies-space-3);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  background: none;
+  border: none;
+}
+
+.flow-question-header:hover {
+  background: var(--ies-bg-muted);
+}
+
+.flow-question-content {
+  flex-grow: 1;
+}
+
+.flow-question-chevron {
+  flex-shrink: 0;
+  color: var(--ies-text-subtle);
+  margin-top: 2px;
+}
+
+/* Question expanded section */
+.flow-question-expanded {
+  padding: var(--ies-space-3);
+  padding-top: 0;
+  border-top: 1px solid var(--ies-border-subtle);
+}
+
+.flow-question-related {
+  margin-bottom: var(--ies-space-3);
+}
+
+.flow-question-related-label {
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+  font-weight: 500;
+  margin-bottom: var(--ies-space-2);
+  display: block;
+}
+
+.flow-question-related-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.flow-question-related-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: var(--ies-text-xs);
+  font-weight: 500;
+  background: var(--ies-accent-subtle);
+  color: var(--ies-accent);
+  border-radius: var(--ies-radius-full);
+}
+
+/* Response input */
+.flow-question-response-input {
+  margin-bottom: var(--ies-space-3);
+}
+
+.flow-question-textarea {
+  width: 100%;
+  padding: var(--ies-space-3);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
+  line-height: var(--ies-leading-relaxed);
+  background: var(--ies-bg-muted);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-md);
+  resize: none;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.flow-question-textarea:focus {
+  outline: none;
+  background: var(--ies-bg-base);
+  border-color: var(--ies-accent);
+  box-shadow: 0 0 0 3px var(--ies-accent-subtle);
+}
+
+.flow-question-textarea::placeholder {
+  color: var(--ies-text-subtle);
+}
+
+.flow-question-input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--ies-space-2);
+}
+
+.flow-question-hint {
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-subtle);
+}
+
+.flow-question-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-family: var(--ies-font-ui);
+  font-size: var(--ies-text-xs);
+  font-weight: 600;
+  background: var(--ies-accent);
+  color: white;
+  border: none;
+  border-radius: var(--ies-radius-md);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.flow-question-submit:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.flow-question-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Submitted response display */
+.flow-question-submitted {
+  padding: var(--ies-space-3);
+  background: var(--ies-success-subtle);
+  border-radius: var(--ies-radius-md);
+  margin-bottom: var(--ies-space-3);
+}
+
+.flow-question-submitted-label {
+  font-size: var(--ies-text-xs);
+  font-weight: 500;
+  color: var(--ies-success);
+  margin-bottom: var(--ies-space-1);
+  display: block;
+}
+
+.flow-question-submitted-text {
+  font-size: var(--ies-text-sm);
+  color: var(--ies-text-secondary);
+  margin: 0;
+  line-height: var(--ies-leading-relaxed);
+}
+
+/* Bookmark button */
+.flow-question-bookmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-family: var(--ies-font-ui);
+  font-size: var(--ies-text-xs);
+  font-weight: 500;
+  color: var(--ies-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.flow-question-bookmark:hover {
+  color: var(--ies-accent);
+}
+
+/* Questions header with refresh */
+.flow-questions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--ies-space-3);
+}
+
+.flow-questions-refresh {
+  padding: 4px;
+  color: var(--ies-text-muted);
+  background: none;
+  border: none;
+  border-radius: var(--ies-radius-sm);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.flow-questions-refresh:hover:not(:disabled) {
+  color: var(--ies-accent);
+  background: var(--ies-accent-subtle);
+}
+
+.flow-questions-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   NOTES CAPTURE
+   ============================================ */
+
+.notes-capture-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ies-space-2);
+}
+
+.notes-capture-textarea {
+  width: 100%;
+  padding: var(--ies-space-3);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
+  line-height: var(--ies-leading-relaxed);
+  background: var(--ies-bg-base);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-md);
+  resize: none;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.notes-capture-textarea:focus {
+  outline: none;
+  border-color: var(--ies-accent);
+  box-shadow: 0 0 0 3px var(--ies-accent-subtle);
+}
+
+.notes-capture-textarea::placeholder {
+  color: var(--ies-text-subtle);
+}
+
+.notes-capture-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ies-space-2);
+}
+
+.notes-capture-context {
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.notes-capture-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-family: var(--ies-font-ui);
+  font-size: var(--ies-text-xs);
+  font-weight: 600;
+  background: var(--ies-accent);
+  color: white;
+  border: none;
+  border-radius: var(--ies-radius-md);
+  cursor: pointer;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+  flex-shrink: 0;
+}
+
+.notes-capture-submit:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.notes-capture-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Captured notes list */
+.notes-captured-list {
+  margin-top: var(--ies-space-4);
+}
+
+.notes-captured-header {
+  margin-bottom: var(--ies-space-2);
+}
+
+.notes-captured-count {
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+  font-weight: 500;
+}
+
+.notes-captured-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ies-space-2);
+}
+
+.notes-captured-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ies-space-2);
+  padding: var(--ies-space-3);
+  background: var(--ies-bg-base);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-md);
+}
+
+.notes-captured-item-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.notes-captured-text {
+  margin: 0 0 var(--ies-space-1);
+  font-size: var(--ies-text-sm);
+  color: var(--ies-text-primary);
+  line-height: var(--ies-leading-relaxed);
+  word-break: break-word;
+}
+
+.notes-captured-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-2);
+  flex-wrap: wrap;
+}
+
+.notes-captured-entity {
+  font-size: var(--ies-text-xs);
+  font-weight: 500;
+  color: var(--ies-accent);
+  background: var(--ies-accent-subtle);
+  padding: 2px 6px;
+  border-radius: var(--ies-radius-sm);
+}
+
+.notes-captured-time {
+  font-size: var(--ies-text-xs);
+  color: var(--ies-text-muted);
+}
+
+.notes-captured-delete {
+  flex-shrink: 0;
+  padding: 4px;
+  color: var(--ies-text-muted);
+  background: none;
+  border: none;
+  border-radius: var(--ies-radius-sm);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+}
+
+.notes-captured-delete:hover {
+  color: var(--ies-error);
+  opacity: 1;
+  background: var(--ies-error-subtle);
 }

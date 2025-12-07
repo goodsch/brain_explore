@@ -74,6 +74,8 @@
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-out);
+  min-height: 44px; /* Ensure minimum touch target size */
+  min-width: 44px; /* Ensure minimum touch target size */
 }
 
 .reader-flow-toggle:hover {
@@ -233,4 +235,81 @@
   .reader-content {
     margin-right: 0 !important;
   }
+
+  /* Hide react-reader nav arrows on mobile - swipe gestures work natively */
+  .reader-content button[aria-label*="previous"],
+  .reader-content button[aria-label*="next"],
+  .reader-content button[aria-label*="Previous"],
+  .reader-content button[aria-label*="Next"] {
+    display: none !important;
+  }
+
+  .reader-fab-note {
+    position: fixed;
+    right: var(--ies-space-4);
+    bottom: calc(var(--ies-space-4) + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--ies-accent);
+    color: white;
+    box-shadow: var(--ies-shadow-lg);
+    z-index: var(--ies-z-fab, 100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+@media (min-width: 768px) {
+  .reader-fab-note {
+    display: none;
+  }
+}
+
+.reader-selection-bar {
+  position: absolute;
+  top: 0; /* Will be overridden by inline style */
+  left: 0; /* Will be overridden by inline style */
+  background: var(--ies-bg-surface);
+  border: 1px solid var(--ies-border-default);
+  border-radius: var(--ies-radius-md);
+  box-shadow: var(--ies-shadow-md);
+  padding: var(--ies-space-2);
+  display: flex;
+  gap: var(--ies-space-2);
+  z-index: var(--ies-z-popover);
+  transform: translate(-50%, -120%); /* Adjust to appear above selection */
+}
+
+.reader-selection-bar button {
+  display: flex;
+  align-items: center;
+  gap: var(--ies-space-1);
+  font-size: var(--ies-text-sm);
+  padding: var(--ies-space-1) var(--ies-space-2);
+  white-space: nowrap;
+}
+
+/* ============================================
+   MOBILE UX IMPROVEMENTS
+   ============================================ */
+
+/* Ensure 44px minimum touch targets */
+.ies-btn,
+.flow-relationship-link,
+.notes-chip, /* Modified from .notes-type-chips button to .notes-chip for NotesSheet.tsx */
+.library-filter-btn,
+.book-card {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Increase tap area without changing visual size */
+.flow-section-title button::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
 }

@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Library, Upload, Wifi, WifiOff, Download } from 'lucide-react';
+import { Library, Upload, Wifi, WifiOff, Download, Clock, Loader2, AlertCircle } from 'lucide-react';
 import { graphClient, type CalibreBook } from '../../services/graphClient';
+import { useIngestionQueue } from '../../hooks/useIngestionQueue';
 import { BookCard } from './BookCard';
 import { SearchBar } from './SearchBar';
+import { IngestionQueueSheet } from './IngestionQueueSheet';
 import './LibraryBrowser.css';
 
 interface LibraryBrowserProps {
@@ -10,7 +12,7 @@ interface LibraryBrowserProps {
   onLocalFileSelect: (file: File) => void;
 }
 
-type ViewFilter = 'all' | 'indexed';
+type ViewFilter = 'all' | 'indexed' | 'queued';
 
 export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrowserProps) {
   const [books, setBooks] = useState<CalibreBook[]>([]);
@@ -21,6 +23,24 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
   const [isOnline, setIsOnline] = useState(true);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showQueueSheet, setShowQueueSheet] = useState(false);
+
+  // Use the ingestion queue hook for automatic polling
+  const {
+    items: queueItems,
+    queuedCount,
+    processingCount,
+    failedCount,
+    hasActiveItems,
+    refresh: refreshQueueStatus,
+  } = useIngestionQueue({ pollIntervalMs: 10000, pollOnlyWhenActive: true });
+
+  // Derive queuedBookIds set for backward compatibility with BookCard
+  const queuedBookIds = new Set(
+    queueItems
+      .filter(item => item.status === 'queued' || item.status === 'processing')
+      .map(item => item.calibre_id)
+  );
 
   // Check backend availability
   useEffect(() => {
@@ -50,6 +70,8 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
   // Filter books
   const filteredBooks = filter === 'indexed'
     ? books.filter((b) => b.entity_count && b.entity_count > 0)
+    : filter === 'queued'
+    ? books.filter((b) => queuedBookIds.has(b.calibre_id))
     : books;
 
   // Handle file input
@@ -106,6 +128,30 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
               {isOnline ? <Wifi size={18} /> : <WifiOff size={18} />}
             </div>
 
+            {/* Queue indicator - shows when there are items in queue */}
+            {(hasActiveItems || failedCount > 0) && (
+              <button
+                className={`library-queue-indicator ${failedCount > 0 ? 'has-failed' : processingCount > 0 ? 'processing' : ''}`}
+                title={`${queuedCount} queued, ${processingCount} processing${failedCount > 0 ? `, ${failedCount} failed` : ''}`}
+                onClick={() => setShowQueueSheet(true)}
+              >
+                {processingCount > 0 ? (
+                  <Loader2 size={16} className="spinning" />
+                ) : failedCount > 0 ? (
+                  <AlertCircle size={16} />
+                ) : (
+                  <Clock size={16} />
+                )}
+                <span>
+                  {processingCount > 0
+                    ? `${processingCount}/${queuedCount + processingCount}`
+                    : failedCount > 0
+                    ? `${failedCount} failed`
+                    : queuedCount}
+                </span>
+              </button>
+            )}
+
             {/* Install button */}
             {showInstallPrompt && (
               <button className="ies-btn ies-btn-secondary" onClick={handleInstall}>
@@ -156,6 +202,16 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
               </span>
             )}
           </button>
+          {queuedBookIds.size > 0 && (
+            <button
+              className={`library-filter-btn library-filter-btn-queued ${filter === 'queued' ? 'active' : ''}`}
+              onClick={() => setFilter('queued')}
+            >
+              <Clock size={14} />
+              Queued
+              <span className="filter-count">{queuedBookIds.size}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -193,13 +249,21 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
                 ? `No books match "${searchQuery}"`
                 : filter === 'indexed'
                 ? 'No indexed books yet. Run the ingestion pipeline to index your library.'
+                : filter === 'queued'
+                ? 'No books are currently queued for indexing.'
                 : 'Your library is empty. Add some books to Calibre to get started.'}
             </p>
           </div>
         ) : (
           <div className="library-grid ies-stagger-children">
             {filteredBooks.map((book) => (
-              <BookCard key={book.calibre_id} book={book} onSelect={onBookSelect} />
+              <BookCard
+                key={book.calibre_id}
+                book={book}
+                onSelect={onBookSelect}
+                isQueued={queuedBookIds.has(book.calibre_id)}
+                onQueueStatusChange={refreshQueueStatus}
+              />
             ))}
           </div>
         )}
@@ -211,6 +275,12 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
           Select text while reading to explore related concepts in the knowledge graph.
         </p>
       </footer>
+
+      {/* Ingestion Queue Sheet */}
+      <IngestionQueueSheet
+        isOpen={showQueueSheet}
+        onClose={() => setShowQueueSheet(false)}
+      />
     </div>
   );
 }
