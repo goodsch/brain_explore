@@ -308,6 +308,35 @@ RECENT CONTEXT:
             "messages": session.get("messages", []),
         }
 
+    async def get_full_session(self, session_id: str) -> dict | None:
+        """Get full session state including ForgeMode data.
+
+        Used by MCP server to retrieve complete session state.
+
+        Args:
+            session_id: Session to retrieve
+
+        Returns:
+            Full session data or None if not found
+        """
+        return await session_store.get(session_id)
+
+    async def update_session_state(
+        self, session_id: str, updates: dict
+    ) -> dict | None:
+        """Update session state with arbitrary data.
+
+        Used by MCP server to store ForgeMode progress.
+
+        Args:
+            session_id: Session to update
+            updates: Fields to merge into session
+
+        Returns:
+            Updated session data or None if not found
+        """
+        return await session_store.update(session_id, updates)
+
 
 # Singleton instance
 chat_service = ChatService()

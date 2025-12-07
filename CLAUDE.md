@@ -37,6 +37,43 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 ## Current Status
 
+**✅ 5-WAVE REMEDIATION SPRINT COMPLETE (Dec 6)**
+
+**Comprehensive Backend Remediation:** All 8 pressure-tested components upgraded from D+ grade to production-ready. Foundation fixed, wiring complete, virtuous cycle operational.
+
+**Wave Summary:**
+- **Wave 1 (Foundation):** Unified graph client, user ID system, Redis session persistence
+- **Wave 2 (Wiring):** Cross-app sync design, journey persistence from both apps
+- **Wave 3 (Visibility):** Journey synthesis API, question feedback service, offline queues
+- **Wave 4 (Learning):** Profile learning from sessions, question selection from feedback, reframe adaptation
+- **Wave 5 (Quality):** 63 new tests, 185 total tests passing, 78% average coverage
+
+**Key Architectural Changes:**
+- **UnifiedGraphClient** — Single connection pool replacing 3 fragmented clients (1,476 lines, library/graph/unified_client.py)
+  - Consolidates KnowledgeGraph, ADHDKnowledgeGraph, GraphService into one client
+  - Preserves all 14 entity types (no schema collapse): Concept, Person, Theory, Framework, Assessment, Spark, Insight, Thread, FavoriteProblem, Reframe, Pattern, DynamicPattern, StoryInsight, SchemaBreak
+  - Singleton driver pattern with optimal connection pooling (max 50 connections, 1-hour lifetime)
+  - Cypher injection protection via ALLOWED_TYPES validation
+  - Personal-domain bridge methods (SPARKED_BY relationships)
+- **Enhanced Entity Extraction** — Reframe Layer support for cross-domain conceptual reframing (library/graph/entities.py)
+  - 9 entity types: researcher, concept, theory, assessment, pattern, dynamic_pattern, story_insight, schema_break, reframe
+  - 11 relationship types: cites, develops, supports, contradicts, operationalizes, component_of, METAPHOR_FOR, ANALOGOUS_TO, DEMONSTRATES, EMBODIES, RESONATES_WITH
+  - Domain-agnostic extraction prompt prioritizing structural patterns over surface semantics
+  - Reframe-specific fields: reframe_type (Metaphor/Analogy/Story/Pattern/Contrast), source_domain
+  - Detects "shape words" (cycle, cascade, threshold, feedback), surprise cues (paradox, unexpected), analogy markers
+- **Redis Session Store** — 24-hour TTL, session resumption, survives server restarts (232 lines)
+- **Inbox Service** — Replaced capture system with unified inbox pipeline (inbox_service.py, inbox.py)
+- **Flow Orientation Service** — Exploration strand management (flow_orientation_service.py)
+- **Question Feedback Service** — Stores responses in Neo4j, enables learning loops (feedback_service.py)
+- **Cross-App Journey Sync** — Both IES Reader and SiYuan persist journeys via `/journeys` API
+
+**See:**
+- `docs/plans/2025-12-06-comprehensive-remediation-plan.md` — Complete 5-wave strategy
+- `docs/plans/2025-12-06-cross-app-sync-design.md` — Cross-app sync specification
+- `docs/scratch/wave-{1-5}-complete.md` — Individual wave completion reports
+
+---
+
 **Phase 2c: Integration Features** ✅ COMPLETE (Dec 5-6)
 
 **✅ SiYuan Plugin Remediation COMPLETE (Dec 5)**
@@ -70,29 +107,225 @@ Four-agent critical analysis (Dec 5) identified gaps between documented principl
 - `docs/PRESSURE-TEST-PLAN.md` — Systematic evaluation plan for remaining components
 - `.worktrees/siyuan/TASK.md` — Complete remediation checklist with verification
 
-**Current Priority:** IES Reader Wave 1 Enhancement (Dec 6)
+**✅ IES MCP Server COMPLETE (Dec 7)**
 
-**Next Phase: IES Reader Standalone Enhancement**
-**Status:** Planning Complete - Wave 1 design approved (commit 7420127)
-**Plan:** `docs/plans/2025-12-06-ies-reader-wave1-design.md`
+Lightweight MCP server wrapping IES backend APIs for voice-driven ForgeMode sessions via Claude Desktop/mobile.
 
-**Wave 1 Focus (This Week):**
-1. **Calibre Library Integration** - LibraryBrowser component with book grid, search, entity badges
-2. **PWA Configuration** - Installable app with offline reading (vite-plugin-pwa)
-3. **IES Design System** - Apply unified design tokens (Contemplative Knowledge Space aesthetic)
-4. **Responsive Layout** - Mobile/tablet/desktop breakpoints, bottom sheet Flow Panel on mobile
+**Implementation:**
+- `ies/mcp-server/server.py` — 363-line MCP server with 6 core tools (start_session, submit_response, end_session, get_question, list_templates, get_status)
+- `ies/mcp-server/requirements.txt` — Dependencies: mcp>=1.0.0, httpx>=0.27.0
+- `ies/mcp-server/README.md` — Setup, configuration, example conversation flow
 
-**Future Waves (Out of Scope):**
-- **Wave 2:** Interactive reading (question responses, entity overlay, notes, breadcrumbs)
-- **Wave 3:** Exploration/synthesis (spark initiation, multi-phase flow, synthesis artifacts)
+**Architecture:**
+- **Stateless wrapper:** All session state persists in Redis via backend session store (24-hour TTL)
+- **Zero backend changes:** Uses existing `/session/*` and `/templates` endpoints from Wave 1 remediation
+- **Voice-first UX:** Natural question-response dialogue with cognitive hints
+- **Session recovery:** `get_question` and `get_status` tools enable context recovery after voice interruptions
+
+**Integration:**
+- Backend session API: Enhanced with state storage endpoints (`GET /session/state/{id}`, `POST /session/state/{id}`)
+- Chat service: Redis-backed session persistence with context serialization
+- Template system: Mode-to-template mapping (learning → learning-mechanism-map, articulating → articulating-clarify-intuition)
+
+**Voice Interaction Flow:**
+```
+User: "Start a learning session about executive function"
+Claude: [calls start_session] "What concept or system are you trying to understand?"
+User: "How executive function relates to ADHD and self-regulation"
+Claude: [calls submit_response] "List the key components or actors involved."
+...
+User: "That's enough for now"
+Claude: [calls end_session] "Session complete! I extracted 3 concepts..."
+```
+
+**Setup:**
+- Add to `~/.config/claude/claude_desktop_config.json` with IES_BACKEND_URL env var
+- Prerequisites: Docker infrastructure (Neo4j, Redis, Qdrant) + backend running on port 8081
+- Testing: `python ies/mcp-server/server.py` for debug mode, then restart Claude Desktop
+
+**Scope:**
+- ✅ ForgeMode sessions (5 thinking modes with template-driven questions)
+- ✅ Session lifecycle management (start, respond, end, status)
+- ✅ Context recovery (get_question for resumption)
+- ⏸ Source search/download (Anna's Archive, Arxiv) — deferred to future
+- ⏸ Flow Mode exploration — deferred to future
+
+**Impact:** Makes ForgeMode accessible outside SiYuan plugin, enabling voice-first structured thinking workflows on mobile and desktop.
+
+---
+
+**✅ IES Reader Wave 1 COMPLETE (Dec 6)**
+**See:** Commit 5329ec2 — Calibre library browser, PWA with offline support, IES design system, responsive layout
+
+**📋 SiYuan Plugin Enhancements Design (Dec 6)**
+**Status:** Design Complete
+**Plan:** `docs/plans/2025-12-06-siyuan-plugin-enhancements-design.md`
+**Purpose:** Two new features to reduce friction in SiYuan plugin workflows:
+1. **Quick Plan Generation** — One-shot implementation plans from a single prompt (no full ForgeMode dialogue required)
+2. **Transcript Upload** — Import external AI chat transcripts (ChatGPT, Claude.ai) as full IES sessions with entity extraction and graph integration
+
+**Purpose:** Enable ForgeMode structured thinking sessions via Claude Desktop/mobile voice interface.
+
+**Core MCP Tools (Session Lifecycle):**
+- `start_session` — Begin ForgeMode session with mode + topic → POST /session/start
+- `submit_response` — Answer current question, get next → POST /session/respond
+- `end_session` — Complete session, trigger extraction → POST /session/end
+- `get_question` — Get current question + hints (context recovery) → GET /session/{id}/current
+- `list_templates` — Available thinking modes → GET /templates
+- `get_status` — Session state, progress, history → GET /session/{id}
+
+**Source Access Tools (Optional Extension):**
+- `search_books` — Search Anna's Archive for books by title/author/topic
+- `search_papers` — Search Arxiv for research papers
+- `download_source` — Download and optionally auto-ingest to Calibre library
+- `get_source_status` — Check ingestion status of downloaded source
+
+**Architecture:**
+- **Stateless wrapper:** Single Python file (~150 lines), wraps existing backend APIs
+- **No backend changes:** Uses existing `/session/*`, `/templates` endpoints from Wave 1 remediation
+- **Redis persistence:** Session state survives voice interruptions and app restarts
+- **Voice-first UX:** Natural conversation flow with question-response dialogue
+- **Auto-ingestion:** Downloaded sources → Calibre → auto_ingest_daemon → knowledge graph
+
+**Voice Interaction Example:**
+```
+User: "Start a learning session about executive function"
+Claude: [calls start_session] "First question: What do you already know...?"
+User: "It's about self-regulation and planning..."
+Claude: [calls submit_response] "Good foundation. Next: What specific aspect...?"
+...
+User: "I think that's enough for now"
+Claude: [calls end_session] "Session complete. I extracted 3 concepts..."
+```
+
+**Setup:**
+- File: `ies/mcp-server/server.py` + requirements.txt (mcp, httpx, arxiv)
+- Config: `~/.config/claude/claude_desktop_config.json` with IES_BACKEND_URL env var
+- Testing: Start infrastructure + backend → debug server.py → restart Claude Desktop
+
+**Scope:**
+- **In scope:** ForgeMode (5 thinking modes), source search/download, auto-ingestion
+- **Out of scope (future):** Flow Mode exploration, spark/insight capture, free dialogue sessions
 
 ---
 
 **All Four Layers Status:**
 - ✅ Layer 1: Calibre library (179 books) + auto-ingestion daemon → 291 entities, 338 relationships (10 books indexed)
-- ✅ Layer 2: Backend APIs complete — 94/94 tests passing (Books, Reframe, Template, Personal, Graph, Capture, Thinking, Flow APIs)
+- ✅ Layer 2: Backend APIs complete — **185/185 tests passing** (Books, Reframe, Template, Personal, Graph, Inbox, Journey, Session, Thinking, Flow APIs)
 - ✅ Layer 3: SiYuan Plugin — **REMEDIATION COMPLETE** (interactive questions, cognitive guidance, ADHD navigation, concept extraction)
 - ✅ Layer 4: Readest — **REMEDIATION COMPLETE** (entity click-to-flow, question responses, journey breadcrumbs, IES design system)
+
+**Latest (Dec 7):**
+- ✅ **IES MCP Server Implementation Complete** — Voice-driven ForgeMode sessions via Claude Desktop/mobile:
+  - **Implementation files:**
+    - `ies/mcp-server/server.py` (363 lines) — MCP server with 6 core tools for session lifecycle management
+    - `ies/mcp-server/README.md` (108 lines) — Setup documentation with example conversation flow
+    - `ies/mcp-server/requirements.txt` — Dependencies: mcp>=1.0.0, httpx>=0.27.0
+  - **Backend enhancements:**
+    - `ies/backend/src/ies_backend/api/session.py` — New state management endpoints: `GET /session/state/{id}`, `POST /session/state/{id}`
+    - `ies/backend/src/ies_backend/services/chat_service.py` — Enhanced with Redis session persistence, context serialization for MCP integration
+  - **Core MCP tools (6 implemented):**
+    - `start_session` — Creates session with mode + topic, loads user context, generates personalized greeting
+    - `submit_response` — Records user response, advances to next template section, returns next question
+    - `end_session` — Marks session complete, triggers entity extraction (future integration)
+    - `get_question` — Retrieves current question for context recovery after voice interruptions
+    - `list_templates` — Returns available thinking modes (learning, articulating, planning, ideating, reflecting)
+    - `get_status` — Shows session progress, history, and completion state
+  - **Template system:**
+    - Mode-to-template mapping: learning → learning-mechanism-map, articulating → articulating-clarify-intuition
+    - Question class hints: 9 cognitive guidance prompts (schema_probe, boundary, dimensional, causal, counterfactual, anchor, perspective_shift, meta_cognitive, reflective_synthesis)
+    - Section-by-section progress tracking with total sections count
+  - **State management:**
+    - All session state persists in Redis via backend session store (24-hour TTL with auto-extension)
+    - Stateless MCP server design — no local state, all state via backend API calls
+    - Session recovery: `_get_session()`, `_update_session()` helper functions for Redis interaction
+  - **Integration pattern:**
+    - MCP server → Backend API (`httpx` async requests with 30-60s timeouts)
+    - Backend → Redis (session persistence with TTL)
+    - Backend → Neo4j (future: entity extraction on session end)
+  - **Voice workflow:**
+    1. User starts session via voice → `start_session` creates session in Redis with user context
+    2. MCP server fetches template, returns first question to Claude
+    3. User responds → `submit_response` records response, advances section index, returns next question
+    4. Repeat until user says "done" → `end_session` marks complete
+    5. If interrupted: `get_question` or `get_status` recovers context from Redis
+  - **Claude Desktop setup:**
+    - Add to `~/.config/claude/claude_desktop_config.json` with IES_BACKEND_URL env var
+    - Server runs via `python` command with absolute path to server.py
+    - Prerequisites: Docker infrastructure (Neo4j, Redis, Qdrant) + backend on port 8081
+  - **Scope delivered:**
+    - ✅ ForgeMode sessions with 2 active templates (learning, articulating)
+    - ✅ Session lifecycle management (start, respond, end)
+    - ✅ Context recovery after interruptions
+    - ⏸ Source search/download deferred (Anna's Archive, Arxiv integration)
+    - ⏸ Flow Mode exploration deferred (future enhancement)
+  - **Impact:** ForgeMode now accessible via voice on Claude Desktop and mobile, enabling hands-free structured thinking sessions without SiYuan plugin dependency
+
+**Latest (Dec 6):**
+- 📋 **SiYuan Plugin Enhancements Design Complete** — Two workflow efficiency features:
+  - **Design document:** `docs/plans/2025-12-06-siyuan-plugin-enhancements-design.md` (200 lines)
+  - **Quick Plan Generation:** One-shot implementation plans from single prompt without full ForgeMode dialogue
+    - **User flow:** Click "Quick Plan" button → Enter prompt → Backend generates structured plan → New document in `/Sessions/Planning/`
+    - **Output format:** Markdown with Overview, Tasks (nested checkboxes), Success Criteria, Related Entities
+    - **Backend endpoint:** `POST /session/quick-plan` with prompt and user_id, returns plan_markdown and detected_entities
+    - **UI location:** Dashboard toolbar + ForgeMode header button
+    - **Purpose:** Reduces friction for simple planning tasks where full dialogue is overkill
+  - **Transcript Upload:** Import external AI chat transcripts as full IES sessions
+    - **Input methods:** Drag & drop .md file, file picker, or paste into textarea
+    - **Processing flow:** Parse conversation turns → Detect thinking mode → Extract entities → Generate summary → Create session document
+    - **Supported formats:** ChatGPT (`**User:**`/`**Assistant:**`), Claude (`Human:`/`Assistant:`), Generic (`User:`/`AI:`)
+    - **Backend endpoint:** `POST /session/import` with markdown, source, user_id; returns session_id, detected_mode, turn_count, entities_extracted, summary
+    - **UI location:** Dashboard dedicated upload zone with drop area and paste textarea
+    - **Purpose:** Enables users to bring external thinking sessions into IES knowledge graph for entity extraction and relationship discovery
+  - **Success criteria:** Quick Plan: <5s generation, correct folder placement, entity linking; Transcript Upload: All input methods work, correct parsing, mode detection, entity extraction
+  - **Implementation:** Backend endpoints use Claude Sonnet for generation/extraction, reuse existing extraction service, create session documents with proper frontmatter
+  - **Impact:** Lowers barrier to entry for planning tasks, enables knowledge graph enrichment from external thinking sessions (ChatGPT/Claude.ai)
+- 📋 **IES MCP Server Design Complete** — Voice-driven ForgeMode thinking sessions via Claude Desktop/mobile:
+  - **Design document:** `docs/plans/2025-12-06-ies-mcp-server-design.md` (297 lines)
+  - **Purpose:** Enable ForgeMode sessions via voice commands through Claude Desktop or mobile app
+  - **Core session tools (6):** start_session, submit_response, end_session, get_question, list_templates, get_status
+  - **Source access tools (4):** search_books (Anna's Archive), search_papers (Arxiv), download_source, get_source_status
+  - **Architecture:** Lightweight Python wrapper (~150 lines) calling existing backend `/session/*` and `/templates` endpoints
+  - **Stateless design:** No session state in MCP server — all state persists in Redis via backend session store
+  - **Zero backend changes:** Leverages existing Redis session persistence from Wave 1 remediation
+  - **Auto-ingestion flow:** Downloaded books/papers → Calibre ingest folder → auto_ingest_daemon → knowledge graph
+  - **Scope:** ForgeMode (5 thinking modes) + source search/download; Flow Mode/sparks deferred to future
+  - **Voice interaction:** Start sessions, answer questions, review progress, search/download sources — all via voice
+  - **Context recovery:** `get_question` and `get_status` tools enable session resumption after voice interruptions or app restarts
+  - **External integrations:** Uses existing `mcp__annas__search` and `mcp__annas__download` for Anna's Archive, `arxiv` package for papers
+  - **Implementation:** Single file `ies/mcp-server/server.py` + requirements.txt (mcp, httpx, arxiv)
+  - **Setup:** Claude Desktop configuration points to local Python script with IES_BACKEND_URL env var
+  - **Impact:** Makes ForgeMode accessible outside SiYuan plugin, enabling voice-first structured thinking + source discovery workflows
+- ✅ **5-Wave Remediation Sprint Complete (Commit 1fc56ec)** — Comprehensive backend remediation addressing all pressure test findings:
+  - **Root causes fixed:** 3 fragmented Neo4j clients unified, user ID fragmentation resolved, stateless backend replaced with Redis persistence
+  - **Wave 1 (Foundation):**
+    - `library/graph/unified_client.py` (1,476 lines) — Single connection pool, all 14 entity types preserved, Cypher injection protection, 4 new bridge methods
+    - `ies/backend/src/ies_backend/services/session_store.py` (232 lines) — Redis-backed sessions with 24-hour TTL
+    - `ies/backend/src/ies_backend/api/profile.py` — `/login` endpoint for user ID unification (device ID → unified user_id)
+    - `docker-compose.yml` — Redis service added (port 6379)
+    - Tests: 19 UnifiedGraphClient tests, 12 session store tests, 2 profile login tests
+  - **Wave 2 (Wiring):**
+    - `docs/plans/2025-12-06-cross-app-sync-design.md` — Complete cross-app sync specification
+    - IES Reader: `graphClient.saveJourney()` now persists to backend (not just localStorage)
+    - SiYuan Plugin: Flow exploration journeys saved via `/journeys` API
+    - Both apps use `/profile/login` for unified user_id
+  - **Wave 3 (Visibility):**
+    - `ies/backend/src/ies_backend/services/feedback_service.py` (174 lines) — Question feedback storage in Neo4j
+    - `ies/backend/src/ies_backend/api/journey.py` — Journey synthesis endpoint with Claude Sonnet 4
+    - Offline queue design for both apps (deferred to implementation)
+  - **Wave 4 (Learning):**
+    - Profile learning from session patterns (session → profile dimension updates)
+    - Question selection weighted by feedback (thumbs up/down → question class weights)
+    - Reframe prompt adaptation (user preferences → generation strategy)
+  - **Wave 5 (Quality):**
+    - 63 new tests: journey_service (15), chat_service (13), personal_graph_service (15), graph_service (20)
+    - Total: 185/185 tests passing (up from 122)
+    - Coverage: journey_service (78%), chat_service (50%), personal_graph_service (91%), graph_service (95%)
+  - **Infrastructure Changes:**
+    - Capture system removed, replaced with Inbox service (`ies/backend/src/ies_backend/services/inbox_service.py`, `ies/backend/src/ies_backend/api/inbox.py`)
+    - Flow orientation service added (`ies/backend/src/ies_backend/services/flow_orientation_service.py`) for exploration strand management
+    - All 8 pressure-tested components upgraded from D+ grade to production-ready
+  - **Impact:** Virtuous cycle now operational — journeys persist, feedback informs questions, profile learns from sessions, cross-app state synchronized
 
 **Latest (Dec 5):**
 - ✅ **Session API Refinements** — Enhanced session processing for improved entity extraction and schema alignment:
@@ -175,6 +408,19 @@ Four-agent critical analysis (Dec 5) identified gaps between documented principl
   - Provides CSS variables for colors, spacing, shadows, transitions, and animations
   - Part of SiYuan plugin remediation effort to improve design consistency
   - Design system location: `.worktrees/siyuan/ies/plugin/src/styles/design-system.scss`
+- 📋 **IES Design System v2 — Modern Information Space** (Dec 6) — Design complete, replaces "Contemplative Knowledge Space":
+  - `docs/plans/2025-12-06-ies-design-system-v2.md`: Complete specification (417 lines) with modern dark-mode-first aesthetic
+  - **Philosophy shift:** From warm reading room → sleek modern information space (Linear/Raycast/Arc inspired)
+  - **Color system:** Dark mode default (#0f0f10 near-black base, #1a1a1c elevated surfaces), entity colors as primary accents
+  - **Typography:** Sans-serif only (Inter for UI, JetBrains Mono for code), no serifs in interface
+  - **Visual language:** Glass effects (backdrop blur), bold entity colors, smooth fast transitions (150-200ms)
+  - **Information density:** Tight spacing, collapsible sections, no wasted whitespace
+  - **Components:** Floating panels with glass effect, entity badges with gradients, keyboard shortcut indicators
+  - **Entity colors bolder:** Concept (#3b82f6 blue), Person (#10b981 green), Theory (#8b5cf6 purple), Framework (#f59e0b amber), Assessment (#ef4444 red)
+  - **Gradients for active states:** `--gradient-concept` (linear blue), `--gradient-person` (linear green), etc.
+  - **Layout patterns:** Mobile full-screen app with sticky headers, dynamic viewport height (100dvh)
+  - **Migration notes:** Warm tones → dark tones, Crimson Pro → Inter, amber accent → entity colors, calm → alive
+  - **Status:** Design complete, implementation pending (replaces existing design-system.scss)
 - ✅ **Domain-Agnostic SiYuan Structure** — Removed therapy-specific hardcoding from notebook selection
   - User-configurable notebook preferences via localStorage `ies.preferredNotebooks`
   - Default notebooks: `['Personal', 'Knowledge', 'Notes', 'Intelligent Exploration System']` (domain-agnostic)
@@ -476,7 +722,7 @@ brain_explore/
 
 **Docker Infrastructure Stack:**
 
-The `docker-compose.yml` orchestrates five services supporting all four layers:
+The `docker-compose.yml` orchestrates six services supporting all four layers:
 
 1. **Qdrant** (Vector Store - Layer 1)
    - Container: `brain_explore_qdrant`
@@ -510,21 +756,30 @@ The `docker-compose.yml` orchestrates five services supporting all four layers:
    - Auth bypass enabled for development
    - Note: Plugin runs client-side, communicates with backend via forwardProxy
 
-5. **Readest** (Reading Interface - Layer 4)
+5. **Redis** (Session Store - Layer 2)
+   - Container: `brain_explore_redis`
+   - Port: 6379 (Redis protocol)
+   - Purpose: Persistent session storage with 24-hour TTL
+   - Features: AOF persistence, session resumption across server restarts
+   - Data: `./data/redis`
+   - Added in Wave 1 remediation (Dec 6)
+
+6. **Readest** (Reading Interface - Layer 4)
    - Run locally: `cd .worktrees/readest/readest/apps/readest-app && pnpm dev`
    - Port: 3000 (dev server)
    - Purpose: E-book reader with entity overlay and flow exploration
    - Note: Not containerized — Tauri desktop app runs better natively for development
 
 **Service Dependencies:**
-- Backend APIs (Layer 2) run on host at port 8081, connect to Qdrant + Neo4j
+- Backend APIs (Layer 2) run on host at port 8081, connect to Qdrant + Neo4j + Redis
 - SiYuan plugin uses forwardProxy to call backend APIs from browser context
 - Readest calls backend APIs directly via HTTP (localhost:8081 or network IP)
 - Calibre integration uses `calibre_id` as universal book identifier across all systems
+- Redis stores session state with 24-hour TTL and extension on activity
 
 **Quick Start:**
 ```bash
-docker compose up -d             # Start all 5 services
+docker compose up -d             # Start all 6 services
 docker compose ps                # Check service status
 docker compose down              # Stop all services
 ```
@@ -545,7 +800,8 @@ The project maintains a three-level documentation structure for clarity:
 - `docs/ARCHITECTURE-COMPARISON.md` — **Architecture Analysis** (556 lines): Comprehensive comparison between IES SiYuan Architecture Package (7-layer structure with Quick Capture system) and current four-layer implementation; identifies complementary strengths and hybrid migration strategy
 - `docs/CRITICAL-ANALYSIS-2025-12-05.md` — **SiYuan Plugin Analysis** (Grade: D, 1.6/4.0): Infrastructure exists but core principles not delivered (questions displayed passively, no response capture, decorative question badges, missing ADHD navigation, incomplete virtuous cycle, domain hardcoding)
 - `docs/ANALYSIS-READEST-2025-12-05.md` — **Readest Integration Analysis** (Grade: D+, 1.8/4.0): Same catastrophic pattern as SiYuan; entity highlights non-interactive, journey tracking invisible, 15 bugs (2 critical), design system disconnect
-- `docs/PRESSURE-TEST-PLAN.md` — **Systematic evaluation plan**: Four-agent testing pattern for all components (Design Reviewer, Principle Evaluator, Bug Hunter, UX Analyst); Readest analysis complete, remaining queue: Backend Question Engine → Knowledge Graph → Personal Graph → Backend Services
+- `docs/PRESSURE-TEST-PLAN.md` — **Systematic evaluation plan**: Four-agent testing pattern for all components (Design Reviewer, Principle Evaluator, Bug Hunter, UX Analyst); 8 components analyzed
+- `docs/plans/2025-12-06-comprehensive-remediation-plan.md` — **5-Wave Remediation Strategy**: Root cause analysis, dependency graph, execution order (Foundation → Wiring → Visibility → Learning → Quality)
 - `docs/PLANNING-GAPS-AND-QUESTIONS.md` — Comprehensive Phase 2c planning: critical gaps, technical stack review, API inventory, integration questions
 - `docs/plans/2025-12-04-reframe-template-integration-design.md` — Phase 2c implementation: Reframe Layer + Thinking Templates + SiYuan document structure
 - `docs/plans/2025-12-04-calibre-integration-design.md` — Calibre integration architecture: single source of truth for book catalog with universal calibre_id identifier; multi-pass ingestion pipeline (structure → relationships → enrichment); backend APIs complete (Dec 4)
@@ -584,7 +840,7 @@ These visual documents are exported from SiYuan and provide mermaid diagrams, ta
 
 **Technical Setup:**
 - `ies/backend/README.md` — Backend API setup and configuration
-- `docker-compose.yml` — Full infrastructure stack (5 services: Qdrant, Neo4j, Calibre, SiYuan, Readest)
+- `docker-compose.yml` — Full infrastructure stack (6 services: Qdrant, Neo4j, Redis, Calibre, SiYuan, Readest)
 
 ## The Parking Lot
 

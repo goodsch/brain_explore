@@ -408,3 +408,65 @@ async def resume_session(session_id: str) -> dict:
             status_code=500,
             detail=f"Failed to resume session: {str(e)}",
         )
+
+
+# ForgeMode State Management (for MCP Server)
+
+
+@router.get("/state/{session_id}")
+async def get_session_state(session_id: str) -> dict:
+    """Get full session state including ForgeMode data.
+
+    Used by MCP server to retrieve session state for context recovery.
+
+    Args:
+        session_id: Session to retrieve
+
+    Returns:
+        Full session data including forge_mode state
+    """
+    try:
+        session = await chat_service.get_full_session(session_id)
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Session not found or expired: {session_id}",
+            )
+        return session
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get session state: {str(e)}",
+        )
+
+
+@router.post("/state/{session_id}")
+async def update_session_state(session_id: str, updates: dict) -> dict:
+    """Update session state with arbitrary data.
+
+    Used by MCP server to store ForgeMode progress.
+
+    Args:
+        session_id: Session to update
+        updates: Fields to merge into session
+
+    Returns:
+        Updated session data
+    """
+    try:
+        session = await chat_service.update_session_state(session_id, updates)
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Session not found or expired: {session_id}",
+            )
+        return session
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update session state: {str(e)}",
+        )
