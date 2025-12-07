@@ -90,7 +90,16 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
     setLocation(epubcfi);
   }, []);
 
-  const getSelectionPosition = useCallback((contents: any) => {
+interface IFrameContents {
+  window: Window & {
+    getSelection: () => Selection | null;
+    frameElement: HTMLElement;
+    scrollY: number;
+    scrollX: number;
+  };
+}
+
+  const getSelectionPosition = useCallback((contents: IFrameContents) => {
       const selection = contents.window.getSelection();
       if (!selection || selection.rangeCount === 0) {
           return { top: 0, left: 0 };
@@ -141,7 +150,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
       });
 
       // Add text selection handler
-      rend.on('selected', (_cfiRange: string, contents: any) => {
+      rend.on('selected', (_cfiRange: string, contents: IFrameContents) => {
         const selection = contents.window.getSelection();
         const selectedText = selection?.toString().trim();
 
@@ -152,7 +161,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
             position: getSelectionPosition(contents),
           });
           // Also perform lookup if the flow panel is open, or some other condition
-          // For now, let's keep lookupEntity call here, it doesn't hurt.
+          // For now, let's keep lookupEntity call here, it's fine.
           lookupEntity(selectedText);
         } else {
             setSelectionContext(null); // Hide bar if selection is too short or cleared
@@ -289,12 +298,12 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
         <PenLine size={24} />
       </button>
 
-      <NotesSheet 
-        isOpen={showNotesSheet} 
-        onClose={() => setShowNotesSheet(false)} 
-        initialText={initialNoteText}
+      <NotesSheet
+          key={initialNoteText}
+          isOpen={showNotesSheet}
+          onClose={() => setShowNotesSheet(false)}
+          initialText={initialNoteText}
       />
-
       {selectionContext && (
         <div
           className="reader-selection-bar"

@@ -72,6 +72,8 @@
   border-radius: var(--ies-radius-full);
   cursor: pointer;
   transition: all var(--ies-duration-fast) var(--ies-ease-default);
+  min-height: 44px; /* Ensure minimum touch target size */
+  min-width: 44px; /* Ensure minimum touch target size */
 }
 
 .reader-flow-toggle:hover {

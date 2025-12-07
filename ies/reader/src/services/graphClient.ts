@@ -95,8 +95,11 @@ class GraphClient {
       });
       return response.ok;
     } catch (error) {
+      console.error('Backend availability check failed:', error);
       return false;
     }
+    // Redundant return to ensure all code paths return a boolean.
+    return false;
   }
 
   /**
@@ -306,7 +309,7 @@ class GraphClient {
   async getJourneyHistory(
     userId: string,
     page: number = 1
-  ): Promise<{ journeys: unknown[]; total: number }> {
+  ): Promise<{ journeys: BreadcrumbJourney[]; total: number }> {
     return this.fetch(`/journeys/user/${encodeURIComponent(userId)}?page=${page}`);
   }
 
@@ -407,6 +410,7 @@ export interface IngestionQueueItem {
   author: string;
   queued_at: string;
   status: 'queued' | 'processing' | 'completed' | 'failed';
+  error_message?: string;
 }
 
 export const graphClient = new GraphClient();

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Rendition, Contents } from 'epubjs';
 import { useFlowStore, type EntityType } from '../store/flowStore';
 
+type EpubSection = any; // Placeholder for epubjs Section type, as it's not directly exported
+
 /**
  * Entity type to CSS class mapping for highlighting
  */
@@ -305,17 +307,19 @@ export function useEntityHighlighter(rendition: Rendition | null) {
     };
 
     // Listen for content ready events
-    rendition.on('rendered', (_section: any, view: any) => {
+    rendition.on('rendered', (_section: EpubSection, view: { contents: Contents }) => {
       if (view.contents) {
         handleContentLoaded(view.contents);
       }
     });
 
+    const currentContentsSet = contentsRef.current; // Capture for cleanup
+
     return () => {
-      contentsRef.current.forEach(contents => {
+      currentContentsSet.forEach(contents => {
         removeHighlighting(contents);
       });
-      contentsRef.current.clear();
+      currentContentsSet.clear();
     };
   }, [rendition, isOverlayEnabled, applyHighlighting, removeHighlighting]);
 

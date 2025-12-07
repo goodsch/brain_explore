@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
 import './Sheet.css';
 
 interface SheetProps {
@@ -7,16 +7,11 @@ interface SheetProps {
   onClose: () => void;
   snapPoints?: string[];  // e.g., ['50%', '90%']
   children: React.ReactNode;
+  title?: string;
 }
 
 export function Sheet({ isOpen, onClose, snapPoints = ['50%'], children }: SheetProps) {
-  const [activeSnap, setActiveSnap] = useState(snapPoints[0]);
-
-  useEffect(() => {
-    if (isOpen) {
-        setActiveSnap(snapPoints[0]);
-    }
-  }, [isOpen, snapPoints]);
+  const [activeSnap] = useState(snapPoints[0]);
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.y > 100 || info.velocity.y > 500) {

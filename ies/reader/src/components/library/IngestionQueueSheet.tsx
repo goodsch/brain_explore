@@ -1,4 +1,4 @@
-import { Clock, Loader2, CheckCircle, XCircle, X, RotateCcw, Trash2 } from 'lucide-react';
+import { Clock, Loader2, CheckCircle, XCircle, RotateCcw, Trash2 } from 'lucide-react';
 import { Sheet } from '../ui/Sheet';
 import { useIngestionQueue } from '../../hooks/useIngestionQueue';
 import type { IngestionQueueItem } from '../../services/graphClient';
@@ -111,6 +111,7 @@ export function IngestionQueueSheet({ isOpen, onClose }: IngestionQueueSheetProp
       onClose={onClose}
       snapPoints={['50%', '80%']}
       title="Ingestion Queue"
+      key={isOpen ? 'open' : 'closed'}
     >
       <div className="queue-sheet">
         {/* Stats summary */}

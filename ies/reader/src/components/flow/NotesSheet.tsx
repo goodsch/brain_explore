@@ -36,14 +36,6 @@ export function NotesSheet({ isOpen, onClose, initialText }: Props) {
   const [noteInput, setNoteInput] = useState(initialText || '');
   const [noteType, setNoteType] = useState<NoteType>('thought');
 
-  useEffect(() => {
-    if (initialText) {
-      setNoteInput(initialText);
-    } else {
-      setNoteInput(''); // Clear if initialText becomes null/undefined
-    }
-  }, [initialText]);
-
   const handleSubmit = () => {
     if (!noteInput.trim()) return;
     
@@ -67,7 +59,7 @@ export function NotesSheet({ isOpen, onClose, initialText }: Props) {
   };
 
   return (
-    <Sheet isOpen={isOpen} onClose={onClose} snapPoints={['60%']}>
+    <Sheet isOpen={isOpen} onClose={onClose} snapPoints={['60%']} key={isOpen ? 'open' : 'closed'}>
         <div className="notes-sheet-content">
           <div className="notes-type-chips">
             {(Object.keys(TYPE_MAPPING) as NoteType[]).map((type) => {

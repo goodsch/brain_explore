@@ -10,11 +10,45 @@ const MAX_QUEUE_SIZE = 50;
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [5000, 30000, 120000]; // 5s, 30s, 2min
 
+export interface NotePayload {
+  title: string;
+  content: string;
+  resonance_signal: string;
+  energy_level: string;
+  source_id?: string;
+}
+
+export interface JourneyEntryPoint {
+  type: string;
+  reference: string;
+}
+
+export interface JourneyPathStep {
+  entity_id: string;
+  entity_name: string;
+  timestamp: string;
+  source_passage: string | null;
+  dwell_time_seconds: number;
+}
+
+export interface JourneyPayload {
+  user_id: string;
+  entry_point: JourneyEntryPoint;
+  path: JourneyPathStep[];
+  marks: [];
+  thinking_partner_exchanges: [];
+  title: string | null;
+  tags: string[];
+  notes: string | null;
+}
+
+export type OperationPayload = NotePayload | JourneyPayload | unknown;
+
 export interface QueuedOperation {
   id: string;
   userId: string;
   operationType: 'journey' | 'profile' | 'feedback' | 'note';
-  payload: any;
+  payload: OperationPayload;
   endpoint: string;
   timestamp: string;
   retryCount: number;

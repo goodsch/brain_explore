@@ -32,7 +32,6 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
     processingCount,
     failedCount,
     hasActiveItems,
-    isBookQueued,
     refresh: refreshQueueStatus,
   } = useIngestionQueue({ pollIntervalMs: 10000, pollOnlyWhenActive: true });
 
