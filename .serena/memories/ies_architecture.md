@@ -51,6 +51,18 @@ Patterns: Pattern, DynamicPattern, StoryInsight, SchemaBreak
 - `/Projects/` — Active work
 - `/Archive/` — Retired material
 
+## Reframe Layer Pipeline (Dec 7, 2025)
+
+| Pass | File | Purpose |
+|------|------|---------|
+| Pass 1 | `library/graph/entities.py` | Extract 9 entity types from text |
+| Pass 2 | `library/graph/reframe_mapper.py` | Cross-domain resonance check ("ADHD Leap") |
+| Pass 3 | `library/graph/reframe_generator.py` | Generate reframes for dense concepts |
+
+**Integration:** `scripts/auto_ingest_daemon.py` runs Pass 1 + Pass 2 automatically.
+
+**Run Pass 3:** `python -m library.graph.reframe_generator 10`
+
 ## IES Reader Features
 
 - Calibre library browser with search/filter
