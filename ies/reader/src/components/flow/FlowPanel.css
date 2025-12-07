@@ -1,6 +1,6 @@
 /* ============================================
    FLOW PANEL
-   Knowledge Graph Exploration Sidebar
+   IES Design System v2 — Glass Effect Sidebar
    ============================================ */
 
 .flow-panel {
@@ -10,12 +10,14 @@
   height: 100vh;
   height: 100dvh;
   width: var(--panel-width, 400px);
-  background: var(--ies-bg-surface);
-  border-left: 1px solid var(--ies-border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-left: var(--glass-border);
   display: flex;
   flex-direction: column;
-  z-index: var(--ies-z-modal);
-  box-shadow: var(--ies-shadow-lg);
+  z-index: var(--z-modal);
+  box-shadow: var(--shadow-xl);
 }
 
 /* ============================================
@@ -26,24 +28,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--ies-space-4);
-  padding-top: calc(var(--ies-space-4) + env(safe-area-inset-top, 0px));
-  border-bottom: 1px solid var(--ies-border-subtle);
-  background: var(--ies-bg-base);
+  padding: var(--space-4);
+  padding-top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
 }
 
 .flow-panel-title {
   display: flex;
   align-items: center;
-  gap: var(--ies-space-3);
+  gap: var(--space-3);
 }
 
 .flow-panel-title h3 {
   margin: 0;
-  font-family: var(--ies-font-display);
-  font-size: var(--ies-text-lg);
-  font-weight: 600;
-  color: var(--ies-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
 }
 
 .flow-panel-close {
@@ -60,12 +62,12 @@
   justify-content: center;
   gap: 4px;
   padding: 4px 8px;
-  font-size: var(--ies-text-xs);
-  font-weight: 500;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
   border: none;
-  border-radius: var(--ies-radius-full);
+  border-radius: var(--radius-full);
   cursor: default;
-  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+  transition: all var(--duration-fast) var(--ease-out);
 }
 
 .flow-sync-badge:disabled {
@@ -73,23 +75,23 @@
 }
 
 .flow-sync-pending {
-  background: var(--ies-warning-subtle);
-  color: var(--ies-warning);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
 }
 
 .flow-sync-synced {
-  background: var(--ies-success-subtle);
-  color: var(--ies-success);
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
 }
 
 .flow-sync-error {
-  background: var(--ies-error-subtle);
-  color: var(--ies-error);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--error);
 }
 
 .flow-sync-offline {
-  background: var(--ies-tertiary-subtle);
-  color: var(--ies-tertiary);
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--entity-theory);
   cursor: pointer;
 }
 
@@ -103,7 +105,7 @@
 
 .flow-sync-count {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: var(--font-semibold);
 }
 
 @keyframes spin {
@@ -119,7 +121,7 @@
 .flow-panel-content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--ies-space-4);
+  padding: var(--space-4);
   overscroll-behavior: contain;
 }
 
@@ -128,20 +130,20 @@
    ============================================ */
 
 .flow-section {
-  margin-bottom: var(--ies-space-6);
+  margin-bottom: var(--space-6);
 }
 
 .flow-section-title {
   display: flex;
   align-items: center;
-  gap: var(--ies-space-2);
-  margin: 0 0 var(--ies-space-3);
-  font-family: var(--ies-font-ui);
-  font-size: var(--ies-text-xs);
-  font-weight: 600;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ies-text-muted);
+  color: var(--text-muted);
 }
 
 /* ============================================
@@ -151,61 +153,61 @@
 .flow-entity-type {
   display: inline-block;
   padding: 4px 10px;
-  font-family: var(--ies-font-ui);
-  font-size: var(--ies-text-xs);
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  border-radius: var(--ies-radius-full);
-  margin-bottom: var(--ies-space-2);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-2);
 }
 
 /* Entity type colors */
 .entity-type-concept {
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--ies-entity-concept);
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--entity-concept);
 }
 
 .entity-type-person {
-  background: rgba(5, 150, 105, 0.12);
-  color: var(--ies-entity-person);
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--entity-person);
 }
 
 .entity-type-theory {
-  background: rgba(124, 58, 237, 0.12);
-  color: var(--ies-entity-theory);
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--entity-theory);
 }
 
 .entity-type-framework {
-  background: rgba(234, 88, 12, 0.12);
-  color: var(--ies-entity-framework);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--entity-framework);
 }
 
 .entity-type-assessment {
-  background: rgba(220, 38, 38, 0.12);
-  color: var(--ies-entity-assessment);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--entity-assessment);
 }
 
 .entity-type-default {
-  background: var(--ies-bg-muted);
-  color: var(--ies-text-secondary);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 .flow-entity-name {
-  margin: 0 0 var(--ies-space-2);
-  font-family: var(--ies-font-display);
-  font-size: var(--ies-text-xl);
-  font-weight: 600;
-  color: var(--ies-text-primary);
-  line-height: var(--ies-leading-tight);
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
 }
 
 .flow-entity-summary {
   margin: 0;
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-base);
-  line-height: var(--ies-leading-relaxed);
-  color: var(--ies-text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
 }
 
 /* ============================================
@@ -218,44 +220,44 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--ies-space-2);
+  gap: var(--space-2);
 }
 
 .flow-relationship-link {
   display: flex;
   align-items: center;
-  gap: var(--ies-space-3);
+  gap: var(--space-3);
   width: 100%;
-  padding: var(--ies-space-3);
-  background: var(--ies-bg-base);
-  border: 1px solid var(--ies-border-default);
-  border-radius: var(--ies-radius-md);
+  padding: var(--space-3);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   text-align: left;
   cursor: pointer;
-  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+  transition: all var(--duration-fast) var(--ease-out);
 }
 
 .flow-relationship-link:hover {
-  border-color: var(--ies-accent);
-  background: var(--ies-accent-subtle);
+  border-color: var(--entity-concept);
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .flow-relationship-type {
   flex-shrink: 0;
   padding: 2px 8px;
-  font-family: var(--ies-font-ui);
-  font-size: var(--ies-text-xs);
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
   text-transform: uppercase;
-  color: var(--ies-text-muted);
-  background: var(--ies-bg-muted);
-  border-radius: var(--ies-radius-sm);
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
 }
 
 .flow-relationship-target {
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-sm);
-  color: var(--ies-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
 }
 
 /* ============================================
@@ -268,30 +270,30 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--ies-space-2);
+  gap: var(--space-2);
 }
 
 .flow-source-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--ies-space-3);
-  background: var(--ies-bg-base);
-  border: 1px solid var(--ies-border-default);
-  border-radius: var(--ies-radius-md);
+  padding: var(--space-3);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
 }
 
 .flow-source-title {
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-sm);
-  font-weight: 500;
-  color: var(--ies-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
 
 .flow-source-chapter {
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-xs);
-  color: var(--ies-text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 /* ============================================
@@ -304,48 +306,48 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--ies-space-3);
+  gap: var(--space-3);
 }
 
 .flow-question-item {
-  padding: var(--ies-space-3);
-  background: var(--ies-bg-base);
-  border: 1px solid var(--ies-border-default);
-  border-radius: var(--ies-radius-md);
+  padding: var(--space-3);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
 }
 
 .flow-question-type {
   display: inline-block;
   padding: 2px 8px;
-  font-family: var(--ies-font-ui);
-  font-size: var(--ies-text-xs);
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
   text-transform: uppercase;
-  border-radius: var(--ies-radius-sm);
-  margin-bottom: var(--ies-space-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
 }
 
 .flow-question-clarifying {
-  background: var(--ies-success-subtle);
-  color: var(--ies-success);
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
 }
 
 .flow-question-connecting {
-  background: var(--ies-warning-subtle);
-  color: var(--ies-warning);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
 }
 
 .flow-question-challenging {
-  background: rgba(220, 38, 38, 0.1);
-  color: #c62828;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--error);
 }
 
 .flow-question-text {
   margin: 0;
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-sm);
-  line-height: var(--ies-leading-relaxed);
-  color: var(--ies-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--text-primary);
 }
 
 /* ============================================
@@ -357,21 +359,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--ies-space-3);
-  padding: var(--ies-space-8);
-  color: var(--ies-text-muted);
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-sm);
+  gap: var(--space-3);
+  padding: var(--space-8);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
 }
 
 .flow-loading-inline {
   flex-direction: row;
-  padding: var(--ies-space-4);
+  padding: var(--space-4);
 }
 
 .flow-loading-spinner {
   animation: spin 1s linear infinite;
-  color: var(--ies-accent);
+  color: var(--entity-concept);
 }
 
 .flow-empty {
@@ -379,35 +381,35 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: var(--ies-space-12) var(--ies-space-4);
-  color: var(--ies-text-muted);
+  padding: var(--space-12) var(--space-4);
+  color: var(--text-muted);
 }
 
 .flow-empty-icon {
-  margin-bottom: var(--ies-space-4);
-  color: var(--ies-text-subtle);
+  margin-bottom: var(--space-4);
+  color: var(--text-muted);
 }
 
 .flow-empty h4 {
-  margin: 0 0 var(--ies-space-2);
-  font-family: var(--ies-font-display);
-  font-size: var(--ies-text-lg);
-  font-weight: 600;
-  color: var(--ies-text-primary);
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
 }
 
 .flow-empty p {
   margin: 0;
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-sm);
-  line-height: var(--ies-leading-relaxed);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
   max-width: 280px;
 }
 
 .flow-empty-hint {
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-sm);
-  color: var(--ies-text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
   font-style: italic;
   margin: 0;
 }
@@ -428,40 +430,40 @@
     max-height: calc(100vh - 60px);
     max-height: calc(100dvh - 60px);
     border-left: none;
-    border-top: 1px solid var(--ies-border-subtle);
-    border-radius: var(--ies-radius-xl) var(--ies-radius-xl) 0 0;
-    box-shadow: var(--ies-shadow-xl);
+    border-top: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: var(--shadow-xl);
   }
 
   .flow-panel-header {
-    padding: var(--ies-space-3) var(--ies-space-4);
-    padding-top: var(--ies-space-3);
+    padding: var(--space-3) var(--space-4);
+    padding-top: var(--space-3);
   }
 
   /* Drag handle for bottom sheet */
   .flow-panel-header::before {
     content: '';
     position: absolute;
-    top: var(--ies-space-2);
+    top: var(--space-2);
     left: 50%;
     transform: translateX(-50%);
     width: 36px;
     height: 4px;
-    background: var(--ies-border-strong);
-    border-radius: var(--ies-radius-full);
+    background: var(--border-focus);
+    border-radius: var(--radius-full);
   }
 
   .flow-panel-title h3 {
-    font-size: var(--ies-text-base);
+    font-size: var(--text-base);
   }
 
   .flow-panel-content {
-    padding: var(--ies-space-3);
-    padding-bottom: calc(var(--ies-space-4) + env(safe-area-inset-bottom, 0px));
+    padding: var(--space-3);
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
   }
 
   .flow-entity-name {
-    font-size: var(--ies-text-lg);
+    font-size: var(--text-lg);
   }
 }
 

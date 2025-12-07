@@ -1,6 +1,6 @@
 /* ============================================
    READER COMPONENT
-   The Reading Room - Immersive Reading Experience
+   IES Design System v2 — Immersive Dark Reading
    ============================================ */
 
 .reader-container {
@@ -8,7 +8,7 @@
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
-  background: var(--ies-bg-base);
+  background: var(--bg-primary);
 }
 
 /* ============================================
@@ -19,18 +19,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--ies-space-3) var(--ies-space-4);
-  padding-top: calc(var(--ies-space-3) + env(safe-area-inset-top, 0px));
-  background: var(--ies-bg-surface);
-  border-bottom: 1px solid var(--ies-border-subtle);
-  z-index: var(--ies-z-sticky);
-  gap: var(--ies-space-3);
+  padding: var(--space-3) var(--space-4);
+  padding-top: calc(var(--space-3) + env(safe-area-inset-top, 0px));
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: var(--glass-border);
+  z-index: var(--z-sticky);
+  gap: var(--space-3);
 }
 
 .reader-toolbar-left {
   display: flex;
   align-items: center;
-  gap: var(--ies-space-3);
+  gap: var(--space-3);
   min-width: 0;
   flex: 1;
 }
@@ -38,7 +40,7 @@
 .reader-toolbar-right {
   display: flex;
   align-items: center;
-  gap: var(--ies-space-2);
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
@@ -48,10 +50,10 @@
 
 .reader-title {
   margin: 0;
-  font-family: var(--ies-font-display);
-  font-size: var(--ies-text-lg);
-  font-weight: 600;
-  color: var(--ies-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -61,29 +63,29 @@
 .reader-flow-toggle {
   display: flex;
   align-items: center;
-  gap: var(--ies-space-2);
-  padding: var(--ies-space-2) var(--ies-space-4);
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-sm);
-  font-weight: 500;
-  color: var(--ies-text-secondary);
-  background: var(--ies-bg-muted);
-  border: 1px solid var(--ies-border-default);
-  border-radius: var(--ies-radius-full);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: all var(--ies-duration-fast) var(--ies-ease-default);
+  transition: all var(--duration-fast) var(--ease-out);
 }
 
 .reader-flow-toggle:hover {
-  background: var(--ies-bg-surface);
-  border-color: var(--ies-border-strong);
-  color: var(--ies-text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+  color: var(--text-primary);
 }
 
 .reader-flow-toggle.active {
-  background: var(--ies-accent-subtle);
-  border-color: var(--ies-accent);
-  color: var(--ies-accent);
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--entity-concept);
+  color: var(--entity-concept);
 }
 
 .reader-flow-label {
@@ -107,17 +109,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--ies-space-4);
-  background: var(--ies-bg-base);
-  color: var(--ies-text-muted);
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-base);
-  z-index: var(--ies-z-modal);
+  gap: var(--space-4);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  z-index: var(--z-modal);
 }
 
 .reader-loading-spinner {
   animation: spin 1s linear infinite;
-  color: var(--ies-accent);
+  color: var(--entity-concept);
 }
 
 @keyframes spin {
@@ -137,44 +139,44 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--ies-space-4);
-  padding: var(--ies-space-6);
-  background: var(--ies-bg-base);
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--bg-primary);
   text-align: center;
-  z-index: var(--ies-z-modal);
+  z-index: var(--z-modal);
 }
 
 .reader-error svg {
-  color: var(--ies-error);
+  color: var(--error);
 }
 
 .reader-error h3 {
   margin: 0;
-  font-family: var(--ies-font-display);
-  font-size: var(--ies-text-xl);
-  font-weight: 600;
-  color: var(--ies-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
 }
 
 .reader-error p {
   margin: 0;
   max-width: 400px;
-  font-family: var(--ies-font-body);
-  font-size: var(--ies-text-base);
-  color: var(--ies-text-muted);
-  line-height: var(--ies-leading-relaxed);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  line-height: var(--leading-relaxed);
 }
 
 .reader-error-actions {
   display: flex;
-  gap: var(--ies-space-3);
-  margin-top: var(--ies-space-2);
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .reader-error-actions button {
   display: flex;
   align-items: center;
-  gap: var(--ies-space-2);
+  gap: var(--space-2);
 }
 
 /* ============================================
@@ -184,8 +186,8 @@
 .reader-content {
   flex: 1;
   position: relative;
-  transition: margin-right var(--ies-duration-base) var(--ies-ease-default);
-  background: var(--ies-bg-base);
+  transition: margin-right var(--duration-base) var(--ease-out);
+  background: var(--bg-primary);
 }
 
 /* Override react-reader styles for IES aesthetic */
@@ -196,12 +198,12 @@
 /* React-reader navigation buttons */
 .reader-content button[aria-label] {
   background: transparent !important;
-  color: var(--ies-text-muted) !important;
-  transition: color var(--ies-duration-fast) !important;
+  color: var(--text-muted) !important;
+  transition: color var(--duration-fast) !important;
 }
 
 .reader-content button[aria-label]:hover {
-  color: var(--ies-text-primary) !important;
+  color: var(--text-primary) !important;
 }
 
 /* ============================================
@@ -209,7 +211,7 @@
    ============================================ */
 
 ::selection {
-  background: var(--ies-accent-subtle);
+  background: rgba(59, 130, 246, 0.2);
 }
 
 /* ============================================
@@ -218,11 +220,11 @@
 
 @media (min-width: 768px) {
   .reader-toolbar {
-    padding: var(--ies-space-4) var(--ies-space-6);
+    padding: var(--space-4) var(--space-6);
   }
 
   .reader-title {
-    font-size: var(--ies-text-xl);
+    font-size: var(--text-xl);
   }
 }
 

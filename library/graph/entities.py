@@ -1,28 +1,59 @@
 """
 Entity extraction from text chunks using LLM.
 
-Extracts:
-- Researchers (who wrote it, who they cite)
-- Concepts (emotion regulation, executive function, etc.)
-- Theories/Models (Gross's process model, Barkley's EF theory)
-- Relationships (supports, contradicts, operationalizes, etc.)
+Extracts entities for a domain-agnostic knowledge graph with "Reframe Layer"
+support for cross-domain conceptual reframing (ADHD-friendly pattern detection).
+
+Entity Types:
+- Researcher: People (authors, theorists, experimenters)
+- Concept: Core ideas, constructs, phenomena
+- Theory: Named theories/models/frameworks
+- Assessment: Instruments/scales/protocols
+- Pattern: Reusable conceptual schemas (Feedback Loop, Tipping Point)
+- DynamicPattern: Temporal/process structures (Oscillation, Emergence)
+- StoryInsight: Narrative vignettes that embody concepts
+- SchemaBreak: Moments where intuitive models fail
+- Reframe: Metaphor/analogy/story linking concepts across domains
+
+Relationships:
+- cites, develops, supports, contradicts, operationalizes, component_of
+- METAPHOR_FOR, ANALOGOUS_TO, DEMONSTRATES, EMBODIES, RESONATES_WITH
 """
 
 import json
 from dataclasses import dataclass, field
-from typing import Iterator
+from typing import Iterator, Literal
 from openai import OpenAI
 
 from library.ingest.chunk import Chunk
+
+
+# Valid entity types
+EntityType = Literal[
+    "researcher", "concept", "theory", "assessment",
+    "pattern", "dynamic_pattern", "story_insight", "schema_break", "reframe"
+]
+
+# Valid reframe types (for reframe entities)
+ReframeType = Literal["Metaphor", "Analogy", "Story", "Pattern", "Contrast"]
+
+# Valid relationship types
+RelationType = Literal[
+    "cites", "develops", "supports", "contradicts", "operationalizes", "component_of",
+    "METAPHOR_FOR", "ANALOGOUS_TO", "DEMONSTRATES", "EMBODIES", "RESONATES_WITH"
+]
 
 
 @dataclass
 class Entity:
     """An extracted entity."""
     name: str
-    type: str  # researcher, concept, theory, assessment
+    type: str  # EntityType
     description: str | None = None
     aliases: list[str] = field(default_factory=list)
+    # Reframe-specific fields
+    reframe_type: str | None = None  # ReframeType - for type="reframe"
+    source_domain: str | None = None  # e.g., "Physics", "Jazz", "Gardening"
 
 
 @dataclass
@@ -42,35 +73,63 @@ class ExtractionResult:
     relationships: list[Relationship]
 
 
-EXTRACTION_PROMPT = """Analyze this text from a therapy/psychology book and extract:
+EXTRACTION_PROMPT = """Analyze this text (any domain) and extract entities/relationships that capture cross-domain conceptual reframing. Prioritize structural patterns (shapes, dynamics, analogies) over surface semantics.
 
-1. **Researchers** - People mentioned (researchers, theorists, clinicians)
-2. **Concepts** - Key psychological concepts (e.g., "emotion regulation", "executive function", "psychological flexibility")
-3. **Theories/Models** - Named theories or models (e.g., "Gross's process model", "ACT hexaflex")
-4. **Assessments** - Any mentioned scales or instruments (e.g., "DERS", "AAQ-II")
+Entities to extract (use only these types):
+1) researcher — people (authors, theorists, experimenters).
+2) concept — core ideas, constructs, phenomena.
+3) theory — named theories/models/frameworks.
+4) assessment — instruments/scales/protocols.
+5) pattern — reusable conceptual schemas (e.g., feedback loop, tragedy of the commons, tipping point).
+6) dynamic_pattern — temporal/process shapes (e.g., oscillation, emergence, cascading failure).
+7) story_insight — specific narrative vignette/experiment/story beat that embodies an idea (e.g., Backwards Bicycle experiment).
+8) schema_break — moments where an intuitive model fails or reveals deeper structure (paradox, surprise, reversal).
+9) reframe — an analogy/metaphor/story/pattern/contrast that explains one concept using another domain.
+   - reframe_type: Metaphor | Analogy | Story | Pattern | Contrast
+   - source_domain: originating domain of the reframe (e.g., Physics, Jazz, Gardening).
 
-Also identify relationships between entities:
-- **cites** - Author A cites Author B's work
-- **develops** - Author develops a theory/model
-- **supports** - Evidence supports a concept/theory
-- **contradicts** - Evidence contradicts a concept/theory
-- **operationalizes** - Assessment operationalizes a concept
-- **component_of** - Concept is part of larger concept/theory
+Relationships to extract (use only these):
+- cites — author/person references another.
+- develops — researcher develops a theory/model.
+- supports — evidence supports a concept/theory.
+- contradicts — evidence counters a concept/theory.
+- operationalizes — assessment measures/operationalizes a concept.
+- component_of — entity is a part/module of a larger concept/theory/pattern.
+- METAPHOR_FOR — X is used as a metaphor/reframe for Y (often reframe -> concept).
+- ANALOGOUS_TO — X and Y share structural similarity across domains.
+- DEMONSTRATES — an experiment/story_insight shows a concept/theory/pattern.
+- EMBODIES — a narrative/experiment instantiates a schema_break or pattern.
+- RESONATES_WITH — non-obvious cross-domain connection (structural rhyme rather than topic match).
 
-Return JSON in this exact format:
+Guidance:
+- Be concise and selective; prefer explicit or strongly implied structures over vague hints.
+- Look for shape words (cycle, cascade, threshold, feedback, oscillate), surprise/violation cues (unexpected, paradox, fails), and analogy markers ("like", "as", "works the way", "reminds").
+- Keep domain-agnostic language; do not assume psychology/therapy.
+- If nothing clear, return empty arrays.
+
+Return JSON exactly in this shape:
 ```json
 {{
   "entities": [
-    {{"name": "string", "type": "researcher|concept|theory|assessment", "description": "brief description", "aliases": ["optional", "aliases"]}}
+    {{
+      "name": "string",
+      "type": "researcher|concept|theory|assessment|pattern|dynamic_pattern|story_insight|schema_break|reframe",
+      "description": "brief description",
+      "aliases": ["optional", "aliases"],
+      "reframe_type": "Metaphor|Analogy|Story|Pattern|Contrast|null",
+      "source_domain": "string|null"
+    }}
   ],
   "relationships": [
-    {{"source": "entity name", "target": "entity name", "relation_type": "cites|develops|supports|contradicts|operationalizes|component_of", "evidence": "brief quote or paraphrase"}}
+    {{
+      "source": "entity name",
+      "target": "entity name",
+      "relation_type": "cites|develops|supports|contradicts|operationalizes|component_of|METAPHOR_FOR|ANALOGOUS_TO|DEMONSTRATES|EMBODIES|RESONATES_WITH",
+      "evidence": "short quote or paraphrase"
+    }}
   ]
 }}
 ```
-
-Be selective - only extract clearly stated entities and relationships, not vague references.
-If nothing clear to extract, return empty arrays.
 
 TEXT TO ANALYZE:
 ---
@@ -138,7 +197,9 @@ class EntityExtractor:
                 name=e.get("name", ""),
                 type=e.get("type", "concept"),
                 description=e.get("description"),
-                aliases=e.get("aliases", [])
+                aliases=e.get("aliases", []),
+                reframe_type=e.get("reframe_type"),
+                source_domain=e.get("source_domain")
             )
             for e in data.get("entities", [])
             if e.get("name")

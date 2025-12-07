@@ -286,3 +286,26 @@ class GraphService:
             ]
         except Exception:
             return []
+
+    @staticmethod
+    async def get_all_book_entity_counts() -> dict[int, int]:
+        """Get entity counts for all indexed books.
+
+        Returns:
+            Dict mapping calibre_id to entity count
+        """
+        query = """
+        MATCH (b:Book)
+        WHERE b.calibre_id IS NOT NULL
+        WITH b
+        OPTIONAL MATCH (b)-[:MENTIONS]->(e)
+        WITH b.calibre_id as calibre_id, count(DISTINCT e) as entity_count
+        WHERE entity_count > 0
+        RETURN calibre_id, entity_count
+        """
+
+        try:
+            results = await Neo4jClient.execute_query(query, {})
+            return {r["calibre_id"]: r["entity_count"] for r in results}
+        except Exception:
+            return {}

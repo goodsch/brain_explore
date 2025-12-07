@@ -10,3 +10,5 @@ class Book(BaseModel):
     title: str
     author: str
     path: str
+    entity_count: int = 0
+    indexed: bool = False

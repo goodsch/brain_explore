@@ -32,7 +32,7 @@ from library.graph.adhd_ontology import (
 # Module-level singleton driver with lazy initialization
 _driver: Driver | None = None
 
-# All 14 allowed entity types (prevents Cypher injection)
+# All allowed entity types (prevents Cypher injection)
 ALLOWED_TYPES = {
     # Domain knowledge types
     "Concept",
@@ -45,14 +45,20 @@ ALLOWED_TYPES = {
     "Insight",
     "Thread",
     "FavoriteProblem",
-    # Enrichment types
-    "Reframe",
-    "Pattern",
+    # Reframe Layer types (cross-domain conceptual reframing)
+    "Reframe",           # Metaphor/analogy/story linking concepts across domains
+    "Pattern",           # Reusable conceptual schemas (Feedback Loop, Tipping Point)
+    "DynamicPattern",    # Temporal/process structures (Oscillation, Emergence)
+    "StoryInsight",      # Narrative vignettes that embody concepts
+    "SchemaBreak",       # Moments where intuitive models fail
+    # Other enrichment types
     "Mechanism",
     "Method",
     # Content types
     "Book",
     "Chunk",
+    # Legacy (keep for backward compatibility)
+    "Researcher",
 }
 
 # Schema version - increment when making breaking changes
@@ -256,23 +262,38 @@ class UnifiedGraphClient:
 
     def add_entity(self, entity: Entity) -> str:
         """Add an entity from Entity object (legacy compatibility)."""
-        # Map entity type to proper label
+        # Map entity type to proper Neo4j label
         type_mapping = {
+            # Original types
             "researcher": "Person",
             "concept": "Concept",
             "theory": "Theory",
             "assessment": "Assessment",
             "framework": "Framework",
             "person": "Person",
+            # Reframe Layer types
+            "pattern": "Pattern",
+            "dynamic_pattern": "DynamicPattern",
+            "story_insight": "StoryInsight",
+            "schema_break": "SchemaBreak",
+            "reframe": "Reframe",
         }
 
         entity_type = type_mapping.get(entity.type.lower(), "Concept")
+
+        # Build additional properties for Reframe entities
+        extra_props = {}
+        if entity.reframe_type:
+            extra_props["reframe_type"] = entity.reframe_type
+        if entity.source_domain:
+            extra_props["source_domain"] = entity.source_domain
 
         return self.add_entity_with_type(
             name=entity.name,
             entity_type=entity_type,
             description=entity.description,
-            aliases=entity.aliases
+            aliases=entity.aliases,
+            **extra_props
         )
 
     # =========================================================================
