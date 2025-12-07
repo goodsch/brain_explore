@@ -63,7 +63,7 @@ Return JSON:
 {{
   "reframe_type": "Metaphor | Analogy | Story | Pattern | Contrast",
   "domain": "source domain (e.g., Physics, Nature, Sports, Music)",
-  "text": "Your {concept} is like [vivid reframe]. [Brief structural connection].",
+  "text": "Your {{concept}} is like [vivid reframe]. [Brief structural connection].",
   "structural_connection": "Brief explanation of the structural parallel"
 }}
 ```
