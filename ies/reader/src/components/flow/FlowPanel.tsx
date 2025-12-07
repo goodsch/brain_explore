@@ -1,7 +1,10 @@
-import { X, Cloud, CloudOff, AlertCircle, Loader2, BookOpen, Link2, HelpCircle, Eye } from 'lucide-react';
+import { X, Cloud, CloudOff, AlertCircle, Loader2, BookOpen, Link2, Eye, HelpCircle } from 'lucide-react';
 import { useFlowStore, type EntityType } from '../../store/flowStore';
 import { useEntityLookup } from '../../hooks/useEntityLookup';
 import { graphClient } from '../../services/graphClient';
+import { JourneyBreadcrumb } from './JourneyBreadcrumb';
+import { InteractiveQuestions } from './InteractiveQuestions';
+import { NotesCapture } from './NotesCapture';
 import './FlowPanel.css';
 
 const ENTITY_TYPES: EntityType[] = ['Concept', 'Person', 'Theory', 'Framework', 'Assessment'];
@@ -13,9 +16,7 @@ export function FlowPanel() {
     currentEntity,
     relationships,
     bookSources,
-    thinkingPartnerQuestions,
     isLoadingEntity,
-    isLoadingQuestions,
     setFlowPanelOpen,
     clearEntity,
     syncStatus,
@@ -222,34 +223,14 @@ export function FlowPanel() {
               </section>
             )}
 
-            {/* Thinking Partner Questions */}
-            <section className="flow-section">
-              <h4 className="flow-section-title">
-                <HelpCircle size={14} />
-                Thinking Partner
-              </h4>
-              {isLoadingQuestions ? (
-                <div className="flow-loading flow-loading-inline">
-                  <Loader2 size={16} className="flow-loading-spinner" />
-                  <span>Generating questions...</span>
-                </div>
-              ) : thinkingPartnerQuestions.length > 0 ? (
-                <ul className="flow-questions">
-                  {thinkingPartnerQuestions.map((q, idx) => (
-                    <li key={idx} className="flow-question-item">
-                      <span className={`flow-question-type flow-question-${q.type}`}>
-                        {q.type}
-                      </span>
-                      <p className="flow-question-text">{q.text}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="flow-empty-hint">
-                  Select text to explore related concepts
-                </p>
-              )}
-            </section>
+            {/* Journey Breadcrumb */}
+            <JourneyBreadcrumb />
+
+            {/* Interactive Thinking Partner Questions */}
+            <InteractiveQuestions />
+
+            {/* Quick Notes Capture */}
+            <NotesCapture />
           </>
         ) : (
           <div className="flow-empty">
