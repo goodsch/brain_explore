@@ -30,6 +30,9 @@ from library.graph.adhd_ontology import (
 # ADHD-friendly Neo4j client (for personal knowledge graph)
 from library.graph.adhd_graph_client import ADHDKnowledgeGraph, SCHEMA_VERSION
 
+# Reframe Layer (Pass 2 cross-domain mapping)
+from library.graph.reframe_mapper import ReframeMapper, ResonanceMatch
+
 __all__ = [
     # Original (book ingestion)
     "Entity",
@@ -52,4 +55,7 @@ __all__ = [
     "Reframe",
     "ADHDKnowledgeGraph",
     "SCHEMA_VERSION",
+    # Reframe Layer
+    "ReframeMapper",
+    "ResonanceMatch",
 ]

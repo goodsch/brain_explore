@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from library.graph.neo4j_client import KnowledgeGraph
 from library.graph.entities import EntityExtractor
+from library.graph.reframe_mapper import ReframeMapper
 
 # Configuration
 CALIBRE_DB = Path("./calibre/library/metadata.db")
@@ -155,10 +156,23 @@ def process_single_book(kg: KnowledgeGraph, book: CalibreBook) -> bool:
                         MERGE (b)-[:MENTIONS]->(e)
                     """, calibre_id=book.calibre_id, entity_name=entity.name)
         
-        # Update status
+        # Update status after Pass 1
         kg.update_book_status(book.calibre_id, "entities_extracted")
-        
-        logger.info(f"Extracted {entities_found} entities from {book.title}")
+        logger.info(f"Pass 1 complete: Extracted {entities_found} entities from {book.title}")
+
+        # Pass 2: Cross-domain mapping (find resonance connections)
+        try:
+            mapper = ReframeMapper(kg)
+            pass2_result = mapper.process_book(book.calibre_id)
+            logger.info(
+                f"Pass 2 complete for {book.title}: "
+                f"{pass2_result['sources']} sources, "
+                f"{pass2_result['relationships']} relationships created"
+            )
+        except Exception as e:
+            logger.warning(f"Pass 2 failed for {book.title}: {e}")
+            # Don't fail the whole ingestion if Pass 2 fails
+
         return True
         
     except Exception as e:
