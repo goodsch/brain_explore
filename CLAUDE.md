@@ -765,6 +765,58 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 6):**
+- **Backend Book Streaming Fix (Dec 6)** — Fixed epub.js inline reading with StreamingResponse:
+  - **Commit:** `72f6228: fix(reader): Add missing proxy config and error handling for book loading`
+  - **Problem:** FileResponse with Content-Disposition header caused epub.js to download instead of reading inline
+  - **Solution:** StreamingResponse with 64KB chunks, no Content-Disposition header
+  - **Implementation (books.py, lines 105-132):**
+    - Changed return type from `FileResponse` to `StreamingResponse`
+    - Generator function `file_iterator()` yields 64KB chunks for memory efficiency
+    - Headers: Content-Type (application/epub+zip or application/pdf), Content-Length only
+    - Media type determined by file extension (.epub vs .pdf)
+  - **Impact:** epub.js can now read book files directly in browser without download prompts
+  - **Related:** Works with updated vite proxy config (all endpoints now use 127.0.0.1 instead of localhost)
+- **Vite Proxy Configuration Enhancement (Dec 6)** — Fixed IPv6 resolution issues and added health check endpoint:
+  - **Commit:** `72f6228: fix(reader): Add missing proxy config and error handling for book loading`
+  - **Problem:** `localhost` resolves to IPv6 `::1` on some systems, causing backend connection failures
+  - **Solution:** Use `127.0.0.1` explicitly for all backend proxies (vite.config.ts lines 131-165)
+  - **Updated proxies:** `/api`, `/books`, `/graph`, `/profile`, `/question-engine`, `/journeys` (all now 127.0.0.1:8081)
+  - **New proxy added:** `/health` endpoint for backend availability checks
+  - **Pattern:** All proxies use `target: 'http://127.0.0.1:8081'` with `changeOrigin: true`
+  - **Impact:** Reliable backend connection across different OS network configurations
+  - **Related:** Complements StreamingResponse fix for complete book loading flow
+- **Reader Error Handling Enhancement (Dec 6)** — Improved loading timeout with better state management:
+  - **Commit:** `72f6228: fix(reader): Add missing proxy config and error handling for book loading`
+  - **Enhanced Timeout System (Reader.tsx, lines 24-44):**
+    - 15-second loading timeout with console logging for debugging
+    - `useEffect` cleanup prevents timeout from triggering after component unmount
+    - Conditional execution: only runs if loading and no existing error
+    - Console markers: `[Reader] Starting 15s loading timeout...` and `[Reader] Loading timeout reached!`
+  - **Error Recovery Flow (Reader.tsx, lines 156-181):**
+    - Dedicated error overlay with AlertCircle icon (lucide-react)
+    - "Try Again" button resets error state and forces re-render by toggling location to 0
+    - "Back to Library" button conditionally shown when onClose callback provided
+    - Error actions div groups buttons with proper spacing
+  - **Loading State Coordination (Reader.tsx, line 148):**
+    - Loading overlay now checks `isLoading && !loadError` to prevent simultaneous display
+    - Error state takes precedence over loading state for better UX
+  - **ReactReader Conditional Rendering (Reader.tsx, line 184):**
+    - Entire reader content wrapped in `{!loadError && ...}` to hide on error
+    - Prevents epub.js from attempting to load when in error state
+    - `loadingView` prop added to ReactReader for custom loading display (lines 199-203)
+  - **State Management Pattern:**
+    - Three states: `isLoading` (boolean), `loadError` (string | null), `location` (string | number)
+    - Error recovery resets: `setLoadError(null)`, `setIsLoading(true)`, `setLocation(0)`
+    - Location reset to 0 forces ReactReader to re-mount and retry
+  - **Debug Logging:**
+    - Mount logging with URL, title, calibreId (lines 25-28)
+    - getRendition success logging: `[Reader] getRendition called - book loaded successfully!` (line 64)
+    - Timeout logging for diagnosing slow network/missing files
+  - **Impact:**
+    - Users see specific error messages instead of infinite loading spinners
+    - Retry mechanism with proper state reset enables recovery without full page reload
+    - Debug logs help diagnose book loading issues in production
+  - **Related:** Part of Wave 1 production readiness improvements alongside PWA and library browser features
 - **✅ IES Reader Wave 1 Complete (Dec 6)** — Standalone React app transformed into production-ready PWA with Calibre library integration:
   - **Commit:** `5329ec2: feat(reader): Wave 1 enhancement - Library browser, PWA, design system`
   - **Total changes:** 23 files, +9,038 lines, -2,761 lines (net +6,277 lines)

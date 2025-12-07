@@ -6,7 +6,7 @@ Provides endpoints to list and get books from the Calibre library.
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 from ies_backend.schemas.calibre import Book
@@ -97,17 +97,16 @@ async def head_book_file(calibre_id: int) -> Response:
         headers={
             "Content-Length": str(file_size),
             "Content-Type": media_type,
-            "Content-Disposition": f'attachment; filename="{file_path.name}"',
         },
     )
 
 
 @router.get("/books/{calibre_id}/file")
-async def get_book_file(calibre_id: int) -> FileResponse:
+async def get_book_file(calibre_id: int) -> StreamingResponse:
     """Get the book file (epub or pdf) for a book.
 
     Returns the epub file if available, otherwise pdf.
-    The file is served with Content-Disposition header for download.
+    Served WITHOUT Content-Disposition header so epubjs can read it inline.
     """
     service = get_calibre_service()
     file_path = service.get_book_file_path(calibre_id=calibre_id)
@@ -118,8 +117,15 @@ async def get_book_file(calibre_id: int) -> FileResponse:
     # Determine media type based on extension
     media_type = "application/epub+zip" if file_path.suffix.lower() == ".epub" else "application/pdf"
 
-    return FileResponse(
-        file_path,
+    # Use StreamingResponse to avoid Content-Disposition header
+    # which interferes with epubjs reading the file inline
+    def file_iterator():
+        with open(file_path, "rb") as f:
+            while chunk := f.read(65536):  # 64KB chunks
+                yield chunk
+
+    return StreamingResponse(
+        file_iterator(),
         media_type=media_type,
-        filename=file_path.name,
+        headers={"Content-Length": str(file_path.stat().st_size)},
     )

@@ -21,12 +21,35 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   const [loadError, setLoadError] = useState<string | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
 
+  // Debug: Log URL and verify it's accessible
+  useEffect(() => {
+    console.log('[Reader] Mounting with URL:', url);
+    console.log('[Reader] Title:', title, 'CalibreId:', calibreId);
+
+    // Verify the URL is accessible before epub.js tries to load it
+    fetch(url, { method: 'HEAD' })
+      .then(response => {
+        console.log('[Reader] URL check:', response.status, response.headers.get('content-type'));
+        if (!response.ok) {
+          setLoadError(`Server returned ${response.status}: ${response.statusText}`);
+          setIsLoading(false);
+        }
+      })
+      .catch(error => {
+        console.error('[Reader] URL check failed:', error);
+        setLoadError(`Failed to access book: ${error.message}`);
+        setIsLoading(false);
+      });
+  }, [url, title, calibreId]);
+
   // Loading timeout - if book doesn't load in 15 seconds, show error
   useEffect(() => {
     if (!isLoading || loadError) return;
 
+    console.log('[Reader] Starting 15s loading timeout...');
     const timeout = setTimeout(() => {
       if (isLoading) {
+        console.error('[Reader] Loading timeout reached!');
         setLoadError('Book took too long to load. Please check your connection and try again.');
         setIsLoading(false);
       }
@@ -53,6 +76,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   // Get rendition ref for text selection handling
   const getRendition = useCallback(
     (rendition: Rendition) => {
+      console.log('[Reader] getRendition called - book loaded successfully!');
       renditionRef.current = rendition;
       setIsLoading(false);
 
@@ -184,6 +208,9 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
             location={location}
             locationChanged={locationChanged}
             getRendition={getRendition}
+            epubInitOptions={{
+              openAs: 'epub',  // Force epub parsing even if server MIME type is wrong
+            }}
             epubOptions={{
               allowScriptedContent: true,
             }}

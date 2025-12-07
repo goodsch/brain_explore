@@ -7,10 +7,10 @@ body {
   place-items: initial;
 }
 
-/* App container fills viewport */
+/* App container fills viewport - explicit height required for react-reader */
 #root {
-  min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport for mobile */
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport for mobile */
 }
 
 /* Focus styles for accessibility */

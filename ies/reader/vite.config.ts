@@ -127,40 +127,40 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/gutenberg/, ''),
       },
-      // Backend API proxy
+      // Backend API proxy - use 127.0.0.1 to avoid IPv6 resolution issues
       '/api': {
-        target: 'http://localhost:8081',
+        target: 'http://127.0.0.1:8081',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // Books endpoint proxy
       '/books': {
-        target: 'http://localhost:8081',
+        target: 'http://127.0.0.1:8081',
         changeOrigin: true,
       },
       // Graph endpoint proxy
       '/graph': {
-        target: 'http://localhost:8081',
+        target: 'http://127.0.0.1:8081',
         changeOrigin: true,
       },
       // Profile endpoint proxy
       '/profile': {
-        target: 'http://localhost:8081',
+        target: 'http://127.0.0.1:8081',
         changeOrigin: true,
       },
       // Question engine proxy
       '/question-engine': {
-        target: 'http://localhost:8081',
+        target: 'http://127.0.0.1:8081',
         changeOrigin: true,
       },
       // Journeys proxy
       '/journeys': {
-        target: 'http://localhost:8081',
+        target: 'http://127.0.0.1:8081',
         changeOrigin: true,
       },
       // Health check proxy
       '/health': {
-        target: 'http://localhost:8081',
+        target: 'http://127.0.0.1:8081',
         changeOrigin: true,
       },
     },
