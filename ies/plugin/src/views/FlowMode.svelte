@@ -10,10 +10,12 @@
     import { showMessage, fetchSyncPost } from 'siyuan';
 
     import ReframesTab from '../components/ReframesTab.svelte';
+    import { saveJourney, type JourneyData } from '../utils/siyuan-structure';
 
     export let backendUrl: string;
     export let journeyId: string | null = null;
     export let initialConcept: string | null = null;
+    export let userId: string | null = null;
 
     const dispatch = createEventDispatcher();
 
@@ -26,6 +28,8 @@
     let nodes: Array<{name: string, type: string, labels: string[]}> = [];
     let relationships: Array<{start: string, type: string, end: string}> = [];
     let explorationPath: string[] = [];
+    let explorationTimestamps: string[] = []; // Timestamps for each step
+    let explorationStartTime: number | null = null; // When exploration began
     let thinkingQuestion: string | null = null;
     let isLoadingQuestion = false;
     let isExploring = false;
@@ -201,13 +205,21 @@
             currentApproach = null;
             lastDetectedState = null;
 
+            // Track exploration start time
+            if (explorationStartTime === null) {
+                explorationStartTime = Date.now();
+            }
+
             // Add to path (avoid duplicates if navigating back)
+            const now = new Date().toISOString();
             const existingIndex = explorationPath.indexOf(concept);
             if (existingIndex >= 0) {
-                // Navigating back - truncate path
+                // Navigating back - truncate path and timestamps
                 explorationPath = explorationPath.slice(0, existingIndex + 1);
+                explorationTimestamps = explorationTimestamps.slice(0, existingIndex + 1);
             } else {
                 explorationPath = [...explorationPath, concept];
+                explorationTimestamps = [...explorationTimestamps, now];
             }
 
             // Clear thinking question when navigating
@@ -304,7 +316,40 @@
         }
     }
 
-    function handleBack() {
+    async function handleBack() {
+        // Save journey if we have exploration data
+        if (explorationPath.length > 0 && userId) {
+            try {
+                const now = Date.now();
+                const journey: JourneyData = {
+                    entryPoint: {
+                        type: 'siyuan-flow',
+                        reference: initialConcept || explorationPath[0] || 'unknown'
+                    },
+                    path: explorationPath.map((conceptName, index) => {
+                        // Calculate dwell time: time until next step, or until now for last step
+                        const stepTime = new Date(explorationTimestamps[index]).getTime();
+                        const nextStepTime = index < explorationPath.length - 1
+                            ? new Date(explorationTimestamps[index + 1]).getTime()
+                            : now;
+                        const dwellSeconds = Math.round((nextStepTime - stepTime) / 1000);
+
+                        return {
+                            entityId: conceptName, // Using name as ID (simplification)
+                            entityName: conceptName,
+                            timestamp: explorationTimestamps[index],
+                            dwellTimeSeconds: dwellSeconds > 0 ? dwellSeconds : 1
+                        };
+                    })
+                };
+
+                await saveJourney(journey, userId);
+                console.log('[FlowMode] Journey saved successfully');
+            } catch (e) {
+                console.error('[FlowMode] Failed to save journey:', e);
+                // Don't block exit on save failure
+            }
+        }
         dispatch('back');
     }
 
@@ -320,6 +365,8 @@
         nodes = [];
         relationships = [];
         explorationPath = [];
+        explorationTimestamps = [];
+        explorationStartTime = null;
         thinkingQuestion = null;
         questionHistory = [];
         questionResponse = '';

@@ -7,15 +7,17 @@
      * - Quick Capture queue status with capture_status filtering
      * - Entry points: Explore Concept, Structured Thinking, Capture
      */
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { showMessage, fetchSyncPost } from 'siyuan';
 
     import ForgeMode from './ForgeMode.svelte';
     import FlowMode from './FlowMode.svelte';
-    import QuickCapture from './QuickCapture.svelte';
+    import Inbox from './Inbox.svelte';
     import SettingsPanel from '../components/SettingsPanel.svelte';
-    import { promoteToInsight, getBackendUrl, checkBackendHealth } from '../utils/siyuan-structure';
+    import { promoteToInsight, getBackendUrl, checkBackendHealth, login, processOfflineQueue } from '../utils/siyuan-structure';
+    import { offlineQueue } from '../utils/offlineQueue';
     import { settingsStore, initializeSettings, getSettingsForSave, type IESSettings } from '../stores/settings';
+    import { noteContext, hasNoteOpen, currentNoteTitle } from '../stores/contextStore';
     import type { CaptureStatus } from '../types/blocks';
     import { CAPTURE_STATUS_LABELS } from '../types/blocks';
 
@@ -25,7 +27,9 @@
     // Backend configuration
     let backendUrl = getBackendUrl();
     const VERSION = '0.3.2';
-    const USER_ID = 'chris';
+
+    // User identity (fetched from profile service)
+    let userId: string | null = null;
 
     // Settings state
     let showSettings = false;
@@ -141,6 +145,33 @@
     let backendStatus: 'connected' | 'disconnected' | 'checking' = 'checking';
     let backendStatusMessage = '';
 
+    // Offline queue status
+    let queuedOperationsCount = 0;
+    let failedOperationsCount = 0;
+    let isProcessingQueue = false;
+
+    function updateQueueStatus() {
+        const status = offlineQueue.getQueueStatus();
+        queuedOperationsCount = status.pending;
+        failedOperationsCount = status.failed;
+    }
+
+    async function handleRetryQueue() {
+        if (queuedOperationsCount === 0) return;
+        isProcessingQueue = true;
+        try {
+            await processOfflineQueue();
+            updateQueueStatus();
+            if (queuedOperationsCount === 0) {
+                showMessage('All queued operations synced successfully');
+            }
+        } catch (err) {
+            showMessage('Some operations failed to sync');
+        } finally {
+            isProcessingQueue = false;
+        }
+    }
+
     // API helper
     async function apiGet(endpoint: string): Promise<any> {
         const url = `${backendUrl}${endpoint}`;
@@ -170,10 +201,11 @@
         error = null;
 
         try {
+            const journeyEndpoint = userId ? `/journeys/user/${userId}` : null;
             const [statsData, suggestionsData, journeysData, personalStatsData, sparksData] = await Promise.all([
                 apiGet('/graph/stats'),
                 apiGet('/graph/suggestions'),
-                apiGet(`/journeys/user/${USER_ID}`).catch(() => ({ journeys: [] })),
+                journeyEndpoint ? apiGet(journeyEndpoint).catch(() => ({ journeys: [] })) : Promise.resolve({ journeys: [] }),
                 apiGet('/personal/stats').catch(() => null),
                 apiGet('/personal/sparks/unvisited?limit=10').catch(() => ({ sparks: [] }))
             ]);
@@ -364,8 +396,33 @@
                 console.log('[IES] No saved settings, using defaults');
             }
         }
+
+        // Login to get user ID from profile service
+        try {
+            const profile = await login();
+            userId = profile.user_id;
+            console.log('[IES] Logged in as:', userId);
+        } catch (e) {
+            console.error('[IES] Login failed, journeys will not be saved:', e);
+            // Continue without login - userId remains null
+        }
+
         refreshBackendStatus();
+        updateQueueStatus();
+
+        // Listen for context menu Flow initiation events
+        window.addEventListener('ies-start-flow-from-context', handleStartFlowFromContext);
     });
+
+    onDestroy(() => {
+        window.removeEventListener('ies-start-flow-from-context', handleStartFlowFromContext);
+    });
+
+    // Handler for context menu Flow initiation
+    function handleStartFlowFromContext() {
+        console.log('[IES] Received start-flow-from-context event');
+        startFlowFromContext();
+    }
 
     async function handleSaveSettings(settings: IESSettings) {
         if (plugin) {
@@ -389,6 +446,23 @@
             selectedConcept = null;
         }
         currentView = view;
+    }
+
+    // Start Flow from current note context
+    function startFlowFromContext() {
+        const sparkSource = noteContext.getSparkSource();
+        if (!sparkSource) {
+            showMessage('No note is currently open');
+            return;
+        }
+
+        // For now, we use the note title as the initial concept
+        // In Phase 2, this will call the orientation endpoint
+        const initialConcept = sparkSource.type === 'selection'
+            ? sparkSource.text?.slice(0, 100)
+            : sparkSource.noteTitle;
+
+        navigateTo('flow', initialConcept);
     }
 
     function handleBack() {
@@ -454,6 +528,27 @@
                         <div class="status-spinner"></div>
                     {/if}
                 </div>
+
+                {#if queuedOperationsCount > 0 || failedOperationsCount > 0}
+                    <div class="queue-status" class:has-pending={queuedOperationsCount > 0} class:has-failed={failedOperationsCount > 0}>
+                        <span class="queue-icon">📴</span>
+                        <div class="queue-text">
+                            <span class="queue-label">
+                                {queuedOperationsCount > 0 ? `${queuedOperationsCount} pending` : ''}
+                                {queuedOperationsCount > 0 && failedOperationsCount > 0 ? ', ' : ''}
+                                {failedOperationsCount > 0 ? `${failedOperationsCount} failed` : ''}
+                            </span>
+                        </div>
+                        <button
+                            class="queue-retry"
+                            on:click={handleRetryQueue}
+                            disabled={isProcessingQueue || queuedOperationsCount === 0}
+                            title="Retry syncing queued operations"
+                        >
+                            {isProcessingQueue ? '...' : 'Sync'}
+                        </button>
+                    </div>
+                {/if}
 
                 <button class="settings-btn" on:click={() => showSettings = true} title="Settings">
                     <svg viewBox="0 0 24 24" width="18" height="18">
@@ -552,10 +647,33 @@
                                 <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
                             </svg>
                         </div>
-                        <span class="mode-title">Capture</span>
+                        <span class="mode-title">Inbox</span>
                         <span class="mode-subtitle">Quick thoughts</span>
                     </button>
                 </div>
+
+                <!-- Context-Aware Flow Entry Point -->
+                {#if $hasNoteOpen}
+                    <section class="context-section">
+                        <h3 class="section-title">Continue Exploring</h3>
+                        <button class="context-card" on:click={startFlowFromContext}>
+                            <div class="context-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="currentColor" d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
+                                </svg>
+                            </div>
+                            <div class="context-info">
+                                <span class="context-title">{$currentNoteTitle}</span>
+                                <span class="context-hint">Start Flow from this note</span>
+                            </div>
+                            <div class="context-arrow">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                                </svg>
+                            </div>
+                        </button>
+                    </section>
+                {/if}
 
                 <!-- Recent Sparks with Energy-Based Navigation -->
                 {#if recentSparks.length > 0 || energyFilter !== 'all' || resonanceFilter}
@@ -734,7 +852,7 @@
                 {#if captureQueue.length > 0}
                     <section class="section">
                         <h3 class="section-title">
-                            Capture Queue
+                            Inbox
                             <span class="queue-badge">{filteredCaptureQueue.length}</span>
                         </h3>
 
@@ -824,9 +942,9 @@
     {:else if currentView === 'structured-thinking'}
         <ForgeMode backendUrl={backendUrl} on:back={handleBack} />
     {:else if currentView === 'flow'}
-        <FlowMode backendUrl={backendUrl} journeyId={selectedJourneyId} initialConcept={selectedConcept} on:back={handleBack} />
+        <FlowMode backendUrl={backendUrl} journeyId={selectedJourneyId} initialConcept={selectedConcept} {userId} on:back={handleBack} />
     {:else if currentView === 'capture'}
-        <QuickCapture backendUrl={backendUrl} on:back={handleBack} />
+        <Inbox backendUrl={backendUrl} on:back={handleBack} />
     {/if}
 
     {#if showSettings}
@@ -1014,6 +1132,63 @@
 
     .settings-btn:active {
         transform: scale(0.95);
+    }
+
+    /* Offline Queue Status */
+    .queue-status {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+    }
+
+    .queue-status.has-pending {
+        background: #ede7f6;
+        border-color: #b39ddb;
+    }
+
+    .queue-status.has-failed {
+        background: #ffebee;
+        border-color: #ef9a9a;
+    }
+
+    .queue-icon {
+        font-size: 14px;
+    }
+
+    .queue-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .queue-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .queue-retry {
+        padding: var(--space-1) var(--space-2);
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+
+    .queue-retry:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+
+    .queue-retry:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     /* Loading & Error States */
@@ -1816,5 +1991,82 @@
 
     .spark-empty-text {
         font-size: 13px;
+    }
+
+    /* Context-Aware Flow Entry */
+    .context-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        margin-top: var(--space-2);
+    }
+
+    .context-card {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        padding: var(--space-4);
+        background: linear-gradient(135deg, var(--secondary-lighter) 0%, var(--bg-elevated) 100%);
+        border: 1px solid var(--secondary-light);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        width: 100%;
+    }
+
+    .context-card:hover {
+        border-color: var(--secondary);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .context-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: var(--secondary-lighter);
+        border-radius: var(--radius-sm);
+        color: var(--secondary);
+        flex-shrink: 0;
+    }
+
+    .context-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .context-title {
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .context-hint {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .context-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--secondary);
+        opacity: 0.6;
+        transition: all 0.15s ease;
+    }
+
+    .context-card:hover .context-arrow {
+        opacity: 1;
+        transform: translateX(2px);
     }
 </style>

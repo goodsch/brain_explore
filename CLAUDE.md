@@ -68,8 +68,8 @@ Four-agent critical analysis of SiYuan plugin revealed catastrophic disconnect b
   - New endpoints: `/question-classes` (list all with descriptions), `/approach-classes` (show approach→class mappings)
   - ClassifiedQuestion schema for tagged questions with cognitive function labels
   - Integration with ForgeMode: state detection, approach selection, question generation all use class system
-- ✅ **AST Folder Structure and Session Persistence (Commit c97aaf7)** — SiYuan plugin now creates structured session documents
-  - Expanded STRUCTURE_FOLDERS: /Concepts/ + mode-specific /Sessions/{mode}/ folders (Learning, Articulating, Planning, Ideating, Reflecting)
+- ✅ **AST Folder Structure and Session Persistence (Commit c97aaf7, updated dfe3ced)** — SiYuan plugin creates structured session documents with complete 10-folder hierarchy
+  - **Complete STRUCTURE_FOLDERS:** /Daily/, /Seedlings/ (7 subcategories), /Sessions/ (5 mode folders), /Flow_Maps/, /Concepts/, /Insights/, /Favorite_Problems/, /Projects/, /Archive/, /System/ (Templates + Example_Notes)
   - createSessionDocument() function: saves sessions with frontmatter (be_type, be_id, mode, topic, status, resonance, energy)
   - Session documents include: section responses (template-driven), full conversation transcript, entities extracted, graph mapping status
   - ForgeMode integration: sessions auto-save to SiYuan on completion with timestamp and mode-specific folder placement
@@ -554,6 +554,13 @@ This project builds a **general intelligent exploration system** (Layers 1-4) fo
 ## Architecture: ADHD-Friendly Personal Knowledge Layer
 
 **Recent Changes (Dec 5):**
+- **SiYuan Plugin Structure Refinements** — Enhanced domain-agnostic configuration and session document metadata:
+  - `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts`: Updated session document creation with ShapingBlockMeta support (769 lines)
+  - **10-folder structure complete:** Added `/System/` folder with Templates and Example_Notes subfolders (Package's 07_System)
+  - **Backend health check fix:** Aligned `BackendHealth` interface with Dashboard expectations (`ok`, `backendUrl`, `checkedAt`, `message` fields)
+  - **Notebook preferences:** Added 'IES' to default notebook names for better domain-agnostic alignment
+  - **Error handling enhancement:** `callBackendApi()` now properly throws errors instead of returning null, with detailed logging
+  - **Purpose:** Completes merged architecture with full Package 07_System layer, fixes health check interface mismatch
 - **Backend Health Check Bug Fix** — Fixed `checkBackendHealth()` function interface alignment with Dashboard component:
   - `.worktrees/siyuan/ies/plugin/src/utils/siyuan-structure.ts`: Updated `BackendHealth` interface and function signature
   - **Interface change:** From `{ status: string, timestamp?: string }` to `{ ok: boolean, backendUrl: string, checkedAt: number, message?: string }`

@@ -12,13 +12,17 @@
  * - Block attributes syncing for backend linking (be_id, be_type, status)
  * - Archive functionality for old captures
  * - Project linking for capture-to-project workflow
+ * - Offline queue for failed backend operations
  */
 
-import { fetchSyncPost, setBlockAttrs, getBlockByID, createDocWithMd, appendBlock } from 'siyuan';
+import { fetchSyncPost } from 'siyuan';
+import { setBlockAttrs, getBlockByID, createDocWithMd, appendBlock } from '../api';
 import type { Block, Notebook } from 'siyuan';
 import { lsNotebooks, moveDocsByID } from '../api';
 import type { ShapingBlockMeta, DecisionBlockMeta } from '../types/blocks';
 import { getSettingsSync } from '../stores/settings';
+import { offlineQueue } from './offlineQueue';
+import type { QueuedOperation } from './offlineQueue';
 
 // === Configuration ===
 
@@ -189,6 +193,12 @@ export async function checkBackendHealth(options: { force?: boolean } = {}): Pro
         };
         cachedHealthStatus = result;
         cachedHealthTimestamp = now;
+
+        // Process offline queue when backend becomes available
+        if (result.ok) {
+            await processOfflineQueue();
+        }
+
         return result;
     } catch (err) {
         const result: BackendHealth = {
@@ -1113,6 +1123,166 @@ export async function getPersonalStats(): Promise<{
     sparks_by_status: Record<string, number>;
 } | null> {
     return callBackendApi('GET', '/personal/stats');
+}
+
+// === User Identity ===
+
+/**
+ * Device ID for anonymous users (persisted in localStorage).
+ */
+function getDeviceId(): string {
+    const key = 'ies-siyuan-device-id';
+    if (typeof window === 'undefined' || !window?.localStorage) {
+        return `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+    let deviceId = window.localStorage.getItem(key);
+    if (!deviceId) {
+        deviceId = `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        window.localStorage.setItem(key, deviceId);
+    }
+    return deviceId;
+}
+
+export interface UserProfile {
+    user_id: string;
+    created_at: string;
+    last_active_at: string;
+}
+
+/**
+ * Login to the backend and get/create user profile.
+ * Uses device ID for anonymous users.
+ */
+export async function login(userId?: string): Promise<UserProfile> {
+    const id = userId || getDeviceId();
+    const result = await callBackendApi<UserProfile>(
+        'POST',
+        `/profile/login?user_id=${encodeURIComponent(id)}`
+    );
+    if (!result) {
+        throw new Error('Login failed: no response from backend');
+    }
+    return result;
+}
+
+// === Journey Management ===
+
+export interface JourneyStep {
+    entityId: string;
+    entityName: string;
+    timestamp: string;
+    sourcePassage?: string;
+    dwellTimeSeconds: number;
+}
+
+export interface JourneyData {
+    entryPoint: {
+        type: string;
+        reference: string;
+    };
+    path: JourneyStep[];
+}
+
+export interface SavedJourney {
+    id: string;
+    user_id: string;
+    started_at: string;
+    ended_at: string;
+}
+
+/**
+ * Save a journey to the backend.
+ * Transforms the journey to backend schema (camelCase to snake_case).
+ * Falls back to offline queue if backend is unreachable.
+ */
+export async function saveJourney(journey: JourneyData, userId: string): Promise<SavedJourney | null> {
+    const backendJourney = {
+        user_id: userId,
+        entry_point: {
+            type: journey.entryPoint.type,
+            reference: journey.entryPoint.reference,
+        },
+        path: journey.path.map((step) => ({
+            entity_id: step.entityId,
+            entity_name: step.entityName,
+            timestamp: step.timestamp,
+            source_passage: step.sourcePassage || null,
+            dwell_time_seconds: step.dwellTimeSeconds,
+        })),
+        marks: [],
+        thinking_partner_exchanges: [],
+        title: null,
+        tags: [],
+        notes: null,
+    };
+
+    try {
+        const result = await callBackendApi<SavedJourney>('POST', '/journeys', backendJourney);
+        if (!result) {
+            throw new Error('Failed to save journey: no response from backend');
+        }
+        console.log('[IES] Journey saved successfully:', result.id);
+        return result;
+    } catch (err) {
+        // Backend unreachable, queue for later
+        console.warn('[IES] Backend unreachable, queueing journey for later:', err);
+
+        await offlineQueue.saveOperation({
+            userId,
+            operationType: 'journey',
+            payload: backendJourney,
+            endpoint: '/journeys',
+            timestamp: new Date().toISOString()
+        });
+
+        console.log('[IES] Journey queued successfully');
+        // Return null to indicate queued (not saved yet)
+        return null;
+    }
+}
+
+/**
+ * Process offline queue (call when backend becomes available).
+ * Executes all queued operations via callBackendApi.
+ */
+export async function processOfflineQueue(): Promise<void> {
+    const status = offlineQueue.getQueueStatus();
+    if (status.pending === 0) {
+        return; // Nothing to process
+    }
+
+    console.log('[IES] Processing offline queue:', status.pending, 'pending operations');
+
+    const executeOperation = async (op: QueuedOperation): Promise<void> => {
+        const method = op.operationType === 'journey' ? 'POST' : 'POST'; // All current ops are POST
+        await callBackendApi(method, op.endpoint, op.payload);
+    };
+
+    const result = await offlineQueue.processQueue(executeOperation);
+
+    if (result.successful > 0) {
+        console.log('[IES] Successfully synced', result.successful, 'operations');
+    }
+    if (result.failed > 0) {
+        console.error('[IES] Failed to sync', result.failed, 'operations:', result.errors);
+    }
+}
+
+/**
+ * Get journey history for a user.
+ */
+export async function getJourneyHistory(userId: string, page: number = 1, limit: number = 20): Promise<{
+    journeys: SavedJourney[];
+    total: number;
+}> {
+    const result = await callBackendApi<{ journeys: SavedJourney[]; total?: number }>(
+        'GET',
+        `/journeys/user/${encodeURIComponent(userId)}?page=${page}&limit=${limit}`
+    );
+    return {
+        journeys: result?.journeys || [],
+        total: result?.total || result?.journeys?.length || 0,
+    };
 }
 
 /**
