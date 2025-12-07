@@ -1,0 +1,59 @@
+# IES Changelog
+
+This file contains detailed development history. For current status, see CLAUDE.md.
+
+## December 2025
+
+### Dec 7 - IES Reader Wave 2 & Wave 3, MCP Server
+- **IES Modern Theme** — Dark-mode-first SiYuan theme (IES Design System v2)
+- **IES Reader Wave 2** — Interactive reading features (questions, breadcrumbs, notes capture)
+- **IES Reader Wave 3** — Mobile optimization, ingestion queue UI (in progress)
+- **IES MCP Server** — Voice-driven ForgeMode sessions via Claude Desktop
+
+### Dec 6 - 5-Wave Remediation Sprint Complete
+- **Wave 1 (Foundation):** UnifiedGraphClient (1,476 lines), Redis session store, user ID system
+- **Wave 2 (Wiring):** Cross-app sync design, journey persistence from both apps
+- **Wave 3 (Visibility):** Journey synthesis API, question feedback service
+- **Wave 4 (Learning):** Profile learning from sessions, question selection from feedback
+- **Wave 5 (Quality):** 63 new tests, 185 total tests passing, 78% coverage
+- **IES Reader Wave 1** — Calibre library browser, PWA, IES design system
+
+### Dec 5 - SiYuan & Readest Remediation
+- SiYuan plugin remediation complete (interactive questions, cognitive guidance)
+- Readest remediation complete (entity click-to-flow, journey breadcrumbs)
+- Architecture merge: IES SiYuan Architecture Package + current implementation
+- Flow Mode backend implementation (capture → thinking → flow pipeline)
+
+### Dec 4 - Calibre Integration & Entity Overlay
+- Calibre integration Phase 2-3 complete (backend APIs, ingestion pipeline)
+- Entity overlay feature complete (inline highlighting in Readest)
+- Template API and Reframe API complete
+
+### Dec 3 - Phase 2c Planning
+- Integration gaps analysis
+- Reframe + Template integration design
+- ADHD-friendly ontology research
+
+## Status Summary
+
+- **Phase 0:** Configuration stabilization ✅
+- **Phase 1:** Core hypothesis validated (11 concepts extracted) ✅
+- **Phase 2a:** CLI exploration tool validated ✅
+- **Phase 2b:** Visual interfaces (Readest + SiYuan MVP) ✅
+- **Phase 2c:** Integration features (~65% complete)
+
+## Phase 1 Results
+
+10 validation sessions completed. Personal growth framework emerged:
+1. Narrow Window of Awareness
+2. Acceptance vs. Resignation
+3. Grief as Acceptance
+4. Metabolization of Difficulty
+5. Shame as Non-Acceptance
+6. Authentic Presence
+7. Nervous System Configurations
+8. Capacity and Nervous System Access
+9. Superpower in Weakness
+10. Window as Condition for Depth
+
+See `/therapy/Track_1_Human_Mind/` for extracted concepts.
