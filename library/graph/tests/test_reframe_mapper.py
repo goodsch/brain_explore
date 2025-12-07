@@ -74,10 +74,12 @@ class TestReframeMapperQueries:
         assert sources[0]["name"] == "Backwards Bicycle"
         assert sources[1]["type"] == "pattern"
 
-        # Verify query includes REFRAME_SOURCE_TYPES
+        # Verify query uses calibre_id and queries by label
         call_args = mock_session.run.call_args
-        assert call_args[1]["source_types"] == REFRAME_SOURCE_TYPES
         assert call_args[1]["calibre_id"] == 42
+        # Query should use label-based filtering (Pattern, StoryInsight, etc.)
+        query = call_args[0][0]
+        assert "e:Pattern" in query or "Pattern" in query
 
     def test_get_concepts_without_reframes(self, mock_kg):
         """Should return concepts ordered by fewest reframe connections."""

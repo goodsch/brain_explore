@@ -103,10 +103,18 @@ class ReframeGenerator:
     def get_story_insights_and_patterns(self, limit: int = 30) -> list[dict]:
         """Get available StoryInsights and Patterns for reframe generation."""
         with self.kg.driver.session() as session:
+            # Query by label (Pattern, StoryInsight, etc.) not type property
             result = session.run("""
                 MATCH (e)
-                WHERE e.type IN ['story_insight', 'pattern', 'dynamic_pattern', 'schema_break']
-                RETURN e.name AS name, e.type AS type, e.description AS description,
+                WHERE e:Pattern OR e:DynamicPattern OR e:StoryInsight OR e:SchemaBreak
+                RETURN e.name AS name,
+                       CASE
+                         WHEN e:Pattern THEN 'pattern'
+                         WHEN e:DynamicPattern THEN 'dynamic_pattern'
+                         WHEN e:StoryInsight THEN 'story_insight'
+                         WHEN e:SchemaBreak THEN 'schema_break'
+                       END AS type,
+                       e.description AS description,
                        e.source_domain AS source_domain
                 LIMIT $limit
             """, limit=limit)

@@ -234,12 +234,21 @@ class TestKnowledgeGraphMethods:
             mock_driver.return_value.session.return_value.__enter__.return_value = mock_session
 
             client = UnifiedGraphClient()
-            client.add_book("Test Book", "Author", "/path", calibre_id=42)
+            client.add_book(
+                "Test Book",
+                "Author",
+                "/path",
+                calibre_id=42,
+                pattern_type="design",
+                pattern_type_confidence=0.9,
+                pattern_type_rationale="Structural pattern guide"
+            )
 
             call_args = mock_session.run.call_args
             query = call_args[0][0]
             assert "Book" in query
             assert "calibre_id" in str(call_args[1])
+            assert call_args[1]["pattern_type"] == "design"
 
     def test_book_exists_checks_by_calibre_id(self):
         """book_exists should check for book by calibre_id."""
@@ -255,6 +264,26 @@ class TestKnowledgeGraphMethods:
             exists = client.book_exists(42)
 
             assert exists is True
+
+    def test_update_book_pattern_type_sets_properties(self):
+        """update_book_pattern_type should set classification metadata."""
+        with patch("library.graph.unified_client.get_driver") as mock_driver:
+            mock_session = MagicMock()
+            mock_driver.return_value.session.return_value.__enter__.return_value = mock_session
+
+            client = UnifiedGraphClient()
+            client.update_book_pattern_type(
+                calibre_id=42,
+                pattern_type="narrative",
+                confidence=0.72,
+                rationale="Primarily storytelling structure"
+            )
+
+            call_args = mock_session.run.call_args
+            query = call_args[0][0]
+            assert "pattern_type" in query
+            assert call_args[1]["pattern_type"] == "narrative"
+            assert call_args[1]["confidence"] == 0.72
 
 
 class TestADHDGraphMethods:

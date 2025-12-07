@@ -16,13 +16,16 @@ Usage:
 """
 
 import argparse
+import json
 import sqlite3
 import sys
+import textwrap
 from pathlib import Path
 from dataclasses import dataclass
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.table import Table
+from openai import OpenAI
 
 # Add library to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -37,6 +40,8 @@ console = Console()
 # Configuration
 CALIBRE_DB = Path("./calibre/library/metadata.db")
 CALIBRE_LIBRARY = Path("./calibre/library")
+PATTERN_TYPES = ["design", "narrative", "dynamic", "embodied", "identity", "mixed"]
+PATTERN_CLASSIFIER_MODEL = "gpt-4o-mini"
 
 
 @dataclass
@@ -46,6 +51,92 @@ class CalibreBook:
     title: str
     author: str
     path: str  # Full path to epub/pdf
+
+
+@dataclass
+class PatternClassification:
+    """LLM-derived pattern type classification for a book."""
+    pattern_type: str
+    confidence: float
+    rationale: str
+
+
+PATTERN_PROMPT = """You classify books by the type of conceptual patterns they provide.
+
+Return a JSON object:
+{{
+  "pattern_type": "design | narrative | dynamic | embodied | identity | mixed",
+  "confidence": 0.0-1.0,
+  "rationale": "one sentence on why"
+}}
+
+Pattern types:
+- design: structural templates, pattern languages, system design guidance
+- narrative: stories, reportage, case studies used to explain ideas
+- dynamic: systems, timing, cycles, synchronization, feedback behavior
+- embodied: sensorimotor/physical experience metaphors and body-based framing
+- identity: self-concept, career/role identity, values and traits as patterns
+- mixed: balanced blend of multiple categories or unclear dominant orientation
+
+Use the metadata and text sample to decide. Prefer the dominant orientation a reader would use this book for.
+
+Book:
+- Title: {title}
+- Author: {author}
+- Metadata: {metadata}
+
+Text sample (truncated):
+\"\"\"{text_sample}\"\"\""""
+
+
+class PatternTypeClassifier:
+    """LLM helper to assign pattern_type to books."""
+
+    def __init__(self, client: OpenAI | None = None, model: str = PATTERN_CLASSIFIER_MODEL):
+        self.client = client or OpenAI()
+        self.model = model
+
+    def classify(self, title: str, author: str, metadata: str | None, text_sample: str | None) -> PatternClassification | None:
+        """Return pattern classification or None on failure."""
+        sample = (text_sample or "").strip()
+        if not sample:
+            sample = "No text available; rely on metadata only."
+
+        prompt = PATTERN_PROMPT.format(
+            title=title or "Unknown title",
+            author=author or "Unknown author",
+            metadata=metadata or "No additional metadata",
+            text_sample=sample
+        )
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                response_format={"type": "json_object"}
+            )
+            content = response.choices[0].message.content
+            data = json.loads(content)
+            pattern_type = (data.get("pattern_type") or "").strip().lower()
+
+            if pattern_type not in PATTERN_TYPES:
+                return None
+
+            confidence = float(data.get("confidence", 0))
+            rationale = str(data.get("rationale", "")).strip()
+            return PatternClassification(pattern_type=pattern_type, confidence=confidence, rationale=rationale)
+        except Exception as e:
+            console.print(f"  [yellow]Pattern classification skipped:[/] {e}")
+            return None
+
+
+def _summarize_text_for_classification(text: str, max_chars: int = 2000) -> str:
+    """Prepare a concise text sample for pattern classification."""
+    clean_text = " ".join(text.split())
+    if len(clean_text) <= max_chars:
+        return clean_text
+    return textwrap.shorten(clean_text, width=max_chars, placeholder="...")
 
 
 def get_calibre_books(limit: int | None = None, calibre_id: int | None = None) -> list[CalibreBook]:
@@ -96,7 +187,7 @@ def get_calibre_books(limit: int | None = None, calibre_id: int | None = None) -
     return books
 
 
-def ingest_book(book: CalibreBook, kg: KnowledgeGraph, extractor: EntityExtractor) -> dict:
+def ingest_book(book: CalibreBook, kg: KnowledgeGraph, extractor: EntityExtractor, classifier: PatternTypeClassifier | None = None) -> dict:
     """Ingest a single book - extract entities and store in Neo4j."""
     stats = {
         "calibre_id": book.calibre_id,
@@ -105,7 +196,8 @@ def ingest_book(book: CalibreBook, kg: KnowledgeGraph, extractor: EntityExtracto
         "chunks": 0,
         "entities": 0,
         "relationships": 0,
-        "status": "success"
+        "status": "success",
+        "pattern_type": None
     }
 
     try:
@@ -133,6 +225,27 @@ def ingest_book(book: CalibreBook, kg: KnowledgeGraph, extractor: EntityExtracto
             doc = extract_document(path)
         stats["sections"] = len(doc.sections)
         console.print(f"  Extracted: {len(doc.sections)} sections")
+
+        # Classify pattern type using a short text sample
+        if classifier and doc.sections:
+            sample_text = _summarize_text_for_classification(doc.full_text)
+            classification = classifier.classify(
+                title=doc.title or book.title,
+                author=doc.author or book.author,
+                metadata=f"Calibre path: {book.path}",
+                text_sample=sample_text
+            )
+            if classification:
+                stats["pattern_type"] = classification.pattern_type
+                kg.update_book_pattern_type(
+                    calibre_id=book.calibre_id,
+                    pattern_type=classification.pattern_type,
+                    confidence=classification.confidence,
+                    rationale=classification.rationale
+                )
+                console.print(f"  Pattern type: [green]{classification.pattern_type}[/] (conf {classification.confidence:.2f})")
+            else:
+                console.print("  [yellow]Pattern type: unavailable[/]")
 
         if not doc.sections:
             console.print("  [yellow]No sections found, skipping[/]")
@@ -250,6 +363,26 @@ def show_status(kg: KnowledgeGraph):
 
         console.print(table)
 
+        # Pattern type classification counts
+        result = session.run("""
+            MATCH (b:Book)
+            WHERE b.pattern_type IS NOT NULL
+            RETURN b.pattern_type AS pattern_type, count(b) AS count
+            ORDER BY count DESC
+        """)
+
+        pattern_table = Table(title="Pattern Type Coverage")
+        pattern_table.add_column("Pattern Type", style="cyan")
+        pattern_table.add_column("Count", justify="right")
+
+        has_rows = False
+        for record in result:
+            has_rows = True
+            pattern_table.add_row(record["pattern_type"], str(record["count"]))
+
+        if has_rows:
+            console.print(pattern_table)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Ingest Calibre books into Neo4j")
@@ -284,11 +417,12 @@ def main():
 
     # Initialize extractor
     extractor = EntityExtractor()
+    classifier = PatternTypeClassifier()
 
     # Process books
     results = []
     for book in books:
-        result = ingest_book(book, kg, extractor)
+        result = ingest_book(book, kg, extractor, classifier)
         results.append(result)
 
     # Summary
@@ -298,10 +432,12 @@ def main():
     success = sum(1 for r in results if r["status"] == "success")
     skipped = sum(1 for r in results if r["status"] == "skipped")
     errors = sum(1 for r in results if r["status"].startswith("error"))
+    classified = sum(1 for r in results if r.get("pattern_type"))
 
     console.print(f"  Processed: {success} books")
     console.print(f"  Skipped: {skipped} books")
     console.print(f"  Errors: {errors} books")
+    console.print(f"  Pattern types classified: {classified}")
     console.print(f"  Total entities: {sum(r['entities'] for r in results)}")
     console.print(f"  Total relationships: {sum(r['relationships'] for r in results)}")
 

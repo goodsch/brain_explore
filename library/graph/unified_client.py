@@ -62,7 +62,7 @@ ALLOWED_TYPES = {
 }
 
 # Schema version - increment when making breaking changes
-SCHEMA_VERSION = "0.1.0"
+SCHEMA_VERSION = "0.2.0"
 
 
 def get_driver() -> Driver:
@@ -306,7 +306,10 @@ class UnifiedGraphClient:
         author: Optional[str],
         path: str,
         calibre_id: Optional[int] = None,
-        processing_status: str = "pending"
+        processing_status: str = "pending",
+        pattern_type: Optional[str] = None,
+        pattern_type_confidence: Optional[float] = None,
+        pattern_type_rationale: Optional[str] = None,
     ):
         """Add a book node with optional calibre_id."""
         with self.driver.session() as session:
@@ -314,16 +317,28 @@ class UnifiedGraphClient:
                 session.run("""
                     MERGE (b:Book {calibre_id: $calibre_id})
                     SET b.title = $title, b.author = $author, b.path = $path,
-                        b.processing_status = $status, b.schema_version = $schema_version
+                        b.processing_status = $status, b.schema_version = $schema_version,
+                        b.pattern_type = $pattern_type,
+                        b.pattern_type_confidence = $pattern_type_confidence,
+                        b.pattern_type_rationale = $pattern_type_rationale
                 """, calibre_id=calibre_id, title=title, author=author,
-                    path=path, status=processing_status, schema_version=SCHEMA_VERSION)
+                    path=path, status=processing_status, schema_version=SCHEMA_VERSION,
+                    pattern_type=pattern_type,
+                    pattern_type_confidence=pattern_type_confidence,
+                    pattern_type_rationale=pattern_type_rationale)
             else:
                 session.run("""
                     MERGE (b:Book {path: $path})
                     SET b.title = $title, b.author = $author,
-                        b.processing_status = $status, b.schema_version = $schema_version
+                        b.processing_status = $status, b.schema_version = $schema_version,
+                        b.pattern_type = $pattern_type,
+                        b.pattern_type_confidence = $pattern_type_confidence,
+                        b.pattern_type_rationale = $pattern_type_rationale
                 """, title=title, author=author, path=path,
-                    status=processing_status, schema_version=SCHEMA_VERSION)
+                    status=processing_status, schema_version=SCHEMA_VERSION,
+                    pattern_type=pattern_type,
+                    pattern_type_confidence=pattern_type_confidence,
+                    pattern_type_rationale=pattern_type_rationale)
 
     def book_exists(self, calibre_id: int) -> bool:
         """Check if a book with calibre_id already exists."""
@@ -342,6 +357,27 @@ class UnifiedGraphClient:
                 MATCH (b:Book {calibre_id: $calibre_id})
                 SET b.processing_status = $status
             """, calibre_id=calibre_id, status=status)
+
+    def update_book_pattern_type(
+        self,
+        calibre_id: int,
+        pattern_type: Optional[str],
+        confidence: Optional[float] = None,
+        rationale: Optional[str] = None,
+    ):
+        """Attach pattern type classification metadata to a book."""
+        with self.driver.session() as session:
+            session.run("""
+                MATCH (b:Book {calibre_id: $calibre_id})
+                SET b.pattern_type = $pattern_type,
+                    b.pattern_type_confidence = $confidence,
+                    b.pattern_type_rationale = $rationale
+            """,
+                calibre_id=calibre_id,
+                pattern_type=pattern_type,
+                confidence=confidence,
+                rationale=rationale
+            )
 
     def add_chunk(self, chunk_id: str, content: str, book_path: str):
         """Add a chunk and link to its book."""

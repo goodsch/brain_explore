@@ -85,11 +85,19 @@ class ReframeMapper:
     def get_reframe_sources_for_book(self, calibre_id: int) -> list[dict]:
         """Get pattern/story entities from a specific book."""
         with self.kg.driver.session() as session:
+            # Query by label (Pattern, StoryInsight, etc.) not type property
             result = session.run("""
                 MATCH (b:Book {calibre_id: $calibre_id})-[:MENTIONS]->(e)
-                WHERE e.type IN $source_types
-                RETURN e.name AS name, e.type AS type, e.description AS description
-            """, calibre_id=calibre_id, source_types=REFRAME_SOURCE_TYPES)
+                WHERE e:Pattern OR e:DynamicPattern OR e:StoryInsight OR e:SchemaBreak
+                RETURN e.name AS name,
+                       CASE
+                         WHEN e:Pattern THEN 'pattern'
+                         WHEN e:DynamicPattern THEN 'dynamic_pattern'
+                         WHEN e:StoryInsight THEN 'story_insight'
+                         WHEN e:SchemaBreak THEN 'schema_break'
+                       END AS type,
+                       e.description AS description
+            """, calibre_id=calibre_id)
             return [dict(r) for r in result]
 
     def get_concepts_without_reframes(self, limit: int = 50) -> list[dict]:
