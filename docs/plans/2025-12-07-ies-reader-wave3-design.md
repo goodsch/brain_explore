@@ -1,7 +1,7 @@
 # IES Reader Wave 3 Enhancement Design
 
 **Created:** 2025-12-07
-**Status:** DRAFT
+**Status:** COMPLETE
 **Scope:** Mobile optimization + Ingestion queue UI + Notes/annotations UX
 
 ---

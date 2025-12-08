@@ -7,8 +7,9 @@ This file contains detailed development history. For current status, see CLAUDE.
 ### Dec 7 - IES Reader Wave 2 & Wave 3, MCP Server
 - **IES Modern Theme** — Dark-mode-first SiYuan theme (IES Design System v2)
 - **IES Reader Wave 2** — Interactive reading features (questions, breadcrumbs, notes capture)
-- **IES Reader Wave 3** — Mobile optimization, ingestion queue UI (in progress)
+- **IES Reader Wave 3** — Mobile optimization, ingestion queue UI, text selection bar (COMPLETE)
 - **IES MCP Server** — Voice-driven ForgeMode sessions via Claude Desktop
+- **Conversation Service** — Parse Claude exports, extract insights, store in Neo4j
 
 ### Dec 6 - 5-Wave Remediation Sprint Complete
 - **Wave 1 (Foundation):** UnifiedGraphClient (1,476 lines), Redis session store, user ID system
