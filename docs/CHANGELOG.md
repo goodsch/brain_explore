@@ -4,6 +4,44 @@ This file contains detailed development history. For current status, see CLAUDE.
 
 ## December 2025
 
+### Dec 8 - Sprint 3: Cross-App Sync Backend + Sprint 1 & 2 Complete
+
+**Sprint 3 Backend: Cross-App Sync Service (Phase 1 Complete)**
+- `schemas/sync.py` — Session schemas for Reader ↔ SiYuan continuity (173 lines)
+  - `AppSource` enum: reader, siyuan
+  - `SessionStatus` enum: active, paused, completed
+  - `ReadingPosition`: CFI-aware book position (book_hash, calibre_id, cfi, chapter, progress_percent)
+  - `JourneyStep`: Entity exploration with dwell time tracking
+  - `ExplorationSession`: Complete cross-app state (id, user_id, app_source, status, journey_path, trail_stack)
+- `services/sync_service.py` — Redis-backed session management (376 lines)
+  - 7-day TTL for exploration sessions
+  - Session CRUD with upsert pattern
+  - Status-based organization for efficient queries
+  - Deep link generation: `readest://` and `siyuan://` protocols
+  - Automatic TTL extension on access
+- `api/sync.py` — REST endpoints for session sync (133 lines)
+  - `POST /sync/sessions` — Create or update session
+  - `GET /sync/sessions/active` — Get active/paused sessions for user
+  - `GET /sync/sessions/{id}` — Get specific session
+  - `GET /sync/sessions/{id}/resume` — Get resume data with deep link
+  - `PUT /sync/sessions/{id}/status` — Update session status
+- 19 new tests, **234 total tests passing**
+
+**Redux Spec Bundle Committed**
+- `redux/` folder with 28 files (3,526 lines)
+- Context + Question Layer specification
+- Entity types: Feynman problems, projects, questions, concepts
+- Pipeline: 4 layers (ingestion → light → deep → flow-triggered)
+- Flow/Reader/Journey integration specs
+
+**Documentation Cleanup**
+- `docs/facet-implementation-summary.md` — Complete facet implementation docs
+- `docs/facet-schema-design.md` — Schema rationale and design decisions
+- `docs/plans/2025-12-08-siyuan-note-schema.md` — Uniform note types
+- `docs/plans/conversation-bundle-architecture.md` — Conversation processing
+- Backend scripts: `seed_facets.py`, `backfill_evidence.py`
+- Research papers folder with 7 arXiv PDFs
+
 ### Dec 8 - Sprint 2: Evidence Endpoint + AI Facet Generation
 
 **Sprint 2 SiYuan Plugin: Evidence Section**
