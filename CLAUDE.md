@@ -18,16 +18,16 @@ Four-layer system for AI-partnered knowledge exploration:
 
 ## Current Status
 
-**Phase 2c: ~65% complete** (Dec 7, 2025)
+**Phase 2c: ~75% complete** (Dec 7, 2025)
 
 Completed:
 - 5-wave backend remediation (all components production-ready)
-- IES Reader Waves 1-2 (library browser, PWA, interactive features)
+- IES Reader Waves 1-3 (library, PWA, interactive, mobile UX)
 - IES MCP Server (voice-driven ForgeMode via Claude Desktop)
 - SiYuan + Readest remediation complete
+- Conversation service (parse Claude exports → Neo4j)
 
 In Progress:
-- IES Reader Wave 3 (mobile optimization, ingestion queue UI)
 - Pass 2/3 enrichment pipeline
 - Cross-app sync
 
