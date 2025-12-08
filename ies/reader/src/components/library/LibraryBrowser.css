@@ -68,7 +68,7 @@
   background: rgba(245, 158, 11, 0.1);
 }
 
-/* Queue Indicator */
+/* Queue Indicator - Modern Glass Style */
 .library-queue-indicator {
   display: flex;
   align-items: center;
@@ -77,29 +77,37 @@
   font-family: var(--ies-font-body);
   font-size: var(--ies-text-sm);
   font-weight: 500;
-  color: var(--ies-warning, #f59e0b);
+  
+  /* Glass Effect */
   background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  
+  color: var(--ies-warning, #f59e0b);
   border-radius: var(--ies-radius-full);
   cursor: pointer;
   transition: all var(--ies-duration-fast) var(--ies-ease-default);
 }
 
 .library-queue-indicator:hover {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .library-queue-indicator.processing {
   color: var(--ies-accent);
-  background: var(--ies-accent-subtle);
-  border-color: var(--ies-accent);
+  background: rgba(59, 130, 246, 0.1); /* Blue tint */
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .library-queue-indicator.has-failed {
   color: var(--ies-error, #ef4444);
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1); /* Red tint */
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .library-queue-indicator .spinning {
@@ -353,13 +361,27 @@
   font-size: var(--text-xs);
   font-weight: var(--font-semibold);
   color: white;
-  background: var(--gradient-concept);
+  
+  /* Glass Badge Style */
+  background: rgba(0, 0, 0, 0.6); /* Fallback */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  
   border-radius: var(--radius-full);
-  box-shadow: var(--shadow-sm);
 }
 
 .book-card-badge-queued {
-  background: var(--ies-warning, #f59e0b);
+  background: rgba(245, 158, 11, 0.7); /* Glassy Orange */
+}
+
+.book-card-badge-processing {
+  background: rgba(59, 130, 246, 0.7); /* Glassy Blue */
+}
+
+.book-card-badge-failed {
+  background: rgba(239, 68, 68, 0.7); /* Glassy Red */
 }
 
 .book-card-info {

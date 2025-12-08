@@ -53,6 +53,7 @@ class ConversationService:
             topic=topic,
             turns=turns,
             extraction=extraction,
+            transcript=transcript,
         )
 
         return ConversationImportResponse(session=session, extraction=extraction)
@@ -78,6 +79,7 @@ class ConversationService:
                     imported_at=datetime.fromisoformat(node.get("imported_at")),
                     turn_count=node.get("turn_count", 0),
                     entity_count=node.get("entity_count", 0),
+                    transcript=node.get("transcript"),
                     turns=[],
                 )
             )
@@ -96,6 +98,10 @@ class ConversationService:
             return None
         row = rows[0]
         node = row.get("c", {})
+        transcript = node.get("transcript")
+        turns = []
+        if transcript:
+            turns = ConversationService._normalize_turns(transcript, source_for_parse=node.get("source", "text"))
         return ConversationSession(
             id=node.get("id"),
             source=ConversationSource(node.get("source", "text")),
@@ -103,7 +109,8 @@ class ConversationService:
             imported_at=datetime.fromisoformat(node.get("imported_at")),
             turn_count=node.get("turn_count", 0),
             entity_count=node.get("entity_count", 0),
-            turns=[],
+            transcript=transcript,
+            turns=turns,
         )
 
     @staticmethod
@@ -201,6 +208,7 @@ class ConversationService:
         topic: str | None,
         turns: list[ConversationTurn],
         extraction: ExtractionResult | None,
+        transcript: str,
     ) -> ConversationSession:
         """Persist session and relationships to Neo4j."""
         session_id = f"conv_{uuid.uuid4().hex[:10]}"
@@ -214,7 +222,8 @@ class ConversationService:
             c.user_id = $user_id,
             c.imported_at = $imported_at,
             c.turn_count = $turn_count,
-            c.entity_count = $entity_count
+            c.entity_count = $entity_count,
+            c.transcript = $transcript
         """
         await Neo4jClient.execute_write(
             query,
@@ -226,6 +235,7 @@ class ConversationService:
                 "imported_at": imported_at,
                 "turn_count": len(turns),
                 "entity_count": len(entity_names),
+                "transcript": transcript,
             },
         )
 
@@ -256,5 +266,6 @@ class ConversationService:
             imported_at=datetime.fromisoformat(imported_at),
             turn_count=len(turns),
             entity_count=len(entity_names),
+            transcript=transcript,
             turns=turns,
         )

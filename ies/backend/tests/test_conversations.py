@@ -28,6 +28,7 @@ def conversation_store(monkeypatch):
                 "imported_at": params.get("imported_at"),
                 "turn_count": params.get("turn_count", 0),
                 "entity_count": params.get("entity_count", 0),
+                "transcript": params.get("transcript"),
             }
             store[node["id"]] = node
             return [{"c": node}]
@@ -95,11 +96,10 @@ async def test_import_conversation_claude_json(monkeypatch, conversation_store):
             )
         ]
     )
-    monkeypatch.setattr(
-        ConversationService,
-        "_extract_entities",
-        staticmethod(lambda transcript: extraction),
-    )
+    async def fake_extract(transcript: str):
+        return extraction
+
+    monkeypatch.setattr(ConversationService, "_extract_entities", staticmethod(fake_extract))
 
     request = ConversationImport(
         source=ConversationSource.CLAUDE,

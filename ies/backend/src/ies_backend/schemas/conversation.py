@@ -46,6 +46,7 @@ class ConversationSession(BaseModel):
     imported_at: datetime
     turn_count: int
     entity_count: int = 0
+    transcript: Optional[str] = None
     turns: list[ConversationTurn] = Field(default_factory=list)
 
 

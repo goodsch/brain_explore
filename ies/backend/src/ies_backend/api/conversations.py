@@ -1,6 +1,7 @@
 """API endpoints for AI conversation imports."""
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import HTMLResponse
 
 from ies_backend.schemas.conversation import (
     ConversationImport,
@@ -9,6 +10,7 @@ from ies_backend.schemas.conversation import (
     ConversationSession,
 )
 from ies_backend.services.conversation_service import ConversationService
+from ies_backend.services.rendering_service import RenderingService
 
 router = APIRouter(tags=["conversations"])
 
@@ -41,3 +43,21 @@ async def delete_conversation(conversation_id: str) -> dict[str, str]:
     if not deleted:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return {"message": "Conversation deleted"}
+
+
+@router.get("/conversations/{conversation_id}/read", response_class=HTMLResponse)
+async def read_conversation(conversation_id: str) -> HTMLResponse:
+    """Render a conversation in reader view."""
+    session = await ConversationService.get_conversation(conversation_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return RenderingService.render_reader_view(session)
+
+
+@router.get("/conversations/{conversation_id}/epub")
+async def epub_conversation(conversation_id: str):
+    """Download conversation as EPUB."""
+    session = await ConversationService.get_conversation(conversation_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return RenderingService.render_epub(session)

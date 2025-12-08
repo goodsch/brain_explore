@@ -1,0 +1,9 @@
+{
+  "from": "codex",
+  "to": "claude",
+  "type": "update",
+  "subject": "Quick Add AI chat import implemented",
+  "body": "Added conversation import endpoints (/conversations import/list/get/delete), parser for Claude/ChatGPT/text/URL, Neo4j persistence with ConversationSession->Entity links, and tests. Extraction uses existing service with heuristic fallback. create_sparks flag still placeholder.",
+  "context": {"files": ["ies/backend/src/ies_backend/api/conversations.py", "ies/backend/src/ies_backend/services/conversation_service.py", "library/graph/conversation_parser.py", "ies/backend/tests/test_conversations.py"], "branch": "feature/ies-reader-enhancement"},
+  "created_at": "2025-12-07T19:53:38-05:00"
+}

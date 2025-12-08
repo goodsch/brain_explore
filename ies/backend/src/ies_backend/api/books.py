@@ -148,6 +148,68 @@ async def get_ingestion_queue() -> IngestionQueueResponse:
     return IngestionQueueResponse(items=items, total=len(items))
 
 
+class ProcessQueueResponse(BaseModel):
+    """Response for queue processing trigger."""
+
+    message: str
+    books_to_process: int
+    status: Literal["started", "empty", "already_running"]
+
+
+# Simple lock to prevent concurrent processing
+_processing_lock = False
+
+
+@router.post("/books/process-queue", response_model=ProcessQueueResponse)
+async def process_queue() -> ProcessQueueResponse:
+    """Trigger processing of queued books.
+
+    This endpoint starts background processing of all queued books.
+    Each book goes through:
+    - Pass 1: Entity extraction
+    - Pass 2: Relationship mapping
+
+    Note: This is a fire-and-forget trigger. Check queue status for progress.
+    """
+    global _processing_lock
+
+    if _processing_lock:
+        return ProcessQueueResponse(
+            message="Processing already in progress",
+            books_to_process=0,
+            status="already_running",
+        )
+
+    queue = _load_ingestion_queue()
+
+    # Handle both formats
+    if isinstance(queue, list):
+        items = [item for item in queue if item.get("status") == "queued"]
+    else:
+        items = [
+            item
+            for item in queue.get("items", {}).values()
+            if item.get("status") == "queued"
+        ]
+
+    if not items:
+        return ProcessQueueResponse(
+            message="No books queued for processing",
+            books_to_process=0,
+            status="empty",
+        )
+
+    # Start background processing
+    import asyncio
+    asyncio.create_task(_process_queue_background(items))
+
+    return ProcessQueueResponse(
+        message=f"Started processing {len(items)} books",
+        books_to_process=len(items),
+        status="started",
+    )
+
+
 @router.get("/books/{calibre_id}", response_model=Book)
 async def get_book(calibre_id: int) -> Book:
     """Get a single book by its Calibre ID."""
@@ -286,10 +348,128 @@ async def remove_from_queue(calibre_id: int) -> dict:
     """Remove a book from the ingestion queue."""
     queue = _load_ingestion_queue()
 
-    if str(calibre_id) not in queue.get("items", {}):
-        raise HTTPException(status_code=404, detail=f"Book {calibre_id} not in queue")
-
-    del queue["items"][str(calibre_id)]
-    _save_ingestion_queue(queue)
+    # Handle both list format (current) and dict format (legacy)
+    if isinstance(queue, list):
+        original_len = len(queue)
+        queue = [item for item in queue if item["calibre_id"] != calibre_id]
+        if len(queue) == original_len:
+            raise HTTPException(status_code=404, detail=f"Book {calibre_id} not in queue")
+        _save_ingestion_queue(queue)
+    else:
+        if str(calibre_id) not in queue.get("items", {}):
+            raise HTTPException(status_code=404, detail=f"Book {calibre_id} not in queue")
+        del queue["items"][str(calibre_id)]
+        _save_ingestion_queue(queue)
 
     return {"message": f"Book {calibre_id} removed from queue"}
+
+
+async def _process_queue_background(items: list[dict]) -> None:
+    """Background task to process queued books."""
+    global _processing_lock
+    _processing_lock = True
+
+    try:
+        import subprocess
+        import sys
+
+        for item in items:
+            calibre_id = item["calibre_id"]
+
+            # Update status to processing
+            _update_queue_item_status(calibre_id, "processing")
+
+            try:
+                # Run the daemon script for this specific book
+                # Using subprocess to avoid import issues with library modules
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-c",
+                        f"""
+import sys
+sys.path.insert(0, '/home/chris/dev/projects/codex/brain_explore')
+from scripts.auto_ingest_daemon import process_single_book, CalibreBook
+from library.graph.neo4j_client import KnowledgeGraph
+
+kg = KnowledgeGraph()
+
+# Get book info from Calibre
+import sqlite3
+from pathlib import Path
+
+CALIBRE_DB = Path('/home/chris/dev/projects/codex/brain_explore/calibre/library/metadata.db')
+CALIBRE_LIBRARY = Path('/home/chris/dev/projects/codex/brain_explore/calibre/library')
+
+with sqlite3.connect(CALIBRE_DB) as conn:
+    cursor = conn.execute(
+        "SELECT id, title, author_sort, path FROM books WHERE id = ?",
+        ({calibre_id},)
+    )
+    row = cursor.fetchone()
+    if row:
+        book_id, title, author, book_path = row
+        book_dir = CALIBRE_LIBRARY / book_path
+        epub_files = list(book_dir.glob("*.epub"))
+        pdf_files = list(book_dir.glob("*.pdf"))
+
+        if epub_files:
+            file_path = str(epub_files[0])
+        elif pdf_files:
+            file_path = str(pdf_files[0])
+        else:
+            print("No readable file found")
+            sys.exit(1)
+
+        book = CalibreBook(
+            calibre_id=book_id,
+            title=title,
+            author=author or "Unknown",
+            path=file_path
+        )
+
+        if process_single_book(kg, book):
+            print("SUCCESS")
+        else:
+            print("FAILED")
+    else:
+        print("Book not found in Calibre")
+        sys.exit(1)
+""",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=600,  # 10 minute timeout per book
+                )
+
+                if "SUCCESS" in result.stdout:
+                    _update_queue_item_status(calibre_id, "completed")
+                else:
+                    _update_queue_item_status(calibre_id, "failed")
+                    print(f"Processing failed for {calibre_id}: {result.stderr}")
+
+            except subprocess.TimeoutExpired:
+                _update_queue_item_status(calibre_id, "failed")
+                print(f"Timeout processing book {calibre_id}")
+            except Exception as e:
+                _update_queue_item_status(calibre_id, "failed")
+                print(f"Error processing book {calibre_id}: {e}")
+
+    finally:
+        _processing_lock = False
+
+
+def _update_queue_item_status(calibre_id: int, status: str) -> None:
+    """Update the status of a queue item."""
+    queue = _load_ingestion_queue()
+
+    if isinstance(queue, list):
+        for item in queue:
+            if item["calibre_id"] == calibre_id:
+                item["status"] = status
+                break
+    else:
+        if str(calibre_id) in queue.get("items", {}):
+            queue["items"][str(calibre_id)]["status"] = status
+
+    _save_ingestion_queue(queue)
