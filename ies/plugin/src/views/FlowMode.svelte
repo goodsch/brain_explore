@@ -74,10 +74,11 @@
         core_concepts: string[];
     }
     interface ContextSearchResult {
-        entity_name: string;
-        entity_type: string;
+        source_id: string;
+        source_title: string;
         snippet: string | null;
-        source_title: string | null;
+        relevance_score: number;
+        concepts_found: string[];
     }
     let isContextMode = false;
     let parsedContext: ParsedContext | null = null;
@@ -86,6 +87,167 @@
     let contextSearchResults: ContextSearchResult[] = [];
     let isContextSearching = false;
     let isDetectingContext = false;
+
+    // ========== Navigation State Machine (Phase 1) ==========
+    type FocusState = 'idle' | 'question' | 'entity' | 'facet';
+
+    interface TrailItem {
+        type: 'context' | 'question' | 'entity' | 'facet';
+        label: string;
+        data?: any; // Store relevant data for navigation back
+    }
+
+    interface EntityDetails {
+        name: string;
+        type: string;
+        description?: string;
+        neighbors: Array<{name: string, type: string, relationship: string, direction: 'in' | 'out'}>;
+        sourceBooks: string[];
+    }
+
+    let focusState: FocusState = 'idle';
+    let trailStack: TrailItem[] = [];
+    let focusedEntity: EntityDetails | null = null;
+    let isLoadingEntity = false;
+
+    // ========== Navigation Functions (Phase 1) ==========
+    function pushTrail(item: TrailItem) {
+        trailStack = [...trailStack, item];
+    }
+
+    function popTrail(): TrailItem | undefined {
+        if (trailStack.length === 0) return undefined;
+        const item = trailStack[trailStack.length - 1];
+        trailStack = trailStack.slice(0, -1);
+        return item;
+    }
+
+    function navigateToTrailIndex(index: number) {
+        if (index < 0 || index >= trailStack.length) return;
+
+        const targetItem = trailStack[index];
+        // Truncate trail to this index
+        trailStack = trailStack.slice(0, index + 1);
+
+        // Restore state based on item type
+        if (targetItem.type === 'context') {
+            focusState = 'idle';
+            focusedEntity = null;
+            activeQuestionIndex = null;
+        } else if (targetItem.type === 'question') {
+            focusState = 'question';
+            focusedEntity = null;
+            // Re-select the question if data available
+            if (targetItem.data?.questionIndex !== undefined) {
+                selectQuestion(targetItem.data.questionIndex);
+            }
+        } else if (targetItem.type === 'entity') {
+            focusState = 'entity';
+            if (targetItem.data?.entityName) {
+                navigateToEntity(targetItem.data.entityName, false); // Don't push to trail again
+            }
+        }
+    }
+
+    async function navigateToEntity(entityName: string, addToTrail = true) {
+        isLoadingEntity = true;
+        focusState = 'entity';
+
+        try {
+            // Fetch entity details from graph API
+            const data = await apiGet(`/graph/explore/${encodeURIComponent(entityName)}?depth=1`);
+
+            // Build EntityDetails from response
+            const neighbors: EntityDetails['neighbors'] = [];
+            for (const rel of (data.relationships || [])) {
+                if (rel.start === entityName) {
+                    neighbors.push({
+                        name: rel.end,
+                        type: data.nodes?.find(n => n.name === rel.end)?.type || 'Unknown',
+                        relationship: rel.type,
+                        direction: 'out'
+                    });
+                } else if (rel.end === entityName) {
+                    neighbors.push({
+                        name: rel.start,
+                        type: data.nodes?.find(n => n.name === rel.start)?.type || 'Unknown',
+                        relationship: rel.type,
+                        direction: 'in'
+                    });
+                }
+            }
+
+            // Extract source books from neighbors or node data
+            const sourceBooks: string[] = data.nodes
+                ?.filter(n => n.labels?.includes('Book'))
+                ?.map(n => n.name) || [];
+
+            focusedEntity = {
+                name: entityName,
+                type: data.nodes?.find(n => n.name === entityName)?.type || 'Concept',
+                description: data.nodes?.find(n => n.name === entityName)?.description,
+                neighbors,
+                sourceBooks
+            };
+
+            // Also update the regular exploration state for compatibility
+            currentConcept = entityName;
+            nodes = data.nodes || [];
+            relationships = data.relationships || [];
+
+            if (addToTrail) {
+                pushTrail({
+                    type: 'entity',
+                    label: entityName,
+                    data: { entityName }
+                });
+            }
+
+            // Track exploration
+            const now = new Date().toISOString();
+            if (!explorationPath.includes(entityName)) {
+                explorationPath = [...explorationPath, entityName];
+                explorationTimestamps = [...explorationTimestamps, now];
+            }
+        } catch (err) {
+            showMessage(`Failed to load entity: ${err.message}`, 5000, 'error');
+            focusState = trailStack.length > 0 ? 'question' : 'idle';
+        } finally {
+            isLoadingEntity = false;
+        }
+    }
+
+    function navigateBack() {
+        if (trailStack.length <= 1) {
+            // Back to idle state
+            focusState = 'idle';
+            focusedEntity = null;
+            trailStack = [];
+            return;
+        }
+
+        // Pop current item and go to previous
+        popTrail();
+        const previousItem = trailStack[trailStack.length - 1];
+
+        if (previousItem.type === 'question') {
+            focusState = 'question';
+            focusedEntity = null;
+        } else if (previousItem.type === 'context') {
+            focusState = 'idle';
+            focusedEntity = null;
+        }
+    }
+
+    function initializeContextTrail() {
+        if (parsedContext && trailStack.length === 0) {
+            pushTrail({
+                type: 'context',
+                label: parsedContext.title || 'Context',
+                data: { contextId: savedContextId }
+            });
+        }
+    }
 
     onMount(() => {
         mounted = true;
@@ -256,6 +418,25 @@
 
         const question = parsedContext.key_questions[questionIndex];
         if (!question) return;
+
+        // Initialize trail with context if first time
+        initializeContextTrail();
+
+        // Set navigation state
+        focusState = 'question';
+        focusedEntity = null;
+
+        // Push question to trail (remove previous question if navigating between questions)
+        const lastTrailItem = trailStack[trailStack.length - 1];
+        if (lastTrailItem?.type === 'question') {
+            // Replace the question in trail
+            trailStack = trailStack.slice(0, -1);
+        }
+        pushTrail({
+            type: 'question',
+            label: question.length > 40 ? question.substring(0, 40) + '...' : question,
+            data: { questionIndex, questionText: question }
+        });
 
         activeQuestionIndex = questionIndex;
         isContextSearching = true;
@@ -663,8 +844,106 @@
                 </button>
             </div>
 
-            <!-- Key Questions Section -->
-            {#if parsedContext.key_questions.length > 0}
+            <!-- Trail Navigation (Breadcrumbs) -->
+            {#if trailStack.length > 0}
+                <div class="trail-nav">
+                    <div class="trail-breadcrumbs">
+                        {#each trailStack as item, i}
+                            {#if i > 0}
+                                <span class="trail-separator">›</span>
+                            {/if}
+                            <button
+                                class="trail-item"
+                                class:active={i === trailStack.length - 1}
+                                class:type-context={item.type === 'context'}
+                                class:type-question={item.type === 'question'}
+                                class:type-entity={item.type === 'entity'}
+                                on:click={() => navigateToTrailIndex(i)}
+                            >
+                                {#if item.type === 'context'}
+                                    <span class="trail-icon">📍</span>
+                                {:else if item.type === 'question'}
+                                    <span class="trail-icon">❓</span>
+                                {:else if item.type === 'entity'}
+                                    <span class="trail-icon">🔷</span>
+                                {/if}
+                                <span class="trail-label">{item.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                    {#if trailStack.length > 1}
+                        <button class="trail-back" on:click={navigateBack} title="Go Back">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                        </button>
+                    {/if}
+                </div>
+            {/if}
+
+            <!-- Entity Focus View -->
+            {#if focusState === 'entity' && focusedEntity}
+                <div class="entity-focus">
+                    <div class="entity-focus-header">
+                        <div class="entity-type-badge">{focusedEntity.type}</div>
+                        <h3 class="entity-name">{focusedEntity.name}</h3>
+                    </div>
+                    {#if focusedEntity.description}
+                        <p class="entity-description">{focusedEntity.description}</p>
+                    {/if}
+
+                    {#if isLoadingEntity}
+                        <div class="entity-loading">
+                            <span class="spinner"></span>
+                            Loading entity details...
+                        </div>
+                    {:else}
+                        <!-- Neighbors Section -->
+                        {#if focusedEntity.neighbors.length > 0}
+                            <div class="entity-section">
+                                <h4 class="entity-section-title">Related Concepts ({focusedEntity.neighbors.length})</h4>
+                                <div class="entity-neighbors">
+                                    {#each focusedEntity.neighbors as neighbor}
+                                        <button
+                                            class="neighbor-card"
+                                            on:click={() => navigateToEntity(neighbor.name)}
+                                        >
+                                            <span class="neighbor-relationship" class:incoming={neighbor.direction === 'in'} class:outgoing={neighbor.direction === 'out'}>
+                                                {neighbor.direction === 'in' ? '←' : '→'} {neighbor.relationship}
+                                            </span>
+                                            <span class="neighbor-name">{neighbor.name}</span>
+                                            <span class="neighbor-type">{neighbor.type}</span>
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+
+                        <!-- Source Books Section -->
+                        {#if focusedEntity.sourceBooks.length > 0}
+                            <div class="entity-section">
+                                <h4 class="entity-section-title">Source Books</h4>
+                                <div class="entity-sources">
+                                    {#each focusedEntity.sourceBooks as book}
+                                        <span class="source-book">{book}</span>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+                    {/if}
+
+                    <!-- Back to Question Button -->
+                    <button class="back-to-question" on:click={navigateBack}>
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        Back to Question
+                    </button>
+                </div>
+            {/if}
+
+            <!-- Key Questions Section (show when not in entity focus) -->
+            {#if focusState !== 'entity' && parsedContext.key_questions.length > 0}
                 <div class="context-section">
                     <h3 class="section-title">Key Questions</h3>
                     <div class="question-buttons">
@@ -686,8 +965,8 @@
                 </div>
             {/if}
 
-            <!-- Areas of Exploration Section -->
-            {#if parsedContext.areas_of_exploration.length > 0}
+            <!-- Areas of Exploration Section (hide when in entity focus) -->
+            {#if focusState !== 'entity' && parsedContext.areas_of_exploration.length > 0}
                 <div class="context-section">
                     <h3 class="section-title">Areas of Exploration</h3>
                     <div class="area-chips">
@@ -698,13 +977,13 @@
                 </div>
             {/if}
 
-            <!-- Core Concepts Section -->
-            {#if parsedContext.core_concepts.length > 0}
+            <!-- Core Concepts Section (hide when in entity focus) -->
+            {#if focusState !== 'entity' && parsedContext.core_concepts.length > 0}
                 <div class="context-section">
                     <h3 class="section-title">Core Concepts</h3>
                     <div class="concept-chips">
                         {#each parsedContext.core_concepts as concept}
-                            <button class="concept-chip" on:click={() => exploreConcept(concept)}>
+                            <button class="concept-chip" on:click={() => navigateToEntity(concept)}>
                                 {concept}
                             </button>
                         {/each}
@@ -712,8 +991,8 @@
                 </div>
             {/if}
 
-            <!-- Context Search Results -->
-            {#if contextSearchResults.length > 0}
+            <!-- Context Search Results (hide when in entity focus) -->
+            {#if focusState !== 'entity' && contextSearchResults.length > 0}
                 <div class="context-section context-results">
                     <h3 class="section-title">
                         Related Entities
@@ -724,7 +1003,7 @@
                             <button
                                 class="context-result-card"
                                 style="--delay: {i * 30}ms"
-                                on:click={() => exploreConcept(result.entity_name)}
+                                on:click={() => navigateToEntity(result.entity_name)}
                             >
                                 <div class="result-main">
                                     <span class="result-entity">{result.entity_name}</span>
@@ -2066,6 +2345,257 @@
         border-width: 2px;
         border-color: var(--text-muted);
         border-top-color: var(--entity-framework);
+    }
+
+    /* ========== Trail Navigation Styles ========== */
+    .trail-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .trail-breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        flex-wrap: wrap;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .trail-separator {
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .trail-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-2);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition-all);
+        max-width: 180px;
+    }
+
+    .trail-item:hover {
+        border-color: var(--entity-concept);
+        color: var(--text-primary);
+    }
+
+    .trail-item.active {
+        background: var(--entity-concept);
+        border-color: var(--entity-concept);
+        color: white;
+    }
+
+    .trail-item.type-context {
+        border-left: 3px solid var(--entity-framework);
+    }
+
+    .trail-item.type-question {
+        border-left: 3px solid var(--entity-concept);
+    }
+
+    .trail-item.type-entity {
+        border-left: 3px solid var(--entity-theory);
+    }
+
+    .trail-icon {
+        font-size: var(--text-xs);
+        flex-shrink: 0;
+    }
+
+    .trail-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .trail-back {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: var(--transition-all);
+        flex-shrink: 0;
+    }
+
+    .trail-back:hover {
+        background: var(--bg-secondary);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
+    }
+
+    /* ========== Entity Focus View Styles ========== */
+    .entity-focus {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        animation: ies-slide-up 0.2s ease-out;
+    }
+
+    .entity-focus-header {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .entity-focus .entity-type-badge {
+        display: inline-block;
+        width: fit-content;
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+        font-weight: var(--font-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--entity-theory);
+        color: white;
+        border-radius: var(--radius-sm);
+    }
+
+    .entity-focus .entity-name {
+        margin: 0;
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        color: var(--text-primary);
+    }
+
+    .entity-focus .entity-description {
+        margin: 0;
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .entity-loading {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .entity-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .entity-section-title {
+        margin: 0;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+    }
+
+    .entity-neighbors {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .neighbor-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        padding: var(--space-2-5) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-align: left;
+        transition: var(--transition-all);
+    }
+
+    .neighbor-card:hover {
+        background: var(--bg-secondary);
+        border-color: var(--entity-concept);
+    }
+
+    .neighbor-relationship {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+        font-family: monospace;
+    }
+
+    .neighbor-relationship.incoming {
+        color: var(--entity-framework);
+    }
+
+    .neighbor-relationship.outgoing {
+        color: var(--entity-concept);
+    }
+
+    .neighbor-name {
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .neighbor-type {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+    }
+
+    .entity-sources {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .source-book {
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+    }
+
+    .back-to-question {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-4);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition-all);
+        align-self: flex-start;
+    }
+
+    .back-to-question:hover {
+        background: var(--bg-secondary);
+        border-color: var(--entity-concept);
+        color: var(--text-primary);
     }
 
     /* Note: Animations (ies-spin, ies-slide-up, ies-fade-in, pulse-soft)
