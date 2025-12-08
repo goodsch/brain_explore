@@ -6,6 +6,38 @@ This file contains detailed development history. For current status, see CLAUDE.
 
 ### Dec 8 - Sprint 2: Evidence Endpoint + AI Facet Generation
 
+**Sprint 2 SiYuan Plugin: Evidence Section**
+- `EvidenceSection.svelte` — New Flow panel component (~370 lines)
+  - Fetches evidence via forwardProxy pattern for Docker CORS bypass
+  - Displays direct chunks as blockquotes with confidence badges
+  - Shows book mentions in "Also mentioned in" section
+  - Full SiYuan CSS styling with design system vars
+- Integrated into FlowMode.svelte entity views
+  - Standalone entity view (search results navigation)
+  - Context Mode entity view (question-driven exploration)
+- Commit: `3867e52` (siyuan worktree)
+
+**Sprint 1 SiYuan Plugin: AddFacetForm**
+- `AddFacetForm.svelte` — New component for graph growth (~300 lines)
+  - Form: entity name, type dropdown (10 types), optional description
+  - Calls POST /graph/entity to create entities during exploration
+  - Success/error feedback with SiYuan showMessage
+  - Keyboard support (Escape to cancel)
+- Integrated into FlowMode.svelte facet view
+  - "Add Entity" button with dashed border styling
+  - Reactive reset when leaving facet view
+  - Refreshes facet view on successful creation
+- Enables virtuous cycle: exploration → entity creation → graph growth
+- Commit: `81fc432` (siyuan worktree)
+
+**Sprint 3 Reader Sync: Architecture Plan**
+- Created `docs/plans/sprint-3-reader-sync-plan.md`
+- ExplorationSession schema for cross-app state persistence
+- `/sync` API endpoints: sessions CRUD, active sessions, resume data
+- Deep link formats: `readest://`, `siyuan://`, web fallback
+- Sync triggers: entity navigation, reading position, journey steps
+- Edge cases: offline handling, conflict resolution, stale sessions
+
 **Sprint 2 IES Reader: Evidence Panel**
 - `EvidenceSection.tsx` — New Flow panel component with confidence badges
 - High-confidence direct chunks shown as blockquotes
