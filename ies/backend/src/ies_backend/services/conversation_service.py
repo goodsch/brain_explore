@@ -20,7 +20,7 @@ from ies_backend.schemas.conversation import (
 from ies_backend.schemas.entity import ExtractionResult, ExtractedEntity
 from ies_backend.services.extraction_service import ExtractionService
 from ies_backend.services.neo4j_client import Neo4jClient
-from library.graph.conversation_parser import ConversationParser, ParsedTurn
+from ies_backend.services.conversation_parser import ConversationParser, ParsedTurn
 
 # Simple extraction fallback mirrors inbox approach
 import re

@@ -64,12 +64,38 @@ class QueueIngestionResponse(BaseModel):
 
 
 def _load_ingestion_queue() -> dict:
-    """Load ingestion queue from JSON file."""
+    """Load ingestion queue from JSON file.
+
+    Handles legacy list format and normalizes to dict format:
+    {"items": {"calibre_id": {...}, ...}}
+    """
     if not INGESTION_QUEUE_PATH.exists():
         return {"items": {}}
     try:
         with open(INGESTION_QUEUE_PATH) as f:
-            return json.load(f)
+            data = json.load(f)
+
+        # Handle legacy list format: convert to dict format
+        if isinstance(data, list):
+            items_dict = {}
+            for item in data:
+                calibre_id = str(item.get("calibre_id", ""))
+                if calibre_id:
+                    items_dict[calibre_id] = item
+            return {"items": items_dict}
+
+        # Handle case where data is dict but items is a list
+        if isinstance(data, dict) and isinstance(data.get("items"), list):
+            items_dict = {}
+            for item in data["items"]:
+                calibre_id = str(item.get("calibre_id", ""))
+                if calibre_id:
+                    items_dict[calibre_id] = item
+            data["items"] = items_dict
+            return data
+
+        # Already in correct format
+        return data
     except (json.JSONDecodeError, IOError):
         return {"items": {}}
 
@@ -124,12 +150,7 @@ async def get_ingestion_queue() -> IngestionQueueResponse:
     Returns all books queued for ingestion with their current status.
     """
     queue = _load_ingestion_queue()
-
-    # Handle both list format (current) and dict format (legacy)
-    if isinstance(queue, list):
-        raw_items = queue
-    else:
-        raw_items = list(queue.get("items", {}).values())
+    raw_items = list(queue.get("items", {}).values())
 
     items = [
         IngestionQueueItem(
@@ -181,16 +202,11 @@ async def process_queue() -> ProcessQueueResponse:
         )
 
     queue = _load_ingestion_queue()
-
-    # Handle both formats
-    if isinstance(queue, list):
-        items = [item for item in queue if item.get("status") == "queued"]
-    else:
-        items = [
-            item
-            for item in queue.get("items", {}).values()
-            if item.get("status") == "queued"
-        ]
+    items = [
+        item
+        for item in queue.get("items", {}).values()
+        if item.get("status") == "queued"
+    ]
 
     if not items:
         return ProcessQueueResponse(
@@ -348,18 +364,10 @@ async def remove_from_queue(calibre_id: int) -> dict:
     """Remove a book from the ingestion queue."""
     queue = _load_ingestion_queue()
 
-    # Handle both list format (current) and dict format (legacy)
-    if isinstance(queue, list):
-        original_len = len(queue)
-        queue = [item for item in queue if item["calibre_id"] != calibre_id]
-        if len(queue) == original_len:
-            raise HTTPException(status_code=404, detail=f"Book {calibre_id} not in queue")
-        _save_ingestion_queue(queue)
-    else:
-        if str(calibre_id) not in queue.get("items", {}):
-            raise HTTPException(status_code=404, detail=f"Book {calibre_id} not in queue")
-        del queue["items"][str(calibre_id)]
-        _save_ingestion_queue(queue)
+    if str(calibre_id) not in queue.get("items", {}):
+        raise HTTPException(status_code=404, detail=f"Book {calibre_id} not in queue")
+    del queue["items"][str(calibre_id)]
+    _save_ingestion_queue(queue)
 
     return {"message": f"Book {calibre_id} removed from queue"}
 
@@ -463,13 +471,6 @@ def _update_queue_item_status(calibre_id: int, status: str) -> None:
     """Update the status of a queue item."""
     queue = _load_ingestion_queue()
 
-    if isinstance(queue, list):
-        for item in queue:
-            if item["calibre_id"] == calibre_id:
-                item["status"] = status
-                break
-    else:
-        if str(calibre_id) in queue.get("items", {}):
-            queue["items"][str(calibre_id)]["status"] = status
-
-    _save_ingestion_queue(queue)
+    if str(calibre_id) in queue.get("items", {}):
+        queue["items"][str(calibre_id)]["status"] = status
+        _save_ingestion_queue(queue)
