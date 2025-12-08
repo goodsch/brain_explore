@@ -37,7 +37,7 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 ## Current Status
 
-**Phase 2c: Integration Features** 🔄 IN PROGRESS (65% complete, Dec 5)
+**Phase 2c: Integration Features** 🔄 IN PROGRESS (75% complete, Dec 8)
 
 **⚠️ CRITICAL FINDING (Dec 5): Implementation-Principle Gap Discovered**
 
@@ -61,7 +61,16 @@ Four-agent critical analysis of SiYuan plugin revealed catastrophic disconnect b
 - ⚠️ Layer 3: SiYuan Plugin — **NEEDS REMEDIATION** (design system, question interaction, principle alignment)
 - 🔍 Layer 4: Readest — **PENDING PRESSURE TEST**
 
-**Latest (Dec 5):**
+**Latest (Dec 8):**
+- ✅ **Context Layer MVP** — Question-driven exploration for Flow Mode
+  - Backend: `/context` API with parse, save, search, journey endpoints
+  - Types: Context, Question, ContextJourneyEntry schemas in `schemas/context.py`
+  - Parser: Detects Context Notes via `## Key Questions`, `## Areas of Exploration`, `## Core Concepts` sections
+  - Search: Keyword-based entity lookup using context concepts + question terms
+  - Flow Mode: New `contextBlockId` prop, Context Panel with clickable question buttons
+  - 191 backend tests passing
+
+**Dec 5:**
 - ✅ **Question Engine Nine Classes Implementation (Commit 1d1ca9f)** — Backend question classification system complete
   - QuestionClass enum with 9 classes mapped to AST thinking modes
   - APPROACH_TO_CLASSES mapping: inquiry approaches generate specific question types
@@ -135,7 +144,7 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 - **Phase 1 (COMPLETE):** Core hypothesis proven — Layers 1 & 2 work; extraction pipeline validated with 11 concepts
 - **Phase 2a (COMPLETE):** Layer 3 CLI validation — CLI exploration tool proven with 5 validation sessions
 - **Phase 2b (COMPLETE):** Visual interfaces — Readest reading interface + SiYuan plugin dashboard (both MVPs complete)
-- **Phase 2c (65% COMPLETE):** Calibre integration + Entity overlay + Reframe API + Template API + ForgeMode
+- **Phase 2c (75% COMPLETE):** Calibre integration + Entity overlay + Reframe API + Template API + ForgeMode + Context Layer
 - **Phase 3+:** Cross-app sync, journey analysis, additional domains
 
 ## How to Work Here (Phase 2c+)

@@ -11,11 +11,13 @@
 
     import ReframesTab from '../components/ReframesTab.svelte';
     import { saveJourney, type JourneyData } from '../utils/siyuan-structure';
+    import { getBlockKramdown, exportMdContent } from '../api';
 
     export let backendUrl: string;
     export let journeyId: string | null = null;
     export let initialConcept: string | null = null;
     export let userId: string | null = null;
+    export let contextBlockId: string | null = null; // Optional: SiYuan block ID to check for Context Note
 
     const dispatch = createEventDispatcher();
 
@@ -62,12 +64,37 @@
     let currentApproach: string | null = null;
     let lastDetectedState: string | null = null;
 
+    // Context Mode State
+    interface ParsedContext {
+        context_type: string;
+        title: string;
+        summary: string | null;
+        key_questions: string[];
+        areas_of_exploration: string[];
+        core_concepts: string[];
+    }
+    interface ContextSearchResult {
+        entity_name: string;
+        entity_type: string;
+        snippet: string | null;
+        source_title: string | null;
+    }
+    let isContextMode = false;
+    let parsedContext: ParsedContext | null = null;
+    let savedContextId: string | null = null;
+    let activeQuestionIndex: number | null = null;
+    let contextSearchResults: ContextSearchResult[] = [];
+    let isContextSearching = false;
+    let isDetectingContext = false;
+
     onMount(() => {
         mounted = true;
         if (journeyId) {
             loadJourney(journeyId);
         } else if (initialConcept) {
             exploreConcept(initialConcept);
+        } else if (contextBlockId) {
+            detectContextNote(contextBlockId);
         }
     });
 
@@ -169,6 +196,115 @@
         }
 
         return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
+    }
+
+    // ========== Context Mode Functions ==========
+
+    /**
+     * Detect if a SiYuan document is a Context Note by parsing its markdown
+     */
+    async function detectContextNote(blockId: string) {
+        isDetectingContext = true;
+        try {
+            // Get the markdown content of the document
+            const mdResult = await exportMdContent(blockId);
+            if (!mdResult || !mdResult.content) {
+                console.log('[IES] No markdown content found for block', blockId);
+                return;
+            }
+
+            const markdown = mdResult.content;
+
+            // Call our backend parser to detect if this is a Context Note
+            const parseResult = await apiPost('/context/parse', {
+                siyuan_block_id: blockId,
+                markdown: markdown
+            });
+
+            if (parseResult.is_context_note) {
+                // It's a Context Note!
+                isContextMode = true;
+                parsedContext = {
+                    context_type: parseResult.context_type,
+                    title: parseResult.title,
+                    summary: parseResult.summary,
+                    key_questions: parseResult.key_questions || [],
+                    areas_of_exploration: parseResult.areas_of_exploration || [],
+                    core_concepts: parseResult.core_concepts || []
+                };
+
+                // If there's an existing context_id, use it; otherwise it will be assigned on first save
+                savedContextId = parseResult.context_id || null;
+
+                showMessage(`Context Note detected: ${parsedContext.title}`, 3000);
+            } else {
+                console.log('[IES] Document is not a Context Note');
+            }
+        } catch (err) {
+            console.error('[IES] Error detecting Context Note:', err);
+            showMessage(`Failed to detect Context Note: ${err.message}`, 5000, 'error');
+        } finally {
+            isDetectingContext = false;
+        }
+    }
+
+    /**
+     * Search for entities/snippets related to a Key Question
+     */
+    async function searchForQuestion(questionIndex: number) {
+        if (!parsedContext) return;
+
+        const question = parsedContext.key_questions[questionIndex];
+        if (!question) return;
+
+        activeQuestionIndex = questionIndex;
+        isContextSearching = true;
+        contextSearchResults = [];
+
+        try {
+            // First, save the parsed context if we don't have an ID yet
+            if (!savedContextId) {
+                const saveResult = await apiPost('/context/save-parsed', {
+                    siyuan_block_id: contextBlockId,
+                    context_type: parsedContext.context_type,
+                    title: parsedContext.title,
+                    summary: parsedContext.summary,
+                    key_questions: parsedContext.key_questions,
+                    areas_of_exploration: parsedContext.areas_of_exploration,
+                    core_concepts: parsedContext.core_concepts
+                });
+                savedContextId = saveResult.id;
+            }
+
+            // Now search using the context
+            const searchResult = await apiPost(`/context/${savedContextId}/search`, {
+                question_text: question,
+                include_areas: false,
+                limit: 20
+            });
+
+            if (searchResult.results && searchResult.results.length > 0) {
+                contextSearchResults = searchResult.results;
+            } else {
+                showMessage('No relevant entities found for this question', 3000);
+            }
+        } catch (err) {
+            console.error('[IES] Context search error:', err);
+            showMessage(`Search failed: ${err.message}`, 5000, 'error');
+        } finally {
+            isContextSearching = false;
+        }
+    }
+
+    /**
+     * Clear context mode and return to normal Flow
+     */
+    function clearContextMode() {
+        isContextMode = false;
+        parsedContext = null;
+        savedContextId = null;
+        activeQuestionIndex = null;
+        contextSearchResults = [];
     }
 
     async function handleSearch() {
@@ -506,6 +642,105 @@
                     </button>
                 {/each}
             </div>
+        </div>
+    {/if}
+
+    <!-- Context Panel (Question-Driven Exploration) -->
+    {#if isContextMode && parsedContext}
+        <div class="context-panel">
+            <div class="context-header">
+                <div class="context-info">
+                    <span class="context-type-badge">{parsedContext.context_type.replace('_', ' ')}</span>
+                    <h2 class="context-title">{parsedContext.title}</h2>
+                    {#if parsedContext.summary}
+                        <p class="context-summary">{parsedContext.summary}</p>
+                    {/if}
+                </div>
+                <button class="context-close" on:click={clearContextMode} title="Exit Context Mode">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Key Questions Section -->
+            {#if parsedContext.key_questions.length > 0}
+                <div class="context-section">
+                    <h3 class="section-title">Key Questions</h3>
+                    <div class="question-buttons">
+                        {#each parsedContext.key_questions as question, i}
+                            <button
+                                class="question-btn"
+                                class:active={activeQuestionIndex === i}
+                                class:searching={activeQuestionIndex === i && isContextSearching}
+                                on:click={() => searchForQuestion(i)}
+                            >
+                                <span class="question-number">Q{i + 1}</span>
+                                <span class="question-text">{question}</span>
+                                {#if activeQuestionIndex === i && isContextSearching}
+                                    <span class="question-spinner"></span>
+                                {/if}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+
+            <!-- Areas of Exploration Section -->
+            {#if parsedContext.areas_of_exploration.length > 0}
+                <div class="context-section">
+                    <h3 class="section-title">Areas of Exploration</h3>
+                    <div class="area-chips">
+                        {#each parsedContext.areas_of_exploration as area}
+                            <span class="area-chip">{area}</span>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+
+            <!-- Core Concepts Section -->
+            {#if parsedContext.core_concepts.length > 0}
+                <div class="context-section">
+                    <h3 class="section-title">Core Concepts</h3>
+                    <div class="concept-chips">
+                        {#each parsedContext.core_concepts as concept}
+                            <button class="concept-chip" on:click={() => exploreConcept(concept)}>
+                                {concept}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+
+            <!-- Context Search Results -->
+            {#if contextSearchResults.length > 0}
+                <div class="context-section context-results">
+                    <h3 class="section-title">
+                        Related Entities
+                        <span class="results-count">{contextSearchResults.length}</span>
+                    </h3>
+                    <div class="context-results-list">
+                        {#each contextSearchResults as result, i}
+                            <button
+                                class="context-result-card"
+                                style="--delay: {i * 30}ms"
+                                on:click={() => exploreConcept(result.entity_name)}
+                            >
+                                <div class="result-main">
+                                    <span class="result-entity">{result.entity_name}</span>
+                                    <span class="result-type-badge">{result.entity_type}</span>
+                                </div>
+                                {#if result.snippet}
+                                    <p class="result-snippet">{result.snippet}</p>
+                                {/if}
+                                {#if result.source_title}
+                                    <span class="result-source">{result.source_title}</span>
+                                {/if}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
         </div>
     {/if}
 
@@ -1536,6 +1771,282 @@
         color: var(--text-secondary);
         line-height: 1.5;
         white-space: pre-wrap;
+    }
+
+    /* ========== Context Panel Styles ========== */
+    .context-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        animation: ies-slide-up 0.3s ease-out;
+    }
+
+    .context-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .context-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .context-type-badge {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+        font-weight: var(--font-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--entity-concept);
+        color: white;
+        border-radius: var(--radius-sm);
+        width: fit-content;
+    }
+
+    .context-title {
+        margin: 0;
+        font-size: var(--text-lg);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .context-summary {
+        margin: 0;
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .context-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: var(--transition-all);
+    }
+
+    .context-close:hover {
+        background: var(--bg-primary);
+        border-color: var(--text-muted);
+        color: var(--text-secondary);
+    }
+
+    .context-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .context-section .section-title {
+        margin: 0;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .results-count {
+        font-size: var(--text-xs);
+        padding: 2px 6px;
+        background: var(--entity-concept);
+        color: white;
+        border-radius: var(--radius-full);
+    }
+
+    /* Question Buttons */
+    .question-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .question-btn {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-align: left;
+        transition: var(--transition-all);
+    }
+
+    .question-btn:hover {
+        background: var(--bg-primary);
+        border-color: var(--entity-concept);
+    }
+
+    .question-btn.active {
+        background: var(--bg-primary);
+        border-color: var(--entity-concept);
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .question-btn.searching {
+        opacity: 0.8;
+        pointer-events: none;
+    }
+
+    .question-number {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        font-size: var(--text-xs);
+        font-weight: var(--font-bold);
+        background: var(--entity-concept);
+        color: white;
+        border-radius: var(--radius-full);
+    }
+
+    .question-text {
+        flex: 1;
+        font-size: var(--text-sm);
+        color: var(--text-primary);
+        line-height: 1.5;
+    }
+
+    .question-spinner {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--border-default);
+        border-top-color: var(--entity-concept);
+        border-radius: 50%;
+        animation: ies-spin 0.8s linear infinite;
+    }
+
+    /* Area Chips */
+    .area-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .area-chip {
+        padding: var(--space-1-5) var(--space-2-5);
+        font-size: var(--text-xs);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-full);
+        color: var(--text-secondary);
+    }
+
+    /* Concept Chips (clickable) */
+    .concept-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .concept-chip {
+        padding: var(--space-1-5) var(--space-2-5);
+        font-size: var(--text-xs);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-full);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition-all);
+    }
+
+    .concept-chip:hover {
+        background: var(--entity-concept);
+        border-color: var(--entity-concept);
+        color: white;
+    }
+
+    /* Context Search Results */
+    .context-results {
+        border-top: 1px solid var(--border-subtle);
+        padding-top: var(--space-4);
+    }
+
+    .context-results-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .context-result-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1-5);
+        padding: var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-align: left;
+        transition: var(--transition-all);
+        animation: ies-slide-up 0.2s ease-out backwards;
+        animation-delay: var(--delay);
+    }
+
+    .context-result-card:hover {
+        background: var(--bg-primary);
+        border-color: var(--entity-concept);
+    }
+
+    .context-result-card .result-main {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .context-result-card .result-entity {
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .context-result-card .result-type-badge {
+        font-size: var(--text-xs);
+        padding: 2px 6px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+    }
+
+    .context-result-card .result-snippet {
+        margin: 0;
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .context-result-card .result-source {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+        font-style: italic;
     }
 
     /* Spinner */
