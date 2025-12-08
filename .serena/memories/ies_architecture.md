@@ -13,6 +13,7 @@
 
 | Route | Purpose |
 |-------|---------|
+| `/context` | Context Notes: parse, save, search, journey (NEW Dec 8) |
 | `/graph` | Entity search, exploration, relationships |
 | `/session` | Thinking sessions, ForgeMode |
 | `/journeys` | Breadcrumb tracking, synthesis |
@@ -62,6 +63,52 @@ Patterns: Pattern, DynamicPattern, StoryInsight, SchemaBreak
 **Integration:** `scripts/auto_ingest_daemon.py` runs Pass 1 + Pass 2 automatically.
 
 **Run Pass 3:** `python -m library.graph.reframe_generator 10`
+
+## Context Layer (Dec 8, 2025)
+
+Question-driven exploration mode for Flow. Contexts are "places where attention lives."
+
+**Context Types:** feynman_problem, project, theory, concept_cluster, life_area
+
+**Context Note Structure (SiYuan):**
+- `## Key Questions` — Clickable question buttons in Flow
+- `## Areas of Exploration` — Topic areas to investigate  
+- `## Core Concepts` — Clickable concept chips
+
+**Backend (`/context`):**
+- `POST /parse` — Detect Context Note from markdown
+- `POST /save-parsed` — Save parsed context to Neo4j
+- `GET /{id}` — Get context by ID
+- `POST /{id}/search` — Keyword search based on context concepts
+- `GET /{id}/journey` — Journey entries for context
+
+**Flow Mode Integration:**
+- `contextBlockId` prop detects Context Notes on mount
+- Context Panel shows questions as clickable buttons
+- Question click → keyword search → show related entities
+- Core Concepts clickable to explore in normal Flow
+
+**Phase 1: Navigation Foundation (Dec 8):**
+- Navigation state machine: `FocusState` = 'idle' | 'question' | 'entity' | 'facet'
+- Trail navigation (breadcrumbs) showing path: Context → Question → Entity
+- EntityFocus view: name, type, description, neighbors, source books
+- Click entity neighbors to continue graph traversal
+- Click trail items to navigate back to any point
+
+**Phase 2: Standalone Navigation (Dec 8):**
+- Fixed plugin → backend connection using `forwardProxy` pattern for Docker CORS
+- Standalone entity panel: search → click entity → view details outside Context Mode
+- Standalone facet panel: entity → click facet → view facet entities
+- Entity panel shows: type badge, name, description, facets, related concepts, source books
+- Facet panel shows: parent entity, facet name, entities in facet
+- Search results hidden when viewing entity/facet (`focusState === 'idle'` only)
+- Full navigation flow: search → entity → facet → back to entity → back to search
+
+**Files:**
+- `ies/backend/src/ies_backend/schemas/context.py`
+- `ies/backend/src/ies_backend/services/context_service.py`
+- `ies/backend/src/ies_backend/api/context.py`
+- `.worktrees/siyuan/ies/plugin/src/views/FlowMode.svelte` (extended)
 
 ## IES Reader Features
 

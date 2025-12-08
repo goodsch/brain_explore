@@ -39,6 +39,13 @@ This file contains detailed development history. For current status, see CLAUDE.
   - `IES_Extraction_Profile_Examples.md` — JSON templates
   - `IES_Integration_Checklist.md` — Implementation roadmap
 - **Evolution Plan** — `docs/plans/flow-mode-evolution.md` with 5-phase roadmap
+- **Flow Mode Standalone Navigation (Phase 2)** — Search results → entity exploration
+  - Fixed plugin → backend connection: `forwardProxy` pattern for Docker CORS bypass
+  - Standalone entity panel: click search result → view entity details (type, description, facets, related, sources)
+  - Standalone facet panel: click facet → view entities in that facet with back navigation
+  - Search results visibility: only shown in `idle` state, hidden during entity/facet view
+  - Full navigation flow: search → entity → facet → back to entity → back to search
+  - Version indicator (v0.4.0) added for deployment verification
 
 ### Dec 7 - IES Reader Wave 2 & Wave 3, MCP Server
 - **IES Modern Theme** — Dark-mode-first SiYuan theme (IES Design System v2)
