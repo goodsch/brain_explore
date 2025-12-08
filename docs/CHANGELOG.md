@@ -4,9 +4,44 @@ This file contains detailed development history. For current status, see CLAUDE.
 
 ## December 2025
 
-### Dec 8 - Sprint 3: Cross-App Sync Backend + Sprint 1 & 2 Complete
+### Dec 8 - Sprint 3: Cross-App Sync COMPLETE (Backend + Frontend)
 
-**Sprint 3 Backend: Cross-App Sync Service (Phase 1 Complete)**
+**Sprint 3 Frontend: IES Reader Sync Integration**
+- `services/flow/syncService.ts` — API client for /sync endpoints (180 lines)
+  - Session CRUD with user_id from anonymous auth
+  - Resume data fetching with deep link generation
+  - Status updates (active/paused/completed)
+- `flowModeStore.ts` — Enhanced with session state management
+  - `sessionId`, `isSyncing`, `lastSynced` state
+  - Auto-sync every 30s during active exploration
+  - `loadSession()` for URL param restoration
+  - `saveExplorationSession()` with debounced sync
+- `ResumeSection.tsx` — "Resume in SiYuan" UI component
+  - Deep link button with siyuan:// protocol
+  - Session state display (entity, breadcrumb count)
+  - Visual sync indicator with timestamp
+- `useSessionResume.ts` — URL parameter session restore hook
+  - Handles `?ies-session={id}` parameter
+  - Loads session and auto-opens Flow panel
+- Commit: `30f70a0` (ies-reader worktree, 587 insertions)
+
+**Sprint 3 Frontend: SiYuan Plugin Sync Integration**
+- `services/syncService.ts` — Bidirectional session sync (180 lines)
+  - Session management with Redis-backed storage
+  - Deep link generation for Readest handoffs
+  - Auto-sync of entity, breadcrumbs, filters
+- `FlowMode.svelte` — Enhanced with sync capabilities (~90 lines added)
+  - Sync state management (syncing, lastSynced)
+  - "Continue in Readest" button with deep link
+  - Auto-sync every 30s during exploration
+  - Visual sync status indicator
+- `Dashboard.svelte` — Session resume support (~100 lines added)
+  - Resume active sessions section
+  - Deep link buttons for Readest handoffs
+  - Session state display (entity, breadcrumb count)
+- Commits: `9fadf58`, `8b03572` (siyuan worktree, 707 insertions)
+
+**Sprint 3 Backend: Cross-App Sync Service**
 - `schemas/sync.py` — Session schemas for Reader ↔ SiYuan continuity (173 lines)
   - `AppSource` enum: reader, siyuan
   - `SessionStatus` enum: active, paused, completed
