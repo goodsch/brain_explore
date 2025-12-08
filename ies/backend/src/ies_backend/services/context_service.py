@@ -506,16 +506,18 @@ class ContextService:
         if not keywords:
             return results
 
-        # Search for entities (concepts) that match any keyword
+        # Search for Concept nodes that match any keyword
         # Use CONTAINS for each keyword (more robust than regex)
         for keyword in keywords[:5]:  # Limit to first 5 keywords to avoid huge queries
             try:
                 entity_results = await Neo4jClient.execute_query(
                     """
-                    MATCH (e:Entity)
-                    WHERE toLower(e.name) CONTAINS toLower($keyword)
-                       OR (e.description IS NOT NULL AND toLower(e.description) CONTAINS toLower($keyword))
-                    RETURN e.name as name, e.description as description, e.id as id
+                    MATCH (c:Concept)
+                    WHERE toLower(c.name) CONTAINS toLower($keyword)
+                       OR (c.description IS NOT NULL AND toLower(c.description) CONTAINS toLower($keyword))
+                    OPTIONAL MATCH (c)-[:MENTIONS]-(b:Book)
+                    RETURN c.name as name, c.description as description, c.name as id,
+                           collect(DISTINCT b.title)[0..3] as source_books
                     LIMIT $limit
                     """,
                     {"keyword": keyword, "limit": limit // len(keywords[:5]) + 1},
@@ -525,13 +527,17 @@ class ContextService:
                     if isinstance(record, dict):
                         name = record.get("name", "")
                         description = record.get("description", "")
+                        source_books = record.get("source_books", [])
                         # Avoid duplicates
                         if not any(r.source_title == name for r in results):
+                            snippet = description[:500] if description else name
+                            if source_books:
+                                snippet += f" (from: {', '.join(source_books)})"
                             results.append(
                                 ContextSearchResult(
                                     source_id=record.get("id", name),
                                     source_title=name,
-                                    snippet=description[:500] if description else name,
+                                    snippet=snippet,
                                     relevance_score=0.8,
                                     concepts_found=[name],
                                 )
