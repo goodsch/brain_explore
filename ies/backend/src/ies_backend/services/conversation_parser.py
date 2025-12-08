@@ -96,25 +96,63 @@ class ConversationParser:
 
     @staticmethod
     def _parse_plaintext(content: str) -> List[ParsedTurn]:
-        """Parse plain text or markdown with simple role cues."""
+        """Parse plain text or markdown with role cues or separators.
+
+        Supports:
+        - user:/assistant:/system: prefixes
+        - Human:/Assistant: prefixes (Claude format)
+        - --- separators (ChatGPT markdown exports) - alternates roles
+        """
         turns: List[ParsedTurn] = []
-        lines = [line.strip() for line in content.splitlines() if line.strip()]
         current_role = "user"
         buffer: list[str] = []
 
         def flush():
-            if buffer:
-                turns.append(ParsedTurn(role=current_role, text="\n".join(buffer)))
+            nonlocal buffer
+            text = "\n".join(buffer).strip()
+            if text:
+                turns.append(ParsedTurn(role=current_role, text=text))
+            buffer = []
 
-        role_pattern = re.compile(r"^(user|assistant|system)[:>-]\s*", re.IGNORECASE)
-        for line in lines:
-            role_match = role_pattern.match(line)
+        def alternate_role() -> str:
+            return "assistant" if current_role == "user" else "user"
+
+        # Pattern for explicit role markers
+        role_pattern = re.compile(
+            r"^(user|assistant|system|human)[:>-]\s*", re.IGNORECASE
+        )
+        # Pattern for --- separators (at least 3 dashes on their own line)
+        separator_pattern = re.compile(r"^-{3,}$")
+
+        for line in content.splitlines():
+            stripped = line.strip()
+
+            # Skip empty lines but preserve them in buffer for formatting
+            if not stripped:
+                if buffer:  # Only add if we have content
+                    buffer.append("")
+                continue
+
+            # Check for --- separator (ChatGPT markdown format)
+            if separator_pattern.match(stripped):
+                flush()
+                current_role = alternate_role()
+                continue
+
+            # Check for explicit role marker
+            role_match = role_pattern.match(stripped)
             if role_match:
                 flush()
-                current_role = role_match.group(1).lower()
-                buffer = [role_pattern.sub("", line)]
-            else:
-                buffer.append(line)
+                matched_role = role_match.group(1).lower()
+                # Normalize "human" to "user"
+                current_role = "user" if matched_role == "human" else matched_role
+                remainder = role_pattern.sub("", stripped)
+                if remainder:
+                    buffer.append(remainder)
+                continue
+
+            buffer.append(stripped)
+
         flush()
 
         if not turns:
