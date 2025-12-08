@@ -94,7 +94,7 @@
     type FocusState = 'idle' | 'question' | 'entity' | 'facet';
 
     interface TrailItem {
-        type: 'context' | 'question' | 'entity' | 'facet';
+        type: 'context' | 'question' | 'entity' | 'facet' | 'search';
         label: string;
         data?: any; // Store relevant data for navigation back
     }
@@ -118,6 +118,7 @@
 
     let focusState: FocusState = 'idle';
     let trailStack: TrailItem[] = [];
+    let standaloneTrailStack: TrailItem[] = []; // Standalone mode trail
     let focusedEntity: EntityDetails | null = null;
     let focusedFacet: FacetDetails | null = null;
     let isLoadingEntity = false;
@@ -211,11 +212,21 @@
             };
 
             if (addToTrail) {
-                pushTrail({
-                    type: 'entity',
-                    label: entityName,
-                    data: { entityName }
-                });
+                // Add to context trail if in context mode
+                if (isContextMode) {
+                    pushTrail({
+                        type: 'entity',
+                        label: entityName,
+                        data: { entityName }
+                    });
+                } else {
+                    // Add to standalone trail
+                    standaloneTrailStack = [...standaloneTrailStack, {
+                        type: 'entity',
+                        label: entityName,
+                        data: { entityName }
+                    }];
+                }
             }
 
             // Track exploration
@@ -256,11 +267,21 @@
             };
 
             if (addToTrail) {
-                pushTrail({
-                    type: 'facet',
-                    label: facetName,
-                    data: { entityName, facetName }
-                });
+                // Add to context trail if in context mode
+                if (isContextMode) {
+                    pushTrail({
+                        type: 'facet',
+                        label: facetName,
+                        data: { entityName, facetName }
+                    });
+                } else {
+                    // Add to standalone trail
+                    standaloneTrailStack = [...standaloneTrailStack, {
+                        type: 'facet',
+                        label: facetName,
+                        data: { entityName, facetName }
+                    }];
+                }
             }
         } catch (err) {
             showMessage(`Failed to load facet: ${err.message}`, 5000, 'error');
@@ -270,7 +291,33 @@
         }
     }
 
+    /**
+     * Check if a facet exists as an entity in the knowledge graph.
+     * A facet "exists in graph" if its name matches any entity in the overall graph.
+     * We determine this by checking if the facet name appears in the facet's own entities list.
+     */
+    function facetExistsInGraph(facet: any): boolean {
+        if (!facet || !facet.name || !facet.entities) {
+            return false;
+        }
+
+        const facetName = facet.name.toLowerCase().trim();
+
+        // Check if facet name matches any entity in the entities array
+        // If the facet itself exists as an entity in the graph, it should appear here
+        return facet.entities.some((entity: any) =>
+            entity.name && entity.name.toLowerCase().trim() === facetName
+        );
+    }
+
     function navigateBack() {
+        // Handle standalone mode
+        if (!isContextMode) {
+            navigateStandaloneBack();
+            return;
+        }
+
+        // Context mode navigation
         if (trailStack.length <= 1) {
             // Back to idle state
             focusState = 'idle';
@@ -297,6 +344,64 @@
             focusedFacet = null;
             if (previousItem.data?.entityName) {
                 navigateToEntity(previousItem.data.entityName, false);
+            }
+        }
+    }
+
+    function navigateStandaloneBack() {
+        if (standaloneTrailStack.length === 0) {
+            // No trail, just return to idle
+            focusState = 'idle';
+            focusedEntity = null;
+            focusedFacet = null;
+            return;
+        }
+
+        // Remove current item
+        standaloneTrailStack = standaloneTrailStack.slice(0, -1);
+
+        if (standaloneTrailStack.length === 0) {
+            // Back to search results
+            focusState = 'idle';
+            focusedEntity = null;
+            focusedFacet = null;
+        } else {
+            // Go to previous item
+            const previousItem = standaloneTrailStack[standaloneTrailStack.length - 1];
+
+            if (previousItem.type === 'entity') {
+                focusState = 'entity';
+                focusedFacet = null;
+                if (previousItem.data?.entityName) {
+                    navigateToEntity(previousItem.data.entityName, false);
+                }
+            } else if (previousItem.type === 'facet') {
+                focusState = 'facet';
+                if (previousItem.data?.entityName && previousItem.data?.facetName) {
+                    navigateToFacet(previousItem.data.entityName, previousItem.data.facetName, false);
+                }
+            }
+        }
+    }
+
+    function navigateStandaloneToIndex(index: number) {
+        if (index < 0 || index >= standaloneTrailStack.length) return;
+
+        // Truncate trail to this index
+        standaloneTrailStack = standaloneTrailStack.slice(0, index + 1);
+        const targetItem = standaloneTrailStack[index];
+
+        // Navigate to the selected item
+        if (targetItem.type === 'entity') {
+            focusState = 'entity';
+            focusedFacet = null;
+            if (targetItem.data?.entityName) {
+                navigateToEntity(targetItem.data.entityName, false);
+            }
+        } else if (targetItem.type === 'facet') {
+            focusState = 'facet';
+            if (targetItem.data?.entityName && targetItem.data?.facetName) {
+                navigateToFacet(targetItem.data.entityName, targetItem.data.facetName, false);
             }
         }
     }
@@ -704,6 +809,10 @@
         conceptDetailTab = 'connections';
         entityDescription = null;
         entitySourceBooks = [];
+        standaloneTrailStack = [];
+        focusState = 'idle';
+        focusedEntity = null;
+        focusedFacet = null;
     }
 
     function navigateToPathStep(index: number) {
@@ -842,13 +951,48 @@
     {#if !isContextMode && focusState === 'entity' && focusedEntity}
         <div class="entity-panel">
             <div class="entity-header">
-                <button class="entity-back" on:click={() => { focusState = 'idle'; focusedEntity = null; }} title="Back to Search">
+                <button class="entity-back" on:click={() => { focusState = 'idle'; focusedEntity = null; standaloneTrailStack = []; }} title="Back to Search">
                     <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                     Back
                 </button>
             </div>
+
+            <!-- Standalone Trail Navigation -->
+            {#if standaloneTrailStack.length > 0}
+                <div class="trail-nav">
+                    <div class="trail-breadcrumbs">
+                        {#each standaloneTrailStack as item, i}
+                            {#if i > 0}
+                                <span class="trail-separator">›</span>
+                            {/if}
+                            <button
+                                class="trail-item"
+                                class:active={i === standaloneTrailStack.length - 1}
+                                class:type-entity={item.type === 'entity'}
+                                class:type-facet={item.type === 'facet'}
+                                on:click={() => navigateStandaloneToIndex(i)}
+                            >
+                                {#if item.type === 'entity'}
+                                    <span class="trail-icon">🔷</span>
+                                {:else if item.type === 'facet'}
+                                    <span class="trail-icon">📂</span>
+                                {/if}
+                                <span class="trail-label">{item.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                    {#if standaloneTrailStack.length > 1}
+                        <button class="trail-back" on:click={navigateStandaloneBack} title="Go Back">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                        </button>
+                    {/if}
+                </div>
+            {/if}
+
             <div class="entity-focus-content">
                 <div class="entity-focus-header">
                     <div class="entity-type-badge">{focusedEntity.type}</div>
@@ -910,13 +1054,48 @@
     {#if !isContextMode && focusState === 'facet' && focusedFacet}
         <div class="entity-panel">
             <div class="entity-header">
-                <button class="entity-back" on:click={navigateBack} title="Back">
+                <button class="entity-back" on:click={navigateStandaloneBack} title="Back">
                     <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                     Back to {focusedFacet.parentEntityName}
                 </button>
             </div>
+
+            <!-- Standalone Trail Navigation -->
+            {#if standaloneTrailStack.length > 0}
+                <div class="trail-nav">
+                    <div class="trail-breadcrumbs">
+                        {#each standaloneTrailStack as item, i}
+                            {#if i > 0}
+                                <span class="trail-separator">›</span>
+                            {/if}
+                            <button
+                                class="trail-item"
+                                class:active={i === standaloneTrailStack.length - 1}
+                                class:type-entity={item.type === 'entity'}
+                                class:type-facet={item.type === 'facet'}
+                                on:click={() => navigateStandaloneToIndex(i)}
+                            >
+                                {#if item.type === 'entity'}
+                                    <span class="trail-icon">🔷</span>
+                                {:else if item.type === 'facet'}
+                                    <span class="trail-icon">📂</span>
+                                {/if}
+                                <span class="trail-label">{item.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                    {#if standaloneTrailStack.length > 1}
+                        <button class="trail-back" on:click={navigateStandaloneBack} title="Go Back">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                        </button>
+                    {/if}
+                </div>
+            {/if}
+
             <div class="entity-focus-content">
                 <div class="facet-focus-header">
                     <div class="facet-parent-info">
