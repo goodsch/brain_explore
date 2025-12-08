@@ -10,6 +10,7 @@
     import { showMessage, fetchSyncPost } from 'siyuan';
 
     import ReframesTab from '../components/ReframesTab.svelte';
+    import EvidenceSection from '../components/EvidenceSection.svelte';
     import { saveJourney, type JourneyData } from '../utils/siyuan-structure';
     import { getBlockKramdown, exportMdContent } from '../api';
 
@@ -1049,6 +1050,9 @@
                         </ul>
                     </div>
                 {/if}
+
+                <!-- Evidence Section (Sprint 2) -->
+                <EvidenceSection entityName={focusedEntity.name} {backendUrl} />
             </div>
         </div>
     {/if}
@@ -1324,6 +1328,9 @@
                                 </div>
                             </div>
                         {/if}
+
+                        <!-- Evidence Section (Sprint 2) -->
+                        <EvidenceSection entityName={focusedEntity.name} {backendUrl} />
                     {/if}
 
                     <!-- Back to Question Button -->
