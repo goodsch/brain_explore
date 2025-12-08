@@ -8,7 +8,7 @@ import './NotesSheet.css';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  initialText?: string; // New prop
+  initialNoteData?: { text: string; cfiRange: string };
 }
 
 // Map UI note types to backend resonance signals (best effort)
@@ -31,26 +31,42 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-export function NotesSheet({ isOpen, onClose, initialText }: Props) {
+export function NotesSheet({ isOpen, onClose, initialNoteData }: Props) {
   const { currentEntity, userId } = useFlowStore();
-  const [noteInput, setNoteInput] = useState(initialText || '');
+  const [noteInput, setNoteInput] = useState(initialNoteData?.text || '');
   const [noteType, setNoteType] = useState<NoteType>('thought');
+  const [cfiRange, setCfiRange] = useState(initialNoteData?.cfiRange || '');
 
   const handleSubmit = () => {
     if (!noteInput.trim()) return;
+
+    const payload: {
+      title: string;
+      content: string;
+      resonance_signal: string;
+      energy_level: string;
+      source_id?: string;
+      location_cfi?: string;
+    } = {
+      title: `${TYPE_MAPPING[noteType].label}: ${noteInput.slice(0, 30)}${noteInput.length > 30 ? '...' : ''}`,
+      content: noteInput,
+      resonance_signal: TYPE_MAPPING[noteType].resonance,
+      energy_level: 'medium',
+    };
+
+    if (currentEntity?.id) {
+      payload.source_id = currentEntity.id;
+    }
+    if (cfiRange) {
+      payload.location_cfi = cfiRange;
+    }
     
     // Create operation for offline queue
     offlineQueue.enqueue({
       userId: userId || 'anonymous',
       operationType: 'note',
       endpoint: '/personal/sparks',
-      payload: {
-        title: `${TYPE_MAPPING[noteType].label}: ${noteInput.slice(0, 30)}${noteInput.length > 30 ? '...' : ''}`,
-        content: noteInput,
-        resonance_signal: TYPE_MAPPING[noteType].resonance,
-        energy_level: 'medium',
-        source_id: currentEntity?.id,
-      }
+      payload: payload
     });
     
     console.log('Note queued for offline sync');

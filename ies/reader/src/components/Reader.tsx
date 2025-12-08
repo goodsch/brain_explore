@@ -24,7 +24,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   const [loadError, setLoadError] = useState<string | null>(null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const [showNotesSheet, setShowNotesSheet] = useState(false);
-  const [initialNoteText, setInitialNoteText] = useState(''); // State to pass to NotesSheet
+  const [initialNoteData, setInitialNoteData] = useState<{ text: string; cfiRange: string } | undefined>(undefined);
   interface SelectionContext {
     text: string;
     position: { top: number; left: number };
@@ -115,8 +115,8 @@ interface IFrameContents {
       };
   }, []);
 
-  const captureAsNote = useCallback((text: string) => {
-    setInitialNoteText(text);
+  const captureAsNote = useCallback((selection: SelectionContext) => {
+    setInitialNoteData({ text: selection.text, cfiRange: selection.cfiRange });
     setShowNotesSheet(true);
     setSelectionContext(null); // Clear selection context after action
   }, []);
@@ -150,7 +150,7 @@ interface IFrameContents {
       // Apply reading styles
       rend.themes.default({
         body: {
-          'font-family': "'Crimson Pro', 'Georgia', serif",
+          'font-family': "'Source Serif Pro', 'Georgia', serif",
           'line-height': '1.8',
           'color': '#2c2c2c',
         },
@@ -313,10 +313,9 @@ interface IFrameContents {
       </button>
 
       <NotesSheet
-          key={initialNoteText}
           isOpen={showNotesSheet}
           onClose={() => setShowNotesSheet(false)}
-          initialText={initialNoteText}
+          initialNoteData={initialNoteData}
       />
       {selectionContext && (
         <div
@@ -334,7 +333,7 @@ interface IFrameContents {
           </button>
           <button 
             className="ies-btn ies-btn-sm ies-btn-subtle"
-            onClick={() => captureAsNote(selectionContext.text)}
+            onClick={() => captureAsNote(selectionContext)}
           >
             <PenLine size={18} /> Note
           </button>
