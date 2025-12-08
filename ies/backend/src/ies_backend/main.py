@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ies_backend.api import (
     book_entities,
     books,
+    context,
     conversations,
     inbox,
     flow_session,
@@ -51,6 +52,7 @@ app.include_router(inbox.router, prefix="/inbox", tags=["inbox"])  # New canonic
 app.include_router(inbox.router, prefix="/capture", tags=["inbox"])  # Backward compatibility
 app.include_router(thinking.router, tags=["thinking"])
 app.include_router(flow_session.router, tags=["flow"])
+app.include_router(context.router, tags=["context"])
 app.include_router(reframe.router, prefix="/reframes", tags=["reframes"])
 app.include_router(personal.router, tags=["personal"])
 app.include_router(books.router, tags=["books"])

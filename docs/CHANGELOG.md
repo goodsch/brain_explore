@@ -4,6 +4,23 @@ This file contains detailed development history. For current status, see CLAUDE.
 
 ## December 2025
 
+### Dec 8 - Context Layer MVP
+- **Context Layer Implementation** — Question-driven exploration for Flow Mode
+  - Backend: `/context` API with parse, save, search, journey endpoints
+  - Types: Context, Question, ContextJourneyEntry schemas
+  - Parser: Detects Context Notes from `## Key Questions`, `## Areas of Exploration`, `## Core Concepts` sections
+  - Search: Keyword-based entity search using context concepts + question terms
+- **Flow Mode Enhancement** — Context Panel UI
+  - New `contextBlockId` prop for Context Note detection
+  - Key Questions as clickable buttons with search integration
+  - Areas of Exploration and Core Concepts display
+  - Search results panel with entity navigation
+- **Spec Docs** — `redux/` folder with Context + Question Layer specification
+  - `IES_Context_and_Question_Layer.md` — Master spec
+  - `IES_Flow_Reader_Journey_v2.md` — Behavioral specs
+  - `IES_Extraction_Profile_Examples.md` — JSON templates
+  - `IES_Integration_Checklist.md` — Implementation roadmap
+
 ### Dec 7 - IES Reader Wave 2 & Wave 3, MCP Server
 - **IES Modern Theme** — Dark-mode-first SiYuan theme (IES Design System v2)
 - **IES Reader Wave 2** — Interactive reading features (questions, breadcrumbs, notes capture)
@@ -41,7 +58,8 @@ This file contains detailed development history. For current status, see CLAUDE.
 - **Phase 1:** Core hypothesis validated (11 concepts extracted) ✅
 - **Phase 2a:** CLI exploration tool validated ✅
 - **Phase 2b:** Visual interfaces (Readest + SiYuan MVP) ✅
-- **Phase 2c:** Integration features (~65% complete)
+- **Phase 2c:** Integration features (~75% complete)
+  - Context Layer MVP ✅ (Dec 8)
 
 ## Phase 1 Results
 
