@@ -52,6 +52,10 @@ Thumbs.db
 .worktrees/
 data/
 check/
+.agents/archive/
+.agents/status.json
+.mcp.json
+mcp.json
 
 # Project-specific ignores
 books/
@@ -67,6 +71,7 @@ resources+.md
 IES Chat/
 *.chatgpt.md
 .research/
+ChatGPT.md
 
 # Reference materials
 IES_SiYuan_Architecture_Package/
