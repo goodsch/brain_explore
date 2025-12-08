@@ -2,11 +2,14 @@
 
 import json
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pytest
 
 from ies_backend.schemas.conversation import ConversationImport, ConversationSource
 from ies_backend.schemas.entity import ExtractionResult, ExtractedEntity
+from ies_backend.schemas.personal import CreateSparkRequest
+from ies_backend.schemas.profile import ProfileObservation
 from ies_backend.services.conversation_service import ConversationService
 from ies_backend.services.neo4j_client import Neo4jClient
 
@@ -16,6 +19,8 @@ def conversation_store(monkeypatch):
     """In-memory stand-ins for Neo4j writes/reads."""
     store: dict[str, dict] = {}
     relations: dict[str, set[str]] = {}
+    open_questions: list[dict] = []
+    spark_links: list[tuple[str | None, str | None]] = []
 
     async def mock_write(query: str, parameters: dict | None = None):
         params = parameters or {}
@@ -33,9 +38,17 @@ def conversation_store(monkeypatch):
             store[node["id"]] = node
             return [{"c": node}]
 
+        if "OpenQuestion" in query:
+            open_questions.extend(params.get("questions", []))
+            return []
+
         if "MERGE (e:Entity" in query:
             rels = relations.setdefault(params["id"], set())
             rels.update(params.get("entities", []))
+            return []
+
+        if "DERIVED_FROM" in query:
+            spark_links.append((params.get("session_id"), params.get("spark_id")))
             return []
 
         if "DETACH DELETE c" in query:
@@ -71,7 +84,14 @@ def conversation_store(monkeypatch):
 
     store.clear()
     relations.clear()
-    return store, relations
+    open_questions.clear()
+    spark_links.clear()
+    return {
+        "sessions": store,
+        "relations": relations,
+        "open_questions": open_questions,
+        "spark_links": spark_links,
+    }
 
 
 @pytest.mark.asyncio
@@ -96,22 +116,53 @@ async def test_import_conversation_claude_json(monkeypatch, conversation_store):
             )
         ]
     )
+    extraction.session_summary.key_insights = ["Timeboxing helps regulate nervous system"]
+    extraction.session_summary.open_questions = ["How do I make timeboxing feel flexible?"]
+    extraction.session_summary.threads_explored = ["Attention patterns"]
+
+    class DummyProfileService:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, ProfileObservation]] = []
+
+        async def apply_observation(self, user_id: str, observation: ProfileObservation):
+            self.calls.append((user_id, observation))
+            return None
+
+    class DummySparkService:
+        def __init__(self) -> None:
+            self.requests: list[CreateSparkRequest] = []
+
+        async def create_spark(self, request: CreateSparkRequest):
+            self.requests.append(request)
+            return SimpleNamespace(id=f"spark_{len(self.requests)}")
+
     async def fake_extract(transcript: str):
         return extraction
 
     monkeypatch.setattr(ConversationService, "_extract_entities", staticmethod(fake_extract))
+    profile_stub = DummyProfileService()
+    spark_stub = DummySparkService()
+    monkeypatch.setattr(ConversationService, "profile_service", profile_stub)
+    monkeypatch.setattr(ConversationService, "personal_graph_service", spark_stub)
 
     request = ConversationImport(
         source=ConversationSource.CLAUDE,
         content=json.dumps(sample),
         topic=None,
         user_id="tester",
+        create_sparks=True,
     )
     resp = await ConversationService.import_conversation(request)
 
     assert resp.session.turn_count == 2
     assert resp.session.entity_count == 1
     assert resp.extraction.entities[0].name == "Timeboxing"
+    assert profile_stub.calls, "Profile observation should be recorded"
+    topics = profile_stub.calls[0][1].topics_explored
+    assert "Attention patterns" in topics
+    assert spark_stub.requests, "Spark capture should run for key insights"
+    assert conversation_store["open_questions"], "Open questions should be stored"
+    assert conversation_store["spark_links"], "Spark should be linked to session"
 
 
 @pytest.mark.asyncio

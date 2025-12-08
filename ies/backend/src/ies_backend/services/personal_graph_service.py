@@ -284,6 +284,26 @@ class PersonalGraphService:
         return SparkListResponse(sparks=sparks, total=len(sparks))
 
     @classmethod
+    async def list_sparks(cls, limit: int = 20, offset: int = 0) -> SparkListResponse:
+        """List all sparks with pagination."""
+        query = """
+        MATCH (s:Spark)
+        RETURN s
+        ORDER BY s.created_at DESC
+        SKIP $offset
+        LIMIT $limit
+        """
+        results = await Neo4jClient.execute_query(query, {"limit": limit, "offset": offset})
+        sparks = [_node_to_spark_response(r.get("s", {})) for r in results]
+        
+        # Get total count
+        count_query = "MATCH (s:Spark) RETURN count(s) as total"
+        count_result = await Neo4jClient.execute_query(count_query)
+        total = count_result[0].get("total", 0) if count_result else len(sparks)
+        
+        return SparkListResponse(sparks=sparks, total=total)
+
+    @classmethod
     async def get_stats(cls) -> PersonalStatsResponse:
         """Get statistics for the personal knowledge graph."""
         query = """

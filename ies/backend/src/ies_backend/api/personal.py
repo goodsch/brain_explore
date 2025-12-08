@@ -17,6 +17,15 @@ from ..services.personal_graph_service import PersonalGraphService
 router = APIRouter(prefix="/personal", tags=["personal"])
 
 
+@router.get("/sparks", response_model=SparkListResponse)
+async def list_sparks(limit: int = 20, offset: int = 0) -> SparkListResponse:
+    """List all sparks with pagination.
+
+    Returns sparks ordered by creation time (newest first).
+    """
+    return await PersonalGraphService.list_sparks(limit, offset)
+
+
 @router.post("/sparks", response_model=SparkResponse)
 async def create_spark(request: CreateSparkRequest) -> SparkResponse:
     """Create a new spark (raw resonance capture).
