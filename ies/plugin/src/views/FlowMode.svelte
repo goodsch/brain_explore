@@ -1010,6 +1010,9 @@
                             {#each focusedEntity.facets as facet}
                                 <button class="facet-chip" on:click={() => navigateToFacet(focusedEntity.name, facet.name)}>
                                     {facet.name}
+                                    {#if facetExistsInGraph(facet)}
+                                        <span class="facet-exists-badge" title="This facet exists as an entity in the knowledge graph">●</span>
+                                    {/if}
                                     {#if facet.entity_count > 0}
                                         <span class="facet-count">{facet.entity_count}</span>
                                     {/if}
@@ -1275,7 +1278,12 @@
                                         >
                                             <span class="facet-chip-icon">📂</span>
                                             <div class="facet-chip-content">
-                                                <span class="facet-chip-name">{facet.name}</span>
+                                                <span class="facet-chip-name">
+                                                    {facet.name}
+                                                    {#if facetExistsInGraph(facet)}
+                                                        <span class="facet-exists-badge" title="This facet exists as an entity in the knowledge graph">●</span>
+                                                    {/if}
+                                                </span>
                                                 <span class="facet-chip-count">{facet.entity_count} {facet.entity_count === 1 ? 'entity' : 'entities'}</span>
                                             </div>
                                         </button>
@@ -2285,6 +2293,19 @@
     .facet-chip-count {
         font-size: var(--text-xs);
         color: var(--text-muted);
+    }
+
+    .facet-exists-badge {
+        display: inline-block;
+        margin-left: var(--space-1);
+        color: var(--entity-concept);
+        font-size: var(--text-xs);
+        opacity: 0.7;
+        transition: opacity var(--transition-all);
+    }
+
+    .facet-chip:hover .facet-exists-badge {
+        opacity: 1;
     }
 
     .entity-neighbors {
