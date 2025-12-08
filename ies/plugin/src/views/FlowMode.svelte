@@ -176,7 +176,7 @@
         focusedFacet = null;
 
         try {
-            // Fetch entity details from new endpoint
+            // Fetch entity details from backend
             const data = await apiGet(`/graph/entity/${encodeURIComponent(entityName)}`);
 
             // Simplified transformation using pre-computed data
@@ -225,6 +225,7 @@
                 explorationTimestamps = [...explorationTimestamps, now];
             }
         } catch (err) {
+            console.error('[FlowMode] Error loading entity:', err);
             showMessage(`Failed to load entity: ${err.message}`, 5000, 'error');
             focusState = trailStack.length > 0 ? 'question' : 'idle';
         } finally {
@@ -815,8 +816,8 @@
         </button>
     </div>
 
-    <!-- Search Results -->
-    {#if searchResults.length > 0}
+    <!-- Search Results (hide when viewing entity or facet) -->
+    {#if searchResults.length > 0 && focusState === 'idle'}
         <div class="results-panel">
             <div class="results-header">
                 <span class="results-label">Found {searchResults.length} concept{searchResults.length !== 1 ? 's' : ''}</span>
@@ -826,13 +827,131 @@
                     <button
                         class="result-card"
                         style="--delay: {i * 40}ms; --type-color: {getTypeColor(result.type)}"
-                        on:click={() => exploreConcept(result.name)}
+                        on:click={() => navigateToEntity(result.name)}
                     >
                         <span class="result-indicator"></span>
                         <span class="result-name">{result.name}</span>
                         <span class="result-type">{result.type}</span>
                     </button>
                 {/each}
+            </div>
+        </div>
+    {/if}
+
+    <!-- Standalone Entity View (for search results outside Context Mode) -->
+    {#if !isContextMode && focusState === 'entity' && focusedEntity}
+        <div class="entity-panel">
+            <div class="entity-header">
+                <button class="entity-back" on:click={() => { focusState = 'idle'; focusedEntity = null; }} title="Back to Search">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    Back
+                </button>
+            </div>
+            <div class="entity-focus-content">
+                <div class="entity-focus-header">
+                    <div class="entity-type-badge">{focusedEntity.type}</div>
+                    <h3 class="entity-name">{focusedEntity.name}</h3>
+                </div>
+                {#if focusedEntity.description}
+                    <p class="entity-description">{focusedEntity.description}</p>
+                {/if}
+
+                <!-- Facets -->
+                {#if focusedEntity.facets && focusedEntity.facets.length > 0}
+                    <div class="entity-section">
+                        <h4 class="entity-section-title">Facets ({focusedEntity.facets.length})</h4>
+                        <div class="facet-chips">
+                            {#each focusedEntity.facets as facet}
+                                <button class="facet-chip" on:click={() => navigateToFacet(focusedEntity.name, facet.name)}>
+                                    {facet.name}
+                                    {#if facet.entity_count > 0}
+                                        <span class="facet-count">{facet.entity_count}</span>
+                                    {/if}
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+
+                <!-- Related Concepts -->
+                {#if focusedEntity.neighbors.length > 0}
+                    <div class="entity-section">
+                        <h4 class="entity-section-title">Related ({focusedEntity.neighbors.length})</h4>
+                        <div class="neighbor-list">
+                            {#each focusedEntity.neighbors as neighbor}
+                                <button class="neighbor-item" on:click={() => navigateToEntity(neighbor.name)}>
+                                    <span class="neighbor-name">{neighbor.name}</span>
+                                    <span class="neighbor-type">{neighbor.type}</span>
+                                    <span class="neighbor-rel">{neighbor.relationship}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+
+                <!-- Source Books -->
+                {#if focusedEntity.sourceBooks.length > 0}
+                    <div class="entity-section">
+                        <h4 class="entity-section-title">Sources ({focusedEntity.sourceBooks.length})</h4>
+                        <ul class="source-list">
+                            {#each focusedEntity.sourceBooks as book}
+                                <li>{book}</li>
+                            {/each}
+                        </ul>
+                    </div>
+                {/if}
+            </div>
+        </div>
+    {/if}
+
+    <!-- Standalone Facet View (for facet exploration outside Context Mode) -->
+    {#if !isContextMode && focusState === 'facet' && focusedFacet}
+        <div class="entity-panel">
+            <div class="entity-header">
+                <button class="entity-back" on:click={navigateBack} title="Back">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    Back to {focusedFacet.parentEntityName}
+                </button>
+            </div>
+            <div class="entity-focus-content">
+                <div class="facet-focus-header">
+                    <div class="facet-parent-info">
+                        <span class="entity-type-badge">{focusedFacet.parentEntityType}</span>
+                        <span class="facet-parent-name">{focusedFacet.parentEntityName}</span>
+                    </div>
+                    <h3 class="entity-name">{focusedFacet.facetName}</h3>
+                    {#if focusedFacet.description}
+                        <p class="entity-description">{focusedFacet.description}</p>
+                    {/if}
+                </div>
+
+                {#if isLoadingFacet}
+                    <div class="entity-section">
+                        <span class="spinner"></span>
+                        Loading facet entities...
+                    </div>
+                {:else if focusedFacet.entities.length > 0}
+                    <div class="entity-section">
+                        <h4 class="entity-section-title">Entities ({focusedFacet.entities.length})</h4>
+                        <div class="neighbor-list">
+                            {#each focusedFacet.entities as entity}
+                                <button class="neighbor-item" on:click={() => navigateToEntity(entity.name)}>
+                                    <span class="neighbor-name">{entity.name}</span>
+                                    <span class="neighbor-type">{entity.type}</span>
+                                    <span class="neighbor-rel">{entity.relationship}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+                {:else}
+                    <div class="entity-section">
+                        <p class="entity-description">No entities in this facet yet</p>
+                    </div>
+                {/if}
             </div>
         </div>
     {/if}
@@ -2139,5 +2258,174 @@
         to {
             transform: rotate(360deg);
         }
+    }
+
+    /* Standalone Entity Panel */
+    .entity-panel {
+        background: var(--bg-primary);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-light);
+        margin-top: var(--space-3);
+        max-height: 70vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .entity-header {
+        padding: var(--space-2) var(--space-3);
+        border-bottom: 1px solid var(--border-light);
+        background: var(--bg-secondary);
+    }
+
+    .entity-back {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 0.85rem;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-sm);
+        transition: var(--transition-all);
+    }
+
+    .entity-back:hover {
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+    }
+
+    .entity-focus-content {
+        padding: var(--space-3);
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .entity-focus-header {
+        margin-bottom: var(--space-2);
+    }
+
+    .entity-type-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        padding: 2px 8px;
+        border-radius: var(--radius-sm);
+        margin-bottom: var(--space-1);
+    }
+
+    .entity-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .entity-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin: var(--space-2) 0;
+        line-height: 1.5;
+    }
+
+    .entity-section {
+        margin-top: var(--space-3);
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--border-light);
+    }
+
+    .entity-section-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin: 0 0 var(--space-2) 0;
+    }
+
+    .facet-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-1);
+    }
+
+    .facet-chip {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: var(--space-1) var(--space-2);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: var(--transition-all);
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+    }
+
+    .facet-chip:hover {
+        background: var(--bg-elevated);
+        border-color: var(--accent);
+    }
+
+    .facet-count {
+        font-size: 0.75rem;
+        background: var(--accent);
+        color: white;
+        padding: 0 6px;
+        border-radius: 10px;
+    }
+
+    .neighbor-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+
+    .neighbor-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: var(--space-2);
+        cursor: pointer;
+        transition: var(--transition-all);
+        text-align: left;
+    }
+
+    .neighbor-item:hover {
+        background: var(--bg-elevated);
+        border-color: var(--accent);
+    }
+
+    .neighbor-name {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .neighbor-type {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: var(--bg-primary);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+    }
+
+    .neighbor-rel {
+        font-size: 0.7rem;
+        color: var(--text-subtle);
+    }
+
+    .source-list {
+        margin: 0;
+        padding-left: var(--space-4);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .source-list li {
+        margin-bottom: var(--space-1);
     }
 </style>

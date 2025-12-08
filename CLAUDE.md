@@ -69,6 +69,13 @@ Four-agent critical analysis of SiYuan plugin revealed catastrophic disconnect b
   - Functions: `navigateToEntity()`, `navigateBack()`, `pushTrail()`, `popTrail()`
   - Sections hide when in entity focus for clean UI
   - Commit: `58f1c94` in SiYuan worktree
+- ✅ **Flow Mode Standalone Navigation (Phase 2)** — Search results exploration
+  - Fixed plugin → backend: `forwardProxy` pattern for Docker CORS bypass
+  - Standalone entity panel: search → entity details outside Context Mode
+  - Standalone facet panel: entity → facet exploration with back navigation
+  - Entity panel: type badge, description, facets, related concepts, source books
+  - Search results hidden during entity/facet view (`focusState === 'idle'`)
+  - Full flow: search → entity → facet → back → search
 - ✅ **Context Layer MVP** — Question-driven exploration for Flow Mode
   - Backend: `/context` API with parse, save, search, journey endpoints
   - Types: Context, Question, ContextJourneyEntry schemas in `schemas/context.py`
