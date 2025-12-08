@@ -309,3 +309,101 @@ class GraphService:
             return {r["calibre_id"]: r["entity_count"] for r in results}
         except Exception:
             return {}
+
+
+    @staticmethod
+    async def get_entity_details(name: str) -> dict | None:
+        """Get detailed entity information for Flow Mode EntityFocus.
+
+        Returns entity details, related concepts, and source book evidence.
+        Works with any node type (Concept, Researcher, Theory, etc.).
+
+        Args:
+            name: Entity/concept name to look up
+
+        Returns:
+            Dict with name, type, description, related entities, and source books.
+            Returns None if entity not found.
+        """
+        # Get entity node with properties
+        entity_query = """
+        MATCH (e {name: $name})
+        RETURN e, labels(e) as labels
+        LIMIT 1
+        """
+
+        try:
+            entity_results = await Neo4jClient.execute_query(
+                entity_query, {"name": name}
+            )
+
+            if not entity_results:
+                return None
+
+            entity = entity_results[0]["e"]
+            labels = entity_results[0]["labels"]
+            # Filter out generic labels, prefer specific type
+            node_type = next(
+                (l for l in labels if l not in ["Node", "Entity", "Base"]),
+                labels[0] if labels else "Concept"
+            )
+
+            # Get related entities with relationship types
+            related_query = """
+            MATCH (e {name: $name})-[r]-(related)
+            WHERE related.name IS NOT NULL
+            RETURN DISTINCT related.name as name, labels(related) as labels,
+                   type(r) as relationship
+            LIMIT 20
+            """
+            related_results = await Neo4jClient.execute_query(
+                related_query, {"name": name}
+            )
+
+            related = []
+            for r in related_results:
+                r_labels = r.get("labels", [])
+                r_type = next(
+                    (l for l in r_labels if l not in ["Node", "Entity", "Base"]),
+                    r_labels[0] if r_labels else "Concept"
+                )
+                related.append({
+                    "name": r["name"],
+                    "type": r_type,
+                    "relationship": r.get("relationship", "RELATED_TO"),
+                })
+
+            # Get source books with snippets
+            sources_query = """
+            MATCH (c:Chunk)-[:MENTIONS]->(e {name: $name})
+            OPTIONAL MATCH (c)-[:FROM_BOOK]->(b:Book)
+            RETURN b.title as title, b.author as author, c.content as snippet
+            LIMIT 5
+            """
+            sources_results = await Neo4jClient.execute_query(
+                sources_query, {"name": name}
+            )
+
+            source_books = []
+            seen_books = set()
+            for s in sources_results:
+                title = s.get("title")
+                if title and title not in seen_books:
+                    seen_books.add(title)
+                    source_books.append({
+                        "title": title,
+                        "author": s.get("author"),
+                        "snippet": (s.get("snippet") or "")[:300],  # Truncate long snippets
+                    })
+
+            return {
+                "name": entity.get("name", name),
+                "type": node_type,
+                "description": entity.get("description"),
+                "related": related,
+                "source_books": source_books,
+            }
+
+        except Exception as e:
+            # Log but don't crash - return None for not found
+            return None

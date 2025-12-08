@@ -106,6 +106,47 @@ class SuggestionsResponse(BaseModel):
     )
 
 
+# === Entity Details Endpoint (Phase 2A) ===
+
+
+class SourceBook(BaseModel):
+    """A book that mentions this entity with evidence snippet."""
+
+    title: str
+    author: str | None = None
+    snippet: str | None = Field(
+        default=None, description="Text snippet where entity is mentioned"
+    )
+
+
+class RelatedEntity(BaseModel):
+    """A related entity with relationship info."""
+
+    name: str
+    type: str = Field(description="Node type (Concept, Researcher, Theory, etc.)")
+    relationship: str = Field(description="Relationship type (COMPONENT_OF, SUPPORTS, etc.)")
+
+
+class EntityDetailsResponse(BaseModel):
+    """Rich entity details for Flow Mode EntityFocus view.
+
+    Provides entity information, related concepts, and source evidence
+    without requiring user_id (works with knowledge graph concepts).
+    """
+
+    name: str
+    type: str = Field(description="Primary node type")
+    description: str | None = Field(
+        default=None, description="Entity description if available"
+    )
+    related: list[RelatedEntity] = Field(
+        default_factory=list, description="1-hop related entities"
+    )
+    source_books: list[SourceBook] = Field(
+        default_factory=list, description="Books mentioning this entity"
+    )
+
+
 # === Thinking Partner Endpoint ===
 
 class ThinkingPartnerRequest(BaseModel):

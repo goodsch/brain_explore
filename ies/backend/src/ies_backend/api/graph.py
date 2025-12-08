@@ -1,11 +1,12 @@
 """Graph API router for Layer 3 exploration.
 
-Provides 6 endpoints for visual knowledge graph exploration:
+Provides 7 endpoints for visual knowledge graph exploration:
 - GET /explore/{concept} - Related concepts and relationships
 - GET /search - Concept search
 - GET /sources/{concept} - Supporting text chunks
 - GET /stats - Graph statistics
 - GET /suggestions - Dashboard topic suggestions
+- GET /entity/{name} - Rich entity details for Flow Mode EntityFocus
 - POST /thinking-partner - Generate reflection question
 """
 
@@ -14,12 +15,15 @@ from fastapi import APIRouter, HTTPException, Query
 from ies_backend.config import settings
 from ies_backend.services.graph_service import GraphService
 from ies_backend.schemas.graph import (
+    EntityDetailsResponse,
     ExploreResponse,
     GraphNode,
     GraphRelationship,
     GraphStats,
+    RelatedEntity,
     SearchResponse,
     SearchResult,
+    SourceBook,
     SourceChunk,
     SourcesResponse,
     SuggestedTopic,
@@ -196,6 +200,54 @@ async def get_suggestions() -> SuggestionsResponse:
         recent=recent,
         connected=connected,
         new=new,
+    )
+
+
+
+@router.get("/entity/{name}", response_model=EntityDetailsResponse)
+async def get_entity_details(name: str) -> EntityDetailsResponse:
+    """Get detailed entity information for Flow Mode EntityFocus view.
+
+    Returns rich entity details including description, related concepts,
+    and source book evidence. Works with any knowledge graph node type.
+
+    Args:
+        name: Entity/concept name to look up
+
+    Returns:
+        EntityDetailsResponse with entity info, related entities, and sources
+
+    Raises:
+        HTTPException 404 if entity not found
+    """
+    result = await GraphService.get_entity_details(name)
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Entity '{name}' not found in knowledge graph"
+        )
+
+    return EntityDetailsResponse(
+        name=result["name"],
+        type=result["type"],
+        description=result.get("description"),
+        related=[
+            RelatedEntity(
+                name=r["name"],
+                type=r["type"],
+                relationship=r["relationship"],
+            )
+            for r in result.get("related", [])
+        ],
+        source_books=[
+            SourceBook(
+                title=s["title"],
+                author=s.get("author"),
+                snippet=s.get("snippet"),
+            )
+            for s in result.get("source_books", [])
+        ],
     )
 
 

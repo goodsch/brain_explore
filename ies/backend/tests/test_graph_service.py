@@ -346,3 +346,91 @@ class TestGraphServiceGetEntitiesByCalibreId:
             result = await GraphService.get_entities_by_calibre_id(123)
 
             assert result == []
+
+
+
+class TestGraphServiceGetEntityDetails:
+    """Tests for get_entity_details (Phase 2A Flow Mode EntityFocus)."""
+
+    @pytest.mark.asyncio
+    async def test_get_entity_details_returns_entity_info(self):
+        """Test that get_entity_details returns entity with related and sources."""
+        # Mock entity lookup
+        mock_entity = [
+            {
+                "e": {"name": "Executive Function", "description": "Cognitive control processes"},
+                "labels": ["Concept"],
+            }
+        ]
+        # Mock related entities
+        mock_related = [
+            {"name": "Working Memory", "labels": ["Concept"], "relationship": "COMPONENT_OF"},
+            {"name": "ADHD", "labels": ["Concept"], "relationship": "RELATED_TO"},
+        ]
+        # Mock source books
+        mock_sources = [
+            {"title": "Scattered Minds", "author": "Gabor Maté", "snippet": "Executive function..."},
+        ]
+
+        with patch(
+            "ies_backend.services.graph_service.Neo4jClient.execute_query",
+            new_callable=AsyncMock,
+            side_effect=[mock_entity, mock_related, mock_sources],
+        ):
+            result = await GraphService.get_entity_details("Executive Function")
+
+            assert result is not None
+            assert result["name"] == "Executive Function"
+            assert result["type"] == "Concept"
+            assert result["description"] == "Cognitive control processes"
+            assert len(result["related"]) == 2
+            assert result["related"][0]["name"] == "Working Memory"
+            assert result["related"][0]["relationship"] == "COMPONENT_OF"
+            assert len(result["source_books"]) == 1
+            assert result["source_books"][0]["title"] == "Scattered Minds"
+
+    @pytest.mark.asyncio
+    async def test_get_entity_details_returns_none_for_missing_entity(self):
+        """Test that get_entity_details returns None when entity not found."""
+        with patch(
+            "ies_backend.services.graph_service.Neo4jClient.execute_query",
+            new_callable=AsyncMock,
+            return_value=[],  # Empty result = not found
+        ):
+            result = await GraphService.get_entity_details("NonExistent")
+
+            assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_entity_details_handles_missing_description(self):
+        """Test that get_entity_details handles entities without descriptions."""
+        mock_entity = [
+            {
+                "e": {"name": "Some Concept"},  # No description
+                "labels": ["Concept"],
+            }
+        ]
+
+        with patch(
+            "ies_backend.services.graph_service.Neo4jClient.execute_query",
+            new_callable=AsyncMock,
+            side_effect=[mock_entity, [], []],  # Entity, no related, no sources
+        ):
+            result = await GraphService.get_entity_details("Some Concept")
+
+            assert result is not None
+            assert result["description"] is None
+            assert result["related"] == []
+            assert result["source_books"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_entity_details_returns_none_on_exception(self):
+        """Test that get_entity_details returns None on error."""
+        with patch(
+            "ies_backend.services.graph_service.Neo4jClient.execute_query",
+            new_callable=AsyncMock,
+            side_effect=Exception("Database error"),
+        ):
+            result = await GraphService.get_entity_details("Test")
+
+            assert result is None
