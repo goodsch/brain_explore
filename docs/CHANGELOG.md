@@ -4,7 +4,16 @@ This file contains detailed development history. For current status, see CLAUDE.
 
 ## December 2025
 
-### Dec 8 - Context Layer MVP
+### Dec 8 - Context Layer MVP + Navigation Foundation
+- **Flow Mode Navigation Foundation (Phase 1)** — Graph traversal with trail tracking
+  - Navigation state machine: `FocusState` = 'idle' | 'question' | 'entity' | 'facet'
+  - Trail component (breadcrumbs): Context → Question → Entity with click-to-navigate
+  - EntityFocus view: entity name, type, description, clickable neighbors, source books
+  - Functions: `navigateToEntity()`, `navigateBack()`, `pushTrail()`, `popTrail()`
+  - Core Concepts and search results now navigate to entity focus view
+  - Sections hide when in entity focus for clean UI
+  - Full CSS styling for trail and entity focus components
+  - Commit: `58f1c94` (SiYuan), `c63c007` (master)
 - **Context Layer Implementation** — Question-driven exploration for Flow Mode
   - Backend: `/context` API with parse, save, search, journey endpoints
   - Types: Context, Question, ContextJourneyEntry schemas
@@ -20,6 +29,7 @@ This file contains detailed development history. For current status, see CLAUDE.
   - `IES_Flow_Reader_Journey_v2.md` — Behavioral specs
   - `IES_Extraction_Profile_Examples.md` — JSON templates
   - `IES_Integration_Checklist.md` — Implementation roadmap
+- **Evolution Plan** — `docs/plans/flow-mode-evolution.md` with 5-phase roadmap
 
 ### Dec 7 - IES Reader Wave 2 & Wave 3, MCP Server
 - **IES Modern Theme** — Dark-mode-first SiYuan theme (IES Design System v2)
