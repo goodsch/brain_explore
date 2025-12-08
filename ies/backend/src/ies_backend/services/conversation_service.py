@@ -26,6 +26,7 @@ from ies_backend.services.personal_graph_service import PersonalGraphService
 from ies_backend.services.profile_service import ProfileService
 from ies_backend.services.neo4j_client import Neo4jClient
 from ies_backend.services.conversation_parser import ConversationParser, ParsedTurn
+from ies_backend.services.siyuan_client import SiYuanClient
 
 # Simple extraction fallback mirrors inbox approach
 import re
@@ -456,6 +457,23 @@ class ConversationService:
             except Exception:
                 logger.exception("Failed to link spark %s to session %s", spark.id, session.id)
 
+            # Sync to SiYuan - create document in Daily log
+            try:
+                block_id = await SiYuanClient.create_spark_block(
+                    spark_id=spark.id,
+                    title=title,
+                    content=insight,
+                    source_id=session.id,
+                    source_name=session.topic or "Conversation",
+                    resonance_signal=spark_request.resonance_signal.value if spark_request.resonance_signal else "curious",
+                    energy_level=spark_request.energy_level.value if spark_request.energy_level else "medium",
+                )
+                if block_id:
+                    await ConversationService._update_spark_siyuan_id(spark.id, block_id)
+                    logger.info("Created SiYuan block %s for spark %s", block_id, spark.id)
+            except Exception:
+                logger.warning("Failed to sync spark %s to SiYuan", spark.id)
+
     @staticmethod
     async def _link_spark_to_session(session_id: str, spark_id: str) -> None:
         """Connect a spark node back to its originating conversation."""
@@ -466,6 +484,16 @@ class ConversationService:
         MERGE (s)-[:DERIVED_FROM]->(c)
         """
         await Neo4jClient.execute_write(query, {"session_id": session_id, "spark_id": spark_id})
+
+    @staticmethod
+    async def _update_spark_siyuan_id(spark_id: str, siyuan_block_id: str) -> None:
+        """Update spark with its corresponding SiYuan block ID."""
+
+        query = """
+        MATCH (s:Spark {id: $spark_id})
+        SET s.siyuan_block_id = $siyuan_block_id
+        """
+        await Neo4jClient.execute_write(query, {"spark_id": spark_id, "siyuan_block_id": siyuan_block_id})
 
     @classmethod
     async def _store_open_questions(
