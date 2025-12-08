@@ -15,6 +15,8 @@ from ies_backend.api import (
     profile,
     question_engine,
     reframe,
+    quick_add,
+    sources,
     session,
     template,
     thinking,
@@ -52,6 +54,8 @@ app.include_router(flow_session.router, tags=["flow"])
 app.include_router(reframe.router, prefix="/reframes", tags=["reframes"])
 app.include_router(personal.router, tags=["personal"])
 app.include_router(books.router, tags=["books"])
+app.include_router(sources.router, tags=["sources"])
+app.include_router(quick_add.router, tags=["quick-add"])
 app.include_router(template.router, tags=["templates"])
 
 

@@ -1,5 +1,7 @@
 """API endpoints for AI conversation imports."""
 
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
@@ -46,12 +48,12 @@ async def delete_conversation(conversation_id: str) -> dict[str, str]:
 
 
 @router.get("/conversations/{conversation_id}/read", response_class=HTMLResponse)
-async def read_conversation(conversation_id: str) -> HTMLResponse:
+async def read_conversation(conversation_id: str, theme: Optional[str] = "dark") -> HTMLResponse:
     """Render a conversation in reader view."""
     session = await ConversationService.get_conversation(conversation_id)
     if not session:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    return RenderingService.render_reader_view(session)
+    return RenderingService.render_reader_view(session, theme=theme)
 
 
 @router.get("/conversations/{conversation_id}/epub")
@@ -60,4 +62,7 @@ async def epub_conversation(conversation_id: str):
     session = await ConversationService.get_conversation(conversation_id)
     if not session:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    return RenderingService.render_epub(session)
+    
+    extraction_result = await ConversationService.get_extraction_result(conversation_id)
+
+    return RenderingService.render_epub(session, extraction_result=extraction_result)

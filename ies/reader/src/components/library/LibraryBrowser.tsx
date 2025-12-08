@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Library, Upload, Wifi, WifiOff, Download, Clock, Loader2, AlertCircle } from 'lucide-react';
+import { Library, Upload, Wifi, WifiOff, Download, Clock, Loader2, AlertCircle, Sun, Moon } from 'lucide-react';
 import { graphClient, type CalibreBook } from '../../services/graphClient';
 import { useIngestionQueue } from '../../hooks/useIngestionQueue';
 import { BookCard } from './BookCard';
@@ -10,11 +10,13 @@ import './LibraryBrowser.css';
 interface LibraryBrowserProps {
   onBookSelect: (book: CalibreBook) => void;
   onLocalFileSelect: (file: File) => void;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
 }
 
 type ViewFilter = 'all' | 'indexed' | 'queued';
 
-export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrowserProps) {
+export function LibraryBrowser({ onBookSelect, onLocalFileSelect, theme, toggleTheme }: LibraryBrowserProps) {
   const [books, setBooks] = useState<CalibreBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +129,11 @@ export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: LibraryBrows
             >
               {isOnline ? <Wifi size={18} /> : <WifiOff size={18} />}
             </div>
+
+            {/* Theme Toggle */}
+            <button onClick={toggleTheme} className="ies-btn ies-btn-ghost" title="Toggle theme">
+              {theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
 
             {/* Queue indicator - shows when there are items in queue */}
             {(hasActiveItems || failedCount > 0) && (
@@ -290,3 +297,4 @@ interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
+

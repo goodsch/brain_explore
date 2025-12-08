@@ -15,6 +15,25 @@ function App() {
   const [currentBook, setCurrentBook] = useState<BookInfo | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(true);
   const { setUserId } = useFlowStore();
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    // Initialize theme from local storage or system preference
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+      return localStorage.getItem('theme') as 'light' | 'dark';
+    }
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  }, []);
 
   // Login on app mount
   useEffect(() => {
@@ -79,6 +98,8 @@ function App() {
           title={currentBook.title}
           calibreId={currentBook.calibreId}
           onClose={closeBook}
+          theme={theme}
+          toggleTheme={toggleTheme}
         />
       </div>
     );
@@ -90,6 +111,8 @@ function App() {
       <LibraryBrowser
         onBookSelect={handleBookSelect}
         onLocalFileSelect={handleLocalFileSelect}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
     </div>
   );

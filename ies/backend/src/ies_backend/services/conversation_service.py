@@ -80,6 +80,7 @@ class ConversationService:
                     turn_count=node.get("turn_count", 0),
                     entity_count=node.get("entity_count", 0),
                     transcript=node.get("transcript"),
+                    entities=row.get("entities", []),
                     turns=[],
                 )
             )
@@ -110,6 +111,7 @@ class ConversationService:
             turn_count=node.get("turn_count", 0),
             entity_count=node.get("entity_count", 0),
             transcript=transcript,
+            entities=row.get("entities", []),
             turns=turns,
         )
 
@@ -125,6 +127,36 @@ class ConversationService:
         if not rows:
             return False
         return bool(rows[0].get("deleted", 0))
+
+    @staticmethod
+    async def get_extraction_result(conversation_id: str) -> ExtractionResult | None:
+        """Fetch extraction result for a conversation."""
+        query = """
+        MATCH (c:ConversationSession {id: $id})-[:MENTIONS]->(e:Entity)
+        RETURN e
+        """
+        rows = await Neo4jClient.execute_query(query, {"id": conversation_id})
+        if not rows:
+            return None
+
+        entities: list[ExtractedEntity] = []
+        for row in rows:
+            node = row.get("e", {})
+            # Assuming ExtractedEntity fields are directly on the Node.
+            # 'quotes' and 'connections' might need more complex retrieval if not stored directly.
+            # For now, initialize as empty lists if not present.
+            entities.append(
+                ExtractedEntity(
+                    name=node.get("name"),
+                    kind=node.get("kind", "idea"),  # Default to 'idea' if not present
+                    domain=node.get("domain", "meta"),  # Default to 'meta'
+                    status=node.get("status", "seed"),  # Default to 'seed'
+                    description=node.get("description", ""),
+                    quotes=node.get("quotes", []),
+                    connections=node.get("connections", []),
+                )
+            )
+        return ExtractionResult(entities=entities)
 
     # ----- Internal helpers ----- #
 

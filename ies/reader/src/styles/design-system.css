@@ -58,6 +58,7 @@
 
   /* === Typography === */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Source Serif Pro', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Font Sizes */
@@ -79,6 +80,7 @@
   --leading-tight: 1.25;
   --leading-normal: 1.5;
   --leading-relaxed: 1.75;
+  --leading-reader: 1.6; /* New line height for reader content */
 
   /* === Spacing (8px base) === */
   --space-0: 0;
@@ -135,7 +137,7 @@
   --z-tooltip: 600;
 
   /* === Layout === */
-  --content-max-width: 720px;
+  --content-max-width: 72ch; /* Updated max-width for readability */
   --sidebar-width: 400px;
   --sidebar-width-mobile: 100%;
   --header-height: 56px;
@@ -184,49 +186,151 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-serif); /* Use serif font for body */
   font-size: var(--text-base);
-  line-height: var(--leading-normal);
+  line-height: var(--leading-reader); /* Use new reader line height */
   color: var(--text-primary);
   background-color: var(--bg-primary);
+  max-width: var(--content-max-width); /* Apply max-width */
+  margin-left: auto; /* Center the content */
+  margin-right: auto; /* Center the content */
+  padding: var(--space-4); /* Add some padding around the content */
 }
 
 /* ============================================
    TYPOGRAPHY
    ============================================ */
-.heading {
-  font-family: var(--font-sans);
+h1, h2, h3, h4, h5, h6 { /* Apply heading styles directly to tags */
+  font-family: var(--font-sans); /* Humanist sans for headings */
   font-weight: var(--font-semibold);
   line-height: var(--leading-tight);
   color: var(--text-primary);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-4);
 }
 
-.heading-1 { font-size: var(--text-3xl); }
-.heading-2 { font-size: var(--text-2xl); }
-.heading-3 { font-size: var(--text-xl); }
-.heading-4 { font-size: var(--text-lg); }
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+h5 { font-size: var(--text-base); }
+h6 { font-size: var(--text-sm); }
+
+p {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
 
 .body-text {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif); /* Ensure body text also uses serif */
   font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
+  line-height: var(--leading-reader);
 }
 
-.label {
+/* ============================================
+   READER VIEW COMPONENTS
+   ============================================ */
+.reader-container {
+  padding: var(--space-4);
+  max-width: var(--content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.conversation-turn {
+  background: var(--bg-tertiary);
+  border: var(--border-thin) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.conversation-turn + .conversation-turn {
+  margin-top: var(--space-4);
+  border-top: none;
+}
+
+.conversation-turn:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: calc(-1 * var(--space-3)); /* Position divider between cards */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 25%;
+  height: var(--border-thin);
+  background-color: var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.role-badge {
   font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: var(--space-3);
 }
 
-.mono {
+.role-badge.user {
+  background: rgba(59, 130, 246, 0.15); /* Blue */
+  color: var(--entity-concept);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.role-badge.assistant {
+  background: rgba(16, 185, 129, 0.15); /* Green */
+  color: var(--entity-person); /* Using person color for assistant for now */
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.role-badge.system {
+  background: rgba(139, 92, 246, 0.15); /* Purple */
+  color: var(--entity-theory); /* Using theory color for system for now */
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+blockquote {
+  border-left: 4px solid var(--border-default);
+  padding-left: var(--space-4);
+  margin-left: 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+code {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 0.2em 0.4em;
+}
+
+pre {
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
 }
 
 /* ============================================
    BUTTONS
-   ============================================ */
 .btn {
   font-family: var(--font-sans);
   font-size: var(--text-sm);

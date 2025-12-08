@@ -16,6 +16,10 @@ dependencies = [
     "openai>=1.0.0",
     "jsonschema>=4.19.0",
     "redis>=5.0.0",
+    # Content extraction
+    "trafilatura>=1.6.0",
+    "yt-dlp>=2023.12.0",
+    "pypdf>=3.0.0",
 ]
 
 [project.optional-dependencies]

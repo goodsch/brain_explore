@@ -48,6 +48,7 @@ class ConversationSession(BaseModel):
     entity_count: int = 0
     transcript: Optional[str] = None
     turns: list[ConversationTurn] = Field(default_factory=list)
+    entities: list[str] = Field(default_factory=list)
 
 
 class ConversationImportResponse(BaseModel):
