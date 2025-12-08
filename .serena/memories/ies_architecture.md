@@ -1,11 +1,39 @@
-# IES Architecture — Current State (Dec 7, 2025)
+# IES Architecture — Current State (Dec 8, 2025)
+
+## Sprint Status (Updated Dec 8)
+
+| Sprint | Feature | Backend | IES Reader | SiYuan | Status |
+|--------|---------|---------|------------|--------|--------|
+| 1 | AI Facet Decomposition | ✅ | - | ✅ AddFacetForm | Complete |
+| 2 | Evidence Display | ✅ | ✅ EvidenceSection | ✅ EvidenceSection | Complete |
+| 3 | Cross-App Sync | ✅ | Pending | Pending | Backend done |
+
+**Test Count:** 234 backend tests passing
+
+## Sync Service (Sprint 3 - Dec 8)
+
+Cross-app continuity between SiYuan and IES Reader.
+
+**Schemas (`sync.py`):**
+- `ExplorationSession`: id, user_id, app_source, status, journey_path, trail_stack
+- `ReadingPosition`: book_hash, calibre_id, cfi, chapter, progress_percent
+- `JourneyStep`: entity_id, entity_name, timestamp, dwell_time
+
+**API (`/sync`):**
+- `POST /sessions` — Create/update session
+- `GET /sessions/active` — Active/paused sessions
+- `GET /sessions/{id}/resume` — Resume data with deep link
+
+**Deep Links:**
+- `readest://open?bookHash={hash}&cfi={cfi}&ies-session={id}`
+- `siyuan://blocks/{note_id}?ies-session={id}&entity={entity_id}`
 
 ## Four-Layer System
 
 | Layer | Component | Status | Key Files |
 |-------|-----------|--------|-----------|
 | 1 | Knowledge Graph | Production | `library/graph/unified_client.py` (1,476 lines) |
-| 2 | Backend APIs | 185 tests passing | `ies/backend/src/ies_backend/` |
+| 2 | Backend APIs | 234 tests passing | `ies/backend/src/ies_backend/` |
 | 3 | SiYuan Plugin | Remediation complete | `.worktrees/siyuan/ies/plugin/` |
 | 4 | Readest | Wave 2 complete, Wave 3 in progress | `.worktrees/readest/` |
 
@@ -24,6 +52,7 @@
 | `/personal` | Sparks, insights, ADHD-friendly capture |
 | `/flow` | Flow session lifecycle |
 | `/inbox` | Quick capture processing |
+| `/sync` | Cross-app session sync (NEW Dec 8) |
 
 ## Key Services
 
