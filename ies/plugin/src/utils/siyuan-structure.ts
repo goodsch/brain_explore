@@ -588,6 +588,9 @@ export async function createSparkWithBackend(options: SparkOptions): Promise<{ s
             'custom-be_type': 'spark',
             'custom-status': 'captured',
             'custom-capture_status': options.capture_status || 'raw',
+            'custom-source-type': 'spark',
+            ...(options.resonance_signal && { 'custom-resonance-signal': options.resonance_signal }),
+            ...(options.energy_level && { 'custom-energy-level': options.energy_level }),
             ...(options.capture_channel && { 'custom-capture_channel': options.capture_channel }),
             ...(options.capture_source && { 'custom-capture_source': options.capture_source }),
         });
@@ -977,6 +980,24 @@ export async function createSessionDocument(options: SessionDocumentOptions): Pr
             'custom-mode': mode,
             'custom-status': 'completed',
         };
+
+        // Add question classes used (pipe-separated for CSS snippet styling)
+        if (questionClassesUsed && questionClassesUsed.length > 0) {
+            attrs['custom-question-classes'] = questionClassesUsed.join('|');
+        }
+
+        // Add entity count if available
+        if (entitiesExtracted !== undefined) {
+            attrs['custom-entity-count'] = entitiesExtracted.toString();
+        }
+
+        // Calculate coverage score based on question classes used (0-100)
+        // Each unique question class represents ~11% coverage (9 total classes)
+        if (questionClassesUsed && questionClassesUsed.length > 0) {
+            const uniqueClasses = [...new Set(questionClassesUsed)];
+            const coverageScore = Math.min(100, Math.round((uniqueClasses.length / 9) * 100));
+            attrs['custom-coverage-score'] = coverageScore.toString();
+        }
         if (thinking_mode) {
             attrs['custom-thinking_mode'] = thinking_mode;
         }
@@ -1100,12 +1121,25 @@ export async function createConceptDocument(options: ConceptDocumentOptions): Pr
         const docId = await createDocWithMd(notebook.id, docPath, content);
 
         // Set block attributes for backend linking
-        await setBlockAttrs(docId, {
+        const attrs: Record<string, string> = {
             'custom-be_type': 'concept',
             'custom-be_id': conceptId,
             'custom-concept_type': conceptType,
             'custom-status': 'anchored',
-        });
+        };
+
+        // Add source session if available
+        if (sourceSessionId) {
+            attrs['custom-source-session'] = sourceSessionId;
+        }
+
+        // Add related concepts (pipe-separated for CSS snippet styling)
+        if (relationships.length > 0) {
+            const relatedNames = relationships.map(r => r.targetName);
+            attrs['custom-related-concepts'] = relatedNames.join('|');
+        }
+
+        await setBlockAttrs(docId, attrs);
 
         return docId;
     } catch (err) {

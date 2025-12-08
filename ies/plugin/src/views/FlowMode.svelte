@@ -37,6 +37,8 @@
     let isExploring = false;
     let mounted = false;
     let conceptDetailTab: 'connections' | 'reframes' = 'connections';
+    let entityDescription: string | null = null;
+    let entitySourceBooks: Array<{title: string, author?: string, snippet?: string}> = [];
 
     interface QuestionExchange {
         question: string;
@@ -512,10 +514,26 @@
         searchResults = []; // Clear search results when exploring
 
         try {
-            const data = await apiGet(`/graph/explore/${encodeURIComponent(concept)}?depth=1`);
+            const data = await apiGet(`/graph/entity/${encodeURIComponent(concept)}`);
             currentConcept = concept;
-            nodes = data.nodes || [];
-            relationships = data.relationships || [];
+
+            // Store entity description and source books
+            entityDescription = data.description || null;
+            entitySourceBooks = data.source_books || [];
+
+            // Transform related entities to nodes/relationships format for UI compatibility
+            nodes = data.related?.map(rel => ({
+                name: rel.entity,
+                type: rel.entity_type || 'unknown',
+                labels: [rel.entity_type || 'unknown']
+            })) || [];
+
+            relationships = data.related?.map(rel => ({
+                start: rel.direction === 'outgoing' ? concept : rel.entity,
+                type: rel.relationship,
+                end: rel.direction === 'outgoing' ? rel.entity : concept
+            })) || [];
+
             questionHistory = [];
             questionResponse = '';
             currentQuestionClass = null;
@@ -693,6 +711,8 @@
         searchQuery = '';
         searchResults = [];
         conceptDetailTab = 'connections';
+        entityDescription = null;
+        entitySourceBooks = [];
     }
 
     function navigateToPathStep(index: number) {
@@ -1068,6 +1088,12 @@
                 </div>
             </div>
 
+            {#if entityDescription}
+                <div class="entity-description">
+                    <p>{entityDescription}</p>
+                </div>
+            {/if}
+
             <div class="concept-tabs">
                 <button
                     class="tab-btn"
@@ -1113,7 +1139,26 @@
                             </div>
                         {/each}
                     </div>
-                {:else if !isExploring}
+                {/if}
+
+                {#if entitySourceBooks.length > 0}
+                    <div class="sources-section">
+                        <div class="section-header">Sources ({entitySourceBooks.length})</div>
+                        {#each entitySourceBooks as source, idx}
+                            <div class="source-item" style="--delay: {idx * 40}ms">
+                                <strong class="source-title">{source.title}</strong>
+                                {#if source.author}
+                                    <span class="source-author">— {source.author}</span>
+                                {/if}
+                                {#if source.snippet}
+                                    <p class="source-snippet">"{source.snippet}"</p>
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+
+                {#if groupedNodes.size === 0 && !isExploring}
                     <div class="no-connections">
                         <p>No connections found for this concept.</p>
                         <p class="hint">Try the Thinking Partner for guidance.</p>
@@ -1776,6 +1821,84 @@
     .no-connections .hint {
         font-style: italic;
         font-size: var(--text-sm);
+    }
+
+    /* Entity Description */
+    .entity-description {
+        margin: var(--space-4) 0;
+        padding: var(--space-4);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-card);
+        animation: ies-fade-in var(--duration-base) var(--ease-out);
+    }
+
+    .entity-description p {
+        margin: 0;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        font-size: var(--text-base);
+    }
+
+    /* Sources Section */
+    .sources-section {
+        margin-top: var(--space-4);
+        padding: var(--space-4);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-card);
+        animation: ies-fade-in var(--duration-base) var(--ease-out);
+    }
+
+    .section-header {
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: var(--space-3);
+    }
+
+    .source-item {
+        padding: var(--space-3);
+        margin-bottom: var(--space-2);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        animation: ies-slide-up var(--duration-base) var(--ease-out) backwards;
+        animation-delay: var(--delay);
+    }
+
+    .source-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .source-title {
+        display: block;
+        color: var(--text-primary);
+        font-size: var(--text-base);
+        font-weight: var(--font-semibold);
+        margin-bottom: var(--space-1);
+    }
+
+    .source-author {
+        display: inline-block;
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+        font-style: italic;
+        margin-left: var(--space-1);
+    }
+
+    .source-snippet {
+        margin: var(--space-2) 0 0 0;
+        padding: var(--space-2);
+        color: var(--text-secondary);
+        font-size: var(--text-sm);
+        line-height: 1.5;
+        font-style: italic;
+        background: var(--bg-elevated);
+        border-left: 3px solid var(--accent);
+        border-radius: var(--radius-sm);
     }
 
     /* Path Trail */
