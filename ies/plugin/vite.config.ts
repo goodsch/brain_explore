@@ -68,7 +68,7 @@ export default defineConfig({
             name: 'copy-ies-theme',
             writeBundle() {
                 const themeSrc = resolve(__dirname, 'themes/ies-modern');
-                const themeDest = resolve(__dirname, '../../../../data/siyuan/workspace/data/themes/ies-modern');
+                const themeDest = resolve(__dirname, '../../../../data/siyuan/workspace/conf/appearance/themes/ies-modern');
                 try {
                     if (fs.existsSync(themeSrc)) {
                         fs.cpSync(themeSrc, themeDest, { recursive: true });

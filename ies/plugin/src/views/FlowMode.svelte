@@ -105,12 +105,23 @@
         description?: string;
         neighbors: Array<{name: string, type: string, relationship: string, direction: 'in' | 'out'}>;
         sourceBooks: string[];
+        facets?: Array<{name: string, description?: string, entity_count: number}>;
+    }
+
+    interface FacetDetails {
+        parentEntityName: string;
+        parentEntityType: string;
+        facetName: string;
+        description?: string;
+        entities: Array<{name: string, type: string, relationship: string}>;
     }
 
     let focusState: FocusState = 'idle';
     let trailStack: TrailItem[] = [];
     let focusedEntity: EntityDetails | null = null;
+    let focusedFacet: FacetDetails | null = null;
     let isLoadingEntity = false;
+    let isLoadingFacet = false;
 
     // ========== Navigation Functions (Phase 1) ==========
     function pushTrail(item: TrailItem) {
@@ -135,18 +146,26 @@
         if (targetItem.type === 'context') {
             focusState = 'idle';
             focusedEntity = null;
+            focusedFacet = null;
             activeQuestionIndex = null;
         } else if (targetItem.type === 'question') {
             focusState = 'question';
             focusedEntity = null;
+            focusedFacet = null;
             // Re-select the question if data available
             if (targetItem.data?.questionIndex !== undefined) {
                 selectQuestion(targetItem.data.questionIndex);
             }
         } else if (targetItem.type === 'entity') {
             focusState = 'entity';
+            focusedFacet = null;
             if (targetItem.data?.entityName) {
                 navigateToEntity(targetItem.data.entityName, false); // Don't push to trail again
+            }
+        } else if (targetItem.type === 'facet') {
+            focusState = 'facet';
+            if (targetItem.data?.entityName && targetItem.data?.facetName) {
+                navigateToFacet(targetItem.data.entityName, targetItem.data.facetName, false);
             }
         }
     }
@@ -154,48 +173,42 @@
     async function navigateToEntity(entityName: string, addToTrail = true) {
         isLoadingEntity = true;
         focusState = 'entity';
+        focusedFacet = null;
 
         try {
-            // Fetch entity details from graph API
-            const data = await apiGet(`/graph/explore/${encodeURIComponent(entityName)}?depth=1`);
+            // Fetch entity details from new endpoint
+            const data = await apiGet(`/graph/entity/${encodeURIComponent(entityName)}`);
 
-            // Build EntityDetails from response
-            const neighbors: EntityDetails['neighbors'] = [];
-            for (const rel of (data.relationships || [])) {
-                if (rel.start === entityName) {
-                    neighbors.push({
-                        name: rel.end,
-                        type: data.nodes?.find(n => n.name === rel.end)?.type || 'Unknown',
-                        relationship: rel.type,
-                        direction: 'out'
-                    });
-                } else if (rel.end === entityName) {
-                    neighbors.push({
-                        name: rel.start,
-                        type: data.nodes?.find(n => n.name === rel.start)?.type || 'Unknown',
-                        relationship: rel.type,
-                        direction: 'in'
-                    });
-                }
+            // Simplified transformation using pre-computed data
+            const neighbors: EntityDetails['neighbors'] = data.related?.map(rel => ({
+                name: rel.name,
+                type: rel.type,
+                relationship: rel.relationship,
+                direction: 'out'
+            })) || [];
+
+            const sourceBooks: string[] = data.source_books?.map(book =>
+                book.author ? `${book.title} - ${book.author}` : book.title
+            ) || [];
+
+            // Fetch facets for this entity
+            let facets = [];
+            try {
+                const facetsData = await apiGet(`/graph/entity/${encodeURIComponent(entityName)}/facets`);
+                facets = facetsData.facets || [];
+            } catch (facetErr) {
+                // Facets are optional, don't fail if endpoint returns 404
+                console.log('[FlowMode] No facets found for entity:', entityName);
             }
 
-            // Extract source books from neighbors or node data
-            const sourceBooks: string[] = data.nodes
-                ?.filter(n => n.labels?.includes('Book'))
-                ?.map(n => n.name) || [];
-
             focusedEntity = {
-                name: entityName,
-                type: data.nodes?.find(n => n.name === entityName)?.type || 'Concept',
-                description: data.nodes?.find(n => n.name === entityName)?.description,
+                name: data.name,
+                type: data.type,
+                description: data.description || null,
                 neighbors,
-                sourceBooks
+                sourceBooks,
+                facets
             };
-
-            // Also update the regular exploration state for compatibility
-            currentConcept = entityName;
-            nodes = data.nodes || [];
-            relationships = data.relationships || [];
 
             if (addToTrail) {
                 pushTrail({
@@ -219,11 +232,49 @@
         }
     }
 
+    async function navigateToFacet(entityName: string, facetName: string, addToTrail = true) {
+        isLoadingFacet = true;
+        focusState = 'facet';
+
+        try {
+            // Fetch facets for entity
+            const data = await apiGet(`/graph/entity/${encodeURIComponent(entityName)}/facets`);
+
+            // Find the selected facet
+            const facet = data.facets.find(f => f.name === facetName);
+            if (!facet) {
+                throw new Error(`Facet '${facetName}' not found for entity '${entityName}'`);
+            }
+
+            focusedFacet = {
+                parentEntityName: data.entity_name,
+                parentEntityType: data.entity_type,
+                facetName: facet.name,
+                description: facet.description,
+                entities: facet.entities || []
+            };
+
+            if (addToTrail) {
+                pushTrail({
+                    type: 'facet',
+                    label: facetName,
+                    data: { entityName, facetName }
+                });
+            }
+        } catch (err) {
+            showMessage(`Failed to load facet: ${err.message}`, 5000, 'error');
+            focusState = 'entity';
+        } finally {
+            isLoadingFacet = false;
+        }
+    }
+
     function navigateBack() {
         if (trailStack.length <= 1) {
             // Back to idle state
             focusState = 'idle';
             focusedEntity = null;
+            focusedFacet = null;
             trailStack = [];
             return;
         }
@@ -235,9 +286,17 @@
         if (previousItem.type === 'question') {
             focusState = 'question';
             focusedEntity = null;
+            focusedFacet = null;
         } else if (previousItem.type === 'context') {
             focusState = 'idle';
             focusedEntity = null;
+            focusedFacet = null;
+        } else if (previousItem.type === 'entity') {
+            focusState = 'entity';
+            focusedFacet = null;
+            if (previousItem.data?.entityName) {
+                navigateToEntity(previousItem.data.entityName, false);
+            }
         }
     }
 
@@ -299,8 +358,9 @@
             if (!groups.has(key)) {
                 groups.set(key, []);
             }
+
             groups.get(key)!.push({
-                name: nodeName,
+                name: node.name,
                 type: node.type,
                 direction
             });
@@ -309,14 +369,8 @@
         return groups;
     }
 
-    // Format relationship type for display
-    function formatRelType(relType: string): string {
-        return relType.replace(/_/g, ' ').toLowerCase();
-    }
-
-    // API helper using SiYuan's forward proxy
-    async function apiGet(endpoint: string): Promise<any> {
-        const url = `${backendUrl}${endpoint}`;
+    async function apiGet(path: string): Promise<any> {
+        const url = `${backendUrl}${path}`;
 
         const response = await fetchSyncPost('/api/network/forwardProxy', {
             url: url,
@@ -338,8 +392,8 @@
         return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
     }
 
-    async function apiPost(endpoint: string, body: any): Promise<any> {
-        const url = `${backendUrl}${endpoint}`;
+    async function apiPost(path: string, body: any): Promise<any> {
+        const url = `${backendUrl}${path}`;
 
         const response = await fetchSyncPost('/api/network/forwardProxy', {
             url: url,
@@ -347,7 +401,7 @@
             timeout: 30000,
             contentType: 'application/json',
             headers: [],
-            payload: body
+            payload: JSON.stringify(body)
         });
 
         if (response.code !== 0) {
@@ -362,241 +416,177 @@
         return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
     }
 
-    // ========== Context Mode Functions ==========
-
-    /**
-     * Detect if a SiYuan document is a Context Note by parsing its markdown
-     */
-    async function detectContextNote(blockId: string) {
-        isDetectingContext = true;
-        try {
-            // Get the markdown content of the document
-            const mdResult = await exportMdContent(blockId);
-            if (!mdResult || !mdResult.content) {
-                console.log('[IES] No markdown content found for block', blockId);
-                return;
-            }
-
-            const markdown = mdResult.content;
-
-            // Call our backend parser to detect if this is a Context Note
-            const parseResult = await apiPost('/context/parse', {
-                siyuan_block_id: blockId,
-                markdown: markdown
-            });
-
-            if (parseResult.is_context_note) {
-                // It's a Context Note!
-                isContextMode = true;
-                parsedContext = {
-                    context_type: parseResult.context_type,
-                    title: parseResult.title,
-                    summary: parseResult.summary,
-                    key_questions: parseResult.key_questions || [],
-                    areas_of_exploration: parseResult.areas_of_exploration || [],
-                    core_concepts: parseResult.core_concepts || []
-                };
-
-                // If there's an existing context_id, use it; otherwise it will be assigned on first save
-                savedContextId = parseResult.context_id || null;
-
-                showMessage(`Context Note detected: ${parsedContext.title}`, 3000);
-            } else {
-                console.log('[IES] Document is not a Context Note');
-            }
-        } catch (err) {
-            console.error('[IES] Error detecting Context Note:', err);
-            showMessage(`Failed to detect Context Note: ${err.message}`, 5000, 'error');
-        } finally {
-            isDetectingContext = false;
-        }
-    }
-
-    /**
-     * Search for entities/snippets related to a Key Question
-     */
-    async function searchForQuestion(questionIndex: number) {
-        if (!parsedContext) return;
-
-        const question = parsedContext.key_questions[questionIndex];
-        if (!question) return;
-
-        // Initialize trail with context if first time
-        initializeContextTrail();
-
-        // Set navigation state
-        focusState = 'question';
-        focusedEntity = null;
-
-        // Push question to trail (remove previous question if navigating between questions)
-        const lastTrailItem = trailStack[trailStack.length - 1];
-        if (lastTrailItem?.type === 'question') {
-            // Replace the question in trail
-            trailStack = trailStack.slice(0, -1);
-        }
-        pushTrail({
-            type: 'question',
-            label: question.length > 40 ? question.substring(0, 40) + '...' : question,
-            data: { questionIndex, questionText: question }
-        });
-
-        activeQuestionIndex = questionIndex;
-        isContextSearching = true;
-        contextSearchResults = [];
-
-        try {
-            // First, save the parsed context if we don't have an ID yet
-            if (!savedContextId) {
-                const saveResult = await apiPost('/context/save-parsed', {
-                    siyuan_block_id: contextBlockId,
-                    context_type: parsedContext.context_type,
-                    title: parsedContext.title,
-                    summary: parsedContext.summary,
-                    key_questions: parsedContext.key_questions,
-                    areas_of_exploration: parsedContext.areas_of_exploration,
-                    core_concepts: parsedContext.core_concepts
-                });
-                savedContextId = saveResult.id;
-            }
-
-            // Now search using the context
-            const searchResult = await apiPost(`/context/${savedContextId}/search`, {
-                question_text: question,
-                include_areas: false,
-                limit: 20
-            });
-
-            if (searchResult.results && searchResult.results.length > 0) {
-                contextSearchResults = searchResult.results;
-            } else {
-                showMessage('No relevant entities found for this question', 3000);
-            }
-        } catch (err) {
-            console.error('[IES] Context search error:', err);
-            showMessage(`Search failed: ${err.message}`, 5000, 'error');
-        } finally {
-            isContextSearching = false;
-        }
-    }
-
-    /**
-     * Clear context mode and return to normal Flow
-     */
-    function clearContextMode() {
-        isContextMode = false;
-        parsedContext = null;
-        savedContextId = null;
-        activeQuestionIndex = null;
-        contextSearchResults = [];
-    }
-
     async function handleSearch() {
-        if (!searchQuery.trim()) return;
+        const query = searchQuery.trim();
+        if (!query) return;
 
         isSearching = true;
         searchResults = [];
+
         try {
-            const data = await apiGet(`/graph/search?q=${encodeURIComponent(searchQuery)}&limit=10`);
-            if (data.results && data.results.length > 0) {
-                searchResults = data.results;
-            } else {
+            const data = await apiGet(`/graph/search?q=${encodeURIComponent(query)}`);
+            searchResults = data.results || [];
+            if (searchResults.length === 0) {
                 showMessage('No concepts found', 3000);
             }
         } catch (err) {
-            showMessage(`Search failed: ${err.message}`, 5000, 'error');
+            console.error('[IES] Search failed:', err);
+            const message = err?.message || String(err);
+            showMessage(`Search failed: ${message}`, 5000, 'error');
         } finally {
             isSearching = false;
         }
     }
 
     async function exploreConcept(concept: string) {
+        if (!concept) return;
+
+        currentConcept = concept;
         isExploring = true;
-        searchResults = []; // Clear search results when exploring
+        searchResults = [];
 
         try {
-            const data = await apiGet(`/graph/entity/${encodeURIComponent(concept)}`);
-            currentConcept = concept;
+            const data = await apiGet(`/graph/explore/${encodeURIComponent(concept)}`);
+            nodes = data.nodes || [];
+            relationships = data.relationships || [];
 
-            // Store entity description and source books
-            entityDescription = data.description || null;
-            entitySourceBooks = data.source_books || [];
-
-            // Transform related entities to nodes/relationships format for UI compatibility
-            nodes = data.related?.map(rel => ({
-                name: rel.entity,
-                type: rel.entity_type || 'unknown',
-                labels: [rel.entity_type || 'unknown']
-            })) || [];
-
-            relationships = data.related?.map(rel => ({
-                start: rel.direction === 'outgoing' ? concept : rel.entity,
-                type: rel.relationship,
-                end: rel.direction === 'outgoing' ? rel.entity : concept
-            })) || [];
-
-            questionHistory = [];
-            questionResponse = '';
-            currentQuestionClass = null;
-            currentApproach = null;
-            lastDetectedState = null;
-
-            // Track exploration start time
-            if (explorationStartTime === null) {
-                explorationStartTime = Date.now();
-            }
-
-            // Add to path (avoid duplicates if navigating back)
+            // Track in path if new
             const now = new Date().toISOString();
-            const existingIndex = explorationPath.indexOf(concept);
-            if (existingIndex >= 0) {
-                // Navigating back - truncate path and timestamps
-                explorationPath = explorationPath.slice(0, existingIndex + 1);
-                explorationTimestamps = explorationTimestamps.slice(0, existingIndex + 1);
-            } else {
+            if (!explorationPath.includes(concept)) {
                 explorationPath = [...explorationPath, concept];
                 explorationTimestamps = [...explorationTimestamps, now];
             }
 
-            // Clear thinking question when navigating
-            thinkingQuestion = null;
+            if (!explorationStartTime) {
+                explorationStartTime = Date.now();
+            }
+
+            // Generate thinking question
+            if (userId) {
+                await generateThinkingQuestion();
+            }
         } catch (err) {
-            showMessage(`Explore failed: ${err.message}`, 5000, 'error');
+            console.error('[IES] Explore failed:', err);
+            const message = err?.message || String(err);
+            showMessage(`Failed to explore ${concept}: ${message}`, 5000, 'error');
         } finally {
             isExploring = false;
         }
     }
 
-    async function requestThinkingPartner() {
-        if (!currentConcept) return;
-
+    async function generateThinkingQuestion() {
         isLoadingQuestion = true;
         try {
+            const recentPath = explorationPath.slice(-5);
             const data = await apiPost('/graph/thinking-partner', {
                 concept: currentConcept,
-                path: explorationPath.slice(-5),
-                related: nodes.slice(0, 5).map(n => n.name)
+                path: recentPath,
+                related: Array.from(groupedNodes.keys())
             });
-            thinkingQuestion = data.question;
-            currentQuestionClass = data.question_class || null;
-            currentApproach = null;
-            lastDetectedState = null;
-            questionResponse = '';
+            thinkingQuestion = data.question || null;
         } catch (err) {
-            showMessage(`Question failed: ${err.message}`, 5000, 'error');
+            console.log('[IES] Could not generate thinking question:', err);
         } finally {
             isLoadingQuestion = false;
         }
     }
 
-    async function submitQuestionResponse() {
-        if (!thinkingQuestion) {
-            showMessage('No active question to respond to', 3000, 'error');
-            return;
+    async function detectContextNote(blockId: string) {
+        isDetectingContext = true;
+        try {
+            // Get block content
+            const kramdown = await getBlockKramdown(blockId);
+            if (!kramdown) {
+                console.log('[IES] No block content found for context detection');
+                return;
+            }
+
+            // Convert to markdown
+            const markdown = await exportMdContent(blockId);
+            if (!markdown) {
+                console.log('[IES] Failed to export markdown for context detection');
+                return;
+            }
+
+            // Call backend to parse context
+            const parsed = await apiPost('/context/parse', { text: markdown });
+            if (!parsed || !parsed.is_context) {
+                console.log('[IES] Block is not a Context Note');
+                return;
+            }
+
+            // Save context
+            const saved = await apiPost('/context/save', parsed);
+            parsedContext = parsed;
+            savedContextId = saved.context_id;
+            isContextMode = true;
+
+            // Initialize trail with context
+            initializeContextTrail();
+
+            showMessage(`Context loaded: ${parsed.title}`, 3000);
+        } catch (err) {
+            console.error('[IES] Context detection failed:', err);
+        } finally {
+            isDetectingContext = false;
         }
-        if (!questionResponse.trim()) {
-            showMessage('Please enter a response', 3000, 'error');
-            return;
+    }
+
+    function clearContextMode() {
+        isContextMode = false;
+        parsedContext = null;
+        savedContextId = null;
+        activeQuestionIndex = null;
+        contextSearchResults = [];
+        trailStack = [];
+        focusState = 'idle';
+        focusedEntity = null;
+        focusedFacet = null;
+    }
+
+    async function selectQuestion(index: number) {
+        if (!parsedContext || !savedContextId) return;
+
+        activeQuestionIndex = index;
+        focusState = 'question';
+        focusedEntity = null;
+        focusedFacet = null;
+
+        // Add question to trail if not already there
+        if (trailStack.length > 0 && trailStack[trailStack.length - 1].type !== 'question') {
+            const question = parsedContext.key_questions[index];
+            pushTrail({
+                type: 'question',
+                label: `Q${index + 1}`,
+                data: { questionIndex: index, question }
+            });
         }
+    }
+
+    async function searchForQuestion(index: number) {
+        if (!parsedContext || !savedContextId) return;
+
+        selectQuestion(index);
+        isContextSearching = true;
+
+        try {
+            const question = parsedContext.key_questions[index];
+            const results = await apiPost('/context/search', {
+                context_id: savedContextId,
+                question
+            });
+
+            contextSearchResults = results.results || [];
+        } catch (err) {
+            console.error('[IES] Context search failed:', err);
+            showMessage(`Search failed: ${err.message}`, 5000, 'error');
+        } finally {
+            isContextSearching = false;
+        }
+    }
+
+    async function handleQuestionResponse() {
+        if (!questionResponse.trim() || !thinkingQuestion) return;
 
         isLoadingQuestion = true;
         const responseText = questionResponse.trim();
@@ -779,6 +769,7 @@
                 <line x1="22" y1="22" x2="16" y2="25" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
             </svg>
             <h1>Flow</h1>
+            <span class="flow-version">v0.4.0</span>
         </div>
         {#if explorationPath.length > 0}
             <button class="clear-btn" on:click={clearExploration}>
@@ -878,6 +869,7 @@
                                 class:type-context={item.type === 'context'}
                                 class:type-question={item.type === 'question'}
                                 class:type-entity={item.type === 'entity'}
+                                class:type-facet={item.type === 'facet'}
                                 on:click={() => navigateToTrailIndex(i)}
                             >
                                 {#if item.type === 'context'}
@@ -886,6 +878,8 @@
                                     <span class="trail-icon">❓</span>
                                 {:else if item.type === 'entity'}
                                     <span class="trail-icon">🔷</span>
+                                {:else if item.type === 'facet'}
+                                    <span class="trail-icon">📂</span>
                                 {/if}
                                 <span class="trail-label">{item.label}</span>
                             </button>
@@ -898,6 +892,59 @@
                             </svg>
                         </button>
                     {/if}
+                </div>
+            {/if}
+
+            <!-- Facet Focus View -->
+            {#if focusState === 'facet' && focusedFacet}
+                <div class="facet-focus">
+                    <div class="facet-focus-header">
+                        <div class="facet-parent-info">
+                            <span class="facet-parent-badge">{focusedFacet.parentEntityType}</span>
+                            <span class="facet-parent-name">{focusedFacet.parentEntityName}</span>
+                        </div>
+                        <h3 class="facet-name">{focusedFacet.facetName}</h3>
+                        {#if focusedFacet.description}
+                            <p class="facet-description">{focusedFacet.description}</p>
+                        {/if}
+                    </div>
+
+                    {#if isLoadingFacet}
+                        <div class="facet-loading">
+                            <span class="spinner"></span>
+                            Loading facet entities...
+                        </div>
+                    {:else if focusedFacet.entities.length > 0}
+                        <div class="facet-section">
+                            <h4 class="facet-section-title">Entities in this Facet ({focusedFacet.entities.length})</h4>
+                            <div class="facet-entities">
+                                {#each focusedFacet.entities as entity}
+                                    <button
+                                        class="facet-entity-card"
+                                        on:click={() => navigateToEntity(entity.name)}
+                                    >
+                                        <div class="facet-entity-main">
+                                            <span class="facet-entity-name">{entity.name}</span>
+                                            <span class="facet-entity-type">{entity.type}</span>
+                                        </div>
+                                        <span class="facet-entity-relationship">{entity.relationship}</span>
+                                    </button>
+                                {/each}
+                            </div>
+                        </div>
+                    {:else}
+                        <div class="facet-empty">
+                            <p>No entities in this facet yet</p>
+                        </div>
+                    {/if}
+
+                    <!-- Back to Entity Button -->
+                    <button class="back-to-entity" on:click={navigateBack}>
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        Back to {focusedFacet.parentEntityName}
+                    </button>
                 </div>
             {/if}
 
@@ -918,6 +965,27 @@
                             Loading entity details...
                         </div>
                     {:else}
+                        <!-- Facets Section -->
+                        {#if focusedEntity.facets && focusedEntity.facets.length > 0}
+                            <div class="entity-section">
+                                <h4 class="entity-section-title">Facets ({focusedEntity.facets.length})</h4>
+                                <div class="entity-facets">
+                                    {#each focusedEntity.facets as facet}
+                                        <button
+                                            class="facet-chip"
+                                            on:click={() => navigateToFacet(focusedEntity.name, facet.name)}
+                                        >
+                                            <span class="facet-chip-icon">📂</span>
+                                            <div class="facet-chip-content">
+                                                <span class="facet-chip-name">{facet.name}</span>
+                                                <span class="facet-chip-count">{facet.entity_count} {facet.entity_count === 1 ? 'entity' : 'entities'}</span>
+                                            </div>
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+
                         <!-- Neighbors Section -->
                         {#if focusedEntity.neighbors.length > 0}
                             <div class="entity-section">
@@ -962,8 +1030,8 @@
                 </div>
             {/if}
 
-            <!-- Key Questions Section (show when not in entity focus) -->
-            {#if focusState !== 'entity' && parsedContext.key_questions.length > 0}
+            <!-- Key Questions Section (show when not in entity or facet focus) -->
+            {#if focusState !== 'entity' && focusState !== 'facet' && parsedContext.key_questions.length > 0}
                 <div class="context-section">
                     <h3 class="section-title">Key Questions</h3>
                     <div class="question-buttons">
@@ -985,8 +1053,8 @@
                 </div>
             {/if}
 
-            <!-- Areas of Exploration Section (hide when in entity focus) -->
-            {#if focusState !== 'entity' && parsedContext.areas_of_exploration.length > 0}
+            <!-- Areas of Exploration Section (hide when in entity or facet focus) -->
+            {#if focusState !== 'entity' && focusState !== 'facet' && parsedContext.areas_of_exploration.length > 0}
                 <div class="context-section">
                     <h3 class="section-title">Areas of Exploration</h3>
                     <div class="area-chips">
@@ -997,23 +1065,9 @@
                 </div>
             {/if}
 
-            <!-- Core Concepts Section (hide when in entity focus) -->
-            {#if focusState !== 'entity' && parsedContext.core_concepts.length > 0}
+            <!-- Context Search Results (hide when in entity or facet focus) -->
+            {#if focusState !== 'entity' && focusState !== 'facet' && contextSearchResults.length > 0}
                 <div class="context-section">
-                    <h3 class="section-title">Core Concepts</h3>
-                    <div class="concept-chips">
-                        {#each parsedContext.core_concepts as concept}
-                            <button class="concept-chip" on:click={() => navigateToEntity(concept)}>
-                                {concept}
-                            </button>
-                        {/each}
-                    </div>
-                </div>
-            {/if}
-
-            <!-- Context Search Results (hide when in entity focus) -->
-            {#if focusState !== 'entity' && contextSearchResults.length > 0}
-                <div class="context-section context-results">
                     <h3 class="section-title">
                         Related Entities
                         <span class="results-count">{contextSearchResults.length}</span>
@@ -1022,19 +1076,19 @@
                         {#each contextSearchResults as result, i}
                             <button
                                 class="context-result-card"
-                                style="--delay: {i * 30}ms"
-                                on:click={() => navigateToEntity(result.entity_name)}
+                                style="--delay: {i * 50}ms"
+                                on:click={() => navigateToEntity(result.source_id)}
                             >
                                 <div class="result-main">
-                                    <span class="result-entity">{result.entity_name}</span>
-                                    <span class="result-type-badge">{result.entity_type}</span>
+                                    <span class="result-entity">{result.source_title}</span>
+                                    {#if result.concepts_found.length > 0}
+                                        <span class="result-type-badge">{result.concepts_found.length} concepts</span>
+                                    {/if}
                                 </div>
                                 {#if result.snippet}
                                     <p class="result-snippet">{result.snippet}</p>
                                 {/if}
-                                {#if result.source_title}
-                                    <span class="result-source">{result.source_title}</span>
-                                {/if}
+                                <span class="result-source">Relevance: {(result.relevance_score * 100).toFixed(0)}%</span>
                             </button>
                         {/each}
                     </div>
@@ -1043,275 +1097,34 @@
         </div>
     {/if}
 
-    <!-- Main Content Area -->
-    <div class="flow-content">
-        {#if isLoadingJourney}
-            <div class="flow-state">
-                <div class="state-icon loading">
-                    <svg viewBox="0 0 32 32" width="48" height="48">
-                        <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity="0.2"/>
-                        <path d="M16 4 A12 12 0 0 1 28 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <p class="state-text">Resuming your journey...</p>
+    <!-- Loading Journey State -->
+    {#if isLoadingJourney}
+        <div class="flow-state">
+            <div class="state-icon loading">
+                <svg viewBox="0 0 24 24" width="48" height="48">
+                    <path fill="currentColor" d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+                </svg>
             </div>
-        {:else if !currentConcept && searchResults.length === 0}
-            <div class="flow-state welcome">
-                <div class="state-icon">
-                    <svg viewBox="0 0 64 64" width="64" height="64">
-                        <!-- Constellation/network welcome icon -->
-                        <circle cx="32" cy="16" r="4" fill="currentColor" opacity="0.8"/>
-                        <circle cx="16" cy="32" r="3" fill="currentColor" opacity="0.6"/>
-                        <circle cx="48" cy="32" r="3" fill="currentColor" opacity="0.6"/>
-                        <circle cx="24" cy="48" r="3" fill="currentColor" opacity="0.5"/>
-                        <circle cx="40" cy="48" r="3" fill="currentColor" opacity="0.5"/>
-                        <circle cx="32" cy="36" r="5" fill="currentColor" opacity="0.9"/>
-                        <line x1="32" y1="20" x2="32" y2="31" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="19" y1="32" x2="27" y2="34" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="45" y1="32" x2="37" y2="34" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="26" y1="46" x2="29" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="38" y1="46" x2="35" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                    </svg>
-                </div>
-                <h2 class="state-title">Navigate Knowledge</h2>
-                <p class="state-text">Search for a concept to begin exploring connections in the knowledge graph.</p>
-                <p class="state-hint">Each concept reveals its relationships, creating paths of understanding.</p>
-            </div>
-        {:else if currentConcept}
-            <!-- Central Concept -->
-            <div class="concept-center" class:exploring={isExploring}>
-                <div class="concept-glow"></div>
-                <div class="concept-core">
-                    <span class="concept-label">Exploring</span>
-                    <h2 class="concept-name">{currentConcept}</h2>
-                    <span class="concept-connections">{nodes.length} connection{nodes.length !== 1 ? 's' : ''}</span>
-                </div>
-            </div>
-
-            {#if entityDescription}
-                <div class="entity-description">
-                    <p>{entityDescription}</p>
-                </div>
-            {/if}
-
-            <div class="concept-tabs">
-                <button
-                    class="tab-btn"
-                    class:active={conceptDetailTab === 'connections'}
-                    on:click={() => conceptDetailTab = 'connections'}
-                >
-                    Connections
-                </button>
-                <button
-                    class="tab-btn"
-                    class:active={conceptDetailTab === 'reframes'}
-                    on:click={() => conceptDetailTab = 'reframes'}
-                >
-                    Reframes
-                </button>
-            </div>
-
-            {#if conceptDetailTab === 'connections'}
-                {#if groupedNodes.size > 0}
-                    <div class="relationships">
-                        {#each [...groupedNodes.entries()] as [relType, relNodes], groupIndex}
-                            <div class="rel-group" style="--delay: {groupIndex * 60}ms">
-                                <div class="rel-header">
-                                    <span class="rel-direction" class:outgoing={relNodes[0]?.direction === 'outgoing'}>
-                                        {relNodes[0]?.direction === 'outgoing' ? '→' : '←'}
-                                    </span>
-                                    <span class="rel-type">{formatRelType(relType)}</span>
-                                    <span class="rel-count">{relNodes.length}</span>
-                                </div>
-                                <div class="rel-nodes">
-                                    {#each relNodes as node, nodeIndex}
-                                        <button
-                                            class="node-chip"
-                                            style="--delay: {(groupIndex * 60) + (nodeIndex * 30)}ms; --type-color: {getTypeColor(node.type)}"
-                                            on:click={() => exploreConcept(node.name)}
-                                            title="{node.type}: {node.name}"
-                                        >
-                                            <span class="node-indicator"></span>
-                                            <span class="node-name">{node.name}</span>
-                                        </button>
-                                    {/each}
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
-
-                {#if entitySourceBooks.length > 0}
-                    <div class="sources-section">
-                        <div class="section-header">Sources ({entitySourceBooks.length})</div>
-                        {#each entitySourceBooks as source, idx}
-                            <div class="source-item" style="--delay: {idx * 40}ms">
-                                <strong class="source-title">{source.title}</strong>
-                                {#if source.author}
-                                    <span class="source-author">— {source.author}</span>
-                                {/if}
-                                {#if source.snippet}
-                                    <p class="source-snippet">"{source.snippet}"</p>
-                                {/if}
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
-
-                {#if groupedNodes.size === 0 && !isExploring}
-                    <div class="no-connections">
-                        <p>No connections found for this concept.</p>
-                        <p class="hint">Try the Thinking Partner for guidance.</p>
-                    </div>
-                {/if}
-            {:else}
-                <ReframesTab conceptId={currentConcept} backendUrl={backendUrl} />
-            {/if}
-        {/if}
-    </div>
-
-    <!-- Exploration Path -->
-    {#if explorationPath.length > 1}
-        <div class="path-trail">
-            <span class="path-label">Journey</span>
-            <div class="path-steps">
-                {#each explorationPath as step, i}
-                    <button
-                        class="path-step"
-                        class:current={i === explorationPath.length - 1}
-                        on:click={() => navigateToPathStep(i)}
-                        disabled={i === explorationPath.length - 1}
-                    >
-                        {step}
-                    </button>
-                    {#if i < explorationPath.length - 1}
-                        <span class="path-connector">
-                            <svg viewBox="0 0 16 16" width="12" height="12">
-                                <path fill="currentColor" d="M8 4l4 4-4 4V4z"/>
-                            </svg>
-                        </span>
-                    {/if}
-                {/each}
-            </div>
-        </div>
-    {/if}
-
-    <!-- Thinking Partner Section -->
-    {#if currentConcept}
-        <div class="thinking-section">
-            {#if thinkingQuestion}
-                <div class="thinking-card">
-                    <div class="thinking-header">
-                        <svg viewBox="0 0 24 24" width="18" height="18">
-                            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-4h2v2h-2zm1.61-9.96c-2.06-.3-3.88.97-4.43 2.79-.18.58.26 1.17.87 1.17h.2c.41 0 .74-.29.88-.67.32-.89 1.27-1.5 2.3-1.28.95.2 1.65 1.13 1.57 2.1-.1 1.34-1.62 1.63-2.45 2.88 0 .01-.01.01-.01.02-.01.02-.02.03-.03.05-.09.15-.18.32-.25.5-.01.03-.03.05-.04.08-.01.02-.01.04-.02.07-.12.34-.2.75-.2 1.25h2c0-.42.11-.77.28-1.07.02-.03.03-.06.05-.09.08-.14.18-.27.28-.39.01-.01.02-.03.03-.04.1-.12.21-.23.33-.34.96-.91 2.26-1.65 1.99-3.56-.24-1.74-1.61-3.21-3.35-3.47z"/>
-                        </svg>
-                        <span>Thinking Partner</span>
-                    </div>
-                    <div class="question-meta">
-                        {#if currentQuestionClass}
-                            <span class="question-badge" style={`--badge-color: ${QUESTION_CLASS_LABELS[currentQuestionClass]?.color || '#7a756e'}`}>
-                                <span class="badge-emoji">{QUESTION_CLASS_LABELS[currentQuestionClass]?.emoji || '💭'}</span>
-                                <span>{QUESTION_CLASS_LABELS[currentQuestionClass]?.label || currentQuestionClass}</span>
-                            </span>
-                        {/if}
-                        {#if lastDetectedState}
-                            <span class="state-chip">{lastDetectedState}</span>
-                        {/if}
-                    </div>
-                    <p class="thinking-question">{thinkingQuestion}</p>
-                    <div class="response-box">
-                        <label for="question-response">Your response</label>
-                        <textarea
-                            id="question-response"
-                            rows="4"
-                            bind:value={questionResponse}
-                            placeholder="Capture your take or next step..."
-                            disabled={isLoadingQuestion}
-                        ></textarea>
-                        <button
-                            class="response-submit"
-                            on:click={submitQuestionResponse}
-                            disabled={isLoadingQuestion || !questionResponse.trim()}
-                        >
-                            {#if isLoadingQuestion}
-                                <span class="spinner small"></span>
-                                <span>Sending...</span>
-                            {:else}
-                                Submit response
-                            {/if}
-                        </button>
-                    </div>
-                </div>
-                {#if questionHistory.length > 0}
-                    <div class="question-history">
-                        <div class="history-header">Recent reflections</div>
-                        {#each questionHistory as entry, idx}
-                            <div class="history-item" style={`--delay: ${idx * 40}ms`}>
-                                <div class="history-question">
-                                    {#if entry.questionClass}
-                                        <span class="question-badge" style={`--badge-color: ${QUESTION_CLASS_LABELS[entry.questionClass]?.color || '#7a756e'}`}>
-                                            <span class="badge-emoji">{QUESTION_CLASS_LABELS[entry.questionClass]?.emoji || '💭'}</span>
-                                            <span>{QUESTION_CLASS_LABELS[entry.questionClass]?.label || entry.questionClass}</span>
-                                        </span>
-                                    {/if}
-                                    <p>{entry.question}</p>
-                                    {#if entry.state}
-                                        <span class="state-chip subtle">{entry.state}</span>
-                                    {/if}
-                                </div>
-                                <p class="history-response">{entry.response}</p>
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
-            {:else}
-                <button
-                    class="thinking-btn"
-                    on:click={requestThinkingPartner}
-                    disabled={isLoadingQuestion}
-                >
-                    {#if isLoadingQuestion}
-                        <span class="spinner small"></span>
-                        <span>Contemplating...</span>
-                    {:else}
-                        <svg viewBox="0 0 24 24" width="18" height="18">
-                            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-                        </svg>
-                        <span>Ask Thinking Partner</span>
-                    {/if}
-                </button>
-            {/if}
+            <h2 class="state-title">Loading Journey...</h2>
+            <p class="state-text">Restoring your exploration path</p>
         </div>
     {/if}
 </div>
 
 <style>
-    /**
-     * FlowMode Styles
-     * Uses unified IES Design System tokens from design-system/tokens/
-     *
-     * Note: Colors, typography, spacing, shadows, and animations are inherited
-     * from the design system. Dark theme is handled automatically.
-     */
-
+    /* Base */
     .flow-mode {
         display: flex;
         flex-direction: column;
+        gap: var(--space-3);
         height: 100%;
-        padding: var(--space-4);
-        gap: var(--space-4);
-        background: var(--bg-primary);
-        font-family: var(--font-sans);
-        color: var(--text-primary);
+        padding: var(--space-3);
         opacity: 0;
-        transform: translateY(8px);
-        transition: opacity var(--duration-base) var(--ease-out),
-                    transform var(--duration-base) var(--ease-out);
+        transition: opacity var(--duration-base);
     }
 
     .flow-mode.mounted {
         opacity: 1;
-        transform: translateY(0);
     }
 
     /* Header */
@@ -1319,33 +1132,44 @@
         display: flex;
         align-items: center;
         gap: var(--space-3);
+        padding-bottom: var(--space-2);
+        border-bottom: 1px solid var(--border-subtle);
     }
 
     .back-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         background: var(--bg-tertiary);
         border: 1px solid var(--border-default);
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-button);
+        color: var(--text-muted);
         cursor: pointer;
-        color: var(--text-secondary);
         transition: var(--transition-all);
     }
 
     .back-btn:hover {
         background: var(--bg-secondary);
-        border-color: var(--entity-concept);
-        color: var(--entity-concept);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
     }
 
     .header-title {
         display: flex;
         align-items: center;
-        gap: var(--space-2-5);
+        gap: var(--space-2);
         flex: 1;
+    }
+
+    .flow-version {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        margin-left: var(--space-1);
     }
 
     .flow-icon {
@@ -1354,49 +1178,50 @@
 
     .header-title h1 {
         font-family: var(--font-sans);
-        font-size: var(--text-2xl);
-        font-weight: var(--font-semibold);
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        color: var(--text-primary);
         margin: 0;
-        letter-spacing: var(--tracking-tight);
     }
 
     .clear-btn {
         display: flex;
         align-items: center;
         gap: var(--space-1-5);
-        padding: var(--space-2) var(--space-3);
+        padding: var(--space-1-5) var(--space-3);
+        font-family: var(--font-sans);
         font-size: var(--text-sm);
         font-weight: var(--font-semibold);
+        color: var(--text-muted);
         background: var(--bg-tertiary);
         border: 1px solid var(--border-default);
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-button);
         cursor: pointer;
-        color: var(--text-muted);
         transition: var(--transition-all);
     }
 
     .clear-btn:hover {
         background: var(--bg-secondary);
-        border-color: var(--border-default);
+        border-color: var(--text-muted);
         color: var(--text-secondary);
     }
 
     /* Search */
     .search-container {
         display: flex;
-        gap: var(--space-2-5);
+        gap: var(--space-2);
     }
 
     .search-wrapper {
-        flex: 1;
         position: relative;
+        flex: 1;
         display: flex;
         align-items: center;
     }
 
     .search-icon {
         position: absolute;
-        left: var(--space-3-5);
+        left: var(--space-3);
         color: var(--text-muted);
         pointer-events: none;
     }
@@ -1542,640 +1367,7 @@
         border-radius: var(--radius-sm);
     }
 
-    /* Flow Content */
-    .flow-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-4);
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--border-default) transparent;
-    }
-
-    .flow-content::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .flow-content::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .flow-content::-webkit-scrollbar-thumb {
-        background: var(--border-default);
-        border-radius: 3px;
-    }
-
-    .flow-content::-webkit-scrollbar-thumb:hover {
-        background: var(--text-muted);
-    }
-
-    /* Flow States */
-    .flow-state {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: var(--space-8);
-    }
-
-    .state-icon {
-        color: var(--entity-concept);
-        margin-bottom: var(--space-4);
-        opacity: 0.8;
-    }
-
-    .state-icon.loading svg {
-        animation: ies-spin 1s linear infinite;
-    }
-
-    .state-title {
-        font-family: var(--font-sans);
-        font-size: var(--text-xl);
-        font-weight: var(--font-semibold);
-        color: var(--text-primary);
-        margin: 0 0 var(--space-2) 0;
-    }
-
-    .state-text {
-        font-size: var(--text-base);
-        color: var(--text-secondary);
-        margin: 0 0 var(--space-1) 0;
-        max-width: 280px;
-        line-height: var(--leading-normal);
-    }
-
-    .state-hint {
-        font-size: var(--text-sm);
-        color: var(--text-muted);
-        margin: 0;
-        font-style: italic;
-    }
-
-    /* Central Concept */
-    .concept-center {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        padding: var(--space-5);
-    }
-
-    .concept-glow {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 200px;
-        height: 200px;
-        background: radial-gradient(circle, rgba(var(--entity-concept-rgb), 0.12) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-        animation: pulse-soft 3s var(--ease-in-out) infinite;
-    }
-
-    .concept-core {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: var(--space-1);
-        padding: var(--space-5) var(--space-8);
-        background: var(--bg-tertiary);
-        border: 2px solid var(--entity-concept);
-        border-radius: var(--radius-card);
-        box-shadow: var(--shadow-card), 0 0 20px rgba(var(--entity-concept-rgb), 0.1);
-        transition: var(--transition-base);
-    }
-
-    .concept-center.exploring .concept-core {
-        opacity: 0.7;
-    }
-
-    .concept-label {
-        font-size: var(--text-xs);
-        font-weight: var(--font-bold);
-        letter-spacing: var(--tracking-wider);
-        text-transform: uppercase;
-        color: var(--entity-concept);
-    }
-
-    .concept-name {
-        font-family: var(--font-sans);
-        font-size: var(--text-xl);
-        font-weight: var(--font-semibold);
-        color: var(--text-primary);
-        margin: 0;
-        text-align: center;
-    }
-
-    .concept-connections {
-        font-size: var(--text-sm);
-        color: var(--text-muted);
-    }
-
-    .concept-tabs {
-        display: inline-flex;
-        gap: var(--space-2);
-        margin: var(--space-4) auto var(--space-2);
-        border-radius: var(--radius-button);
-        padding: var(--space-1);
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-default);
-    }
-
-    .tab-btn {
-        padding: var(--space-1-5) var(--space-3-5);
-        border-radius: var(--radius-button);
-        border: none;
-        background: transparent;
-        font-size: var(--text-sm);
-        font-weight: var(--font-semibold);
-        color: var(--text-muted);
-        cursor: pointer;
-        transition: var(--transition-all);
-    }
-
-    .tab-btn:hover:not(.active) {
-        background: var(--bg-secondary);
-        color: var(--text-secondary);
-    }
-
-    .tab-btn.active {
-        background: var(--entity-concept-subtle);
-        color: var(--entity-concept);
-    }
-
-    /* Relationships */
-    .relationships {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-3);
-    }
-
-    .rel-group {
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-card);
-        padding: var(--space-3);
-        animation: ies-slide-up var(--duration-base) var(--ease-out) backwards;
-        animation-delay: var(--delay);
-    }
-
-    .rel-header {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        padding-bottom: var(--space-2-5);
-        margin-bottom: var(--space-2-5);
-        border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .rel-direction {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        font-size: var(--text-sm);
-        font-weight: var(--font-bold);
-        color: var(--entity-theory);
-        background: var(--entity-theory-subtle);
-        border-radius: 50%;
-    }
-
-    .rel-direction.outgoing {
-        color: var(--entity-concept);
-        background: var(--entity-concept-subtle);
-    }
-
-    .rel-type {
-        flex: 1;
-        font-size: var(--text-sm);
-        font-weight: var(--font-semibold);
-        color: var(--text-secondary);
-        text-transform: capitalize;
-    }
-
-    .rel-count {
-        font-size: var(--text-xs);
-        font-weight: var(--font-semibold);
-        color: var(--text-muted);
-        padding: var(--space-0-5) var(--space-2);
-        background: var(--bg-secondary);
-        border-radius: var(--radius-chip);
-    }
-
-    .rel-nodes {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-    }
-
-    .node-chip {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        padding: var(--space-2) var(--space-3);
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-chip);
-        cursor: pointer;
-        transition: var(--transition-all);
-        animation: ies-fade-in var(--duration-fast) var(--ease-out) backwards;
-        animation-delay: var(--delay);
-    }
-
-    .node-chip:hover {
-        background: var(--entity-concept-subtle);
-        border-color: var(--entity-concept-muted);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-xs);
-    }
-
-    .node-indicator {
-        width: 6px;
-        height: 6px;
-        background: var(--type-color);
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-
-    .node-name {
-        font-size: var(--text-sm);
-        font-weight: var(--font-medium);
-        color: var(--text-primary);
-    }
-
-    .no-connections {
-        text-align: center;
-        padding: var(--space-6);
-        color: var(--text-muted);
-    }
-
-    .no-connections p {
-        margin: var(--space-1) 0;
-    }
-
-    .no-connections .hint {
-        font-style: italic;
-        font-size: var(--text-sm);
-    }
-
-    /* Entity Description */
-    .entity-description {
-        margin: var(--space-4) 0;
-        padding: var(--space-4);
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-card);
-        animation: ies-fade-in var(--duration-base) var(--ease-out);
-    }
-
-    .entity-description p {
-        margin: 0;
-        color: var(--text-secondary);
-        line-height: 1.6;
-        font-size: var(--text-base);
-    }
-
-    /* Sources Section */
-    .sources-section {
-        margin-top: var(--space-4);
-        padding: var(--space-4);
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-card);
-        animation: ies-fade-in var(--duration-base) var(--ease-out);
-    }
-
-    .section-header {
-        font-size: var(--text-sm);
-        font-weight: var(--font-semibold);
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: var(--space-3);
-    }
-
-    .source-item {
-        padding: var(--space-3);
-        margin-bottom: var(--space-2);
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        animation: ies-slide-up var(--duration-base) var(--ease-out) backwards;
-        animation-delay: var(--delay);
-    }
-
-    .source-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .source-title {
-        display: block;
-        color: var(--text-primary);
-        font-size: var(--text-base);
-        font-weight: var(--font-semibold);
-        margin-bottom: var(--space-1);
-    }
-
-    .source-author {
-        display: inline-block;
-        color: var(--text-muted);
-        font-size: var(--text-sm);
-        font-style: italic;
-        margin-left: var(--space-1);
-    }
-
-    .source-snippet {
-        margin: var(--space-2) 0 0 0;
-        padding: var(--space-2);
-        color: var(--text-secondary);
-        font-size: var(--text-sm);
-        line-height: 1.5;
-        font-style: italic;
-        background: var(--bg-elevated);
-        border-left: 3px solid var(--accent);
-        border-radius: var(--radius-sm);
-    }
-
-    /* Path Trail */
-    .path-trail {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2-5);
-        padding: var(--space-2-5) var(--space-3-5);
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-card);
-        overflow-x: auto;
-    }
-
-    .path-label {
-        font-size: var(--text-xs);
-        font-weight: var(--font-bold);
-        letter-spacing: var(--tracking-wide);
-        text-transform: uppercase;
-        color: var(--text-muted);
-        flex-shrink: 0;
-    }
-
-    .path-steps {
-        display: flex;
-        align-items: center;
-        gap: var(--space-1);
-        flex-wrap: wrap;
-    }
-
-    .path-step {
-        padding: var(--space-1) var(--space-2-5);
-        font-family: inherit;
-        font-size: var(--text-sm);
-        font-weight: var(--font-medium);
-        color: var(--text-secondary);
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-chip);
-        cursor: pointer;
-        transition: var(--transition-all);
-    }
-
-    .path-step:hover:not(:disabled) {
-        background: var(--entity-concept-subtle);
-        border-color: var(--entity-concept-muted);
-    }
-
-    .path-step.current {
-        background: var(--entity-concept-subtle);
-        border-color: var(--entity-concept);
-        color: var(--entity-concept);
-        font-weight: var(--font-semibold);
-        cursor: default;
-    }
-
-    .path-connector {
-        color: var(--text-muted);
-        display: flex;
-        align-items: center;
-    }
-
-    /* Thinking Section */
-    .thinking-section {
-        padding-top: var(--space-3);
-        border-top: 1px solid var(--border-subtle);
-    }
-
-    .thinking-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: var(--space-2-5);
-        width: 100%;
-        padding: var(--space-3-5) var(--space-5);
-        font-family: inherit;
-        font-size: var(--text-base);
-        font-weight: var(--font-semibold);
-        color: var(--text-primary);
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-card);
-        cursor: pointer;
-        transition: var(--transition-all);
-    }
-
-    .thinking-btn:hover:not(:disabled) {
-        background: var(--entity-framework-subtle);
-        border-color: var(--entity-framework);
-        color: var(--entity-framework);
-    }
-
-    .thinking-btn:disabled {
-        opacity: 0.7;
-        cursor: wait;
-    }
-
-    .thinking-card {
-        padding: var(--space-4);
-        background: var(--entity-framework-subtle);
-        border: 1px solid var(--entity-framework);
-        border-radius: var(--radius-card);
-        animation: ies-slide-up var(--duration-base) var(--ease-out);
-    }
-
-    .thinking-header {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        color: var(--entity-framework);
-        margin-bottom: var(--space-2-5);
-    }
-
-    .thinking-header span {
-        font-size: var(--text-xs);
-        font-weight: var(--font-bold);
-        letter-spacing: var(--tracking-wide);
-        text-transform: uppercase;
-    }
-
-    .thinking-question {
-        font-family: var(--font-sans);
-        font-size: var(--text-lg);
-        font-style: italic;
-        line-height: var(--leading-relaxed);
-        color: var(--text-primary);
-        margin: 0;
-    }
-
-    .question-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
-        flex-wrap: wrap;
-    }
-
-    .question-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
-        background: rgba(0, 0, 0, 0.02);
-        border: 1px solid var(--badge-color, #7a756e);
-        border-radius: 999px;
-        font-size: 0.8125rem;
-        font-weight: 700;
-        color: var(--badge-color, var(--text-primary));
-    }
-
-    .badge-emoji {
-        font-size: 1rem;
-    }
-
-    .state-chip {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 8px;
-        border-radius: 10px;
-        font-size: 0.75rem;
-        text-transform: capitalize;
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-default);
-        color: var(--text-secondary);
-    }
-
-    .state-chip.subtle {
-        background: var(--bg-tertiary);
-    }
-
-    .response-box {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-top: 12px;
-    }
-
-    .response-box label {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: var(--text-secondary);
-    }
-
-    .response-box textarea {
-        width: 100%;
-        padding: 10px 12px;
-        font-family: inherit;
-        font-size: 0.9375rem;
-        color: var(--text-primary);
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-sm);
-        resize: vertical;
-        min-height: 90px;
-    }
-
-    .response-box textarea:focus {
-        outline: none;
-        border-color: var(--entity-framework);
-        box-shadow: 0 0 0 3px var(--entity-framework-light);
-    }
-
-    .response-submit {
-        align-self: flex-end;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: white;
-        background: var(--entity-framework);
-        border: none;
-        border-radius: var(--radius-sm);
-        cursor: pointer;
-        transition: all 0.15s ease-out;
-    }
-
-    .response-submit:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .response-submit:not(:disabled):hover {
-        background: var(--entity-framework-light);
-        color: var(--text-primary);
-    }
-
-    .question-history {
-        margin-top: 12px;
-        padding: 12px;
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .history-header {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: var(--text-secondary);
-    }
-
-    .history-item {
-        padding: 10px;
-        border-radius: var(--radius-sm);
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-subtle);
-        animation: slideIn 0.25s ease-out backwards;
-        animation-delay: var(--delay);
-    }
-
-    .history-question {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 6px;
-    }
-
-    .history-question p {
-        margin: 0;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .history-response {
-        margin: 0;
-        color: var(--text-secondary);
-        line-height: 1.5;
-        white-space: pre-wrap;
-    }
-
-    /* ========== Context Panel Styles ========== */
+    /* Context Panel */
     .context-panel {
         background: var(--bg-secondary);
         border: 1px solid var(--border-default);
@@ -2298,28 +1490,22 @@
     }
 
     .question-btn.active {
-        background: var(--bg-primary);
         border-color: var(--entity-concept);
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-    }
-
-    .question-btn.searching {
-        opacity: 0.8;
-        pointer-events: none;
+        background: var(--entity-concept-subtle);
     }
 
     .question-number {
-        flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         width: 24px;
         height: 24px;
-        font-size: var(--text-xs);
-        font-weight: var(--font-bold);
+        flex-shrink: 0;
         background: var(--entity-concept);
         color: white;
-        border-radius: var(--radius-full);
+        border-radius: 50%;
+        font-size: var(--text-xs);
+        font-weight: var(--font-bold);
     }
 
     .question-text {
@@ -2329,17 +1515,6 @@
         line-height: 1.5;
     }
 
-    .question-spinner {
-        flex-shrink: 0;
-        width: 16px;
-        height: 16px;
-        border: 2px solid var(--border-default);
-        border-top-color: var(--entity-concept);
-        border-radius: 50%;
-        animation: ies-spin 0.8s linear infinite;
-    }
-
-    /* Area Chips */
     .area-chips {
         display: flex;
         flex-wrap: wrap;
@@ -2347,50 +1522,18 @@
     }
 
     .area-chip {
-        padding: var(--space-1-5) var(--space-2-5);
+        padding: var(--space-1) var(--space-2);
         font-size: var(--text-xs);
         background: var(--bg-tertiary);
         border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-full);
+        border-radius: var(--radius-sm);
         color: var(--text-secondary);
-    }
-
-    /* Concept Chips (clickable) */
-    .concept-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-    }
-
-    .concept-chip {
-        padding: var(--space-1-5) var(--space-2-5);
-        font-size: var(--text-xs);
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-full);
-        color: var(--text-secondary);
-        cursor: pointer;
-        transition: var(--transition-all);
-    }
-
-    .concept-chip:hover {
-        background: var(--entity-concept);
-        border-color: var(--entity-concept);
-        color: white;
-    }
-
-    /* Context Search Results */
-    .context-results {
-        border-top: 1px solid var(--border-subtle);
-        padding-top: var(--space-4);
     }
 
     .context-results-list {
         display: flex;
         flex-direction: column;
         gap: var(--space-2);
-        max-height: 400px;
-        overflow-y: auto;
     }
 
     .context-result-card {
@@ -2470,7 +1613,7 @@
         border-top-color: var(--entity-framework);
     }
 
-    /* ========== Trail Navigation Styles ========== */
+    /* Trail Navigation Styles */
     .trail-nav {
         display: flex;
         align-items: center;
@@ -2534,6 +1677,10 @@
         border-left: 3px solid var(--entity-theory);
     }
 
+    .trail-item.type-facet {
+        border-left: 3px solid var(--entity-person);
+    }
+
     .trail-icon {
         font-size: var(--text-xs);
         flex-shrink: 0;
@@ -2566,7 +1713,168 @@
         color: var(--text-primary);
     }
 
-    /* ========== Entity Focus View Styles ========== */
+    /* Facet Focus View Styles */
+    .facet-focus {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        animation: ies-slide-up 0.2s ease-out;
+    }
+
+    .facet-focus-header {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .facet-parent-info {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+    }
+
+    .facet-parent-badge {
+        display: inline-block;
+        padding: var(--space-0-5) var(--space-1-5);
+        font-weight: var(--font-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--entity-theory);
+        color: white;
+        border-radius: var(--radius-sm);
+    }
+
+    .facet-parent-name {
+        font-weight: var(--font-medium);
+        color: var(--text-secondary);
+    }
+
+    .facet-name {
+        margin: 0;
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        color: var(--text-primary);
+    }
+
+    .facet-description {
+        margin: 0;
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .facet-loading {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .facet-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .facet-section-title {
+        margin: 0;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+    }
+
+    .facet-entities {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .facet-entity-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        padding: var(--space-2-5) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-align: left;
+        transition: var(--transition-all);
+    }
+
+    .facet-entity-card:hover {
+        background: var(--bg-secondary);
+        border-color: var(--entity-concept);
+    }
+
+    .facet-entity-main {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .facet-entity-name {
+        flex: 1;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .facet-entity-type {
+        font-size: var(--text-xs);
+        padding: var(--space-0-5) var(--space-1-5);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+    }
+
+    .facet-entity-relationship {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+        font-family: monospace;
+    }
+
+    .facet-empty {
+        padding: var(--space-4);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .back-to-entity {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-button);
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition-all);
+    }
+
+    .back-to-entity:hover {
+        background: var(--bg-secondary);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
+    }
+
+    /* Entity Focus View Styles */
     .entity-focus {
         display: flex;
         flex-direction: column;
@@ -2631,6 +1939,54 @@
         font-size: var(--text-sm);
         font-weight: var(--font-semibold);
         color: var(--text-secondary);
+    }
+
+    /* Facet Chips in Entity View */
+    .entity-facets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .facet-chip {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2-5) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: var(--transition-all);
+    }
+
+    .facet-chip:hover {
+        background: var(--entity-person-subtle);
+        border-color: var(--entity-person);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-xs);
+    }
+
+    .facet-chip-icon {
+        font-size: var(--text-base);
+        flex-shrink: 0;
+    }
+
+    .facet-chip-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-0-5);
+    }
+
+    .facet-chip-name {
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .facet-chip-count {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
     }
 
     .entity-neighbors {
@@ -2704,23 +2060,84 @@
         align-items: center;
         justify-content: center;
         gap: var(--space-2);
-        padding: var(--space-2) var(--space-4);
+        padding: var(--space-2) var(--space-3);
         background: var(--bg-tertiary);
         border: 1px solid var(--border-default);
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-button);
         font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
         color: var(--text-secondary);
         cursor: pointer;
         transition: var(--transition-all);
-        align-self: flex-start;
     }
 
     .back-to-question:hover {
         background: var(--bg-secondary);
-        border-color: var(--entity-concept);
+        border-color: var(--text-muted);
         color: var(--text-primary);
     }
 
-    /* Note: Animations (ies-spin, ies-slide-up, ies-fade-in, pulse-soft)
-       are provided by the unified design system in design-system/tokens/animations.css */
+    /* Flow States */
+    .flow-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: var(--space-8);
+    }
+
+    .state-icon {
+        color: var(--entity-concept);
+        margin-bottom: var(--space-4);
+        opacity: 0.8;
+    }
+
+    .state-icon.loading svg {
+        animation: ies-spin 1s linear infinite;
+    }
+
+    .state-title {
+        font-family: var(--font-sans);
+        font-size: var(--text-xl);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+        margin: 0 0 var(--space-2) 0;
+    }
+
+    .state-text {
+        font-size: var(--text-base);
+        color: var(--text-secondary);
+        margin: 0 0 var(--space-1) 0;
+        max-width: 280px;
+        line-height: var(--leading-normal);
+    }
+
+    /* Animations */
+    @keyframes ies-slide-up {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes ies-fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes ies-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
 </style>

@@ -26,7 +26,7 @@
 
     // Backend configuration
     let backendUrl = getBackendUrl();
-    const VERSION = '0.3.2';
+    const VERSION = '0.4.0';
 
     // User identity (fetched from profile service)
     let userId: string | null = null;
