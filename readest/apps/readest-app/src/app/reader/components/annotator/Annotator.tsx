@@ -85,7 +85,7 @@ const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
   const transPopupWidth = Math.min(480, maxWidth);
   const transPopupHeight = Math.min(265, maxHeight);
   const annotPopupWidth = Math.min(useResponsiveSize(300), maxWidth);
-  const annotPopupHeight = useResponsiveSize(44);
+  const annotPopupHeight = useResponsiveSize(48);
   const androidSelectionHandlerHeight = 0;
 
   // Reposition popups on scroll without dismissing them
