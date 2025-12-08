@@ -1,0 +1,10 @@
+{
+  "processing_status": {
+    "layer0_ingested": "boolean",
+    "layer1_light_processed": "boolean",
+    "layer2_deep_processed": "boolean",
+    "layer3_flow_contexts": [
+      "string"
+    ]
+  }
+}

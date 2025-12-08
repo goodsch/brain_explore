@@ -1,0 +1,131 @@
+{
+  "FeynmanProblem": {
+    "id": "string",
+    "title": "string",
+    "description": "string",
+    "importance": "number",
+    "status": "string",
+    "linked_project_ids": [
+      "string"
+    ],
+    "root_question_ids": [
+      "string"
+    ],
+    "seed_concept_ids": [
+      "string"
+    ],
+    "contexts": [
+      "string"
+    ],
+    "created_at": "string",
+    "updated_at": "string"
+  },
+  "Project": {
+    "id": "string",
+    "title": "string",
+    "goal": "string",
+    "description": "string",
+    "deliverables": [
+      "string"
+    ],
+    "linked_feynman_problem_ids": [
+      "string"
+    ],
+    "key_question_ids": [
+      "string"
+    ],
+    "timeline": "string",
+    "status": "string",
+    "created_at": "string",
+    "updated_at": "string"
+  },
+  "Question": {
+    "id": "string",
+    "text": "string",
+    "type": "string",
+    "parent_question_ids": [
+      "string"
+    ],
+    "child_question_ids": [
+      "string"
+    ],
+    "related_concept_ids": [
+      "string"
+    ],
+    "linked_source_fragments": [
+      "string"
+    ],
+    "status": "string",
+    "confidence": "number",
+    "explanation_block_id": "string",
+    "created_at": "string",
+    "updated_at": "string"
+  },
+  "Concept": {
+    "id": "string",
+    "name": "string",
+    "type": "string",
+    "definition": "string",
+    "aliases": [
+      "string"
+    ],
+    "related_entity_ids": [
+      "string"
+    ],
+    "related_question_ids": [
+      "string"
+    ],
+    "source_mentions": [
+      "string"
+    ],
+    "importance": "number",
+    "created_at": "string",
+    "updated_at": "string"
+  },
+  "Relation": {
+    "id": "string",
+    "subject_id": "string",
+    "relation_type": "string",
+    "object_id": "string",
+    "evidence_chunk_ids": [
+      "string"
+    ],
+    "strength": "string",
+    "created_at": "string",
+    "updated_at": "string"
+  },
+  "Source": {
+    "id": "string",
+    "title": "string",
+    "authors": [
+      "string"
+    ],
+    "year": "number",
+    "type": "string",
+    "metadata": "object",
+    "structure": "object",
+    "processing_status": "object",
+    "created_at": "string",
+    "updated_at": "string"
+  },
+  "Chunk": {
+    "id": "string",
+    "source_id": "string",
+    "location": "string",
+    "text": "string",
+    "themes": [
+      "string"
+    ],
+    "categories": [
+      "string"
+    ],
+    "entities": [
+      "string"
+    ],
+    "deep_processed_for": [
+      "string"
+    ],
+    "created_at": "string",
+    "updated_at": "string"
+  }
+}
