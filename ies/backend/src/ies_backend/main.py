@@ -19,6 +19,7 @@ from ies_backend.api import (
     quick_add,
     sources,
     session,
+    sync,
     template,
     thinking,
 )
@@ -59,6 +60,7 @@ app.include_router(books.router, tags=["books"])
 app.include_router(sources.router, tags=["sources"])
 app.include_router(quick_add.router, tags=["quick-add"])
 app.include_router(template.router, tags=["templates"])
+app.include_router(sync.router, tags=["sync"])
 
 
 @app.get("/health")
