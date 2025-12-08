@@ -1,4 +1,11 @@
 import { create } from 'zustand';
+import {
+  getSyncService,
+  AppSource,
+  SessionStatus,
+  type ReadingPosition,
+  type ExplorationSession,
+} from '@/services/flow/syncService';
 
 // Types for entity data from the knowledge graph
 export interface GraphEntity {
@@ -96,6 +103,12 @@ interface FlowModeState {
   journeyStartTime: number | null;
   currentStepStartTime: number | null;
 
+  // Session sync (Sprint 3)
+  sessionId: string | null;
+  currentSession: ExplorationSession | null;
+  readingPosition: ReadingPosition | null;
+  isSyncing: boolean;
+
   // Loading states
   isLoadingEntity: boolean;
   isLoadingEvidence: boolean;
@@ -126,7 +139,19 @@ interface FlowModeState {
   addThinkingPartnerExchange: (question: string, response?: string) => void;
   endJourney: () => BreadcrumbJourney | null;
   getCurrentJourney: () => BreadcrumbJourney | null;
+
+  // Actions - Session Sync (Sprint 3)
+  setReadingPosition: (position: ReadingPosition | null) => void;
+  syncSession: (userId: string, force?: boolean) => Promise<void>;
+  pauseCurrentSession: () => Promise<void>;
+  loadSession: (sessionId: string) => Promise<void>;
+  setSessionId: (sessionId: string | null) => void;
 }
+
+// Debounce helper
+let syncDebounceTimer: NodeJS.Timeout | null = null;
+const SYNC_DEBOUNCE_MS = 2000; // 2 seconds for entity navigation
+const POSITION_SYNC_DEBOUNCE_MS = 5000; // 5 seconds for reading position
 
 export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   // Initial state
@@ -141,6 +166,10 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   currentJourney: null,
   journeyStartTime: null,
   currentStepStartTime: null,
+  sessionId: null,
+  currentSession: null,
+  readingPosition: null,
+  isSyncing: false,
   isLoadingEntity: false,
   isLoadingEvidence: false,
   isLoadingQuestions: false,
@@ -150,11 +179,35 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   setFlowPanelWidth: (width: string) => set({ flowPanelWidth: width }),
   toggleFlowMode: () => set((state) => ({ isFlowModeActive: !state.isFlowModeActive })),
   toggleFlowPanelPin: () => set((state) => ({ isFlowPanelPinned: !state.isFlowPanelPinned })),
-  setFlowModeActive: (active: boolean) => set({ isFlowModeActive: active }),
+  setFlowModeActive: (active: boolean) => {
+    set({ isFlowModeActive: active });
+    // Auto-pause session when flow panel closes
+    if (!active) {
+      const state = get();
+      if (state.sessionId) {
+        get().pauseCurrentSession().catch(console.error);
+      }
+    }
+  },
   setFlowPanelPinned: (pinned: boolean) => set({ isFlowPanelPinned: pinned }),
 
   // Entity actions
-  setCurrentEntity: (entity: GraphEntity | null) => set({ currentEntity: entity }),
+  setCurrentEntity: (entity: GraphEntity | null) => {
+    set({ currentEntity: entity });
+    // Auto-sync on entity navigation (debounced)
+    if (entity) {
+      const state = get();
+      if (state.currentJourney) {
+        get().addJourneyStep(entity.id, entity.name);
+      }
+      // Trigger sync after debounce
+      if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        const userId = state.currentJourney?.userId || 'default-user';
+        get().syncSession(userId, false).catch(console.error);
+      }, SYNC_DEBOUNCE_MS);
+    }
+  },
   setRelationships: (relationships: EntityRelationship[]) => set({ relationships }),
   setBookSources: (sources: BookSource[]) => set({ bookSources: sources }),
   setEvidence: (evidence: EvidencePassage[]) => set({ evidence }),
@@ -181,6 +234,8 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
       journeyStartTime: now,
       currentStepStartTime: now,
     });
+    // Start sync session
+    get().syncSession(userId, true).catch(console.error);
   },
 
   addJourneyStep: (entityId: string, entityName: string, sourcePassage?: string) => {
@@ -286,4 +341,127 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   },
 
   getCurrentJourney: () => get().currentJourney,
+
+  // Session Sync actions (Sprint 3)
+  setReadingPosition: (position: ReadingPosition | null) => {
+    set({ readingPosition: position });
+    // Auto-sync reading position (debounced longer - 5s)
+    if (position) {
+      if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        const state = get();
+        const userId = state.currentJourney?.userId || 'default-user';
+        get().syncSession(userId, false).catch(console.error);
+      }, POSITION_SYNC_DEBOUNCE_MS);
+    }
+  },
+
+  setSessionId: (sessionId: string | null) => {
+    set({ sessionId });
+  },
+
+  syncSession: async (userId: string, force = false) => {
+    const state = get();
+    if (state.isSyncing && !force) return;
+
+    set({ isSyncing: true });
+    try {
+      const syncService = getSyncService();
+
+      // Convert journey path to sync format
+      const journeyPath = state.currentJourney?.path.map((step) => ({
+        entity_id: step.entityId,
+        entity_name: step.entityName,
+        timestamp: step.timestamp,
+        source_passage: step.sourcePassage,
+        dwell_time: step.dwellTimeSeconds,
+      })) || [];
+
+      const session = await syncService.createOrUpdateSession(
+        {
+          user_id: userId,
+          app_source: AppSource.READER,
+          status: SessionStatus.ACTIVE,
+          current_entity_id: state.currentEntity?.id,
+          current_entity_name: state.currentEntity?.name,
+          reading_position: state.readingPosition || undefined,
+          journey_path: journeyPath,
+        },
+        state.sessionId || undefined,
+      );
+
+      set({
+        sessionId: session.id,
+        currentSession: session,
+      });
+    } catch (error) {
+      console.error('Failed to sync session:', error);
+    } finally {
+      set({ isSyncing: false });
+    }
+  },
+
+  pauseCurrentSession: async () => {
+    const state = get();
+    if (!state.sessionId) return;
+
+    try {
+      const syncService = getSyncService();
+      const session = await syncService.pauseSession(state.sessionId);
+      set({ currentSession: session });
+    } catch (error) {
+      console.error('Failed to pause session:', error);
+    }
+  },
+
+  loadSession: async (sessionId: string) => {
+    try {
+      const syncService = getSyncService();
+      const session = await syncService.getSession(sessionId);
+
+      // Restore state from session
+      set({
+        sessionId: session.id,
+        currentSession: session,
+        readingPosition: session.reading_position || null,
+      });
+
+      // Restore current entity if available
+      if (session.current_entity_id && session.current_entity_name) {
+        set({
+          currentEntity: {
+            id: session.current_entity_id,
+            name: session.current_entity_name,
+            type: 'Concept',
+            summary: '',
+          },
+        });
+      }
+
+      // Restore journey if available
+      if (session.journey_path.length > 0) {
+        const journey: BreadcrumbJourney = {
+          id: `restored-${session.id}`,
+          userId: session.user_id,
+          startedAt: session.created_at,
+          entryPoint: {
+            type: 'book',
+            reference: session.reading_position?.book_hash || 'unknown',
+          },
+          path: session.journey_path.map((step) => ({
+            entityId: step.entity_id,
+            entityName: step.entity_name,
+            timestamp: step.timestamp,
+            sourcePassage: step.source_passage,
+            dwellTimeSeconds: step.dwell_time,
+          })),
+          marks: [],
+          thinkingPartnerExchanges: [],
+        };
+        set({ currentJourney: journey });
+      }
+    } catch (error) {
+      console.error('Failed to load session:', error);
+    }
+  },
 }));

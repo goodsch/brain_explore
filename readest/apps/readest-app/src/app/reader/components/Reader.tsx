@@ -15,6 +15,7 @@ import { useNotebookStore } from '@/store/notebookStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useDeviceControlStore } from '@/store/deviceStore';
 import { useScreenWakeLock } from '@/hooks/useScreenWakeLock';
+import { useSessionResume } from '../hooks/useSessionResume';
 import { eventDispatcher } from '@/utils/event';
 import { interceptWindowOpen } from '@/utils/open';
 import { mountAdditionalFonts } from '@/styles/fonts';
@@ -64,6 +65,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
 
   useTheme({ systemUIVisible: settings.alwaysShowStatusBar, appThemeColor: 'base-100' });
   useScreenWakeLock(settings.screenWakeLock);
+  useSessionResume(); // Sprint 3: Handle session resume from URL parameters
 
   useEffect(() => {
     mountAdditionalFonts(document);

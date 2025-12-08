@@ -17,6 +17,7 @@ import RelationshipsSection from './RelationshipsSection';
 import SourcesSection from './SourcesSection';
 import EvidenceSection from './EvidenceSection';
 import QuestionsSection from './QuestionsSection';
+import ResumeSection from './ResumeSection';
 
 const MIN_FLOW_PANEL_WIDTH = 0.2;
 const MAX_FLOW_PANEL_WIDTH = 0.5;
@@ -39,6 +40,7 @@ const FlowPanel: React.FC = () => {
     thinkingPartnerQuestions,
     isLoadingEntity,
     isLoadingEvidence,
+    sessionId,
     getFlowPanelWidth,
     setFlowPanelWidth,
     setFlowModeActive,
@@ -159,6 +161,8 @@ const FlowPanel: React.FC = () => {
             </div>
           ) : currentEntity ? (
             <div className='space-y-4'>
+              {/* Resume Section - Show at top when session is active */}
+              {sessionId && <ResumeSection />}
               <EntitySection entity={currentEntity} />
               <RelationshipsSection relationships={relationships} />
               <SourcesSection sources={bookSources} />
