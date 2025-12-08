@@ -1,0 +1,384 @@
+/**
+ * IES Visual Enhancements for SiYuan
+ *
+ * Provides visual styling for Intelligent Exploration System components.
+ * This CSS targets the custom-* attributes that the IES plugin sets on blocks.
+ *
+ * INSTALLATION:
+ * 1. Open SiYuan → Settings → Appearance → Code Snippet → CSS
+ * 2. Click "+" to add new snippet
+ * 3. Copy this entire file content
+ * 4. Save and reload SiYuan
+ *
+ * ATTRIBUTES TARGETED:
+ * - custom-be_type: "spark", "insight", "session", "context", "concept"
+ * - custom-status: "captured", "anchored", "archived", "completed"
+ * - custom-mode: "learning", "articulating", "planning", "ideating", "reflecting"
+ * - custom-capture_status: "raw", "processed"
+ *
+ * VERSION: 1.0.0 (Dec 2025)
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (Theme Variables)
+   ============================================ */
+
+:root {
+  /* Sparks/Insights (Amber/Gold) */
+  --ies-spark-primary: #f59e0b;
+  --ies-spark-light: #fbbf24;
+  --ies-spark-bg: rgba(245, 158, 11, 0.08);
+  --ies-spark-border: rgba(245, 158, 11, 0.3);
+
+  /* Context/Anchored (Purple) */
+  --ies-context-primary: #9333ea;
+  --ies-context-light: #a855f7;
+  --ies-context-bg: rgba(147, 51, 234, 0.08);
+  --ies-context-border: rgba(147, 51, 234, 0.3);
+
+  /* Thinking Modes */
+  --ies-mode-learning: #06b6d4; /* cyan */
+  --ies-mode-articulating: #8b5cf6; /* violet */
+  --ies-mode-planning: #10b981; /* emerald */
+  --ies-mode-ideating: #6366f1; /* indigo */
+  --ies-mode-reflecting: #ef4444; /* red */
+
+  /* General */
+  --ies-transition-speed: 0.15s;
+}
+
+/* Dark theme adjustments */
+body.body--theme-dark {
+  --ies-spark-bg: rgba(245, 158, 11, 0.12);
+  --ies-context-bg: rgba(147, 51, 234, 0.12);
+}
+
+
+/* ============================================
+   SPARKS (Captured Moments)
+   ============================================ */
+
+[custom-be_type="spark"],
+[custom-status="captured"] {
+  background: var(--ies-spark-bg);
+  border-left: 4px solid var(--ies-spark-primary);
+  padding: 8px 12px;
+  margin: 8px 0;
+  border-radius: 4px;
+  position: relative;
+  transition: all var(--ies-transition-speed) ease;
+}
+
+[custom-be_type="spark"]:hover,
+[custom-status="captured"]:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-left-color: var(--ies-spark-light);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+  transform: translateX(2px);
+}
+
+[custom-be_type="spark"]::before {
+  content: "✨ ";
+  font-size: 1.1em;
+  opacity: 0.8;
+}
+
+
+/* ============================================
+   INSIGHTS (Promoted Sparks)
+   ============================================ */
+
+[custom-be_type="insight"],
+[custom-status="anchored"] {
+  background: var(--ies-context-bg);
+  border-left: 4px solid var(--ies-context-primary);
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-radius: 4px;
+  transition: all var(--ies-transition-speed) ease;
+}
+
+[custom-be_type="insight"]:hover,
+[custom-status="anchored"]:hover {
+  background: rgba(147, 51, 234, 0.15);
+  border-left-color: var(--ies-context-light);
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.2);
+}
+
+[custom-be_type="insight"]::before {
+  content: "💡 ";
+  font-size: 1.1em;
+  opacity: 0.8;
+}
+
+
+/* ============================================
+   CONCEPTS (Formalized Knowledge)
+   ============================================ */
+
+[custom-be_type="concept"] {
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 4px solid #3b82f6;
+  padding: 10px 12px;
+  margin: 10px 0;
+  border-radius: 4px;
+}
+
+[custom-be_type="concept"]:hover {
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+[custom-be_type="concept"]::before {
+  content: "🔷 ";
+  font-size: 1.1em;
+  opacity: 0.8;
+}
+
+
+/* ============================================
+   THINKING SESSIONS
+   ============================================ */
+
+[custom-be_type="session"] {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+body.body--theme-dark [custom-be_type="session"] {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Learning Mode (Cyan) */
+[custom-mode="learning"] {
+  border-left: 4px solid var(--ies-mode-learning);
+  background: rgba(6, 182, 212, 0.05);
+}
+
+[custom-mode="learning"]::before {
+  content: "📚 Learning";
+  display: inline-block;
+  color: var(--ies-mode-learning);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-right: 8px;
+  padding: 2px 8px;
+  background: rgba(6, 182, 212, 0.1);
+  border-radius: 4px;
+}
+
+/* Articulating Mode (Violet) */
+[custom-mode="articulating"] {
+  border-left: 4px solid var(--ies-mode-articulating);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+[custom-mode="articulating"]::before {
+  content: "💬 Articulating";
+  display: inline-block;
+  color: var(--ies-mode-articulating);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-right: 8px;
+  padding: 2px 8px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 4px;
+}
+
+/* Planning Mode (Emerald) */
+[custom-mode="planning"] {
+  border-left: 4px solid var(--ies-mode-planning);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+[custom-mode="planning"]::before {
+  content: "📋 Planning";
+  display: inline-block;
+  color: var(--ies-mode-planning);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-right: 8px;
+  padding: 2px 8px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 4px;
+}
+
+/* Ideating Mode (Indigo) */
+[custom-mode="ideating"] {
+  border-left: 4px solid var(--ies-mode-ideating);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+[custom-mode="ideating"]::before {
+  content: "💡 Ideating";
+  display: inline-block;
+  color: var(--ies-mode-ideating);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-right: 8px;
+  padding: 2px 8px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 4px;
+}
+
+/* Reflecting Mode (Red) */
+[custom-mode="reflecting"] {
+  border-left: 4px solid var(--ies-mode-reflecting);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+[custom-mode="reflecting"]::before {
+  content: "🔍 Reflecting";
+  display: inline-block;
+  color: var(--ies-mode-reflecting);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-right: 8px;
+  padding: 2px 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+}
+
+
+/* ============================================
+   STATUS STATES
+   ============================================ */
+
+/* Completed status - subtle green tint */
+[custom-status="completed"] {
+  border-left-color: #10b981;
+  opacity: 0.9;
+}
+
+[custom-status="completed"]::after {
+  content: "✓";
+  color: #10b981;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+/* Archived status - muted */
+[custom-status="archived"] {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+}
+
+[custom-status="archived"]:hover {
+  opacity: 0.7;
+  filter: grayscale(0.3);
+}
+
+
+/* ============================================
+   ADHD-FRIENDLY ENHANCEMENTS
+   ============================================ */
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  [custom-be_type],
+  [custom-status],
+  [custom-mode] {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Enhanced focus states for keyboard navigation */
+[custom-be_type]:focus,
+[custom-status]:focus {
+  outline: 3px solid rgba(147, 51, 234, 0.4);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.1);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  [custom-be_type="spark"],
+  [custom-be_type="insight"] {
+    border-left-width: 6px;
+  }
+
+  [custom-mode]::before {
+    font-weight: 700;
+  }
+}
+
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+/* Mobile: reduce padding */
+@media (max-width: 768px) {
+  [custom-be_type="spark"],
+  [custom-be_type="insight"],
+  [custom-be_type="session"] {
+    padding: 6px 10px;
+    margin: 6px 0;
+  }
+
+  [custom-mode]::before {
+    font-size: 0.75rem;
+    padding: 1px 6px;
+  }
+}
+
+/* Print styles */
+@media print {
+  [custom-be_type],
+  [custom-status] {
+    border-left-width: 2px;
+    page-break-inside: avoid;
+  }
+
+  [custom-mode]::before {
+    display: inline;
+  }
+}
+
+
+/* ============================================
+   INTEGRATION WITH SIYUAN THEMES
+   ============================================ */
+
+/* Respect SiYuan's native spacing */
+.protyle-wysiwyg [custom-be_type],
+.protyle-wysiwyg [custom-status] {
+  margin-top: var(--b3-block-margin-top, 8px);
+  margin-bottom: var(--b3-block-margin-bottom, 8px);
+}
+
+/* Match SiYuan's native border radius */
+[custom-be_type],
+[custom-be_type="session"] {
+  border-radius: var(--b3-border-radius, 4px);
+}
+
+/* Use SiYuan's transition timing if available */
+[custom-be_type],
+[custom-status] {
+  transition-duration: var(--b3-transition, 0.15s);
+}
+
+
+/* ============================================
+   DARK MODE REFINEMENTS
+   ============================================ */
+
+body.body--theme-dark [custom-be_type="spark"]:hover,
+body.body--theme-dark [custom-status="captured"]:hover {
+  background: rgba(245, 158, 11, 0.18);
+}
+
+body.body--theme-dark [custom-be_type="insight"]:hover,
+body.body--theme-dark [custom-status="anchored"]:hover {
+  background: rgba(147, 51, 234, 0.18);
+}
+
+body.body--theme-dark [custom-be_type="concept"]:hover {
+  background: rgba(59, 130, 246, 0.18);
+}
