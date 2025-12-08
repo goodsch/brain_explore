@@ -11,10 +11,14 @@ import {
   BookSource,
   ThinkingPartnerQuestion,
   BreadcrumbJourney,
+  EvidencePassage,
 } from '@/store/flowModeStore';
 
-// Configuration
-const DEFAULT_API_BASE = 'http://localhost:8081/api/v1';
+// Configuration - use same host as the web app (backend runs on same server)
+const DEFAULT_API_BASE =
+  typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? `http://${window.location.hostname}:8081`
+    : 'http://localhost:8081';
 
 interface GraphClientConfig {
   baseUrl?: string;
@@ -36,13 +40,62 @@ interface ExploreResponse {
   }>;
 }
 
-interface ThinkingPartnerResponse {
-  questions: ThinkingPartnerQuestion[];
-}
-
 interface JourneyResponse {
   id: string;
   siyuanNoteId?: string;
+}
+
+// Raw API response types
+interface RawExploreResponse {
+  concept: string;
+  nodes: Array<{
+    name: string;
+    type: string;
+    labels: string[];
+  }>;
+  relationships: Array<{
+    start: string;
+    type: string;
+    end: string;
+  }>;
+}
+
+interface RawSourcesResponse {
+  concept: string;
+  sources: Array<{
+    text: string;
+    book: string;
+    author: string;
+    chapter: string | null;
+  }>;
+}
+
+interface RawSearchResponse {
+  query: string;
+  results: Array<{
+    name: string;
+    type: string;
+    score: number;
+  }>;
+}
+
+interface RawEvidenceResponse {
+  entity_name: string;
+  evidence: Array<{
+    id: string;
+    text: string;
+    source_title: string;
+    source_author: string | null;
+    location: {
+      chapter?: string;
+      page?: number;
+      cfi?: string;
+    } | null;
+    confidence: number;
+    source_type: 'chunk' | 'book';
+  }>;
+  total_count: number;
+  sources_searched: number;
 }
 
 class GraphAPIClient {
@@ -57,9 +110,10 @@ class GraphAPIClient {
   private async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const fullUrl = `${this.baseUrl}${endpoint}`;
 
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(fullUrl, {
         ...options,
         signal: controller.signal,
         headers: {
@@ -79,61 +133,163 @@ class GraphAPIClient {
   }
 
   /**
-   * Get entity details by ID
+   * Get entity details by name (uses explore endpoint)
    */
-  async getEntity(entityId: string): Promise<EntityResponse> {
-    return this.fetch<EntityResponse>(`/graph/entity/${entityId}`);
+  async getEntity(entityName: string): Promise<EntityResponse> {
+    // Use explore to get entity and relationships
+    const exploreData = await this.fetch<RawExploreResponse>(
+      `/graph/explore/${encodeURIComponent(entityName)}?depth=1&limit=20`
+    );
+
+    // Get sources separately
+    let sources: BookSource[] = [];
+    try {
+      const sourcesData = await this.fetch<RawSourcesResponse>(
+        `/graph/sources/${encodeURIComponent(entityName)}`
+      );
+      sources = sourcesData.sources.map((s) => ({
+        bookId: `${s.book}-${s.chapter || 'main'}`,
+        bookTitle: `${s.book} by ${s.author}`,
+        chapter: s.chapter || undefined,
+      }));
+    } catch {
+      // Sources may not exist for all entities
+    }
+
+    // Transform to expected format
+    const entity: GraphEntity = {
+      id: entityName,
+      name: entityName,
+      type: 'Concept',
+      summary: `Concept from knowledge graph with ${exploreData.nodes.length} related entities`,
+    };
+
+    const relationships: EntityRelationship[] = exploreData.relationships.map((r) => ({
+      type: r.type,
+      target: {
+        id: r.end,
+        name: r.end,
+        type: exploreData.nodes.find((n) => n.name === r.end)?.type || 'Unknown',
+        summary: '',
+      },
+    }));
+
+    return { entity, relationships, sources };
   }
 
   /**
    * Search for entities by name or term
    */
   async searchEntities(query: string, limit = 10): Promise<GraphEntity[]> {
-    const params = new URLSearchParams({ query, limit: String(limit) });
-    return this.fetch<GraphEntity[]>(`/graph/search?${params}`);
+    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    const response = await this.fetch<RawSearchResponse>(`/graph/search?${params}`);
+    return response.results.map((r) => ({
+      id: r.name,
+      name: r.name,
+      type: r.type,
+      summary: '',
+    }));
   }
 
   /**
    * Get neighborhood exploration (related entities)
    */
-  async exploreNeighborhood(entityId: string, depth = 1, limit = 20): Promise<ExploreResponse> {
+  async exploreNeighborhood(entityName: string, depth = 1, limit = 20): Promise<ExploreResponse> {
     const params = new URLSearchParams({
       depth: String(depth),
       limit: String(limit),
     });
-    return this.fetch<ExploreResponse>(`/graph/explore/${entityId}?${params}`);
+    const raw = await this.fetch<RawExploreResponse>(
+      `/graph/explore/${encodeURIComponent(entityName)}?${params}`
+    );
+
+    const center: GraphEntity = {
+      id: raw.concept,
+      name: raw.concept,
+      type: 'Concept',
+      summary: '',
+    };
+
+    const neighbors = raw.nodes.map((node) => {
+      const rel = raw.relationships.find((r) => r.end === node.name || r.start === node.name);
+      return {
+        entity: {
+          id: node.name,
+          name: node.name,
+          type: node.type,
+          summary: '',
+        },
+        relationship: rel?.type || 'RELATED_TO',
+        distance: 1,
+      };
+    });
+
+    return { center, neighbors };
   }
 
   /**
    * Get book sources that discuss an entity
    */
-  async getEntitySources(entityId: string): Promise<BookSource[]> {
-    return this.fetch<BookSource[]>(`/graph/sources/${entityId}`);
+  async getEntitySources(entityName: string): Promise<BookSource[]> {
+    const response = await this.fetch<RawSourcesResponse>(
+      `/graph/sources/${encodeURIComponent(entityName)}`
+    );
+    return response.sources.map((s) => ({
+      bookId: `${s.book}-${s.chapter || 'main'}`,
+      bookTitle: `${s.book} by ${s.author}`,
+      chapter: s.chapter || undefined,
+    }));
   }
 
   /**
-   * Get thinking partner questions for an entity
+   * Get evidence passages for an entity (Sprint 2)
+   * Returns text snippets from books that mention/discuss the entity
+   */
+  async getEntityEvidence(entityName: string, limit = 10): Promise<EvidencePassage[]> {
+    try {
+      const params = new URLSearchParams({
+        limit: String(limit),
+        include_book_mentions: 'true',
+      });
+      const response = await this.fetch<RawEvidenceResponse>(
+        `/graph/entity/${encodeURIComponent(entityName)}/evidence?${params}`
+      );
+      return response.evidence.map((e) => ({
+        id: e.id,
+        text: e.text,
+        sourceTitle: e.source_title,
+        sourceAuthor: e.source_author || undefined,
+        location: e.location || undefined,
+        confidence: e.confidence,
+        sourceType: e.source_type,
+      }));
+    } catch {
+      // Evidence may not exist for all entities
+      return [];
+    }
+  }
+
+  /**
+   * Get thinking partner question for an entity
    */
   async getThinkingPartnerQuestions(
-    entityId: string,
-    context?: {
+    entityName: string,
+    _context?: {
       currentPassage?: string;
       recentPath?: string[];
       userProfileId?: string;
     }
   ): Promise<ThinkingPartnerQuestion[]> {
-    const response = await this.fetch<ThinkingPartnerResponse>('/question-engine/question', {
+    const response = await this.fetch<{ question: string }>('/graph/thinking-partner', {
       method: 'POST',
-      body: JSON.stringify({
-        entity_id: entityId,
-        context: {
-          current_passage: context?.currentPassage,
-          recent_path: context?.recentPath || [],
-          user_profile_id: context?.userProfileId || 'default',
-        },
-      }),
+      body: JSON.stringify({ concept: entityName }),
     });
-    return response.questions;
+    return [
+      {
+        text: response.question,
+        type: 'clarifying',
+      },
+    ];
   }
 
   /**
@@ -181,19 +337,32 @@ class GraphAPIClient {
   }
 }
 
-// Singleton instance
+// Singleton instance with config tracking
 let graphClient: GraphAPIClient | null = null;
+let clientConfigHash: string | null = null;
+
+function hashConfig(config?: GraphClientConfig): string {
+  return JSON.stringify({
+    baseUrl: config?.baseUrl || DEFAULT_API_BASE,
+    timeout: config?.timeout || 10000,
+  });
+}
 
 export function getGraphClient(config?: GraphClientConfig): GraphAPIClient {
-  if (!graphClient) {
+  const newConfigHash = hashConfig(config);
+
+  // Recreate client if config has changed
+  if (!graphClient || clientConfigHash !== newConfigHash) {
     graphClient = new GraphAPIClient(config);
+    clientConfigHash = newConfigHash;
   }
   return graphClient;
 }
 
 export function resetGraphClient(): void {
   graphClient = null;
+  clientConfigHash = null;
 }
 
 export { GraphAPIClient };
-export type { GraphClientConfig, EntityResponse, ExploreResponse, ThinkingPartnerResponse };
+export type { GraphClientConfig, EntityResponse, ExploreResponse };

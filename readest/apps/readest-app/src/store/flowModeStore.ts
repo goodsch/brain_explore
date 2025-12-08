@@ -27,6 +27,21 @@ export interface ThinkingPartnerQuestion {
   relatedEntities?: string[];
 }
 
+// Evidence passages from source materials (Sprint 2)
+export interface EvidencePassage {
+  id: string;
+  text: string;
+  sourceTitle: string;
+  sourceAuthor?: string;
+  location?: {
+    chapter?: string;
+    page?: number;
+    cfi?: string;
+  };
+  confidence: number;
+  sourceType: 'chunk' | 'book';
+}
+
 // Breadcrumb journey tracking
 export interface JourneyStep {
   entityId: string;
@@ -73,6 +88,7 @@ interface FlowModeState {
   currentEntity: GraphEntity | null;
   relationships: EntityRelationship[];
   bookSources: BookSource[];
+  evidence: EvidencePassage[];
   thinkingPartnerQuestions: ThinkingPartnerQuestion[];
 
   // Journey tracking
@@ -82,6 +98,7 @@ interface FlowModeState {
 
   // Loading states
   isLoadingEntity: boolean;
+  isLoadingEvidence: boolean;
   isLoadingQuestions: boolean;
 
   // Actions - Panel
@@ -96,8 +113,10 @@ interface FlowModeState {
   setCurrentEntity: (entity: GraphEntity | null) => void;
   setRelationships: (relationships: EntityRelationship[]) => void;
   setBookSources: (sources: BookSource[]) => void;
+  setEvidence: (evidence: EvidencePassage[]) => void;
   setThinkingPartnerQuestions: (questions: ThinkingPartnerQuestion[]) => void;
   setIsLoadingEntity: (loading: boolean) => void;
+  setIsLoadingEvidence: (loading: boolean) => void;
   setIsLoadingQuestions: (loading: boolean) => void;
 
   // Actions - Journey
@@ -117,11 +136,13 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   currentEntity: null,
   relationships: [],
   bookSources: [],
+  evidence: [],
   thinkingPartnerQuestions: [],
   currentJourney: null,
   journeyStartTime: null,
   currentStepStartTime: null,
   isLoadingEntity: false,
+  isLoadingEvidence: false,
   isLoadingQuestions: false,
 
   // Panel actions
@@ -136,9 +157,11 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   setCurrentEntity: (entity: GraphEntity | null) => set({ currentEntity: entity }),
   setRelationships: (relationships: EntityRelationship[]) => set({ relationships }),
   setBookSources: (sources: BookSource[]) => set({ bookSources: sources }),
+  setEvidence: (evidence: EvidencePassage[]) => set({ evidence }),
   setThinkingPartnerQuestions: (questions: ThinkingPartnerQuestion[]) =>
     set({ thinkingPartnerQuestions: questions }),
   setIsLoadingEntity: (loading: boolean) => set({ isLoadingEntity: loading }),
+  setIsLoadingEvidence: (loading: boolean) => set({ isLoadingEvidence: loading }),
   setIsLoadingQuestions: (loading: boolean) => set({ isLoadingQuestions: loading }),
 
   // Journey actions

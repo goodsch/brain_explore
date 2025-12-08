@@ -15,6 +15,7 @@ import FlowPanelHeader from './Header';
 import EntitySection from './EntitySection';
 import RelationshipsSection from './RelationshipsSection';
 import SourcesSection from './SourcesSection';
+import EvidenceSection from './EvidenceSection';
 import QuestionsSection from './QuestionsSection';
 
 const MIN_FLOW_PANEL_WIDTH = 0.2;
@@ -34,8 +35,10 @@ const FlowPanel: React.FC = () => {
     currentEntity,
     relationships,
     bookSources,
+    evidence,
     thinkingPartnerQuestions,
     isLoadingEntity,
+    isLoadingEvidence,
     getFlowPanelWidth,
     setFlowPanelWidth,
     setFlowModeActive,
@@ -159,6 +162,7 @@ const FlowPanel: React.FC = () => {
               <EntitySection entity={currentEntity} />
               <RelationshipsSection relationships={relationships} />
               <SourcesSection sources={bookSources} />
+              <EvidenceSection evidence={evidence} isLoading={isLoadingEvidence} />
               <QuestionsSection questions={thinkingPartnerQuestions} />
             </div>
           ) : (
