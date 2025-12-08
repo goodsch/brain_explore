@@ -4,6 +4,62 @@ This file contains detailed development history. For current status, see CLAUDE.
 
 ## December 2025
 
+### Dec 8 - Sprint 2: Evidence Endpoint + AI Facet Generation
+
+**Sprint 2 IES Reader: Evidence Panel**
+- `EvidenceSection.tsx` — New Flow panel component with confidence badges
+- High-confidence direct chunks shown as blockquotes
+- Lower-confidence book mentions in separate "Also mentioned in" section
+- Click-to-open support (ready for CFI navigation)
+- `graphClient.ts` — Fixed API paths, added `getEntityEvidence()` method
+- `flowModeStore.ts` — Added `EvidencePassage` type and state management
+- `useFlowEntity.ts` — Added `fetchEvidence()` hook function
+- Commit: `e546a00` (ies-reader worktree)
+
+**Sprint 2 Backend: Evidence Endpoint**
+- `GET /graph/entity/{name}/evidence` — Returns source evidence for entities
+  - `limit` param: Max passages to return (1-100, default 20)
+  - `include_book_mentions` param: Include book-level evidence when chunks sparse
+  - Returns confidence scores: 1.0 for direct chunks, 0.7 for book mentions
+  - Location info (chapter, CFI) for jump-back to IES Reader
+- `EvidencePassage` schema: id, text, source_title, author, location, confidence, source_type
+- `EntityEvidenceResponse` schema with evidence array, total_count, sources_searched
+- `GraphService.get_entity_evidence()` — Two-tier query (chunks then books)
+- 6 new tests for evidence functionality (215 total passing)
+
+**Redux Consolidation & Implementation Plan**
+- Created `redux/IMPLEMENTATION_PLAN.md` — Single canonical plan synthesizing all redux specs
+- Reviewed and consolidated: `IES_Flow_Claude/`, `Flow_Graph_Interaction_Spec.md`, `IES_Context_and_Question_Layer.md`
+- Core insight: Facet decomposition on demand — graph grows from exploration, not planning
+
+**SiYuan Templates (Layer 1 Complete)**
+- Book Template (9 sections with highlight tracking, CFI support)
+- Theory Template (12 sections: Summary, Origin, Principles, Evidence Pool, Implications)
+- Feynman Problem Template (12 sections with Hypotheses, Predictions)
+- Concept Template (10 sections)
+- Spark Template (5 sections with promotion tracking)
+- Session Template (9 sections)
+- Hub Pages: Theories Hub, Sources Hub, Problems Hub
+- Attribute schema: `custom-type`, `custom-id`, `custom-status`, `custom-section`, `custom-section-id`
+
+**Sprint 1 Backend: AI Facet Decomposition**
+- `GET /graph/entity/{name}/facets` — AI generates facets if none exist
+  - `generate=true` (default): Auto-generate via Claude
+  - `refresh=true`: Force regenerate (deletes existing)
+  - Persists generated facets to Neo4j as cache
+- `POST /graph/entity` — Create entity from facet exploration
+  - Links new entity to parent with RELATED_TO/HAS_COMPONENT
+  - Adds to facet with BELONGS_TO relationship
+- `GraphService.generate_facets_with_ai()` — Claude-powered decomposition (4-7 facets)
+- `GraphService.create_entity_from_exploration()` — Idempotent entity creation
+- `EntityFacetsResponse.generated` field indicates if AI-generated this request
+
+**Knowledge Pipeline Design**
+- Created `redux/docs/IES_Knowledge_Pipeline_Design.md`
+- Three agent types: Intake, Enrichment, Synthesis
+- Five implementation layers: Schema → Reader Sync → Backend → Agents → Flow Mode
+- Block naming convention: `{TYPE}_{TITLE}_{SECTION}`
+
 ### Dec 8 - Context Layer MVP + Navigation Foundation + Entity Enrichment
 - **Phase 2A: Entity Details Endpoint** — Rich entity data for EntityFocus view
   - `GET /graph/entity/{name}` - Returns entity type, description, related concepts, source books
