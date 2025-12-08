@@ -1,12 +1,15 @@
 """Graph API router for Layer 3 exploration.
 
-Provides 7 endpoints for visual knowledge graph exploration:
+Provides 10 endpoints for visual knowledge graph exploration:
 - GET /explore/{concept} - Related concepts and relationships
 - GET /search - Concept search
 - GET /sources/{concept} - Supporting text chunks
 - GET /stats - Graph statistics
 - GET /suggestions - Dashboard topic suggestions
 - GET /entity/{name} - Rich entity details for Flow Mode EntityFocus
+- GET /entity/{name}/facets - Facets for entity drilling (AI-generated if empty)
+- GET /entity/{name}/evidence - Evidence passages from source materials
+- POST /entity - Create entity from facet exploration
 - POST /thinking-partner - Generate reflection question
 """
 
@@ -15,8 +18,15 @@ from fastapi import APIRouter, HTTPException, Query
 from ies_backend.config import settings
 from ies_backend.services.graph_service import GraphService
 from ies_backend.schemas.graph import (
+    CreateEntityRequest,
+    CreateEntityResponse,
     EntityDetailsResponse,
+    EntityEvidenceResponse,
+    EntityFacetsResponse,
+    EvidencePassage,
     ExploreResponse,
+    Facet,
+    FacetEntity,
     GraphNode,
     GraphRelationship,
     GraphStats,
@@ -249,6 +259,170 @@ async def get_entity_details(name: str) -> EntityDetailsResponse:
             for s in result.get("source_books", [])
         ],
     )
+
+
+@router.get("/entity/{name}/facets", response_model=EntityFacetsResponse)
+async def get_entity_facets(
+    name: str,
+    generate: bool = Query(
+        default=True,
+        description="Generate facets via AI if none exist"
+    ),
+    refresh: bool = Query(
+        default=False,
+        description="Force regenerate facets (deletes existing)"
+    ),
+) -> EntityFacetsResponse:
+    """Get facets for an entity to enable categorical drilling in Flow Mode.
+
+    Facets are thematic groupings of related concepts (e.g., ADHD might have
+    facets like "Diagnosis", "Neurobiology", "Treatment"). This enables
+    entity → facet → sub-entity exploration.
+
+    If no facets exist and `generate=True`, AI will generate them automatically.
+    Use `refresh=True` to force regeneration of facets.
+
+    Args:
+        name: Entity name to get facets for
+        generate: If True, generate facets via AI when none exist
+        refresh: If True, delete existing facets and regenerate
+
+    Returns:
+        EntityFacetsResponse with list of facets and their entities
+
+    Raises:
+        HTTPException 404 if entity not found
+    """
+    result = await GraphService.get_entity_facets(
+        entity_name=name,
+        generate_if_empty=generate,
+        force_regenerate=refresh,
+    )
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Entity '{name}' not found in knowledge graph"
+        )
+
+    return EntityFacetsResponse(
+        entity_name=result["entity_name"],
+        entity_type=result["entity_type"],
+        facets=[
+            Facet(
+                name=f["name"],
+                description=f.get("description"),
+                entity_count=f["entity_count"],
+                entities=[
+                    FacetEntity(
+                        name=e["name"],
+                        type=e["type"],
+                        relationship=e.get("relationship", "BELONGS_TO"),
+                    )
+                    for e in f.get("entities", [])
+                ],
+            )
+            for f in result.get("facets", [])
+        ],
+        generated=result.get("generated", False),
+    )
+
+
+@router.get("/entity/{name}/evidence", response_model=EntityEvidenceResponse)
+async def get_entity_evidence(
+    name: str,
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum evidence passages to return"
+    ),
+    include_book_mentions: bool = Query(
+        default=True,
+        description="Include book-level mentions when chunks are sparse"
+    ),
+) -> EntityEvidenceResponse:
+    """Get evidence passages for an entity from source materials.
+
+    Returns text passages from books that mention or discuss this entity.
+    Evidence comes from two sources:
+    1. Chunks: Extracted text with explicit entity mentions (high confidence)
+    2. Books: Book-level mentions when chunk data is sparse (lower confidence)
+
+    Evidence includes location info (chapter, CFI) for jump-back to IES Reader.
+
+    Args:
+        name: Entity name to find evidence for
+        limit: Maximum passages to return (1-100)
+        include_book_mentions: Include book mentions when chunks sparse
+
+    Returns:
+        EntityEvidenceResponse with evidence passages and metadata
+    """
+    result = await GraphService.get_entity_evidence(
+        entity_name=name,
+        limit=limit,
+        include_book_mentions=include_book_mentions,
+    )
+
+    return EntityEvidenceResponse(
+        entity_name=result["entity_name"],
+        evidence=[
+            EvidencePassage(
+                id=e["id"],
+                text=e["text"],
+                source_title=e["source_title"],
+                source_author=e.get("source_author"),
+                location=e.get("location"),
+                confidence=e.get("confidence", 1.0),
+                source_type=e.get("source_type", "chunk"),
+            )
+            for e in result.get("evidence", [])
+        ],
+        total_count=result.get("total_count", 0),
+        sources_searched=result.get("sources_searched", 0),
+    )
+
+
+@router.post("/entity", response_model=CreateEntityResponse)
+async def create_entity(request: CreateEntityRequest) -> CreateEntityResponse:
+    """Create a new entity from facet/graph exploration.
+
+    When exploring facets, clicking on a facet that doesn't exist as an entity
+    triggers creation. The new entity is linked to its parent and facet.
+
+    This enables the graph to grow organically from exploration.
+
+    Args:
+        request: Entity creation details including name, type, parent, facet
+
+    Returns:
+        CreateEntityResponse with entity info and whether newly created
+
+    Raises:
+        HTTPException 500 if creation fails
+    """
+    try:
+        result = await GraphService.create_entity_from_exploration(
+            name=request.name,
+            entity_type=request.entity_type,
+            parent_entity=request.parent_entity,
+            facet_name=request.facet_name,
+            description=request.description,
+        )
+
+        return CreateEntityResponse(
+            name=result["name"],
+            entity_type=result["entity_type"],
+            created=result["created"],
+            parent_entity=result.get("parent_entity"),
+            facet_name=result.get("facet_name"),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create entity: {e}"
+        )
 
 
 THINKING_PARTNER_SYSTEM = """You are a thinking partner helping someone explore therapeutic concepts.
