@@ -11,6 +11,7 @@
 
     import ReframesTab from '../components/ReframesTab.svelte';
     import EvidenceSection from '../components/EvidenceSection.svelte';
+    import AddFacetForm from '../components/AddFacetForm.svelte';
     import { saveJourney, type JourneyData } from '../utils/siyuan-structure';
     import { getBlockKramdown, exportMdContent } from '../api';
 
@@ -124,6 +125,12 @@
     let focusedFacet: FacetDetails | null = null;
     let isLoadingEntity = false;
     let isLoadingFacet = false;
+    let showAddEntityForm = false;
+
+    // Reset add form when leaving facet view
+    $: if (focusState !== 'facet') {
+        showAddEntityForm = false;
+    }
 
     // ========== Navigation Functions (Phase 1) ==========
     function pushTrail(item: TrailItem) {
@@ -1137,6 +1144,34 @@
                     <div class="entity-section">
                         <p class="entity-description">No entities in this facet yet</p>
                     </div>
+                {/if}
+
+                <!-- Add Entity to Facet (Sprint 1) -->
+                {#if showAddEntityForm}
+                    <AddFacetForm
+                        parentEntity={focusedFacet.parentEntityName}
+                        facetName={focusedFacet.facetName}
+                        {backendUrl}
+                        on:created={(e) => {
+                            showAddEntityForm = false;
+                            showMessage(`Created entity: ${e.detail.name}`);
+                            // Refresh the facet view to show the new entity
+                            if (focusedFacet) {
+                                navigateToFacet(focusedFacet.parentEntityName, focusedFacet.facetName, false);
+                            }
+                        }}
+                        on:cancel={() => showAddEntityForm = false}
+                    />
+                {:else}
+                    <button
+                        class="add-entity-btn"
+                        on:click={() => showAddEntityForm = true}
+                    >
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Add Entity
+                    </button>
                 {/if}
             </div>
         </div>
@@ -2634,5 +2669,37 @@
 
     .source-list li {
         margin-bottom: var(--space-1);
+    }
+
+    /* Add Entity Button (Sprint 1) */
+    .add-entity-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        padding: 10px 16px;
+        margin-top: var(--space-3);
+        background: transparent;
+        border: 1px dashed var(--border-light);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: var(--transition-all);
+    }
+
+    .add-entity-btn:hover {
+        background: var(--bg-secondary);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .add-entity-btn svg {
+        opacity: 0.7;
+    }
+
+    .add-entity-btn:hover svg {
+        opacity: 1;
     }
 </style>
