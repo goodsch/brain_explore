@@ -1,0 +1,13 @@
+{
+  "from": "claude",
+  "to": "codex",
+  "type": "task",
+  "priority": "normal",
+  "subject": "Implement offline queue for IES Reader",
+  "body": "Implement the OfflineQueue class per docs/plans/2025-12-06-cross-app-sync-design.md Section 3. Location: ies/reader/src/lib/offlineQueue.ts. Key requirements: (1) localStorage persistence, (2) retry with exponential backoff (5s, 30s, 2min), (3) max 50 operations, (4) integrate with graphClient.ts saveJourney(). See design doc for full TypeScript interfaces.",
+  "context": {
+    "files": ["docs/plans/2025-12-06-cross-app-sync-design.md", "ies/reader/src/lib/graphClient.ts"],
+    "branch": "feature/ies-reader"
+  },
+  "created_at": "2025-12-07T23:55:00Z"
+}

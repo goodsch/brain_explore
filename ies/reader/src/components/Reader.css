@@ -216,6 +216,12 @@
   background: rgba(59, 130, 246, 0.2);
 }
 
+/* Style for epub.js highlights */
+.hl {
+  background: rgba(255, 255, 0, 0.3); /* Yellow with some transparency */
+  pointer-events: none; /* Allows text selection over the highlight */
+}
+
 /* ============================================
    RESPONSIVE ADJUSTMENTS
    ============================================ */
@@ -287,10 +293,13 @@
 .reader-selection-bar button {
   display: flex;
   align-items: center;
-  gap: var(--ies-space-1);
-  font-size: var(--ies-text-sm);
-  padding: var(--ies-space-1) var(--ies-space-2);
+  justify-content: center;
+  gap: var(--ies-space-2);
+  font-size: var(--ies-text-base);
+  padding: var(--ies-space-2) var(--ies-space-3);
   white-space: nowrap;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 /* ============================================

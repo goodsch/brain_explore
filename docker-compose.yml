@@ -30,17 +30,14 @@ services:
     volumes:
       - ./calibre/config:/config
       - ./calibre/library:/calibre-library
-      - ./calibre/ingest:/downloads
+      # CWA auto-ingest: files placed here are added to library then REMOVED
+      - ./calibre/ingest:/cwa-book-ingest
     environment:
       PUID: 1000
       PGID: 1000
       TZ: America/New_York
-      # Calibre-Web-Automated specific settings
-      DOCKER_MODS: linuxserver/mods:universal-calibre
-      OAUTHLIB_RELAX_TOKEN_SCOPE: 1
-      # Auto-import settings
-      AUTO_UPDATE: true
-      AUTO_IMPORT: true
+      # CWA port (matches exposed port)
+      CWA_PORT_OVERRIDE: 8083
     restart: unless-stopped
 
   redis:

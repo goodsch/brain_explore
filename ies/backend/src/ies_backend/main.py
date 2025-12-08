@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ies_backend.api import (
     book_entities,
     books,
+    conversations,
     inbox,
     flow_session,
     graph,
@@ -41,6 +42,8 @@ app.include_router(question_engine.router, prefix="/question-engine", tags=["que
 app.include_router(graph.router, prefix="/graph", tags=["graph"])
 app.include_router(book_entities.router, prefix="/graph", tags=["graph"])
 app.include_router(journey.router, tags=["journeys"])
+# Conversation imports
+app.include_router(conversations.router, tags=["conversations"])
 # Inbox router mounted at both paths for migration
 app.include_router(inbox.router, prefix="/inbox", tags=["inbox"])  # New canonical path
 app.include_router(inbox.router, prefix="/capture", tags=["inbox"])  # Backward compatibility

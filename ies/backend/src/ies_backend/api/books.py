@@ -45,7 +45,7 @@ class IngestionQueueItem(BaseModel):
     title: str
     author: str
     queued_at: datetime
-    status: str  # 'queued', 'processing', 'completed', 'failed'
+    status: Literal["queued", "processing", "completed", "failed"]
 
 
 class IngestionQueueResponse(BaseModel):
@@ -214,106 +214,21 @@ async def get_book_file(calibre_id: int) -> StreamingResponse:
     )
 
 
-<<<<<<< HEAD
 # === Ingestion Queue Endpoints ===
 
 
-class IngestionQueueItem(BaseModel):
-    """An item in the ingestion queue."""
-
-    calibre_id: int
-    title: str
-    author: str
-    queued_at: str
-    status: Literal["queued", "processing", "completed", "failed"]
-
-
-class IngestionQueueResponse(BaseModel):
-    """Response for listing the ingestion queue."""
-
-    items: list[IngestionQueueItem]
-    total: int
-
-
-class QueueIngestResponse(BaseModel):
-    """Response for queueing a book for ingestion."""
-
-    calibre_id: int
-    message: str
-    queued_at: str
-
-
-def _load_ingestion_queue() -> list[dict]:
-    """Load ingestion queue from JSON file."""
-    if not INGESTION_QUEUE_PATH.exists():
-        return []
-    try:
-        with open(INGESTION_QUEUE_PATH, "r") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return []
-
-
-def _save_ingestion_queue(queue: list[dict]) -> None:
-    """Save ingestion queue to JSON file."""
-    # Ensure parent directory exists
-    INGESTION_QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(INGESTION_QUEUE_PATH, "w") as f:
-        json.dump(queue, f, indent=2)
-
-
-@router.post("/books/{calibre_id}/queue-ingest", response_model=QueueIngestResponse)
-async def queue_book_for_ingestion(calibre_id: int) -> QueueIngestResponse:
-    """Queue a book for entity extraction.
-
-    Adds the book to the ingestion queue for background processing
-    by the auto_ingest_daemon.
-    """
-    # Get book details from Calibre
-=======
 @router.post("/books/{calibre_id}/queue-ingest", response_model=QueueIngestionResponse)
 async def queue_book_for_ingestion(calibre_id: int) -> QueueIngestionResponse:
     """Queue a book for entity extraction/ingestion.
 
     Adds the book to the ingestion queue for background processing.
     """
->>>>>>> feature/ies-reader-enhancement
     service = get_calibre_service()
     book = service.get_book(calibre_id=calibre_id)
 
     if book is None:
         raise HTTPException(status_code=404, detail=f"Book with ID {calibre_id} not found")
 
-<<<<<<< HEAD
-    # Load current queue
-    queue = _load_ingestion_queue()
-
-    # Check if already in queue
-    existing = next((item for item in queue if item["calibre_id"] == calibre_id), None)
-    if existing:
-        return QueueIngestResponse(
-            calibre_id=calibre_id,
-            message="Book already in queue",
-            queued_at=existing["queued_at"],
-        )
-
-    # Add to queue
-    queued_at = datetime.now().isoformat()
-    queue.append({
-        "calibre_id": calibre_id,
-        "title": book.title,
-        "author": book.author,
-        "queued_at": queued_at,
-        "status": "queued",
-    })
-
-    _save_ingestion_queue(queue)
-
-    return QueueIngestResponse(
-        calibre_id=calibre_id,
-        message="Book queued for entity extraction",
-        queued_at=queued_at,
-=======
     # Load queue and add book
     queue = _load_ingestion_queue()
     now = datetime.utcnow()
@@ -332,37 +247,19 @@ async def queue_book_for_ingestion(calibre_id: int) -> QueueIngestionResponse:
         calibre_id=calibre_id,
         message=f"Book '{book.title}' queued for ingestion",
         queued_at=now,
->>>>>>> feature/ies-reader-enhancement
     )
 
 
 @router.get("/books/ingestion-queue", response_model=IngestionQueueResponse)
 async def get_ingestion_queue() -> IngestionQueueResponse:
-<<<<<<< HEAD
-    """Get the current ingestion queue.
-
-    Returns all books queued for entity extraction with their status.
-=======
     """Get the current ingestion queue status.
 
     Returns all books queued for ingestion with their current status.
->>>>>>> feature/ies-reader-enhancement
     """
     queue = _load_ingestion_queue()
 
     items = [
         IngestionQueueItem(
-<<<<<<< HEAD
-            calibre_id=item["calibre_id"],
-            title=item["title"],
-            author=item["author"],
-            queued_at=item["queued_at"],
-            status=item.get("status", "queued"),
-        )
-        for item in queue
-    ]
-
-=======
             calibre_id=int(item["calibre_id"]),
             title=item["title"],
             author=item["author"],
@@ -375,24 +272,10 @@ async def get_ingestion_queue() -> IngestionQueueResponse:
     # Sort by queued_at descending (newest first)
     items.sort(key=lambda x: x.queued_at, reverse=True)
 
->>>>>>> feature/ies-reader-enhancement
     return IngestionQueueResponse(items=items, total=len(items))
 
 
 @router.delete("/books/{calibre_id}/queue-ingest")
-<<<<<<< HEAD
-async def remove_from_ingestion_queue(calibre_id: int) -> dict:
-    """Remove a book from the ingestion queue."""
-    queue = _load_ingestion_queue()
-
-    # Find and remove the item
-    original_length = len(queue)
-    queue = [item for item in queue if item["calibre_id"] != calibre_id]
-
-    if len(queue) == original_length:
-        raise HTTPException(status_code=404, detail=f"Book {calibre_id} not in queue")
-
-=======
 async def remove_from_queue(calibre_id: int) -> dict:
     """Remove a book from the ingestion queue."""
     queue = _load_ingestion_queue()
@@ -401,7 +284,6 @@ async def remove_from_queue(calibre_id: int) -> dict:
         raise HTTPException(status_code=404, detail=f"Book {calibre_id} not in queue")
 
     del queue["items"][str(calibre_id)]
->>>>>>> feature/ies-reader-enhancement
     _save_ingestion_queue(queue)
 
     return {"message": f"Book {calibre_id} removed from queue"}

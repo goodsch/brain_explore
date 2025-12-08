@@ -5,7 +5,7 @@ import type {
   ThinkingPartnerQuestion,
   BreadcrumbJourney,
 } from '../store/flowStore';
-import { offlineQueue } from './offlineQueue';
+import { offlineQueue } from '../lib/offlineQueue';
 
 const API_BASE = '';  // Use Vite proxy - relative URLs
 

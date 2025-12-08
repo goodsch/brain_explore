@@ -1,0 +1,24 @@
+{
+  "from": "claude",
+  "to": "codex",
+  "type": "task",
+  "timestamp": "2025-12-07T19:45:00Z",
+  "subject": "Quick Add Feature: Import AI Chat Conversations",
+  "message": "Design and implement a Quick Add feature that allows users to import AI chat conversations (from Claude, ChatGPT, etc.) into the IES knowledge system for entity extraction and graph integration.\n\n## Requirements\n\n### Input Formats to Support\n1. **Claude conversation exports** (JSON format from claude.ai)\n2. **ChatGPT exports** (conversations.json from OpenAI data export)\n3. **Plain text/markdown** (copy-paste from any AI chat)\n4. **URL import** (shared conversation links if accessible)\n\n### Processing Pipeline\n1. Parse conversation into turns (human/assistant)\n2. Extract entities using existing EntityExtractor\n3. Create ConversationSession node in Neo4j with:\n   - source (claude/chatgpt/other)\n   - timestamp\n   - topic (auto-detected or user-provided)\n   - turn_count\n4. Link extracted entities to the ConversationSession\n5. Optionally create Spark/Insight nodes for key takeaways\n\n### Backend Implementation\nCreate new endpoints in `ies/backend/src/ies_backend/api/`:\n- `POST /conversations/import` - Upload conversation file or paste content\n- `GET /conversations` - List imported conversations\n- `GET /conversations/{id}` - Get conversation with extracted entities\n- `DELETE /conversations/{id}` - Remove conversation\n\n### Schema Design\n```python\nclass ConversationImport(BaseModel):\n    source: Literal['claude', 'chatgpt', 'text', 'url']\n    content: str  # Raw content or URL\n    topic: Optional[str] = None\n    extract_entities: bool = True\n    create_sparks: bool = False\n```\n\n### Neo4j Node Structure\n```cypher\n(:ConversationSession {\n    id: str,\n    source: str,\n    topic: str,\n    imported_at: datetime,\n    turn_count: int,\n    entity_count: int\n})-[:MENTIONS]->(:Entity)\n```\n\n## Implementation Notes\n- Use existing `library/graph/entities.py` EntityExtractor\n- Add conversation parser utilities in `library/graph/conversation_parser.py`\n- Follow existing API patterns in `ies/backend/`\n- Write tests in `ies/backend/tests/test_conversations.py`\n\n## Success Criteria\n- [ ] Can import Claude JSON export\n- [ ] Can import ChatGPT export\n- [ ] Can paste plain text conversation\n- [ ] Entities extracted and linked in graph\n- [ ] API endpoints documented and tested\n- [ ] Integration with existing entity overlay (conversations as source)",
+  "context": {
+    "existing_files": [
+      "library/graph/entities.py",
+      "library/graph/neo4j_client.py",
+      "ies/backend/src/ies_backend/api/",
+      "ies/backend/src/ies_backend/schemas/"
+    ],
+    "related_features": [
+      "Entity extraction pipeline",
+      "Books API pattern",
+      "Personal graph sparks"
+    ]
+  },
+  "priority": "medium",
+  "estimated_complexity": "medium",
+  "status": "pending"
+}

@@ -17,7 +17,7 @@ from uuid import uuid4
 
 from openai import OpenAI
 
-from library.graph.neo4j_client import KnowledgeGraph
+from library.graph.unified_client import UnifiedGraphClient
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ Return JSON:
 class ReframeGenerator:
     """Generates reframes by pairing concepts with stories/patterns."""
 
-    def __init__(self, kg: KnowledgeGraph, model: str = "gpt-4o-mini"):
+    def __init__(self, kg: UnifiedGraphClient, model: str = "gpt-4o-mini"):
         self.kg = kg
         self.client = OpenAI()
         self.model = model
@@ -266,7 +266,7 @@ class ReframeGenerator:
 
 def run_pass3_batch(max_concepts: int = 10) -> dict:
     """Convenience function to run Pass 3 batch generation."""
-    kg = KnowledgeGraph()
+    kg = UnifiedGraphClient()
     generator = ReframeGenerator(kg)
     return generator.run_batch_generation(max_concepts)
 

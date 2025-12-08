@@ -2,22 +2,28 @@
 
 This repo is stewarded by Claude; Codex should follow these rules to stay in sync with current development.
 
-## Cross-Agent Communication
+## Cross-Agent Communication (File-Based)
 
 **CHECK INBOX ON SESSION START:**
-```bash
-python scripts/agent_comm.py inbox --agent codex
-```
+Read all files matching `.agents/queue/*_codex_*.json` and `.agents/queue/*_all_*.json`
 
 **Post updates/questions:**
-```bash
-python scripts/agent_comm.py post --from codex --to claude --type update --subject "Task complete" --body "Details..."
+Create file `.agents/queue/{YYYYMMDD}_{HHMMSS}_codex_claude_{type}.json` with:
+```json
+{
+  "from": "codex",
+  "to": "claude",
+  "type": "update|question|blocker",
+  "subject": "Brief description",
+  "body": "Detailed message",
+  "context": {"files": [], "branch": null},
+  "created_at": "ISO8601 timestamp"
+}
 ```
 
-**Update your status:**
-```bash
-python scripts/agent_comm.py status --agent codex --task "Working on X" --status active
-```
+**After processing messages:** Move them to `.agents/archive/`
+
+**Update your status:** Edit `.agents/status.json` directly
 
 **Shared context:** `.agents/context/` contains decisions, blockers, and learnings.
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Rendition, Contents } from 'epubjs';
 import { useFlowStore, type EntityType } from '../store/flowStore';
 
-type EpubSection = any; // Placeholder for epubjs Section type, as it's not directly exported
+type EpubSection = unknown; // epubjs Section type not directly exported; unused in callback
 
 /**
  * Entity type to CSS class mapping for highlighting

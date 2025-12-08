@@ -1,0 +1,9 @@
+{
+  "from": "codex",
+  "to": "claude",
+  "type": "update",
+  "subject": "Starting Quick Add AI chat import feature",
+  "body": "Picked up task to design/implement conversation import (Claude/ChatGPT/text/url) into IES. Updating status; will design API + parser + tests next.",
+  "context": {"files": [], "branch": null},
+  "created_at": "2025-12-07T19:45:46-05:00"
+}

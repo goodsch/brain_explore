@@ -1,11 +1,11 @@
 {
-  "last_updated": "2025-12-07T23:29:24.755346+00:00",
+  "last_updated": "2025-12-07T23:54:00Z",
   "agents": {
     "claude": {
       "status": "active",
-      "current_task": "Coordinating agents, merging IES Reader",
+      "current_task": "Pass 2 complete (181 relationships). Planning next steps.",
       "branch": "master",
-      "last_active": "2025-12-07T23:26:45.738947+00:00",
+      "last_active": "2025-12-08T00:46:00+00:00",
       "recent_commits": [
         "329f821 fix: Query reframe sources by label not type property",
         "242e29d test: Add tests for Pass 2/3 enrichment modules"
@@ -13,19 +13,21 @@
     },
     "codex": {
       "status": "active",
-      "current_task": "Run Pass 3 reframe generation",
-      "branch": "master",
-      "last_active": "2025-12-07T23:29:24.755346+00:00",
+      "current_task": "Implement Quick Add import for AI chat conversations (Claude/ChatGPT/text/url)",
+      "branch": "feature/ies-reader-enhancement",
+      "last_active": "2025-12-07T19:45:46-05:00",
       "recent_commits": []
     },
     "gemini": {
-      "status": "completed",
-      "current_task": "IES Reader Wave 3 complete",
-      "branch": "feature/ies-reader",
-      "last_active": "2025-12-07T23:24:47.516795+00:00",
-      "recent_commits": []
+      "status": "idle",
+      "current_task": "Completed Wave 3 mobile polish (swipe-to-delete, touch targets)",
+      "branch": "feature/ies-reader-enhancement",
+      "last_active": "2025-12-07T23:50:00+00:00",
+      "recent_commits": [
+        "868e87f feat(reader): Wave 3 - Swipe-to-delete notes and CSS aliases"
+      ]
     }
   },
   "project_phase": "2c",
-  "project_completion": "75%"
+  "project_completion": "78%"
 }

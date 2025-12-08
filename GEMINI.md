@@ -2,22 +2,28 @@
 
 This repo is stewarded by Claude; Gemini should follow these rules for parallel work.
 
-## Cross-Agent Communication
+## Cross-Agent Communication (File-Based)
 
 **CHECK INBOX ON SESSION START:**
-```bash
-python scripts/agent_comm.py inbox --agent gemini
-```
+Read all files matching `.agents/queue/*_gemini_*.json` and `.agents/queue/*_all_*.json`
 
 **Post updates/questions:**
-```bash
-python scripts/agent_comm.py post --from gemini --to claude --type update --subject "Task complete" --body "Details..."
+Create file `.agents/queue/{YYYYMMDD}_{HHMMSS}_gemini_claude_{type}.json` with:
+```json
+{
+  "from": "gemini",
+  "to": "claude",
+  "type": "update|question|blocker",
+  "subject": "Brief description",
+  "body": "Detailed message",
+  "context": {"files": [], "branch": null},
+  "created_at": "ISO8601 timestamp"
+}
 ```
 
-**Update your status:**
-```bash
-python scripts/agent_comm.py status --agent gemini --task "Working on X" --status active
-```
+**After processing messages:** Move them to `.agents/archive/`
+
+**Update your status:** Edit `.agents/status.json` directly
 
 **Shared context:** `.agents/context/` contains decisions, blockers, and learnings.
 

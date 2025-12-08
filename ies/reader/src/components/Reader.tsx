@@ -28,6 +28,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   interface SelectionContext {
     text: string;
     position: { top: number; left: number };
+    cfiRange: string;
   }
   const [selectionContext, setSelectionContext] = useState<SelectionContext | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
@@ -120,10 +121,22 @@ interface IFrameContents {
     setSelectionContext(null); // Clear selection context after action
   }, []);
 
-  const highlightText = useCallback((_selection: SelectionContext) => { // SelectionContext not used for now
-    console.log('Highlighting text:', _selection.text);
-    // Implement actual highlighting logic later
-    setSelectionContext(null);
+  const highlightText = useCallback((selection: SelectionContext) => {
+    if (!renditionRef.current) return;
+    const { cfiRange, text } = selection;
+
+    console.log('Highlighting text:', text, 'at cfi:', cfiRange);
+
+    // Use epub.js annotations to add a highlight
+    renditionRef.current.annotations.add(
+      'highlight',
+      cfiRange,
+      {}, // Data object (can store metadata about the highlight)
+      (e: MouseEvent) => console.log('Highlight clicked', e), // Click handler
+      'hl', // Class name for styling the highlight
+      { 'fill': '#ffff00', 'fill-opacity': '0.3', 'pointer-events': 'none' } // Styles to apply directly
+    );
+    setSelectionContext(null); // Clear selection context after action
   }, []);
 
   // Get rendition ref for text selection handling
@@ -159,6 +172,7 @@ interface IFrameContents {
           setSelectionContext({
             text: selectedText,
             position: getSelectionPosition(contents),
+            cfiRange: _cfiRange,
           });
           // Also perform lookup if the flow panel is open, or some other condition
           // For now, let's keep lookupEntity call here, it's fine.
@@ -316,19 +330,19 @@ interface IFrameContents {
                 setSelectionContext(null); // Clear context after action
             }}
           >
-            <Search size={14} /> Look up
+            <Search size={18} /> Look up
           </button>
           <button 
             className="ies-btn ies-btn-sm ies-btn-subtle"
             onClick={() => captureAsNote(selectionContext.text)}
           >
-            <PenLine size={14} /> Note
+            <PenLine size={18} /> Note
           </button>
           <button 
             className="ies-btn ies-btn-sm ies-btn-subtle"
             onClick={() => highlightText(selectionContext)}
           >
-            <Highlighter size={14} /> Highlight
+            <Highlighter size={18} /> Highlight
           </button>
         </div>
       )}

@@ -45,21 +45,30 @@ Longer-form shared documents:
 - `blockers.md` — Current blockers across all agents
 - `learnings.md` — Lessons learned, patterns discovered
 
-## Quick Commands
+## Quick Commands (No Script Required)
+
+All agents can communicate by directly reading/writing JSON files.
 
 **Post a message:**
-```bash
-echo '{"from":"claude","to":"codex","type":"task","subject":"...","body":"..."}' > .agents/queue/$(date +%Y%m%d_%H%M%S)_claude_codex_task.json
+```
+1. Create file: .agents/queue/{YYYYMMDD}_{HHMMSS}_{from}_{to}_{type}.json
+2. Write JSON with schema below
 ```
 
-**Check inbox:**
-```bash
-cat .agents/queue/*_$(whoami)_*.json 2>/dev/null
+**Check inbox (look for messages addressed to you):**
+```
+Read files matching: .agents/queue/*_{your_agent_name}_*.json
+Also check: .agents/queue/*_all_*.json (broadcast messages)
 ```
 
-**Update status:**
-```bash
-# Use the Python helper or edit .agents/status.json directly
+**After processing a message:**
+```
+Move file from .agents/queue/ to .agents/archive/
+```
+
+**Update your status:**
+```
+Edit .agents/status.json directly - update your agent's entry
 ```
 
 ## Message Schema
