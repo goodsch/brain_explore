@@ -85,6 +85,18 @@ export interface BreadcrumbJourney {
   thinkingPartnerExchanges: ThinkingPartnerExchange[];
 }
 
+// Question types for Flow v2
+export interface FlowQuestion {
+  id: string;
+  text: string;
+  source: 'siyuan' | 'reader' | 'ai-suggested';
+  siyuanId?: string;
+  parentId?: string;
+  status: 'active' | 'paused' | 'resolved';
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface FlowModeState {
   // Panel visibility and layout
   flowPanelWidth: string;
@@ -113,6 +125,10 @@ interface FlowModeState {
   isLoadingEntity: boolean;
   isLoadingEvidence: boolean;
   isLoadingQuestions: boolean;
+
+  // Question state
+  questions: FlowQuestion[];
+  currentQuestionId: string | null;
 
   // Actions - Panel
   getFlowPanelWidth: () => string;
@@ -146,6 +162,13 @@ interface FlowModeState {
   pauseCurrentSession: () => Promise<void>;
   loadSession: (sessionId: string) => Promise<void>;
   setSessionId: (sessionId: string | null) => void;
+
+  // Question actions
+  addQuestion: (question: FlowQuestion) => void;
+  removeQuestion: (questionId: string) => void;
+  updateQuestion: (questionId: string, updates: Partial<FlowQuestion>) => void;
+  setCurrentQuestionId: (questionId: string | null) => void;
+  setQuestions: (questions: FlowQuestion[]) => void;
 }
 
 // Debounce helper
@@ -173,6 +196,8 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   isLoadingEntity: false,
   isLoadingEvidence: false,
   isLoadingQuestions: false,
+  questions: [],
+  currentQuestionId: null,
 
   // Panel actions
   getFlowPanelWidth: () => get().flowPanelWidth,
@@ -464,4 +489,25 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
       console.error('Failed to load session:', error);
     }
   },
+
+  // Question actions
+  addQuestion: (question: FlowQuestion) =>
+    set((state) => ({ questions: [...state.questions, question] })),
+
+  removeQuestion: (questionId: string) =>
+    set((state) => ({
+      questions: state.questions.filter((q) => q.id !== questionId),
+      currentQuestionId: state.currentQuestionId === questionId ? null : state.currentQuestionId,
+    })),
+
+  updateQuestion: (questionId: string, updates: Partial<FlowQuestion>) =>
+    set((state) => ({
+      questions: state.questions.map((q) =>
+        q.id === questionId ? { ...q, ...updates, updatedAt: new Date().toISOString() } : q
+      ),
+    })),
+
+  setCurrentQuestionId: (questionId: string | null) => set({ currentQuestionId: questionId }),
+
+  setQuestions: (questions: FlowQuestion[]) => set({ questions }),
 }));
