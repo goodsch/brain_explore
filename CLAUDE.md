@@ -62,6 +62,13 @@ Four-agent critical analysis of SiYuan plugin revealed catastrophic disconnect b
 - 🔍 Layer 4: Readest — **PENDING PRESSURE TEST**
 
 **Latest (Dec 8):**
+- ✅ **Flow Mode Navigation Foundation (Phase 1)** — Graph traversal with trail tracking
+  - Navigation state machine: `FocusState` = 'idle' | 'question' | 'entity' | 'facet'
+  - Trail component (breadcrumbs): Context → Question → Entity with click-to-navigate
+  - EntityFocus view: name, type, description, neighbors (clickable), source books
+  - Functions: `navigateToEntity()`, `navigateBack()`, `pushTrail()`, `popTrail()`
+  - Sections hide when in entity focus for clean UI
+  - Commit: `58f1c94` in SiYuan worktree
 - ✅ **Context Layer MVP** — Question-driven exploration for Flow Mode
   - Backend: `/context` API with parse, save, search, journey endpoints
   - Types: Context, Question, ContextJourneyEntry schemas in `schemas/context.py`
