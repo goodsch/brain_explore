@@ -5,7 +5,7 @@ import type {
   ThinkingPartnerQuestion,
   BreadcrumbJourney,
 } from '../store/flowStore';
-import { offlineQueue } from '../lib/offlineQueue';
+import { offlineQueue } from './offlineQueue';
 
 const API_BASE = '';  // Use Vite proxy - relative URLs
 
@@ -69,19 +69,27 @@ interface BackendSourcesResponse {
 
 class GraphClient {
   private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+        signal: options?.signal || controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json();
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return response.json();
   }
 
   /**
