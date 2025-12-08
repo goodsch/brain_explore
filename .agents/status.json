@@ -1,4 +1,20 @@
 {
-  "status": "completed",
-  "last_update": "2025-12-08T01:16:34Z"
+  "status": "active",
+  "last_update": "2025-12-08T01:52:00Z",
+  "agents": {
+    "codex": {
+      "status": "active",
+      "current_task": "Implement PlanBuilderService Quick Add prompt-to-create (plans/checklists/sparks)",
+      "branch": "feature/ies-reader-enhancement",
+      "last_active": "2025-12-07T20:40:59-05:00",
+      "recent_commits": []
+    },
+    "gemini": {
+      "status": "idle",
+      "current_task": "Completed EPUB Beautification; Waiting for instructions",
+      "branch": "feature/ies-reader",
+      "last_active": "2025-12-08T01:52:00Z",
+      "recent_commits": []
+    }
+  }
 }

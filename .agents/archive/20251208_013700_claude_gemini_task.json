@@ -1,0 +1,17 @@
+{
+  "from": "claude",
+  "to": "gemini",
+  "type": "task",
+  "timestamp": "2025-12-08T01:37:00Z",
+  "subject": "EPUB Beautification: Reader View CSS + EPUB Chaptering",
+  "message": "Implement the Reader View & EPUB Beautification plan from docs/plans/2025-12-07-reader-epub-beautify.md. Focus on:\n\n1. CSS upgrades for reader view:\n   - Serif body font stack, 70-75ch max-width, 1.6 line-height\n   - Role badges (user/assistant/system) with color coding\n   - Card-style turns with gentle dividers\n   - Light/dark theme toggle\n\n2. EPUB structure improvements:\n   - Chapters: Intro (metadata), Body (turns), Entities appendix\n   - TOC via nav.xhtml\n   - Embed CSS inline\n\n3. Update RenderingService in ies/backend/src/ies_backend/services/rendering_service.py\n\n4. Test that HTML contains role badges and EPUB has required files.\n\nThe conversation service already exists at ies/backend/src/ies_backend/services/conversation_service.py - check its render methods.",
+  "context": {
+    "design_doc": "docs/plans/2025-12-07-reader-epub-beautify.md",
+    "target_files": [
+      "ies/backend/src/ies_backend/services/rendering_service.py",
+      "ies/backend/src/ies_backend/api/conversations.py"
+    ]
+  },
+  "priority": "high",
+  "status": "pending"
+}

@@ -1,0 +1,23 @@
+{
+  "from": "claude",
+  "to": "codex",
+  "type": "task",
+  "timestamp": "2025-12-08T01:40:00Z",
+  "subject": "Implement PlanBuilderService for Quick Add prompt-to-create",
+  "message": "Implement the PlanBuilderService from docs/plans/2025-12-07-quick-add-conversations-sources.md Section 3.\n\nCreate ies/backend/src/ies_backend/services/plan_builder_service.py with:\n\n1. PlanBuilderService class with methods:\n   - build_plan(prompt, duration?, due?) -> Plan with timeboxed steps\n   - build_checklist(prompt) -> Checklist with actionable items\n   - create_spark(prompt, source_id?) -> Spark (concise insight)\n\n2. ADHD-friendly output features:\n   - Timeboxed steps (5-15 min each)\n   - Micro-start (tiny first action to reduce friction)\n   - Friction reducers (pre-decisions, defaults)\n   - Clear done criteria per step\n\n3. Create schemas in ies/backend/src/ies_backend/schemas/plan.py:\n   - Plan, PlanStep, Checklist, ChecklistItem, Spark\n   - BuildPlanRequest, BuildPlanResponse\n\n4. Add API endpoint POST /quick-add/prompt in new file ies/backend/src/ies_backend/api/quick_add.py\n\n5. Entity linking: call ExtractionService on prompt text, create MENTIONS relationships\n\n6. Add tests in ies/backend/tests/test_plan_builder.py\n\nUse Claude API (or mock for tests) for LLM generation. Follow existing service patterns in the codebase.",
+  "context": {
+    "design_doc": "docs/plans/2025-12-07-quick-add-conversations-sources.md",
+    "reference_services": [
+      "ies/backend/src/ies_backend/services/conversation_service.py",
+      "ies/backend/src/ies_backend/services/extraction_service.py"
+    ],
+    "target_files": [
+      "ies/backend/src/ies_backend/services/plan_builder_service.py",
+      "ies/backend/src/ies_backend/schemas/plan.py",
+      "ies/backend/src/ies_backend/api/quick_add.py",
+      "ies/backend/tests/test_plan_builder.py"
+    ]
+  },
+  "priority": "high",
+  "status": "pending"
+}
