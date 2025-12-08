@@ -20,6 +20,7 @@
     import { noteContext, hasNoteOpen, currentNoteTitle } from '../stores/contextStore';
     import type { CaptureStatus } from '../types/blocks';
     import { CAPTURE_STATUS_LABELS } from '../types/blocks';
+    import * as SyncService from '../services/syncService';
 
     // Plugin instance (optional, for settings persistence)
     export let plugin: any = null;
@@ -67,6 +68,10 @@
         ended_at: string | null;
         path: Array<{entity_name: string}>;
     }> = [];
+
+    // Resume sessions from Reader
+    let resumeSessions: SyncService.ExplorationSession[] = [];
+    let isLoadingResumeSessions = false;
 
     // Sparks data
     interface Spark {
@@ -227,12 +232,53 @@
                 resonance_signal: spark.resonance_signal,
                 energy_level: spark.energy_level,
             }));
+            
+            // Load resume sessions from Reader
+            loadResumeSessions();
         } catch (err) {
             error = err.message;
             console.error('[IES] Dashboard load error:', err);
         } finally {
             isLoading = false;
         }
+
+    async function loadResumeSessions() {
+        if (!userId) return;
+        
+        isLoadingResumeSessions = true;
+        try {
+            const sessions = await SyncService.getActiveSessions(userId, backendUrl);
+            // Filter for reader sessions that are paused
+            resumeSessions = sessions.filter(s => 
+                s.app_source === 'reader' && s.status === 'paused'
+            ).slice(0, 5); // Show max 5
+        } catch (err) {
+            console.error('[Dashboard] Failed to load resume sessions:', err);
+            // Don't show error - this is optional feature
+        } finally {
+            isLoadingResumeSessions = false;
+        }
+    }
+
+    async function openDeepLink(deepLink: string) {
+        // Try to open deep link
+        try {
+            window.open(deepLink, '_blank');
+        } catch (err) {
+            // Fallback: show instructions
+            showMessage(`Deep link: ${deepLink}`, 10000, 'info');
+        }
+    }
+
+    async function resumeReaderSession(sessionId: string) {
+        try {
+            const resumeData = await SyncService.getResumeData(sessionId, 'reader', backendUrl);
+            openDeepLink(resumeData.deep_link);
+        } catch (err) {
+            console.error('[Dashboard] Failed to get resume data:', err);
+            showMessage(`Failed to resume session: ${err.message}`, 5000, 'error');
+        }
+    }
     }
 
     async function refreshBackendStatus(force = false) {
@@ -874,6 +920,42 @@
                                     {/if}
                                 </button>
                             {/each}
+
+                <!-- Resume Reading Sessions -->
+                {#if resumeSessions.length > 0}
+                    <section class="section">
+                        <h3 class="section-title">Resume Reading Sessions</h3>
+                        <div class="journey-list">
+                            {#each resumeSessions as session, i}
+                                <button
+                                    class="journey-card journey-card--reader"
+                                    style="animation-delay: {i * 60}ms"
+                                    on:click={() => resumeReaderSession(session.id)}
+                                >
+                                    <div class="journey-indicator journey-indicator--reader"></div>
+                                    <div class="journey-content">
+                                        <span class="journey-title">
+                                            {session.current_entity_name || 'Unnamed entity'}
+                                        </span>
+                                        <span class="journey-meta">
+                                            {#if session.reading_position?.book_hash}
+                                                Reading · {formatRelativeTime(session.updated_at)}
+                                            {:else}
+                                                Exploring · {formatRelativeTime(session.updated_at)}
+                                            {/if}
+                                        </span>
+                                        {#if session.resume_hint}
+                                            <span class="journey-hint">{session.resume_hint}</span>
+                                        {/if}
+                                    </div>
+                                    <svg class="journey-arrow" viewBox="0 0 24 24" width="16" height="16">
+                                        <path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                                    </svg>
+                                </button>
+                            {/each}
+                        </div>
+                    </section>
+                {/if}
                         </div>
 
                         <div class="capture-list">
@@ -2068,5 +2150,25 @@
     .context-card:hover .context-arrow {
         opacity: 1;
         transform: translateX(2px);
+    }
+    
+    /* Reader session cards */
+    .journey-card--reader {
+        border-left-color: var(--secondary);
+    }
+    
+    .journey-card--reader:hover {
+        border-color: var(--secondary);
+    }
+    
+    .journey-indicator--reader {
+        background: var(--secondary);
+    }
+    
+    .journey-hint {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-style: italic;
+        margin-top: 2px;
     }
 </style>

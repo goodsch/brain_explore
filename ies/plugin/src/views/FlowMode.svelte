@@ -14,6 +14,7 @@
     import AddFacetForm from '../components/AddFacetForm.svelte';
     import { saveJourney, type JourneyData } from '../utils/siyuan-structure';
     import { getBlockKramdown, exportMdContent } from '../api';
+    import * as SyncService from '../services/syncService';
 
     export let backendUrl: string;
     export let journeyId: string | null = null;
@@ -41,6 +42,10 @@
     let conceptDetailTab: 'connections' | 'reframes' = 'connections';
     let entityDescription: string | null = null;
     let entitySourceBooks: Array<{title: string, author?: string, snippet?: string}> = [];
+    // Session sync state
+    let sessionId: string | null = null;
+    let lastSyncTime: number = 0;
+    const SYNC_DEBOUNCE_MS = 3000; // Don't sync more than once every 3 seconds
 
     interface QuestionExchange {
         question: string;
@@ -243,6 +248,9 @@
                 explorationPath = [...explorationPath, entityName];
                 explorationTimestamps = [...explorationTimestamps, now];
             }
+
+            // Sync session after navigation (debounced)
+            syncSession();
         } catch (err) {
             console.error('[FlowMode] Error loading entity:', err);
             showMessage(`Failed to load entity: ${err.message}`, 5000, 'error');
@@ -290,6 +298,9 @@
                         data: { entityName, facetName }
                     }];
                 }
+
+            // Sync session after navigation (debounced)
+            syncSession();
             }
         } catch (err) {
             showMessage(`Failed to load facet: ${err.message}`, 5000, 'error');
@@ -528,6 +539,70 @@
         }
 
         return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
+    }
+
+    /**
+     * Sync current session state to backend (debounced)
+     */
+    async function syncSession() {
+        if (!userId) return; // No sync without user ID
+        
+        const now = Date.now();
+        if (now - lastSyncTime < SYNC_DEBOUNCE_MS) {
+            return; // Debounce - too soon since last sync
+        }
+        
+        try {
+            const journeyPath = explorationPath.map((entityName, index) => ({
+                entity_id: entityName,
+                entity_name: entityName,
+                timestamp: explorationTimestamps[index] || new Date().toISOString(),
+                dwell_time: 0 // TODO: Calculate from timestamps
+            }));
+            
+            const sessionData: SyncService.CreateSessionRequest = {
+                user_id: userId,
+                app_source: 'siyuan',
+                current_entity_id: focusedEntity?.name || null,
+                current_entity_name: focusedEntity?.name || null,
+                journey_path: journeyPath,
+                trail_stack: isContextMode ? trailStack : standaloneTrailStack,
+                resume_hint: focusedEntity ? `Exploring: ${focusedEntity.name}` : null
+            };
+            
+            const session = await SyncService.createOrUpdateSession(sessionData, backendUrl);
+            sessionId = session.id;
+            lastSyncTime = now;
+            
+            console.log('[FlowMode] Session synced:', sessionId);
+        } catch (err) {
+            console.error('[FlowMode] Session sync failed:', err);
+            // Don't show error to user - sync is background operation
+
+        }
+    }
+
+    async function resumeInReader() {
+        if (!sessionId || !focusedEntity) {
+            showMessage('No active session to resume', 3000, 'info');
+            return;
+        }
+        
+        try {
+            const resumeData = await SyncService.getResumeData(sessionId, 'reader', backendUrl);
+            
+            // Try to open deep link
+            try {
+                window.open(resumeData.deep_link, '_blank');
+                showMessage('Opening in Reader...', 2000, 'info');
+            } catch (err) {
+                // Fallback: show deep link instructions
+                showMessage(`Open this link in Reader: ${resumeData.deep_link}`, 10000, 'info');
+            }
+        } catch (err) {
+            console.error('[FlowMode] Failed to get resume data:', err);
+            showMessage(`Failed to resume in Reader: ${err.message}`, 5000, 'error');
+        }
     }
 
     async function handleSearch() {
@@ -1006,6 +1081,18 @@
                     <div class="entity-type-badge">{focusedEntity.type}</div>
                     <h3 class="entity-name">{focusedEntity.name}</h3>
                 </div>
+
+                <!-- Resume in Reader Button -->
+                {#if sessionId && focusedEntity}
+                    <div class="entity-section">
+                        <button class="btn btn--resume-reader" on:click={resumeInReader}>
+                            <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path fill="currentColor" d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                            </svg>
+                            Resume in Reader
+                        </button>
+                    </div>
+                {/if}
                 {#if focusedEntity.description}
                     <p class="entity-description">{focusedEntity.description}</p>
                 {/if}
