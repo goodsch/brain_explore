@@ -117,6 +117,37 @@ async def list_books(
     return BooksListResponse(books=enriched_books, total=len(enriched_books))
 
 
+@router.get("/books/ingestion-queue", response_model=IngestionQueueResponse)
+async def get_ingestion_queue() -> IngestionQueueResponse:
+    """Get the current ingestion queue status.
+
+    Returns all books queued for ingestion with their current status.
+    """
+    queue = _load_ingestion_queue()
+
+    # Handle both list format (current) and dict format (legacy)
+    if isinstance(queue, list):
+        raw_items = queue
+    else:
+        raw_items = list(queue.get("items", {}).values())
+
+    items = [
+        IngestionQueueItem(
+            calibre_id=int(item["calibre_id"]),
+            title=item["title"],
+            author=item["author"],
+            queued_at=datetime.fromisoformat(item["queued_at"]),
+            status=item["status"],
+        )
+        for item in raw_items
+    ]
+
+    # Sort by queued_at descending (newest first)
+    items.sort(key=lambda x: x.queued_at, reverse=True)
+
+    return IngestionQueueResponse(items=items, total=len(items))
+
+
 @router.get("/books/{calibre_id}", response_model=Book)
 async def get_book(calibre_id: int) -> Book:
     """Get a single book by its Calibre ID."""
@@ -248,31 +279,6 @@ async def queue_book_for_ingestion(calibre_id: int) -> QueueIngestionResponse:
         message=f"Book '{book.title}' queued for ingestion",
         queued_at=now,
     )
-
-
-@router.get("/books/ingestion-queue", response_model=IngestionQueueResponse)
-async def get_ingestion_queue() -> IngestionQueueResponse:
-    """Get the current ingestion queue status.
-
-    Returns all books queued for ingestion with their current status.
-    """
-    queue = _load_ingestion_queue()
-
-    items = [
-        IngestionQueueItem(
-            calibre_id=int(item["calibre_id"]),
-            title=item["title"],
-            author=item["author"],
-            queued_at=datetime.fromisoformat(item["queued_at"]),
-            status=item["status"],
-        )
-        for item in queue.get("items", {}).values()
-    ]
-
-    # Sort by queued_at descending (newest first)
-    items.sort(key=lambda x: x.queued_at, reverse=True)
-
-    return IngestionQueueResponse(items=items, total=len(items))
 
 
 @router.delete("/books/{calibre_id}/queue-ingest")
