@@ -4,7 +4,16 @@ This file contains detailed development history. For current status, see CLAUDE.
 
 ## December 2025
 
-### Dec 8 - Context Layer MVP + Navigation Foundation
+### Dec 8 - Context Layer MVP + Navigation Foundation + Entity Enrichment
+- **Phase 2A: Entity Details Endpoint** — Rich entity data for EntityFocus view
+  - `GET /graph/entity/{name}` - Returns entity type, description, related concepts, source books
+  - `EntityDetailsResponse` schema with `RelatedEntity` and `SourceBook` types
+  - `GraphService.get_entity_details()` queries KG for comprehensive entity data
+  - 4 new tests (195 total passing)
+- **IES Reader Enhancement** — CFI-aware note capture
+  - Note capture now includes CFI range for location context
+  - Source Serif Pro font for cleaner reading experience
+  - Google Fonts preconnect for faster loading
 - **Flow Mode Navigation Foundation (Phase 1)** — Graph traversal with trail tracking
   - Navigation state machine: `FocusState` = 'idle' | 'question' | 'entity' | 'facet'
   - Trail component (breadcrumbs): Context → Question → Entity with click-to-navigate

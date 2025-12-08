@@ -64,15 +64,14 @@ User can click neighbors to continue navigation → trail grows
 User can click trail items to navigate back
 ```
 
-### Phase 2: Entity Enrichment
+### Phase 2: Entity Enrichment (In Progress)
 **Goal:** Show meaningful entity details with facets.
 
 **Backend:**
-- [ ] Create `/entity/{name}/details` endpoint with:
-  - Description (from KG or generated)
-  - Related concepts (1-hop)
-  - Source books
-  - Evidence snippets
+- [x] Create `/graph/entity/{name}` endpoint with: (Dec 8, 2025)
+  - Description (from KG)
+  - Related concepts (1-hop with relationship types)
+  - Source books with evidence snippets
 - [ ] Define facet schema and storage
 - [ ] Implement facet extraction (LLM-powered or template-based)
 
