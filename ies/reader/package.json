@@ -10,13 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "clsx": "^2.1.1",
     "epubjs": "^0.3.93",
     "framer-motion": "^11.18.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-reader": "^2.0.15",
-    "zustand": "^5.0.9"
+    "zustand": "^5.0.9",
+    "clsx": "^2.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
