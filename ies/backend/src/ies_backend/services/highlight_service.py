@@ -9,6 +9,7 @@ from ..schemas.highlight import (
     HighlightCreate,
     HighlightUpdate,
     HighlightBatchCreate,
+    SyncStatus,
 )
 from .siyuan_client import SiYuanClient
 from .calibre_service import CalibreService
@@ -47,6 +48,9 @@ class HighlightService:
             chapter=data.chapter,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
+            note_type=data.note_type,
+            question_id=data.question_id,
+            sync_status=SyncStatus.PENDING,
         )
 
         # Store highlight
@@ -88,6 +92,10 @@ class HighlightService:
         for key, value in update_dict.items():
             setattr(highlight, key, value)
         highlight.updated_at = datetime.utcnow()
+
+        # Mark as modified if already synced
+        if highlight.sync_status == SyncStatus.SYNCED:
+            highlight.sync_status = SyncStatus.MODIFIED
 
         _highlights[highlight_id] = highlight
         return highlight
@@ -179,6 +187,8 @@ class HighlightService:
                         note=hl_data.note,
                         color=hl_data.color,
                         context_id=hl_data.context_id,
+                        note_type=hl_data.note_type,
+                        question_id=hl_data.question_id,
                     )
                     await HighlightService.update_highlight(existing.id, update_data)
                     updated += 1
@@ -240,10 +250,10 @@ class HighlightService:
 
     @staticmethod
     async def sync_highlight_to_siyuan(highlight: Highlight) -> str | None:
-        """Sync a highlight to SiYuan Book Note.
+        """Sync a highlight to SiYuan Book Note (legacy method).
 
-        Creates the Book Note if it doesn't exist (auto-creation).
-        Appends the highlight to the Book Note's Highlights section.
+        This method is kept for backward compatibility.
+        New code should use HighlightSyncService.sync_highlight() instead.
 
         Args:
             highlight: Highlight to sync
@@ -251,67 +261,18 @@ class HighlightService:
         Returns:
             SiYuan block ID or None if sync failed
         """
-        try:
-            book_id = highlight.book_id
+        # Import here to avoid circular dependency
+        from .highlight_sync_service import HighlightSyncService
 
-            # Check cache for existing book note
-            doc_id = _book_note_ids.get(book_id)
-
-            if not doc_id:
-                # Try to find existing book note
-                doc_id = await SiYuanClient.find_book_note_by_calibre_id(book_id)
-
-            if not doc_id:
-                # Need to create book note - fetch book info from Calibre
-                try:
-                    calibre = CalibreService()
-                    book = calibre.get_book(int(book_id))
-                    if book:
-                        doc_id = await SiYuanClient.create_book_note(
-                            calibre_id=book_id,
-                            title=book.title,
-                            author=book.author,
-                        )
-                except Exception as e:
-                    logger.warning(f"Failed to get book info for {book_id}: {e}")
-                    # Fallback: create with minimal info
-                    doc_id = await SiYuanClient.create_book_note(
-                        calibre_id=book_id,
-                        title=f"Book {book_id}",
-                        author="Unknown",
-                    )
-
-            if not doc_id:
-                logger.warning(f"Could not create/find book note for {book_id}")
-                return None
-
-            # Cache the book note ID
-            _book_note_ids[book_id] = doc_id
-
-            # Append highlight to book note
-            block_id = await SiYuanClient.append_highlight_to_book_note(
-                doc_id=doc_id,
-                highlight_text=highlight.text,
-                note=highlight.note,
-                chapter=highlight.chapter,
-                cfi=highlight.cfi,
-            )
-
-            if block_id:
-                # Update highlight with SiYuan block ID
-                highlight.siyuan_block_id = block_id
-                _highlights[highlight.id] = highlight
-                logger.info(f"Synced highlight {highlight.id} to SiYuan block {block_id}")
-
-            return block_id
-
-        except Exception as e:
-            logger.warning(f"Failed to sync highlight to SiYuan: {e}")
-            return None
+        result = await HighlightSyncService.sync_highlight(highlight)
+        return result.siyuan_block_id if result.success else None
 
     @staticmethod
     async def sync_to_siyuan(highlight_id: str) -> bool:
-        """Sync a specific highlight to SiYuan.
+        """Sync a specific highlight to SiYuan (legacy method).
+
+        This method is kept for backward compatibility.
+        New code should use HighlightSyncService.sync_highlight() instead.
 
         Args:
             highlight_id: ID of highlight to sync

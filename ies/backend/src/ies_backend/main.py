@@ -13,6 +13,7 @@ from ies_backend.api import (
     extraction,
     flow_session,
     graph,
+    highlight_sync,
     highlights,
     inbox,
     journey,
@@ -72,6 +73,7 @@ app.include_router(concept.router, tags=["concepts"])
 app.include_router(questions.router, prefix="/questions", tags=["questions"])
 app.include_router(sync.router, prefix="/sync", tags=["sync"])
 app.include_router(highlights.router, tags=["highlights"])
+app.include_router(highlight_sync.router, tags=["highlight-sync"])
 app.include_router(extraction.router, tags=["extraction"])
 app.include_router(visit_tracking.router, tags=["visit_tracking"])
 app.include_router(block_attributes.router, tags=["block-attributes"])

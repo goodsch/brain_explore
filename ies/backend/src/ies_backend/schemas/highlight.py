@@ -15,6 +15,24 @@ class HighlightColor(str, Enum):
     PURPLE = "purple"
 
 
+class SyncStatus(str, Enum):
+    """Sync status for highlights."""
+
+    PENDING = "pending"
+    SYNCED = "synced"
+    ERROR = "error"
+    MODIFIED = "modified"
+
+
+class NoteType(str, Enum):
+    """Note type classification."""
+
+    THOUGHT = "thought"
+    QUESTION = "question"
+    INSIGHT = "insight"
+    CLARIFICATION = "clarification"
+
+
 class HighlightCreate(BaseModel):
     """Request to create a highlight."""
 
@@ -25,6 +43,8 @@ class HighlightCreate(BaseModel):
     color: HighlightColor = HighlightColor.YELLOW
     context_id: str | None = None  # Related context/question
     chapter: str | None = None  # Chapter title if available
+    note_type: NoteType | None = None  # Optional note classification
+    question_id: str | None = None  # Link to question if relevant
 
 
 class Highlight(BaseModel):
@@ -46,6 +66,13 @@ class Highlight(BaseModel):
     entity_refs: list[str] = Field(default_factory=list)  # Extracted entity names
     siyuan_block_id: str | None = None  # If synced to SiYuan
 
+    # New sync-related fields
+    sync_status: SyncStatus = SyncStatus.PENDING
+    sync_error: str | None = None
+    synced_at: datetime | None = None
+    note_type: NoteType | None = None
+    question_id: str | None = None
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -57,6 +84,8 @@ class Highlight(BaseModel):
                 "note": "Great metaphor for habit formation",
                 "color": "yellow",
                 "chapter": "The Fundamentals",
+                "sync_status": "synced",
+                "note_type": "insight",
             }
         }
     }
@@ -68,6 +97,8 @@ class HighlightUpdate(BaseModel):
     note: str | None = None
     color: HighlightColor | None = None
     context_id: str | None = None
+    note_type: NoteType | None = None
+    question_id: str | None = None
 
 
 class HighlightResponse(BaseModel):
@@ -100,3 +131,33 @@ class HighlightBatchResponse(BaseModel):
     updated: int
     errors: list[str] = Field(default_factory=list)
     message: str = "Highlights synced"
+
+
+class SyncResult(BaseModel):
+    """Result of syncing a single highlight."""
+
+    highlight_id: str
+    success: bool
+    siyuan_block_id: str | None = None
+    error: str | None = None
+
+
+class BatchSyncResult(BaseModel):
+    """Result of batch syncing highlights."""
+
+    book_id: str
+    total: int
+    synced: int
+    failed: int
+    results: list[SyncResult]
+
+
+class SyncStatusResponse(BaseModel):
+    """Summary of sync status."""
+
+    total_highlights: int
+    synced: int
+    pending: int
+    error: int
+    modified: int
+    book_id: str | None = None

@@ -85,6 +85,49 @@ class SiYuanClient:
         return ""
 
     @classmethod
+    async def set_block_attributes(cls, block_id: str, attrs: dict[str, str]) -> bool:
+        """Set custom attributes on a SiYuan block.
+
+        Args:
+            block_id: Block ID to set attributes on
+            attrs: Dictionary of attribute key-value pairs
+                   For custom attributes, use "custom-" prefix
+                   e.g., {"custom-be_type": "highlight", "custom-be_id": "hl_123"}
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            await cls._request(
+                "attr/setBlockAttrs",
+                {"id": block_id, "attrs": attrs},
+            )
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to set block attributes: {e}")
+            return False
+
+    @classmethod
+    async def get_block_attributes(cls, block_id: str) -> dict[str, str]:
+        """Get custom attributes from a SiYuan block.
+
+        Args:
+            block_id: Block ID to get attributes from
+
+        Returns:
+            Dictionary of attribute key-value pairs
+        """
+        try:
+            data = await cls._request(
+                "attr/getBlockAttrs",
+                {"id": block_id},
+            )
+            return data if isinstance(data, dict) else {}
+        except Exception as e:
+            logger.warning(f"Failed to get block attributes: {e}")
+            return {}
+
+    @classmethod
     async def get_doc_id_by_path(cls, notebook_id: str, path: str) -> str | None:
         """Get document ID by human-readable path."""
         try:
@@ -324,6 +367,10 @@ author: {author}
         note: str | None = None,
         chapter: str | None = None,
         cfi: str | None = None,
+        highlight_id: str | None = None,
+        context_id: str | None = None,
+        question_id: str | None = None,
+        note_type: str | None = None,
     ) -> str | None:
         """Append a highlight to a book note's Highlights section.
 
@@ -333,30 +380,54 @@ author: {author}
             note: User's note about the highlight
             chapter: Chapter name
             cfi: EPUB CFI location for jump-back
+            highlight_id: Backend highlight ID for syncing
+            context_id: Related context ID
+            question_id: Related question ID
+            note_type: Type of note (thought/question/insight)
 
         Returns:
             Block ID of the created highlight or None
         """
         try:
-            # Build highlight block with frontmatter
+            # Build highlight block markdown
             location = chapter or ""
             if cfi:
                 location = f"{location} (CFI: `{cfi}`)" if location else f"CFI: `{cfi}`"
 
             note_line = f"\n\n**Note:** {note}" if note else ""
 
-            markdown = f"""---
-custom-block-type: highlight
-custom-source-cfi: {cfi or ''}
----
-
-> "{highlight_text}"
+            markdown = f"""> "{highlight_text}"
 
 *{location}*{note_line}
 
 ---
 """
+            # Create the block first
             block_id = await cls.append_block(doc_id, markdown)
+            if not block_id:
+                return None
+
+            # Set block attributes with IES metadata
+            attrs = {
+                "custom-be_type": "highlight",
+            }
+
+            if highlight_id:
+                attrs["custom-be_id"] = highlight_id
+            if cfi:
+                attrs["custom-source-cfi"] = cfi
+            if context_id:
+                attrs["custom-context"] = context_id
+            if question_id:
+                attrs["custom-question"] = question_id
+            if note_type:
+                attrs["custom-note-type"] = note_type
+
+            attrs["custom-status"] = "synced"
+
+            # Apply attributes to the block
+            await cls.set_block_attributes(block_id, attrs)
+
             return block_id
 
         except Exception as e:
