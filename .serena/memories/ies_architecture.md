@@ -1,4 +1,8 @@
-# IES Architecture — Current State (Dec 8, 2025)
+# IES Architecture — Current State (Dec 9, 2025)
+
+> **Ground Truth:** `docs/IES-SYSTEM-DESIGN.md` — For conceptual foundation (WHY & HOW)
+> 
+> This memory contains implementation details. For cognitive architecture, operating model, and interaction semantics, see the ground truth document.
 
 ## Sprint Status (Updated Dec 8)
 
@@ -35,7 +39,7 @@ Cross-app continuity between SiYuan and IES Reader.
 | 1 | Knowledge Graph | Production | `library/graph/unified_client.py` (1,476 lines) |
 | 2 | Backend APIs | 234 tests passing | `ies/backend/src/ies_backend/` |
 | 3 | SiYuan Plugin | Remediation complete | `.worktrees/siyuan/ies/plugin/` |
-| 4 | Readest | Wave 2 complete, Wave 3 in progress | `.worktrees/readest/` |
+| 4 | IES Reader | Active development | `ies/reader/` and `.worktrees/ies-reader/` |
 
 ## Backend API Routes (Layer 2)
 

@@ -3,6 +3,18 @@
 
 *Domain-agnostic tool for structured thinking and knowledge exploration*
 
+> **Ground Truth Document:** `docs/IES-SYSTEM-DESIGN.md`
+>
+> This is the conceptual foundation — cognitive architecture, operating model, entity lifecycle, interaction semantics.
+>
+> **Document Hierarchy:**
+> - `docs/IES-SYSTEM-DESIGN.md` — Ground Truth (WHY & HOW)
+> - `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` — What's active (Readest vs IES Reader)
+> - `docs/ARCHITECTURE-AND-INTERACTIONS.md` — Technical structure, APIs, data flows
+> - `docs/GAP-ANALYSIS-2025-12-09.md` — Implementation status vs specification
+>
+> **TL;DR:** IES Reader is ACTIVE. Readest is ARCHIVED.
+
 ## What This Is
 
 Four-layer system for AI-partnered knowledge exploration:
@@ -170,22 +182,24 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 ### Where to Start
 
 **For New Session (Read First):**
-1. `docs/SYSTEM-DESIGN.md` — How the system works end-to-end (operational reference)
-2. Check git status and recent commits to understand current state
+1. `docs/IES-SYSTEM-DESIGN.md` — **Ground Truth** (cognitive architecture, operating model, entity lifecycle)
+2. `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` — What's active, what's archived
+3. Check git status and recent commits to understand current state
 
-**Understand What Was Accomplished:**
-1. Read `docs/session-notes.md` — Top section summarizes all 10 sessions and Phase 1 completion
-2. Review `/therapy/Track_1_Human_Mind/CONNECTIONS.md` — See the therapeutic framework that emerged
-3. Review the 11 concept documents in `/therapy/Track_1_Human_Mind/` — Each concept is a formalized insight
-4. Check git log — `git log --oneline` shows progression of sessions and concept extraction
+**Document Hierarchy (When to Read What):**
 
-**Key Resources:**
-- `docs/SYSTEM-DESIGN.md` — Operational reference: how all layers integrate, critical gaps, SiYuan AST structure (4 modes, 9 question classes)
-- `docs/PROJECT-OVERVIEW.md` — Complete vision and design rationale, IES Question Engine preview
-- `docs/five-agent-synthesis.md` — Deep analysis of why architecture decisions were made
-- `docs/PHASE-1-WORKFLOW.md` — Phase 1 operational guide (for reference if running additional exploration sessions)
-- `IES AST SiYuan structure.md` — Tracking document for 20 SiYuan notebook pages defining AST mode architecture
-- `docs/IES question engine expansion.md` — Complete Question Engine specification (referenced by SiYuan documents)
+| Need | Read |
+|------|------|
+| Understand WHY IES exists | `docs/IES-SYSTEM-DESIGN.md` §1-2 |
+| Understand cognitive architecture | `docs/IES-SYSTEM-DESIGN.md` §3-4 |
+| Know what's active vs archived | `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` |
+| Technical API/data flow details | `docs/ARCHITECTURE-AND-INTERACTIONS.md` |
+| Implementation gaps | `docs/GAP-ANALYSIS-2025-12-09.md` |
+
+**Secondary Resources:**
+- `docs/SYSTEM-DESIGN.md` — Older operational reference (being superseded)
+- `docs/five-agent-synthesis.md` — Deep analysis of architecture decisions
+- `docs/PHASE-1-WORKFLOW.md` — Phase 1 operational guide
 
 ### Phase 2c Focus
 
@@ -346,28 +360,59 @@ git status                # Current state
 - Check git status before starting work
 - Run tests after changes: `uv run pytest`
 - Use Serena symbolic tools for code exploration
-- Check `docs/SYSTEM-DESIGN.md` for architecture questions
+- Check `docs/IES-SYSTEM-DESIGN.md` for architecture questions (Ground Truth)
 
 ## Key Resources
 
+**Ground Truth Documentation (Dec 2025):**
+
+| Document | Purpose |
+|----------|---------|
+| `docs/IES-SYSTEM-DESIGN.md` | **Ground Truth** — WHY IES exists, cognitive architecture, operating model |
+| `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` | WHAT is active — Readest vs IES Reader, component status |
+| `docs/ARCHITECTURE-AND-INTERACTIONS.md` | HOW it works — Technical APIs, data flows, layer interactions |
+| `docs/GAP-ANALYSIS-2025-12-09.md` | Implementation status vs specification |
+
+**Reference Documentation:**
+
 | Resource | Purpose |
 |----------|---------|
-| `docs/SYSTEM-DESIGN.md` | Architecture and data flows |
 | `docs/CHANGELOG.md` | Development history |
-| `docs/plans/2025-12-08-flow-v2-phase1-implementation.md` | Flow v2 Phase 1 TDD implementation plan (5 tasks) - COMPLETED |
-| `docs/plans/2025-12-08-flow-v2-phase2-implementation.md` | Flow v2 Phase 2 backend persistence plan (6 tasks) - IN PROGRESS |
 | `docs/plans/` | Feature design documents |
-| `ies/backend/src/ies_backend/schemas/question.py` | Question, QuestionStatus, QuestionSource, AnswerBlock schemas |
-| `ies/backend/src/ies_backend/schemas/context.py` | Context, ContextType, ContextStatus schemas |
-| `ies/backend/src/ies_backend/services/question_service.py` | QuestionService CRUD implementation |
-| `ies/backend/src/ies_backend/services/context_crud_service.py` | ContextCRUDService CRUD implementation |
-| `ies/backend/src/ies_backend/api/questions.py` | Question REST API endpoints (CRUD + answer blocks) |
-| `.worktrees/ies-reader/ies/reader/src/services/questionApi.ts` | IES Reader Question API client |
-| `.worktrees/ies-reader/ies/reader/src/services/contextApi.ts` | IES Reader Context API client |
-| `.worktrees/ies-reader/ies/reader/src/services/index.ts` | Services barrel export |
-| `ies/reader/src/components/Reader.tsx` | Main reader component, text selection handling |
-| `ies/reader/src/store/flowStore.ts` | Global state: journeys, entities, sync |
 | Serena memory: `true_vision` | Core project vision |
+| Serena memory: `ies_architecture` | Technical architecture details |
+
+**Key Code Locations:**
+
+| Location | Purpose |
+|----------|---------|
+| `ies/backend/src/ies_backend/` | FastAPI backend |
+| `ies/reader/src/` | IES Reader React app |
+| `.worktrees/siyuan/ies/plugin/` | SiYuan plugin |
+| `library/graph/` | Neo4j client, entity extraction |
+
+## Memory Strategy
+
+**Three-Layer System:**
+
+| Layer | Tool | Purpose | When to Use |
+|-------|------|---------|-------------|
+| 1. CLAUDE.md | Auto-memory plugin | Build commands, architecture, conventions | Auto-managed on file changes |
+| 2. Serena Memories | `mcp__serena__read_memory` | Detailed implementation context | Query by name when needed |
+| 3. Ground Truth Docs | Read tool | Conceptual foundations, specs | Reference for architecture decisions |
+
+**Auto-Memory Plugin (Enabled):**
+- Config: `.claude/auto-memory/config.json` (triggerMode: default)
+- Tracks: File edits/writes in real-time
+- Updates: `<!-- AUTO-MANAGED -->` sections in CLAUDE.md
+- Commands: `/auto-memory:status`, `/auto-memory:sync`, `/auto-memory:calibrate`
+
+**Serena Memories (Query on Demand):**
+- `project-status-dec9` — Current project state, document hierarchy
+- `ies_architecture` — Technical implementation details
+- `true_vision` — Core project vision
+- `deprecated-readest` — Warning about archived code
+- `context-layer-implementation` — Context/Question system details
 
 ## IES Reader Key Patterns
 
@@ -470,19 +515,39 @@ Claude acts as project manager. Identify optimal next action and proceed — don
 ## Context Efficiency
 
 This CLAUDE.md is intentionally brief. For details:
+- **Ground Truth:** `docs/IES-SYSTEM-DESIGN.md` (start here for WHY/HOW)
+- **Active Status:** `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` (Readest vs IES Reader)
+- **Technical Details:** `docs/ARCHITECTURE-AND-INTERACTIONS.md`
+- **Implementation Gaps:** `docs/GAP-ANALYSIS-2025-12-09.md`
 - **History:** `docs/CHANGELOG.md`
-- **Architecture:** Use `mcp__serena__read_memory` with `ies_architecture`
-- **Implementation:** Read code with Serena symbolic tools
+- **Architecture Memory:** Use `mcp__serena__read_memory` with `ies_architecture`
 - **Plans:** Check `docs/plans/` directory
-- **Phase 2 Spec:** `docs/plans/2025-12-08-flow-v2-phase2-implementation.md`
 <!-- END MANUAL -->
 
 <!-- AUTO-MANAGED: build-commands -->
-<!-- This section will be automatically updated by auto-memory plugin -->
+## Build Commands
+
+| Component | Command | Description |
+|-----------|---------|-------------|
+| Backend | `cd ies/backend && uv run uvicorn ies_backend.main:app --reload --port 8081` | Start FastAPI server |
+| Backend Tests | `cd ies/backend && uv run pytest` | Run all backend tests |
+| IES Reader | `cd ies/reader && pnpm dev` | Start Vite dev server |
+| IES Reader Build | `cd ies/reader && pnpm build` | Production build |
+| Docker | `docker compose up -d` | Start Neo4j, Redis, Qdrant |
+| SiYuan Plugin | `cd .worktrees/siyuan/ies/plugin && pnpm dev` | Plugin dev mode |
+
+**Detected Frameworks:**
+- Python (FastAPI + uv) — `ies/backend/`
+- TypeScript/React (Vite + pnpm) — `ies/reader/`
+- TypeScript/Svelte — `.worktrees/siyuan/ies/plugin/`
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: architecture -->
-## Architecture: ADHD-Friendly Personal Knowledge Layer
+## Architecture: Quick Reference
+
+> **Full Documentation:** See `docs/IES-SYSTEM-DESIGN.md` (Ground Truth) and `docs/ARCHITECTURE-AND-INTERACTIONS.md` (Technical Details)
+>
+> This section contains auto-managed implementation notes. For conceptual understanding, read the docs.
 
 **Recent Changes (Dec 5):**
 - **SiYuan Plugin Structure Refinements** — Enhanced domain-agnostic configuration and session document metadata:
