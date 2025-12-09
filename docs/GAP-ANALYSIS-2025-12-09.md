@@ -1,6 +1,7 @@
 # Implementation Gap Analysis — Redux Specs vs Current State
 
 **Created:** 2025-12-09
+**Updated:** 2025-12-09 (Passage Ranking implementation)
 **Purpose:** Map redux specifications to implemented features, identify gaps, prioritize next work
 
 > **Ground Truth:** For system design and semantics, see `docs/IES-SYSTEM-DESIGN.md`.
@@ -17,7 +18,7 @@ The `redux/` directory contains detailed specifications for the Context + Questi
 3. **What's missing** — Features not yet started
 4. **Priority recommendations** — What to build next
 
-**Overall Status:** ~45% of redux specifications implemented
+**Overall Status:** ~50% of redux specifications implemented (updated from 45% with passage ranking completion)
 
 ---
 
@@ -31,7 +32,7 @@ The `redux/` directory contains detailed specifications for the Context + Questi
 | **Question** | id, context_id, parent_question_id, question_text, status, prerequisite_questions, related_concepts, linked_sources, answers | ✅ Implemented |
 | **AnswerBlock** | id, question_id, content, quality | ✅ Implemented |
 | **JourneyEntry** | id, timestamp, context_id, focus_id, classification, entity_links, source_links | 🔄 Partial |
-| **ExtractionProfile** | context_id, core_concepts, synonyms, relation_types, domain_filters | ❌ Not implemented |
+| **ExtractionProfile** | context_id, core_concepts, synonyms, relation_types, domain_filters | ✅ Implemented |
 
 ### Implementation Location
 
@@ -41,23 +42,11 @@ The `redux/` directory contains detailed specifications for the Context + Questi
 | Question | `ies/backend/src/ies_backend/schemas/question.py` | ✅ Complete with QuestionStatus, QuestionSource enums |
 | AnswerBlock | `ies/backend/src/ies_backend/schemas/question.py` | ✅ Nested in question schema |
 | JourneyEntry | `ies/backend/src/ies_backend/schemas/journey.py` | 🔄 Basic, missing classification array |
-| ExtractionProfile | — | ❌ Not implemented |
+| ExtractionProfile | `ies/backend/src/ies_backend/schemas/extraction.py` | ✅ Complete schema (Dec 9) |
 
-### Gap: ExtractionProfile
+### ~~Gap: ExtractionProfile~~ ✅ COMPLETE
 
-**What's missing:**
-```python
-# Needed in ies/backend/src/ies_backend/schemas/extraction.py
-class ExtractionProfile(BaseModel):
-    context_id: str
-    core_concepts: list[str]
-    synonyms: dict[str, list[str]]
-    relation_types: list[str]
-    domain_filters: list[str]
-    question_overrides: dict[str, QuestionExtractionProfile] | None = None
-```
-
-**Priority:** Medium — Enables context-aware extraction
+ExtractionProfile schema implemented with full support for context-aware extraction configuration.
 
 ---
 
@@ -106,7 +95,7 @@ class ExtractionProfile(BaseModel):
 | Run Extraction button | Triggers context-aware extraction | ❌ Not implemented |
 | Trail navigation | Breadcrumb path | ✅ Implemented |
 | Facet decomposition | AI-generated facets | ✅ Implemented |
-| "New since last run" highlighting | Mark new content | ❌ Not implemented |
+| "New since last run" highlighting | Mark new content | ✅ **DONE** (Visit Tracking API) |
 
 ### Implementation Location
 
@@ -124,7 +113,7 @@ class ExtractionProfile(BaseModel):
 - "Run Extraction" button in Flow UI
 - `runExtraction({ context_id, focus_id, profile })` function
 - Extraction Engine service
-- "New since last run" tracking and highlighting
+
 
 **Priority:** High — Core value proposition of Flow v2
 
@@ -191,7 +180,7 @@ class ExtractionEngine:
 | Left pane: Context navigation | Title, questions, areas | 🔄 Partial (FlowPanel) |
 | Center pane: Source view | Book/article content | ✅ Implemented |
 | Right pane: Journey & Notes | Timeline, highlights | ❌ Not implemented |
-| Passage ranking for questions | Suggest relevant passages | ❌ Not implemented |
+| Passage ranking for questions | Suggest relevant passages | ✅ **DONE** (Dec 9) |
 | Auto-tag notes with context_id | On highlight | ❌ Not implemented |
 | CFI preservation | Jump-back links | ✅ Implemented |
 
@@ -203,13 +192,38 @@ class ExtractionEngine:
 | FlowPanel | `ies/reader/src/components/flow/FlowPanel.tsx` | ✅ |
 | NotesSheet | `ies/reader/src/components/flow/NotesSheet.tsx` | ✅ |
 | Journey pane | — | ❌ Not implemented |
-| Passage ranking | — | ❌ Not implemented |
+| Passage ranking | `ies/backend/src/ies_backend/services/passage_ranking_service.py` | ✅ **NEW** |
 
-### Gap: Journey Pane & Passage Ranking
+### ~~Gap: Passage Ranking~~ ✅ COMPLETE
+
+**Implementation (Dec 9):**
+- **Service:** `PassageRankingService` with keyword extraction, TF-IDF-like scoring, concept matching
+- **API:** `GET /questions/{question_id}/relevant-passages` endpoint
+- **Schemas:** `RankedPassage`, `PassageRankingRequest`, `PassageRankingResponse`
+- **Features:**
+  - Keyword extraction from question text (stop word filtering)
+  - Related concept matching with scoring bonuses
+  - TF-IDF-like relevance scoring with length normalization
+  - Configurable max_passages and min_score filters
+  - Source attribution (book title, author, chapter, page)
+  - Matched keywords and concepts tracking
+- **Tests:** 11 comprehensive unit tests, all passing
+
+**Ranking Algorithm:**
+- Extracts keywords from question text (excluding stop words)
+- Includes related concepts from question metadata
+- Searches Neo4j chunks using keyword CONTAINS matching
+- Scores passages based on:
+  - Keyword matches: +0.1 per keyword
+  - Concept matches: +0.3 per concept (higher value)
+  - Multiple occurrences: diminishing returns (log scale)
+  - Length normalization: prevents long passages from dominating
+- Returns passages sorted by relevance score (0-1)
+
+### Remaining Gap: Journey Pane
 
 **What's missing:**
 - Right pane showing journey entries for current context
-- Service to rank passages by relevance to active question
 - Auto-tagging captured notes with context_id/focus_id
 
 **Priority:** Medium — Enhances reading workflow
@@ -346,7 +360,7 @@ class ExtractionEngine:
 
 ## Priority Matrix
 
-> **Updated:** 2025-12-09 (commit 3fd956b)
+> **Updated:** 2025-12-09 (Passage Ranking implementation)
 
 ### P0 — Critical Path (Do First)
 
@@ -362,8 +376,8 @@ class ExtractionEngine:
 |-----|--------|--------|--------|
 | ExtractionProfile schema | Enables targeted extraction | Low | ✅ **DONE** (schemas/extraction.py) |
 | Journey query helpers | Enables pattern analysis | Low | ✅ **DONE** (GET /context/{id}/journey?focus_id=X) |
-| "New since last run" tracking | UX improvement | Medium | ❌ Not started |
-| Passage ranking for questions | Reading guidance | High | ❌ Not started |
+| "New since last run" tracking | UX improvement | Medium | ✅ **DONE** (Visit Tracking API - 2025-12-09) |
+| Passage ranking for questions | Reading guidance | Medium | ✅ **DONE** (Dec 9) |
 
 ### P2 — Important (Do Later)
 
@@ -372,6 +386,7 @@ class ExtractionEngine:
 | Block attribute system | AI navigation | Medium |
 | Journey timeline UI | Visualization | Medium |
 | Areas of Exploration buttons | Additional navigation | Low |
+| Journey pane in Reader | Context tracking | Medium |
 
 ### P3 — Nice to Have
 
@@ -385,16 +400,7 @@ class ExtractionEngine:
 
 ## Recommended Next Sprint
 
-### ~~Sprint Focus: Close the Capture Loop~~ ✅ COMPLETE
-
-> **Completed:** 2025-12-09 (commit 3fd956b)
-
-The capture loop is now closed:
-- Highlights API: Full CRUD + batch sync
-- SiYuan sync: Book Notes with highlights
-- Reader integration: highlightApi.ts client
-
-### Sprint Focus: Extraction Engine (NEW)
+### Sprint Focus: Extraction Engine
 
 **Goal:** Context-aware extraction that uses ExtractionProfile to find relevant content.
 
@@ -416,35 +422,23 @@ The capture loop is now closed:
 
 ---
 
-## Previous Sprint (Completed)
+## Completed in Recent Sprints
 
-### Sprint Focus: Close the Capture Loop ✅
+### ~~Sprint: Close the Capture Loop~~ ✅ COMPLETE (Dec 9)
 
-**Goal:** Highlights captured in Reader appear in SiYuan Book Notes and can be queried.
+The capture loop is now closed:
+- Highlights API: Full CRUD + batch sync
+- SiYuan sync: Book Notes with highlights
+- Reader integration: highlightApi.ts client
 
-**Tasks:**
+### ~~Sprint: Passage Ranking~~ ✅ COMPLETE (Dec 9)
 
-1. **Highlight Sync API** (Backend) ✅
-   - `POST /highlights` — Full CRUD with CFI tracking
-   - Service creates Book Note in SiYuan
-   - Transform to SiYuan block with attributes
-
-2. **Reader Highlight Export** (IES Reader) ✅
-   - highlightApi.ts client
-   - Include CFI, current entity context, book calibre_id
-
-3. **Book Note Template** (SiYuan)
-   - Create standard template with sections
-   - Auto-create from Calibre metadata
-
-4. **Basic Query Helpers** (Backend)
-   - `GET /journey?context_id=X` — Filter by context
-   - `GET /highlights?book_id=X` — Get highlights for book
-
-**Success Criteria:**
-- Highlight in Reader → SiYuan Book Note in <30 seconds
-- Can query all highlights for a context
-- CFI preserved for jump-back
+Question-driven passage ranking is now operational:
+- PassageRankingService with TF-IDF-like scoring
+- `GET /questions/{question_id}/relevant-passages` API endpoint
+- Comprehensive test coverage (11 tests, all passing)
+- Keyword extraction, concept matching, length normalization
+- Configurable filters and source attribution
 
 ---
 
@@ -455,11 +449,12 @@ Based on this analysis, these new files are needed:
 ```
 ies/backend/src/ies_backend/
 ├── schemas/
-│   └── extraction.py          # ExtractionProfile, ExtractionResult
+│   └── extraction.py          # ✅ DONE - ExtractionProfile, ExtractionResult
 ├── services/
 │   ├── extraction_engine.py   # Context-aware extraction
 │   ├── highlight_sync.py      # Reader → SiYuan sync
-│   └── context_note_parser.py # Parse SiYuan Context Notes
+│   ├── context_note_parser.py # Parse SiYuan Context Notes
+│   └── passage_ranking_service.py  # ✅ DONE - Rank passages by relevance
 └── api/
     └── sync.py                # Sync endpoints (enhance existing)
 

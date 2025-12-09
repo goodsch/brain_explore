@@ -14,12 +14,18 @@ from ies_backend.schemas.question import (
     QuestionStatus,
     QuestionUpdate,
 )
+from ies_backend.schemas.passage import (
+    PassageRankingRequest,
+    PassageRankingResponse,
+)
 from ies_backend.services.question_service import QuestionService
+from ies_backend.services.passage_ranking_service import PassageRankingService
 
 router = APIRouter(tags=["questions"])
 
-# Global service instance
+# Global service instances
 _question_service = QuestionService()
+_passage_ranking_service = PassageRankingService()
 
 
 @router.post("/", response_model=Question)
@@ -109,3 +115,38 @@ async def create_answer(question_id: str, data: AnswerBlockCreate) -> AnswerBloc
         )
 
     return await _question_service.create_answer(data)
+
+
+@router.get("/{question_id}/relevant-passages", response_model=PassageRankingResponse)
+async def get_relevant_passages(
+    question_id: str,
+    max_passages: int = Query(10, ge=1, le=100, description="Maximum passages to return"),
+    min_score: float = Query(0.1, ge=0.0, le=1.0, description="Minimum relevance score"),
+    source_ids: list[str] | None = Query(None, description="Optional: limit to specific sources"),
+) -> PassageRankingResponse:
+    """Get passages ranked by relevance to the question.
+
+    This endpoint helps answer questions by finding the most relevant
+    text passages from indexed books. The ranking algorithm uses:
+    - Keyword extraction from question text
+    - Related concepts from the question
+    - TF-IDF-like scoring with length normalization
+    - Concept match bonuses
+
+    Returns passages sorted by relevance score (0-1), with source
+    attribution and matching details.
+    """
+    try:
+        request = PassageRankingRequest(
+            max_passages=max_passages,
+            min_score=min_score,
+            source_ids=source_ids,
+        )
+        return await _passage_ranking_service.rank_passages_for_question(
+            question_id=question_id,
+            request=request,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to rank passages: {str(e)}")

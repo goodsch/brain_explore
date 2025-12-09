@@ -26,6 +26,7 @@ from ies_backend.api import (
     sync,
     template,
     thinking,
+    visit_tracking,
 )
 
 app = FastAPI(
@@ -69,6 +70,7 @@ app.include_router(questions.router, prefix="/questions", tags=["questions"])
 app.include_router(sync.router, prefix="/sync", tags=["sync"])
 app.include_router(highlights.router, tags=["highlights"])
 app.include_router(extraction.router, tags=["extraction"])
+app.include_router(visit_tracking.router, tags=["visit_tracking"])
 
 
 @app.get("/health")
