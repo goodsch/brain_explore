@@ -150,6 +150,34 @@ class ContextJourneyEntry(BaseModel):
 
 
 # -----------------------------------------------------------------------------
+# CRUD Schemas
+# -----------------------------------------------------------------------------
+
+
+class ContextCreate(BaseModel):
+    """Schema for creating a new context."""
+
+    type: ContextType = ContextType.FEYNMAN_PROBLEM
+    title: str
+    summary: str | None = None
+    parent_context_id: str | None = None
+    status: ContextStatus = ContextStatus.ACTIVE
+    siyuan_doc_id: str | None = None
+
+
+class ContextUpdate(BaseModel):
+    """Schema for updating a context (all fields optional)."""
+
+    title: str | None = None
+    summary: str | None = None
+    status: ContextStatus | None = None
+    parent_context_id: str | None = None
+    core_concepts: list[str] | None = None
+    linked_sources: list[str] | None = None
+    areas_of_exploration: list[str] | None = None
+
+
+# -----------------------------------------------------------------------------
 # API Request/Response Schemas
 # -----------------------------------------------------------------------------
 

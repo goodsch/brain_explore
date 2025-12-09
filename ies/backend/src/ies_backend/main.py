@@ -15,6 +15,7 @@ from ies_backend.api import (
     personal,
     profile,
     question_engine,
+    questions,
     reframe,
     quick_add,
     sources,
@@ -61,6 +62,7 @@ app.include_router(sources.router, tags=["sources"])
 app.include_router(quick_add.router, tags=["quick-add"])
 app.include_router(template.router, tags=["templates"])
 app.include_router(sync.router, tags=["sync"])
+app.include_router(questions.router, tags=["questions"])
 
 
 @app.get("/health")

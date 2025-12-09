@@ -13,6 +13,7 @@ from ies_backend.schemas.profile import UserProfile
 _test_profiles: dict[str, dict[str, Any]] = {}
 _test_sessions: list[dict[str, Any]] = []
 _test_entities: list[dict[str, Any]] = []
+_test_contexts: dict[str, dict[str, Any]] = {}
 
 
 def _profile_to_node(profile: UserProfile) -> dict[str, Any]:
@@ -57,6 +58,32 @@ async def mock_execute_query(query: str, parameters: dict | None = None) -> list
             entities = [e for e in entities if e.get("status") in ["seed", "developing"]]
         return [{"e": e} for e in entities]
 
+    # Context queries
+    if "MATCH (c:Context" in query:
+        context_id = params.get("id")
+        if context_id and context_id in _test_contexts:
+            return [{"c": _test_contexts[context_id]}]
+
+        # List query
+        contexts = list(_test_contexts.values())
+
+        # Filter by type
+        if "type" in params:
+            contexts = [c for c in contexts if c.get("type") == params["type"]]
+
+        # Filter by status
+        if "status" in params:
+            contexts = [c for c in contexts if c.get("status") == params["status"]]
+
+        # Sort by updated_at descending
+        contexts.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+
+        # Apply limit
+        limit = params.get("limit", 100)
+        contexts = contexts[:limit]
+
+        return [{"c": c} for c in contexts]
+
     return []
 
 
@@ -91,6 +118,45 @@ async def mock_execute_write(query: str, parameters: dict | None = None) -> list
                     _test_profiles[user_id][key] = value
             return [{"p": _test_profiles[user_id]}]
 
+    # Context creation
+    elif "CREATE (c:Context" in query:
+        context_id = params["id"]
+        _test_contexts[context_id] = dict(params)
+        return [{"c": _test_contexts[context_id]}]
+
+    # Context update - handle key_questions append operation
+    elif "MATCH (c:Context" in query and "SET" in query:
+        context_id = params.get("id")
+        if context_id and context_id in _test_contexts:
+            # Handle appending to key_questions
+            if "question_id" in params and "key_questions" in query:
+                # This is an add_question operation
+                question_id = params["question_id"]
+                current_questions = _test_contexts[context_id].get("key_questions", [])
+                if question_id not in current_questions:
+                    current_questions = current_questions + [question_id]
+                    _test_contexts[context_id]["key_questions"] = current_questions
+                _test_contexts[context_id]["updated_at"] = params.get("updated_at")
+            else:
+                # Regular update
+                for key, value in params.items():
+                    if key != "id":
+                        _test_contexts[context_id][key] = value
+            return [{"c": _test_contexts[context_id]}]
+        return []
+
+    # Context deletion
+    elif "DETACH DELETE" in query:
+        context_id = params.get("id")
+        if context_id and context_id in _test_contexts:
+            del _test_contexts[context_id]
+            return [{"deleted": 1}]
+        return [{"deleted": 0}]
+
+    # Context constraints (schema creation)
+    elif "CREATE CONSTRAINT" in query or "CREATE INDEX" in query:
+        return []
+
     return []
 
 
@@ -100,18 +166,18 @@ def mock_neo4j():
     _test_profiles.clear()  # Clear between tests
     _test_sessions.clear()
     _test_entities.clear()
+    _test_contexts.clear()
 
+    # Also clear the in-memory store in ContextCRUDService
+    from ies_backend.services.context_crud_service import ContextCRUDService
+    ContextCRUDService.clear_store()
+
+    # Patch at the neo4j_client module level to catch all imports
     with patch(
-        "ies_backend.services.profile_service.Neo4jClient.execute_query",
+        "ies_backend.services.neo4j_client.Neo4jClient.execute_query",
         side_effect=mock_execute_query,
     ), patch(
-        "ies_backend.services.profile_service.Neo4jClient.execute_write",
-        side_effect=mock_execute_write,
-    ), patch(
-        "ies_backend.services.entity_storage_service.Neo4jClient.execute_query",
-        side_effect=mock_execute_query,
-    ), patch(
-        "ies_backend.services.entity_storage_service.Neo4jClient.execute_write",
+        "ies_backend.services.neo4j_client.Neo4jClient.execute_write",
         side_effect=mock_execute_write,
     ):
         yield
