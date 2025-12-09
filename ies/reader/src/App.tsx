@@ -98,8 +98,6 @@ function App() {
           title={currentBook.title}
           calibreId={currentBook.calibreId}
           onClose={closeBook}
-          theme={theme}
-          toggleTheme={toggleTheme}
         />
       </div>
     );

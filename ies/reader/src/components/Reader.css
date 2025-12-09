@@ -9,6 +9,7 @@
   height: 100vh;
   height: 100dvh;
   background: var(--bg-primary);
+  position: relative;
 }
 
 /* ============================================
@@ -276,14 +277,14 @@
   position: absolute;
   top: 0; /* Will be overridden by inline style */
   left: 0; /* Will be overridden by inline style */
-  background: var(--ies-bg-surface);
-  border: 1px solid var(--ies-border-default);
-  border-radius: var(--ies-radius-md);
-  box-shadow: var(--ies-shadow-md);
-  padding: var(--ies-space-2);
+  background: var(--bg-secondary, #1a1a1c);
+  border: 1px solid var(--border-default, #3a3a3e);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 6px;
   display: flex;
-  gap: var(--ies-space-2);
-  z-index: var(--ies-z-popover);
+  gap: 6px;
+  z-index: 1000;
   transform: translate(-50%, -120%); /* Adjust to appear above selection */
 }
 
@@ -291,12 +292,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--ies-space-2);
-  font-size: var(--ies-text-base);
-  padding: var(--ies-space-2) var(--ies-space-3);
+  gap: 8px;
+  font-size: 14px;
+  padding: 8px 14px;
   white-space: nowrap;
   min-height: 44px;
   min-width: 44px;
+  background: var(--bg-tertiary, #252528);
+  border: 1px solid var(--border-default, #3a3a3e);
+  border-radius: 8px;
+  color: var(--text-primary, #f5f5f5);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.reader-selection-bar button:hover {
+  background: var(--bg-hover, #2a2a2e);
+  border-color: var(--border-focus, #5a5a60);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.reader-selection-bar button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* ============================================

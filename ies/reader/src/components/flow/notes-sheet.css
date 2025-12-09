@@ -1,3 +1,54 @@
+/* Base button styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.btn-ghost {
+  background: var(--bg-secondary, #1a1a1c);
+  border-color: var(--border-default, #3a3a3e);
+  color: var(--text-secondary, #a0a0a5);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-tertiary, #252528);
+  border-color: var(--border-focus, #5a5a60);
+  color: var(--text-primary, #f5f5f5);
+}
+
+.btn-primary {
+  background: var(--entity-concept, #3b82f6);
+  color: #ffffff;
+  border-color: var(--entity-concept, #3b82f6);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .notes-type-chips .notes-chip {
   min-height: 44px; /* Ensure minimum touch target size */
   min-width: 44px; /* Ensure minimum touch target size */
