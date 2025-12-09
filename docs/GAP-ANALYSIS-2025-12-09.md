@@ -1,7 +1,7 @@
 # Implementation Gap Analysis — Redux Specs vs Current State
 
 **Created:** 2025-12-09
-**Updated:** 2025-12-09 (Extraction Engine + Context Note Parser implementation)
+**Updated:** 2025-12-09 (Redis migration for SessionStateService)
 **Purpose:** Map redux specifications to implemented features, identify gaps, prioritize next work
 
 > **Ground Truth:** For system design and semantics, see `docs/IES-SYSTEM-DESIGN.md`.
@@ -636,15 +636,14 @@ ies/reader/src/services/
 **P0 - Critical:** None identified
 
 **P1 - High Value:**
-1. **Redis Migration** — SessionStateService uses in-memory storage
-   - Impact: State lost on restart
-   - File: `session_state_service.py`
-   - Effort: 2-3 days
+1. ~~**Redis Migration** — SessionStateService uses in-memory storage~~ ✅ **COMPLETE** (Dec 9)
+   - Added `redis_client.py` async Redis client singleton
+   - Rewrote `session_state_service.py` to use Redis (state + history)
+   - 24h TTL with auto-cleanup, 23 unit tests added
 
-2. **Add ARCHIVED Entity Status** — Spec has 4 states, code has 3
-   - Impact: Completes lifecycle model
-   - File: `library/graph/adhd_ontology.py:89`
-   - Effort: 1 hour
+2. ~~**Add ARCHIVED Entity Status** — Spec has 4 states, code has 3~~ ✅ **N/A**
+   - ContextStatus already has ARCHIVED (4 states)
+   - EntityStatus uses different lifecycle (gardening metaphor: CAPTURED→EXPLORING→ANCHORED)
 
 3. **Journey Event Logging** — capture/extraction/template events not logged
    - Impact: Enables pattern analysis
