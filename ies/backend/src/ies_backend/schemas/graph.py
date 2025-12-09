@@ -306,3 +306,66 @@ class ThinkingPartnerResponse(BaseModel):
     """Response with a thinking partner question."""
 
     question: str = Field(description="Clarifying question to deepen exploration")
+
+
+# === Question Extraction from Facets (Sprint 4) ===
+
+
+class ExtractedQuestion(BaseModel):
+    """A question extracted from facet decomposition."""
+
+    text: str = Field(description="The question text")
+    question_type: str = Field(
+        default="general",
+        description="Type: why, how, what, when, who, where, which, general"
+    )
+    related_concepts: list[str] = Field(
+        default_factory=list,
+        description="Concepts this question relates to"
+    )
+
+
+class EntityQuestionsResponse(BaseModel):
+    """Response containing questions extracted for an entity."""
+
+    entity_name: str
+    entity_type: str
+    questions: list[ExtractedQuestion] = Field(
+        default_factory=list,
+        description="Questions that emerge from exploring this entity"
+    )
+    generated: bool = Field(
+        default=False,
+        description="True if questions were AI-generated on this request"
+    )
+
+
+class ClarificationRequest(BaseModel):
+    """Request for guided clarification before facet decomposition."""
+
+    entity_name: str = Field(description="Entity to explore")
+    user_goal: str | None = Field(
+        default=None,
+        description="What the user wants to understand (optional)"
+    )
+
+
+class ClarificationResponse(BaseModel):
+    """Response with clarification dialogue to guide exploration."""
+
+    entity_name: str
+    clarifying_question: str = Field(
+        description="Question to clarify user's exploration intent"
+    )
+    suggested_facets: list[str] = Field(
+        default_factory=list,
+        description="Suggested facets based on user's goal"
+    )
+    prerequisites: list[str] = Field(
+        default_factory=list,
+        description="Prerequisite concepts to understand first"
+    )
+    why_it_matters: str | None = Field(
+        default=None,
+        description="Brief explanation of why this entity matters"
+    )

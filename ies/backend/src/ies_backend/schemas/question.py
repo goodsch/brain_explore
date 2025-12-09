@@ -20,16 +20,33 @@ class QuestionSource(str, Enum):
     READER = "reader"
     AI_SUGGESTED = "ai-suggested"
     DIALOGUE = "dialogue"
+    FACET_DECOMPOSITION = "facet-decomposition"
+
+
+class QuestionType(str, Enum):
+    """Type of question based on interrogative."""
+    WHY = "why"
+    HOW = "how"
+    WHAT = "what"
+    WHEN = "when"
+    WHO = "who"
+    WHERE = "where"
+    WHICH = "which"
+    GENERAL = "general"
 
 
 class QuestionBase(BaseModel):
     """Base question fields."""
-    context_id: str
+    context_id: str | None = None  # Optional for entity-based questions
     text: str = Field(..., min_length=1, max_length=2000)
+    question_type: QuestionType = QuestionType.GENERAL
     parent_question_id: str | None = None
+    parent_entity_id: str | None = None  # Entity this question is about
     status: QuestionStatus = QuestionStatus.OPEN
     source: QuestionSource = QuestionSource.READER
     siyuan_block_id: str | None = None
+    evidence_count: int = 0
+    confidence: float = 0.0
 
 
 class QuestionCreate(QuestionBase):
@@ -40,12 +57,16 @@ class QuestionCreate(QuestionBase):
 class QuestionUpdate(BaseModel):
     """Schema for updating a question."""
     text: str | None = Field(None, min_length=1, max_length=2000)
+    question_type: QuestionType | None = None
     status: QuestionStatus | None = None
     parent_question_id: str | None = None
+    parent_entity_id: str | None = None
     prerequisite_questions: list[str] | None = None
     related_concepts: list[str] | None = None
     linked_sources: list[str] | None = None
     siyuan_block_id: str | None = None
+    evidence_count: int | None = None
+    confidence: float | None = None
 
 
 class Question(QuestionBase):

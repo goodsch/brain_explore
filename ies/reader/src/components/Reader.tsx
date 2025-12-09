@@ -9,6 +9,7 @@ import { useEntityLookup } from '../hooks/useEntityLookup';
 import { useEntityOverlay } from '../hooks/useEntityOverlay';
 import { useEntityHighlighter } from '../hooks/useEntityHighlighter';
 import { graphClient } from '../services/graphClient';
+import { highlightApi, type HighlightCreate } from '../services/highlightApi';
 import './Reader.css';
 
 interface ReaderProps {
@@ -96,6 +97,43 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   // Fetch entities for overlay when book opens
   useEntityOverlay(calibreId);
 
+  // Load existing highlights when book opens
+  useEffect(() => {
+    if (!calibreId || !rendition) return;
+
+    const loadHighlights = async () => {
+      try {
+        const highlights = await highlightApi.listByBook(String(calibreId));
+        console.log(`[Reader] Loaded ${highlights.length} existing highlights`);
+
+        // Apply each highlight as an epub.js annotation
+        highlights.forEach(hl => {
+          const colorMap: Record<string, string> = {
+            yellow: '#ffff00',
+            green: '#90EE90',
+            blue: '#87CEEB',
+            pink: '#FFB6C1',
+            purple: '#DDA0DD',
+          };
+          const fill = colorMap[hl.color] || '#ffff00';
+
+          rendition.annotations.add(
+            'highlight',
+            hl.cfi,
+            { highlightId: hl.id },
+            (e: MouseEvent) => console.log('Highlight clicked:', hl.id, e),
+            'hl',
+            { 'fill': fill, 'fill-opacity': '0.3', 'pointer-events': 'none' }
+          );
+        });
+      } catch (error) {
+        console.error('[Reader] Failed to load highlights:', error);
+      }
+    };
+
+    loadHighlights();
+  }, [calibreId, rendition]);
+
   // Apply entity highlighting to epub content
   useEntityHighlighter(rendition);
 
@@ -134,7 +172,7 @@ interface IFrameContents {
     setSelectionContext(null); // Clear selection context after action
   }, []);
 
-  const highlightText = useCallback((selection: SelectionContext) => {
+  const highlightText = useCallback(async (selection: SelectionContext) => {
     if (!renditionRef.current) return;
     const { cfiRange, text } = selection;
 
@@ -150,7 +188,24 @@ interface IFrameContents {
       { 'fill': '#ffff00', 'fill-opacity': '0.3', 'pointer-events': 'none' } // Styles to apply directly
     );
     setSelectionContext(null); // Clear selection context after action
-  }, []);
+
+    // Sync highlight to backend (if we have a calibreId)
+    if (calibreId) {
+      try {
+        const highlightData: HighlightCreate = {
+          book_id: String(calibreId),
+          text,
+          cfi: cfiRange,
+          color: 'yellow',
+        };
+        const created = await highlightApi.create(highlightData);
+        console.log('Highlight synced to backend:', created.id);
+      } catch (error) {
+        console.error('Failed to sync highlight to backend:', error);
+        // Don't fail silently - highlight is still shown locally
+      }
+    }
+  }, [calibreId]);
 
   // Get rendition ref for text selection handling
   const getRendition = useCallback(

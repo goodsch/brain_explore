@@ -188,3 +188,199 @@ source_id: {source_id or ''}
         except Exception as e:
             logger.warning(f"Failed to create SiYuan spark block: {e}")
             return None
+
+    @classmethod
+    async def get_doc_by_id(cls, doc_id: str) -> dict[str, Any] | None:
+        """Get document info by ID."""
+        try:
+            data = await cls._request(
+                "block/getBlockInfo",
+                {"id": doc_id},
+            )
+            return data if isinstance(data, dict) else None
+        except Exception:
+            return None
+
+    @classmethod
+    async def search_docs(cls, query: str, notebook_id: str | None = None) -> list[dict]:
+        """Search documents by keyword."""
+        try:
+            params = {"k": query}
+            if notebook_id:
+                params["box"] = notebook_id
+            data = await cls._request("search/searchBlock", params)
+            return data.get("blocks", []) if isinstance(data, dict) else []
+        except Exception:
+            return []
+
+    @classmethod
+    async def create_book_note(
+        cls,
+        calibre_id: str,
+        title: str,
+        author: str,
+        notebook_id: str | None = None,
+    ) -> str | None:
+        """Create a Book Note document in SiYuan.
+
+        Uses the Book Template structure with proper frontmatter.
+
+        Args:
+            calibre_id: Calibre book ID
+            title: Book title
+            author: Book author
+            notebook_id: Target notebook ID (auto-detects if None)
+
+        Returns:
+            Document ID or None if creation fails
+        """
+        try:
+            # Find or use provided notebook
+            if not notebook_id:
+                notebooks = await cls.list_notebooks()
+                open_notebooks = [nb for nb in notebooks if not nb.get("closed", True)]
+
+                notebook = None
+                for name in ["IES", "Personal", "Intelligent Exploration"]:
+                    for nb in open_notebooks:
+                        if name.lower() in nb.get("name", "").lower():
+                            notebook = nb
+                            break
+                    if notebook:
+                        break
+
+                if not notebook and open_notebooks:
+                    notebook = open_notebooks[0]
+
+                if not notebook:
+                    logger.warning("No SiYuan notebook found for book note creation")
+                    return None
+
+                notebook_id = notebook["id"]
+
+            # Clean title for path (remove special characters)
+            clean_title = "".join(c for c in title if c.isalnum() or c in " -_").strip()
+            clean_title = clean_title[:50]  # Limit length
+            path = f"/Sources/Books/{clean_title}"
+
+            # Check if book note already exists
+            existing_id = await cls.get_doc_id_by_path(notebook_id, path)
+            if existing_id:
+                logger.info(f"Book note already exists for {title}: {existing_id}")
+                return existing_id
+
+            # Create Book Note with template structure
+            markdown = f"""---
+be_type: book
+be_id: calibre_{calibre_id}
+status: reading
+calibre_id: {calibre_id}
+title: {title}
+author: {author}
+---
+
+# {title}
+
+**Author:** {author}
+**Calibre ID:** {calibre_id}
+
+## Overview
+
+*Summary and key themes will appear here as you read.*
+
+## Key Concepts
+
+*Extracted concepts from highlights.*
+
+## Highlights
+
+*Reading highlights from IES Reader.*
+
+## Questions
+
+*Questions that emerged while reading.*
+
+## Connections
+
+*Links to other concepts and sources.*
+
+## Notes
+
+*Your reflections and observations.*
+"""
+            doc_id = await cls.create_doc(notebook_id, path, markdown)
+            logger.info(f"Created book note for {title}: {doc_id}")
+            return doc_id
+
+        except Exception as e:
+            logger.warning(f"Failed to create book note: {e}")
+            return None
+
+    @classmethod
+    async def append_highlight_to_book_note(
+        cls,
+        doc_id: str,
+        highlight_text: str,
+        note: str | None = None,
+        chapter: str | None = None,
+        cfi: str | None = None,
+    ) -> str | None:
+        """Append a highlight to a book note's Highlights section.
+
+        Args:
+            doc_id: Book note document ID
+            highlight_text: The highlighted text
+            note: User's note about the highlight
+            chapter: Chapter name
+            cfi: EPUB CFI location for jump-back
+
+        Returns:
+            Block ID of the created highlight or None
+        """
+        try:
+            # Build highlight block with frontmatter
+            location = chapter or ""
+            if cfi:
+                location = f"{location} (CFI: `{cfi}`)" if location else f"CFI: `{cfi}`"
+
+            note_line = f"\n\n**Note:** {note}" if note else ""
+
+            markdown = f"""---
+custom-block-type: highlight
+custom-source-cfi: {cfi or ''}
+---
+
+> "{highlight_text}"
+
+*{location}*{note_line}
+
+---
+"""
+            block_id = await cls.append_block(doc_id, markdown)
+            return block_id
+
+        except Exception as e:
+            logger.warning(f"Failed to append highlight: {e}")
+            return None
+
+    @classmethod
+    async def find_book_note_by_calibre_id(cls, calibre_id: str) -> str | None:
+        """Find existing book note by calibre ID.
+
+        Args:
+            calibre_id: Calibre book ID
+
+        Returns:
+            Document ID or None if not found
+        """
+        try:
+            # Search for documents containing the calibre_id
+            results = await cls.search_docs(f"calibre_{calibre_id}")
+            for block in results:
+                # Check if it's a document root and contains our frontmatter
+                content = block.get("content", "")
+                if f"calibre_id: {calibre_id}" in content:
+                    return block.get("rootID") or block.get("id")
+            return None
+        except Exception:
+            return None

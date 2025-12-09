@@ -934,3 +934,227 @@ Now generate facets for "{entity_name}":"""
             "total_count": total_count,
             "sources_searched": len(sources_searched),
         }
+
+    @staticmethod
+    async def generate_questions_for_entity(
+        entity_name: str,
+        entity_type: str,
+        facets: list[dict] | None = None,
+        persist: bool = False,
+    ) -> dict:
+        """Generate questions for exploring an entity using AI.
+
+        Questions are extracted from the entity's facets or generated fresh
+        based on the entity type. Each question is classified by type
+        (why, how, what, when, who, where, which, general).
+
+        Args:
+            entity_name: Name of the entity to generate questions for
+            entity_type: Type of entity (Concept, Theory, etc.)
+            facets: Optional list of facets to base questions on
+            persist: Whether to save generated questions to the graph
+
+        Returns:
+            Dict with entity_name, entity_type, questions list, and generated flag
+        """
+        if not ANTHROPIC_AVAILABLE or not settings.anthropic_api_key:
+            logger.warning("Anthropic not available for question generation")
+            return {
+                "entity_name": entity_name,
+                "entity_type": entity_type,
+                "questions": [],
+                "generated": False,
+            }
+
+        # Build facet context if available
+        facet_context = ""
+        if facets:
+            facet_names = [f.get("name", "") for f in facets]
+            facet_context = f"\n\nThis entity has the following facets/aspects: {', '.join(facet_names)}"
+
+        prompt = f"""You are helping someone explore "{entity_name}" (type: {entity_type}).{facet_context}
+
+Generate 5-8 questions that would help someone deeply understand this topic. Mix different question types:
+- WHY questions (reasons, causes, motivations)
+- HOW questions (mechanisms, processes, methods)
+- WHAT questions (definitions, components, characteristics)
+- WHEN questions (timing, conditions, sequences)
+- WHO questions (people, roles, stakeholders)
+- WHERE questions (contexts, locations, applications)
+- WHICH questions (comparisons, choices, distinctions)
+
+Return ONLY a JSON array with this structure:
+[
+  {{"text": "Question text?", "type": "why", "concepts": ["related", "concepts"]}},
+  ...
+]
+
+Example for "Executive Function":
+[
+  {{"text": "How does executive function develop across the lifespan?", "type": "how", "concepts": ["development", "lifespan", "brain maturation"]}},
+  {{"text": "Why do people with ADHD struggle with executive function?", "type": "why", "concepts": ["ADHD", "dopamine", "prefrontal cortex"]}},
+  {{"text": "What are the main components of executive function?", "type": "what", "concepts": ["working memory", "inhibition", "cognitive flexibility"]}}
+]
+
+Now generate questions for "{entity_name}":"""
+
+        try:
+            client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+            response = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=800,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            # Parse JSON response
+            response_text = response.content[0].text.strip()
+            # Handle potential markdown code blocks
+            if response_text.startswith("```"):
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+                response_text = response_text.strip()
+
+            questions_data = json.loads(response_text)
+
+            # Normalize and validate
+            questions = []
+            for q in questions_data:
+                question_type = q.get("type", "general").lower()
+                # Validate type
+                if question_type not in ["why", "how", "what", "when", "who", "where", "which"]:
+                    question_type = "general"
+
+                questions.append({
+                    "text": q.get("text", ""),
+                    "question_type": question_type,
+                    "related_concepts": q.get("concepts", []),
+                })
+
+            logger.info(f"Generated {len(questions)} questions for {entity_name}")
+
+            return {
+                "entity_name": entity_name,
+                "entity_type": entity_type,
+                "questions": questions,
+                "generated": True,
+            }
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse AI question response: {e}")
+            return {
+                "entity_name": entity_name,
+                "entity_type": entity_type,
+                "questions": [],
+                "generated": False,
+            }
+        except Exception as e:
+            logger.error(f"AI question generation failed: {e}")
+            return {
+                "entity_name": entity_name,
+                "entity_type": entity_type,
+                "questions": [],
+                "generated": False,
+            }
+
+    @staticmethod
+    async def generate_clarification(
+        entity_name: str,
+        user_goal: str | None = None,
+    ) -> dict:
+        """Generate a clarification dialogue before facet decomposition.
+
+        Helps users articulate what they want to understand about an entity
+        before diving into facet exploration. Returns a clarifying question,
+        suggested facets based on the goal, prerequisites, and context.
+
+        Args:
+            entity_name: Name of the entity to explore
+            user_goal: Optional user-provided goal/interest
+
+        Returns:
+            Dict with clarifying_question, suggested_facets, prerequisites, why_it_matters
+        """
+        if not ANTHROPIC_AVAILABLE or not settings.anthropic_api_key:
+            logger.warning("Anthropic not available for clarification generation")
+            return {
+                "entity_name": entity_name,
+                "clarifying_question": f"What specifically would you like to understand about {entity_name}?",
+                "suggested_facets": [],
+                "prerequisites": [],
+                "why_it_matters": None,
+            }
+
+        goal_context = ""
+        if user_goal:
+            goal_context = f'\n\nThe user has indicated their goal: "{user_goal}"'
+
+        prompt = f"""You are a thinking partner helping someone explore "{entity_name}".{goal_context}
+
+Generate a thoughtful clarification dialogue to help them focus their exploration.
+
+Return ONLY a JSON object with this structure:
+{{
+  "clarifying_question": "A question to help clarify their exploration intent",
+  "suggested_facets": ["facet1", "facet2", "facet3"],
+  "prerequisites": ["concept1", "concept2"],
+  "why_it_matters": "Brief explanation of why understanding this matters"
+}}
+
+Example for "Dopamine" with goal "understanding ADHD medication":
+{{
+  "clarifying_question": "Are you more interested in how dopamine affects attention and focus, or in understanding the mechanism of stimulant medications specifically?",
+  "suggested_facets": ["Neurotransmission Mechanisms", "Medication Effects", "Attention Regulation"],
+  "prerequisites": ["neurotransmitters", "prefrontal cortex"],
+  "why_it_matters": "Understanding dopamine's role helps demystify how ADHD medications work and why they're effective for some people"
+}}
+
+Now generate clarification for "{entity_name}":"""
+
+        try:
+            client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+            response = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=400,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            # Parse JSON response
+            response_text = response.content[0].text.strip()
+            # Handle potential markdown code blocks
+            if response_text.startswith("```"):
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+                response_text = response_text.strip()
+
+            data = json.loads(response_text)
+
+            logger.info(f"Generated clarification for {entity_name}")
+
+            return {
+                "entity_name": entity_name,
+                "clarifying_question": data.get("clarifying_question", f"What would you like to understand about {entity_name}?"),
+                "suggested_facets": data.get("suggested_facets", []),
+                "prerequisites": data.get("prerequisites", []),
+                "why_it_matters": data.get("why_it_matters"),
+            }
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse AI clarification response: {e}")
+            return {
+                "entity_name": entity_name,
+                "clarifying_question": f"What specifically would you like to understand about {entity_name}?",
+                "suggested_facets": [],
+                "prerequisites": [],
+                "why_it_matters": None,
+            }
+        except Exception as e:
+            logger.error(f"AI clarification generation failed: {e}")
+            return {
+                "entity_name": entity_name,
+                "clarifying_question": f"What specifically would you like to understand about {entity_name}?",
+                "suggested_facets": [],
+                "prerequisites": [],
+                "why_it_matters": None,
+            }

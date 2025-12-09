@@ -16,7 +16,7 @@ from ies_backend.schemas.question import (
 )
 from ies_backend.services.question_service import QuestionService
 
-router = APIRouter(prefix="/questions", tags=["questions"])
+router = APIRouter(tags=["questions"])
 
 # Global service instance
 _question_service = QuestionService()
@@ -33,6 +33,7 @@ async def list_questions(
     context_id: str | None = Query(None, description="Filter by context ID"),
     source: QuestionSource | None = Query(None, description="Filter by source"),
     status: QuestionStatus | None = Query(None, description="Filter by status"),
+    parent_entity_id: str | None = Query(None, description="Filter by parent entity ID"),
     limit: int = Query(100, ge=1, le=500, description="Maximum results"),
 ) -> list[Question]:
     """List questions with optional filters."""
@@ -40,8 +41,18 @@ async def list_questions(
         context_id=context_id,
         source=source,
         status=status,
+        parent_entity_id=parent_entity_id,
         limit=limit,
     )
+
+
+@router.get("/by-entity/{entity_id}", response_model=list[Question])
+async def list_questions_by_entity(
+    entity_id: str,
+    status: QuestionStatus | None = Query(None, description="Filter by status"),
+) -> list[Question]:
+    """List all questions about a specific entity."""
+    return await _question_service.list_by_entity(entity_id, status=status)
 
 
 @router.get("/{question_id}", response_model=Question)

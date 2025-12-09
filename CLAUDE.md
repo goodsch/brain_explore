@@ -63,7 +63,64 @@ docker compose up -d
 # Backend (port 8081)
 cd ies/backend && uv run uvicorn ies_backend.main:app --reload --port 8081
 
-**Latest (Dec 8):**
+**Latest (Dec 9):**
+- ✅ **Extraction Profile Schemas** — Context-aware entity extraction configuration system
+  - **New schemas** (`ies/backend/src/ies_backend/schemas/extraction.py`, 133 lines):
+    - `QuestionExtractionProfile` — Fine-grained extraction settings per question (focus_concepts, relation_types, depth 1-3)
+    - `ExtractionProfile` — Context-wide extraction configuration (core_concepts, synonyms, relation_types, domain_filters, question_overrides)
+    - `ExtractionResult` — Extraction session results (concepts_found, relations_found, subquestions_generated, sources_processed, segments_analyzed)
+    - `ExtractionProfileCreate` — API request schema for creating profiles
+    - `ExtractionRunRequest` — API request for running extraction (context_id, question_id, source_ids, max_segments)
+    - `ExtractionRunResponse` — API response with result and journey_entry_id
+  - **Schema exports** — All extraction types now exported from `ies/backend/src/ies_backend/schemas/__init__.py`
+  - **Test coverage** — Complete test suite in `ies/backend/tests/test_extraction_schema.py` (200+ lines, validation + serialization)
+  - **Purpose:** Enables targeted entity extraction based on context and question focus, addressing Gap #5 (context-aware extraction)
+  - **Features:** Synonym mapping for flexible matching, depth control for graph traversal, domain filtering, question-specific overrides
+  - **Integration:** Will be used by Extraction Engine service (future implementation) for intelligent source processing
+- ✅ **Highlights + Cross-App Sync + Facet Decomposition (Commits 3c7bb64, adbbb6c, f2e1f0d)** — Complete reader annotation system with SiYuan integration
+  - **Highlights API** (`/highlights`) — Backend highlight persistence with CFI-based location tracking
+    - Endpoints: create, get, update, delete, list (by book/context), batch sync
+    - Schemas: Highlight, HighlightCreate, HighlightUpdate, HighlightColor (yellow/green/blue/pink/purple)
+    - In-memory storage MVP (will migrate to PostgreSQL/Neo4j later)
+    - Features: context linking, entity extraction, SiYuan sync tracking
+  - **Reader Integration** (`ies/reader/src/components/Reader.tsx`) — Highlight creation from text selection
+    - Selection action bar integration with highlight button
+    - Color picker for highlight annotation
+    - Auto-sync to backend on creation
+  - **SiYuan Highlights Section** (`.worktrees/siyuan/ies/plugin/src/components/HighlightsSection.svelte`) — Display book highlights with sync
+    - Lists highlights by book with color indicators, notes, timestamps
+    - "Sync All to SiYuan" button creates document blocks for each highlight
+    - SiYuan block ID tracking prevents duplicate sync
+    - Backend sync endpoint: `POST /highlights/{book_id}/sync-to-siyuan`
+  - **SiYuan Client Enhancement** (`ies/backend/src/ies_backend/services/siyuan_client.py`) — Full CRUD for SiYuan documents
+    - New methods: `create_doc()`, `append_block()`, `get_doc_id_by_path()`, `ensure_folder_exists()`, `create_book_note_structure()`
+    - Book Notes creation: `/Book Notes/{book_title}` documents with highlights, questions, insights sections
+    - Automatic notebook selection: prefers "IES", "Personal", "Therapy", or first open notebook
+  - **Facet Decomposition** (`POST /graph/decompose`) — AI-driven entity exploration
+    - Generates 3-7 exploration facets for an entity (mechanisms, applications, critiques, related_theories, etc.)
+    - Each facet contains questions to guide investigation
+    - Schema: `FacetDecompositionRequest`, `Facet`, `FacetDecompositionResponse`
+  - **Clarification Layer** (`POST /graph/clarify`) — Pre-facet user intent clarification
+    - Asks clarifying question before decomposition to understand exploration goals
+    - Returns: clarifying_question, suggested_facets, prerequisites, why_it_matters
+    - Used by ClarificationDialog component in SiYuan Flow Mode
+  - **Question Entity Linking** (`parent_entity_id` field in Question schema) — Questions now link to entities
+    - QuestionSource enum extended with `FACET_DECOMPOSITION` type
+    - Supports facet-driven question generation workflow
+  - **API Clients**:
+    - IES Reader: `ies/reader/src/services/highlightApi.ts` (HighlightApiClient with network-aware API URL)
+    - SiYuan: `.worktrees/siyuan/ies/plugin/src/services/highlightApi.ts` (forwardProxy pattern for CORS bypass)
+  - **Impact:** Completes reading → annotation → knowledge capture → cross-app sync workflow
+- ✅ **Ground Truth Documentation** (commit 1c9e683) — Four comprehensive docs establish complete system design
+  - `docs/IES-SYSTEM-DESIGN.md` — Conceptual foundation (906 lines): WHY IES exists, cognitive architecture, operating model, entity lifecycle, interaction semantics
+  - `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` — Project clarity (382 lines): Resolves Readest vs IES Reader confusion, migration guide, current status
+  - `docs/ARCHITECTURE-AND-INTERACTIONS.md` — Technical reference (1,343 lines): Complete API maps, data flows, user interaction diagrams, state management
+  - `docs/GAP-ANALYSIS-2025-12-09.md` — Implementation tracking (440 lines): Redux specs vs actual code, prioritized gap analysis
+  - **Rule:** If docs conflict, `IES-SYSTEM-DESIGN.md` wins (it's the ground truth)
+  - Updated Serena memory `ies_architecture` with Dec 9 snapshot
+  - Removed stale `true_vision` memory reference from CLAUDE.md
+
+**Dec 8:**
 - ✅ **Flow Mode Navigation Foundation (Phase 1)** — Graph traversal with trail tracking
   - Navigation state machine: `FocusState` = 'idle' | 'question' | 'entity' | 'facet'
   - Trail component (breadcrumbs): Context → Question → Entity with click-to-navigate
@@ -364,14 +421,18 @@ git status                # Current state
 
 ## Key Resources
 
-**Ground Truth Documentation (Dec 2025):**
+**Ground Truth Documentation (Dec 9, 2025):**
 
-| Document | Purpose |
-|----------|---------|
-| `docs/IES-SYSTEM-DESIGN.md` | **Ground Truth** — WHY IES exists, cognitive architecture, operating model |
-| `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` | WHAT is active — Readest vs IES Reader, component status |
-| `docs/ARCHITECTURE-AND-INTERACTIONS.md` | HOW it works — Technical APIs, data flows, layer interactions |
-| `docs/GAP-ANALYSIS-2025-12-09.md` | Implementation status vs specification |
+Four comprehensive documentation files establish the complete system design:
+
+| Document | Purpose | When to Read |
+|----------|---------|--------------|
+| `docs/IES-SYSTEM-DESIGN.md` | **Ground Truth** — WHY IES exists, cognitive architecture, operating model, entity lifecycle, interaction semantics | Start here for conceptual understanding |
+| `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` | WHAT is active — Readest vs IES Reader status, component migration guide | When working across layers |
+| `docs/ARCHITECTURE-AND-INTERACTIONS.md` | HOW it works — Technical APIs, data flows, layer interactions, user interaction maps | For implementation details |
+| `docs/GAP-ANALYSIS-2025-12-09.md` | Implementation status vs redux specifications | When planning next features |
+
+**Documentation Hierarchy Rule:** If any document conflicts with `IES-SYSTEM-DESIGN.md`, that document wins. It is the conceptual foundation.
 
 **Reference Documentation:**
 
@@ -379,8 +440,7 @@ git status                # Current state
 |----------|---------|
 | `docs/CHANGELOG.md` | Development history |
 | `docs/plans/` | Feature design documents |
-| Serena memory: `true_vision` | Core project vision |
-| Serena memory: `ies_architecture` | Technical architecture details |
+| Serena memory: `ies_architecture` | Implementation snapshot (updated Dec 9) |
 
 **Key Code Locations:**
 

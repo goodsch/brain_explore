@@ -1,6 +1,6 @@
 """Graph API router for Layer 3 exploration.
 
-Provides 10 endpoints for visual knowledge graph exploration:
+Provides 12 endpoints for visual knowledge graph exploration:
 - GET /explore/{concept} - Related concepts and relationships
 - GET /search - Concept search
 - GET /sources/{concept} - Supporting text chunks
@@ -9,8 +9,10 @@ Provides 10 endpoints for visual knowledge graph exploration:
 - GET /entity/{name} - Rich entity details for Flow Mode EntityFocus
 - GET /entity/{name}/facets - Facets for entity drilling (AI-generated if empty)
 - GET /entity/{name}/evidence - Evidence passages from source materials
+- GET /entity/{name}/questions - AI-generated questions for entity exploration (Sprint 4)
 - POST /entity - Create entity from facet exploration
 - POST /thinking-partner - Generate reflection question
+- POST /clarify - Guided clarification before facet decomposition (Sprint 4)
 """
 
 from fastapi import APIRouter, HTTPException, Query
@@ -18,13 +20,17 @@ from fastapi import APIRouter, HTTPException, Query
 from ies_backend.config import settings
 from ies_backend.services.graph_service import GraphService
 from ies_backend.schemas.graph import (
+    ClarificationRequest,
+    ClarificationResponse,
     CreateEntityRequest,
     CreateEntityResponse,
     EntityDetailsResponse,
     EntityEvidenceResponse,
     EntityFacetsResponse,
+    EntityQuestionsResponse,
     EvidencePassage,
     ExploreResponse,
+    ExtractedQuestion,
     Facet,
     FacetEntity,
     GraphNode,
@@ -477,3 +483,124 @@ Ask ONE thoughtful question to deepen their exploration."""
         question = f"What draws you to explore {request.concept}?"
 
     return ThinkingPartnerResponse(question=question)
+
+
+@router.get("/entity/{name}/questions", response_model=EntityQuestionsResponse)
+async def get_entity_questions(
+    name: str,
+    generate: bool = Query(
+        default=True,
+        description="Generate questions via AI if none exist"
+    ),
+) -> EntityQuestionsResponse:
+    """Get questions for exploring an entity (Sprint 4: Questions + Clarification).
+
+    Returns a list of questions that would help understand this entity deeply.
+    Questions are classified by type (why, how, what, when, who, where, which).
+    If `generate=True` and no cached questions exist, AI will generate them.
+
+    This endpoint enables the question extraction from facet decomposition
+    workflow, providing AI-generated questions to guide exploration.
+
+    Args:
+        name: Entity name to get questions for
+        generate: If True, generate questions via AI when none exist
+
+    Returns:
+        EntityQuestionsResponse with list of extracted questions
+
+    Raises:
+        HTTPException 404 if entity not found
+    """
+    # First verify entity exists
+    entity_result = await GraphService.get_entity_details(name)
+    if entity_result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Entity '{name}' not found in knowledge graph"
+        )
+
+    entity_type = entity_result.get("type", "Concept")
+
+    if not generate:
+        # Return empty if not generating
+        return EntityQuestionsResponse(
+            entity_name=name,
+            entity_type=entity_type,
+            questions=[],
+            generated=False,
+        )
+
+    # Get entity facets for context (if available)
+    facets_result = await GraphService.get_entity_facets(
+        entity_name=name,
+        generate_if_empty=False,  # Don't auto-generate facets
+        force_regenerate=False,
+    )
+
+    facets = facets_result.get("facets", []) if facets_result else []
+
+    # Generate questions using AI
+    result = await GraphService.generate_questions_for_entity(
+        entity_name=name,
+        entity_type=entity_type,
+        facets=facets,
+        persist=False,  # Don't persist for now (in-memory cache later)
+    )
+
+    return EntityQuestionsResponse(
+        entity_name=result["entity_name"],
+        entity_type=result["entity_type"],
+        questions=[
+            ExtractedQuestion(
+                text=q["text"],
+                question_type=q["question_type"],
+                related_concepts=q.get("related_concepts", []),
+            )
+            for q in result.get("questions", [])
+        ],
+        generated=result.get("generated", False),
+    )
+
+
+@router.post("/clarify", response_model=ClarificationResponse)
+async def get_clarification(request: ClarificationRequest) -> ClarificationResponse:
+    """Get guided clarification before facet decomposition (Sprint 4).
+
+    This endpoint provides a dialogue to help users articulate what they
+    want to understand about an entity before diving into exploration.
+    Returns a clarifying question, suggested facets, prerequisites, and context.
+
+    Use this to implement the "clarification dialogue before facet generation"
+    flow in the UI.
+
+    Args:
+        request: ClarificationRequest with entity_name and optional user_goal
+
+    Returns:
+        ClarificationResponse with clarifying question and guidance
+
+    Raises:
+        HTTPException 404 if entity not found
+    """
+    # Verify entity exists (optional - could allow clarification for new topics)
+    entity_result = await GraphService.get_entity_details(request.entity_name)
+    if entity_result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Entity '{request.entity_name}' not found in knowledge graph"
+        )
+
+    # Generate clarification dialogue
+    result = await GraphService.generate_clarification(
+        entity_name=request.entity_name,
+        user_goal=request.user_goal,
+    )
+
+    return ClarificationResponse(
+        entity_name=result["entity_name"],
+        clarifying_question=result["clarifying_question"],
+        suggested_facets=result.get("suggested_facets", []),
+        prerequisites=result.get("prerequisites", []),
+        why_it_matters=result.get("why_it_matters"),
+    )

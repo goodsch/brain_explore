@@ -10,6 +10,7 @@ from ies_backend.schemas.question import (
     QuestionCreate,
     QuestionSource,
     QuestionStatus,
+    QuestionType,
     QuestionUpdate,
     AnswerBlock,
     AnswerBlockCreate,
@@ -33,10 +34,14 @@ class QuestionService:
             id=question_id,
             context_id=data.context_id,
             text=data.text,
+            question_type=data.question_type,
             parent_question_id=data.parent_question_id,
+            parent_entity_id=data.parent_entity_id,
             status=data.status,
             source=data.source,
             siyuan_block_id=data.siyuan_block_id,
+            evidence_count=data.evidence_count,
+            confidence=data.confidence,
             prerequisite_questions=[],
             related_concepts=[],
             linked_sources=[],
@@ -63,11 +68,20 @@ class QuestionService:
         questions.sort(key=lambda q: q.created_at, reverse=True)
         return questions
 
+    async def list_by_entity(self, entity_id: str, status: QuestionStatus | None = None) -> list[Question]:
+        """List questions for a specific entity."""
+        questions = [q for q in self._questions.values() if q.parent_entity_id == entity_id]
+        if status:
+            questions = [q for q in questions if q.status == status]
+        questions.sort(key=lambda q: q.created_at, reverse=True)
+        return questions
+
     async def list(
         self,
         context_id: str | None = None,
         source: QuestionSource | None = None,
         status: QuestionStatus | None = None,
+        parent_entity_id: str | None = None,
         limit: int = 100,
     ) -> list[Question]:
         """List questions with optional filters."""
@@ -79,6 +93,8 @@ class QuestionService:
             questions = [q for q in questions if q.source == source]
         if status:
             questions = [q for q in questions if q.status == status]
+        if parent_entity_id:
+            questions = [q for q in questions if q.parent_entity_id == parent_entity_id]
 
         questions.sort(key=lambda q: q.updated_at, reverse=True)
         return questions[:limit]
