@@ -1,47 +1,17 @@
 /* IES Reader - Global Styles */
-/* IES Design System v2 — Dark Mode First */
 @import './styles/design-system.css';
 
-/* Reset body centering from Vite defaults */
 body {
   display: block;
   place-items: initial;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
 }
 
-/* App container fills viewport - explicit height required for react-reader */
 #root {
   height: 100vh;
-  height: 100dvh; /* Dynamic viewport for mobile */
-}
-
-/* Focus styles for accessibility */
-:focus-visible {
-  outline: 2px solid var(--entity-concept);
-  outline-offset: 2px;
-}
-
-/* Selection color */
-::selection {
-  background: rgba(59, 130, 246, 0.2);
-  color: var(--text-primary);
-}
-
-/* Links */
-a {
-  color: var(--entity-concept);
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-out);
-}
-
-a:hover {
-  color: #60a5fa; /* Lighter blue on hover */
-  text-decoration: underline;
-}
-
-/* Reset button defaults */
-button {
-  font-family: inherit;
-  border: none;
-  background: none;
-  cursor: pointer;
+  height: 100dvh;
 }

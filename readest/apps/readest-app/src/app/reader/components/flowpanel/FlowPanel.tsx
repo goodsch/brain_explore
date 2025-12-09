@@ -12,12 +12,13 @@ import { Overlay } from '@/components/Overlay';
 import useShortcuts from '@/hooks/useShortcuts';
 
 import FlowPanelHeader from './Header';
+import QuestionSelector from './QuestionSelector';
 import EntitySection from './EntitySection';
 import RelationshipsSection from './RelationshipsSection';
 import SourcesSection from './SourcesSection';
+import EvidenceSection from './EvidenceSection';
 import QuestionsSection from './QuestionsSection';
-import ReframesSection from './ReframesSection';
-import { EntityTypeFilter } from '../EntityTypeFilter';
+import ResumeSection from './ResumeSection';
 
 const MIN_FLOW_PANEL_WIDTH = 0.2;
 const MAX_FLOW_PANEL_WIDTH = 0.5;
@@ -36,8 +37,16 @@ const FlowPanel: React.FC = () => {
     currentEntity,
     relationships,
     bookSources,
+    evidence,
     thinkingPartnerQuestions,
     isLoadingEntity,
+    isLoadingEvidence,
+    sessionId,
+    questions,
+    currentQuestionId,
+    isLoadingQuestions,
+    addQuestion,
+    setCurrentQuestionId,
     getFlowPanelWidth,
     setFlowPanelWidth,
     setFlowModeActive,
@@ -151,6 +160,28 @@ const FlowPanel: React.FC = () => {
           />
         </div>
 
+        {/* Question Selector - new in Flow v2 */}
+        <div className='px-4 py-3 border-b border-base-300/50'>
+          <QuestionSelector
+            questions={questions}
+            currentQuestionId={currentQuestionId}
+            onSelect={setCurrentQuestionId}
+            onCreate={(text) => {
+              const newQuestion = {
+                id: `q-${Date.now()}`,
+                text,
+                source: 'reader' as const,
+                status: 'active' as const,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+              addQuestion(newQuestion);
+              setCurrentQuestionId(newQuestion.id);
+            }}
+            isLoading={isLoadingQuestions}
+          />
+        </div>
+
         <div className='flex-grow overflow-y-auto px-4 py-2'>
           {/* Entity Overlay Filter - Always visible at top */}
           <div className='mb-4'>
@@ -163,9 +194,12 @@ const FlowPanel: React.FC = () => {
             </div>
           ) : currentEntity ? (
             <div className='space-y-4'>
+              {/* Resume Section - Show at top when session is active */}
+              {sessionId && <ResumeSection />}
               <EntitySection entity={currentEntity} />
               <RelationshipsSection relationships={relationships} />
               <SourcesSection sources={bookSources} />
+              <EvidenceSection evidence={evidence} isLoading={isLoadingEvidence} />
               <QuestionsSection questions={thinkingPartnerQuestions} />
               {currentEntity?.id && <ReframesSection conceptId={currentEntity.id} />}
             </div>

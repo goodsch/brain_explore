@@ -11,6 +11,7 @@ import {
   BookSource,
   ThinkingPartnerQuestion,
   BreadcrumbJourney,
+  EvidencePassage,
 } from '@/store/flowModeStore';
 
 // Configuration - use same host as the web app (backend runs on same server)
@@ -76,6 +77,25 @@ interface RawSearchResponse {
     type: string;
     score: number;
   }>;
+}
+
+interface RawEvidenceResponse {
+  entity_name: string;
+  evidence: Array<{
+    id: string;
+    text: string;
+    source_title: string;
+    source_author: string | null;
+    location: {
+      chapter?: string;
+      page?: number;
+      cfi?: string;
+    } | null;
+    confidence: number;
+    source_type: 'chunk' | 'book';
+  }>;
+  total_count: number;
+  sources_searched: number;
 }
 
 class GraphAPIClient {
@@ -222,6 +242,34 @@ class GraphAPIClient {
   }
 
   /**
+   * Get evidence passages for an entity (Sprint 2)
+   * Returns text snippets from books that mention/discuss the entity
+   */
+  async getEntityEvidence(entityName: string, limit = 10): Promise<EvidencePassage[]> {
+    try {
+      const params = new URLSearchParams({
+        limit: String(limit),
+        include_book_mentions: 'true',
+      });
+      const response = await this.fetch<RawEvidenceResponse>(
+        `/graph/entity/${encodeURIComponent(entityName)}/evidence?${params}`
+      );
+      return response.evidence.map((e) => ({
+        id: e.id,
+        text: e.text,
+        sourceTitle: e.source_title,
+        sourceAuthor: e.source_author || undefined,
+        location: e.location || undefined,
+        confidence: e.confidence,
+        sourceType: e.source_type,
+      }));
+    } catch {
+      // Evidence may not exist for all entities
+      return [];
+    }
+  }
+
+  /**
    * Get thinking partner question for an entity
    */
   async getThinkingPartnerQuestions(
@@ -289,18 +337,31 @@ class GraphAPIClient {
   }
 }
 
-// Singleton instance
+// Singleton instance with config tracking
 let graphClient: GraphAPIClient | null = null;
+let clientConfigHash: string | null = null;
+
+function hashConfig(config?: GraphClientConfig): string {
+  return JSON.stringify({
+    baseUrl: config?.baseUrl || DEFAULT_API_BASE,
+    timeout: config?.timeout || 10000,
+  });
+}
 
 export function getGraphClient(config?: GraphClientConfig): GraphAPIClient {
-  if (!graphClient) {
+  const newConfigHash = hashConfig(config);
+
+  // Recreate client if config has changed
+  if (!graphClient || clientConfigHash !== newConfigHash) {
     graphClient = new GraphAPIClient(config);
+    clientConfigHash = newConfigHash;
   }
   return graphClient;
 }
 
 export function resetGraphClient(): void {
   graphClient = null;
+  clientConfigHash = null;
 }
 
 export { GraphAPIClient };

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Sheet } from '../ui/Sheet';
-import { useFlowStore } from '../../store/flowStore'; // Corrected path
+import { useFlowStore } from '../../store/flowStore';
 import { Send, PenLine, Lightbulb, HelpCircle } from 'lucide-react';
 import clsx from 'clsx';
 // Assuming useTranslation is available globally or imported from a common hook
@@ -21,7 +21,7 @@ type NoteType = 'thought' | 'question' | 'insight';
 export function NotesSheet({ isOpen, onClose, initialNoteData }: Props) {
   // const _ = useTranslation(); // Temporarily disabled until path is confirmed
   const _ = (text: string) => text; // Mock translation function
-  const { currentEntity, addJourneyStep } = useFlowStore();
+  const { currentEntity, addJourneyMark } = useFlowStore();
   const [noteInput, setNoteInput] = useState(initialNoteData?.text ? `"${initialNoteData.text}"
 
 ` : '');
@@ -30,15 +30,18 @@ export function NotesSheet({ isOpen, onClose, initialNoteData }: Props) {
   const handleSubmit = () => {
     if (!noteInput.trim()) return;
 
-    // Add as a step to the current journey with the note as source passage
+    // Add as a mark to the current journey
+    // If no journey is active, this might need handling, but we assume flow is somewhat active
     if (currentEntity) {
-      addJourneyStep(
-        currentEntity.id,
-        currentEntity.name,
-        `[${noteType.toUpperCase()}] ${noteInput}`
-      );
+      addJourneyMark({
+        type: noteType === 'question' ? 'question' : 'annotation', // Simplified mapping
+        entityId: currentEntity.id,
+        content: `[${noteType.toUpperCase()}] ${noteInput}`,
+        // Assuming currentBookId and selectedText are available from a broader context or props if needed
+      });
     } else {
-      // Fallback if no entity - log for now
+      // Fallback if no entity - maybe just log or add to a general note store?
+      // For now, we'll log it as a limit of current implementation
       console.log('Note captured (no entity):', { type: noteType, content: noteInput });
       // TODO: Implement a way to capture notes without an entity, perhaps to a general "inbox"
     }

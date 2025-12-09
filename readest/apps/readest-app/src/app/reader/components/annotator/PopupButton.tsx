@@ -29,7 +29,7 @@ const PopupButton: React.FC<PopupButtonProps> = ({
       <button
         onClick={handleClick}
         className={clsx(
-          'flex h-8 min-h-8 w-8 items-center justify-center p-0',
+          'flex h-12 min-h-12 w-12 items-center justify-center p-0',
           disabled ? 'cursor-not-allowed opacity-50' : 'rounded-md hover:bg-gray-500',
         )}
         disabled={disabled}

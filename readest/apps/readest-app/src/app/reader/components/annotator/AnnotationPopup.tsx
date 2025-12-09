@@ -27,7 +27,7 @@ interface AnnotationPopupProps {
   onDismiss?: () => void;
 }
 
-const OPTIONS_HEIGHT_PIX = 28;
+const OPTIONS_HEIGHT_PIX = 48;
 const OPTIONS_PADDING_PIX = 16;
 
 const AnnotationPopup: React.FC<AnnotationPopupProps> = ({

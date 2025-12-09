@@ -16,6 +16,8 @@ interface ReaderProps {
   title?: string;
   calibreId?: number;
   onClose?: () => void;
+  theme?: 'light' | 'dark';
+  toggleTheme?: () => void;
 }
 
 export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps) {
@@ -185,6 +187,9 @@ interface IFrameContents {
             position: getSelectionPosition(contents),
             cfiRange: _cfiRange,
           });
+          // Also perform lookup if the flow panel is open, or some other condition
+          // For now, let's keep lookupEntity call here, it's fine.
+          lookupEntity(selectedText);
         } else {
             setSelectionContext(null); // Hide bar if selection is too short or cleared
         }
@@ -193,7 +198,7 @@ interface IFrameContents {
       // Start journey when book opens
       startJourney(title, calibreId);
     },
-    [startJourney, title, calibreId, getSelectionPosition]
+    [lookupEntity, startJourney, title, calibreId, getSelectionPosition]
   );
 
   // Toggle Flow panel

@@ -18,8 +18,10 @@ export function useFlowEntity(options: UseFlowEntityOptions = {}) {
     setCurrentEntity,
     setRelationships,
     setBookSources,
+    setEvidence,
     setThinkingPartnerQuestions,
     setIsLoadingEntity,
+    setIsLoadingEvidence,
     setIsLoadingQuestions,
     addJourneyStep,
     currentJourney,
@@ -46,24 +48,30 @@ export function useFlowEntity(options: UseFlowEntityOptions = {}) {
         // Add to journey path
         addJourneyStep(response.entity.id, response.entity.name);
 
-        // Fetch thinking partner questions asynchronously
+        // Fetch thinking partner questions and evidence asynchronously
         fetchQuestions(entityId);
+        fetchEvidence(entityId);
       } catch (error) {
         console.error('Failed to fetch entity:', error);
         setCurrentEntity(null);
         setRelationships([]);
         setBookSources([]);
+        setEvidence([]);
       } finally {
         setIsLoadingEntity(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       client,
       setCurrentEntity,
       setRelationships,
       setBookSources,
+      setEvidence,
       setIsLoadingEntity,
       addJourneyStep,
+      // Note: fetchQuestions and fetchEvidence intentionally omitted to avoid circular dependency
+      // They are stable references created with useCallback
     ]
   );
 
@@ -107,6 +115,26 @@ export function useFlowEntity(options: UseFlowEntityOptions = {}) {
       }
     },
     [client, currentJourney, setThinkingPartnerQuestions, setIsLoadingQuestions]
+  );
+
+  /**
+   * Fetch evidence passages for current entity (Sprint 2)
+   */
+  const fetchEvidence = useCallback(
+    async (entityId: string, limit = 10) => {
+      setIsLoadingEvidence(true);
+
+      try {
+        const evidence = await client.getEntityEvidence(entityId, limit);
+        setEvidence(evidence);
+      } catch (error) {
+        console.error('Failed to fetch evidence:', error);
+        setEvidence([]);
+      } finally {
+        setIsLoadingEvidence(false);
+      }
+    },
+    [client, setEvidence, setIsLoadingEvidence]
   );
 
   /**
@@ -166,6 +194,7 @@ export function useFlowEntity(options: UseFlowEntityOptions = {}) {
     fetchEntity,
     searchEntities,
     fetchQuestions,
+    fetchEvidence,
     exploreNeighborhood,
     lookupFromSelection,
   };

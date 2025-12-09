@@ -1,5 +1,11 @@
 import { create } from 'zustand';
-import type { EntityOverlay } from '../services/transformers/types';
+import {
+  getSyncService,
+  AppSource,
+  SessionStatus,
+  type ReadingPosition,
+  type ExplorationSession,
+} from '@/services/flow/syncService';
 
 // Types for entity data from the knowledge graph
 export interface GraphEntity {
@@ -26,6 +32,21 @@ export interface ThinkingPartnerQuestion {
   text: string;
   type: 'clarifying' | 'connecting' | 'challenging';
   relatedEntities?: string[];
+}
+
+// Evidence passages from source materials (Sprint 2)
+export interface EvidencePassage {
+  id: string;
+  text: string;
+  sourceTitle: string;
+  sourceAuthor?: string;
+  location?: {
+    chapter?: string;
+    page?: number;
+    cfi?: string;
+  };
+  confidence: number;
+  sourceType: 'chunk' | 'book';
 }
 
 // Breadcrumb journey tracking
@@ -64,6 +85,18 @@ export interface BreadcrumbJourney {
   thinkingPartnerExchanges: ThinkingPartnerExchange[];
 }
 
+// Question types for Flow v2
+export interface FlowQuestion {
+  id: string;
+  text: string;
+  source: 'siyuan' | 'reader' | 'ai-suggested';
+  siyuanId?: string;
+  parentId?: string;
+  status: 'active' | 'paused' | 'resolved';
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface FlowModeState {
   // Panel visibility and layout
   flowPanelWidth: string;
@@ -74,6 +107,7 @@ interface FlowModeState {
   currentEntity: GraphEntity | null;
   relationships: EntityRelationship[];
   bookSources: BookSource[];
+  evidence: EvidencePassage[];
   thinkingPartnerQuestions: ThinkingPartnerQuestion[];
 
   // Journey tracking
@@ -81,18 +115,20 @@ interface FlowModeState {
   journeyStartTime: number | null;
   currentStepStartTime: number | null;
 
-  // Entity overlay state
-  entityOverlay: {
-    enabled: boolean;
-    entities: EntityOverlay[];
-    visibleTypes: string[];
-    loading: boolean;
-    error: string | null;
-  };
+  // Session sync (Sprint 3)
+  sessionId: string | null;
+  currentSession: ExplorationSession | null;
+  readingPosition: ReadingPosition | null;
+  isSyncing: boolean;
 
   // Loading states
   isLoadingEntity: boolean;
+  isLoadingEvidence: boolean;
   isLoadingQuestions: boolean;
+
+  // Question state
+  questions: FlowQuestion[];
+  currentQuestionId: string | null;
 
   // Actions - Panel
   getFlowPanelWidth: () => string;
@@ -106,8 +142,10 @@ interface FlowModeState {
   setCurrentEntity: (entity: GraphEntity | null) => void;
   setRelationships: (relationships: EntityRelationship[]) => void;
   setBookSources: (sources: BookSource[]) => void;
+  setEvidence: (evidence: EvidencePassage[]) => void;
   setThinkingPartnerQuestions: (questions: ThinkingPartnerQuestion[]) => void;
   setIsLoadingEntity: (loading: boolean) => void;
+  setIsLoadingEvidence: (loading: boolean) => void;
   setIsLoadingQuestions: (loading: boolean) => void;
 
   // Actions - Journey
@@ -118,13 +156,25 @@ interface FlowModeState {
   endJourney: () => BreadcrumbJourney | null;
   getCurrentJourney: () => BreadcrumbJourney | null;
 
-  // Actions - Entity Overlay
-  setEntityOverlayEnabled: (enabled: boolean) => void;
-  setEntityOverlayEntities: (entities: EntityOverlay[]) => void;
-  setVisibleTypes: (types: string[]) => void;
-  toggleEntityType: (type: string) => void;
-  fetchEntitiesForBook: (bookHash: string, title?: string, calibreId?: number) => Promise<void>;
+  // Actions - Session Sync (Sprint 3)
+  setReadingPosition: (position: ReadingPosition | null) => void;
+  syncSession: (userId: string, force?: boolean) => Promise<void>;
+  pauseCurrentSession: () => Promise<void>;
+  loadSession: (sessionId: string) => Promise<void>;
+  setSessionId: (sessionId: string | null) => void;
+
+  // Question actions
+  addQuestion: (question: FlowQuestion) => void;
+  removeQuestion: (questionId: string) => void;
+  updateQuestion: (questionId: string, updates: Partial<FlowQuestion>) => void;
+  setCurrentQuestionId: (questionId: string | null) => void;
+  setQuestions: (questions: FlowQuestion[]) => void;
 }
+
+// Debounce helper
+let syncDebounceTimer: NodeJS.Timeout | null = null;
+const SYNC_DEBOUNCE_MS = 2000; // 2 seconds for entity navigation
+const POSITION_SYNC_DEBOUNCE_MS = 5000; // 5 seconds for reading position
 
 export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   // Initial state
@@ -134,12 +184,20 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   currentEntity: null,
   relationships: [],
   bookSources: [],
+  evidence: [],
   thinkingPartnerQuestions: [],
   currentJourney: null,
   journeyStartTime: null,
   currentStepStartTime: null,
+  sessionId: null,
+  currentSession: null,
+  readingPosition: null,
+  isSyncing: false,
   isLoadingEntity: false,
+  isLoadingEvidence: false,
   isLoadingQuestions: false,
+  questions: [],
+  currentQuestionId: null,
 
   // Entity overlay initial state
   entityOverlay: {
@@ -155,16 +213,42 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
   setFlowPanelWidth: (width: string) => set({ flowPanelWidth: width }),
   toggleFlowMode: () => set((state) => ({ isFlowModeActive: !state.isFlowModeActive })),
   toggleFlowPanelPin: () => set((state) => ({ isFlowPanelPinned: !state.isFlowPanelPinned })),
-  setFlowModeActive: (active: boolean) => set({ isFlowModeActive: active }),
+  setFlowModeActive: (active: boolean) => {
+    set({ isFlowModeActive: active });
+    // Auto-pause session when flow panel closes
+    if (!active) {
+      const state = get();
+      if (state.sessionId) {
+        get().pauseCurrentSession().catch(console.error);
+      }
+    }
+  },
   setFlowPanelPinned: (pinned: boolean) => set({ isFlowPanelPinned: pinned }),
 
   // Entity actions
-  setCurrentEntity: (entity: GraphEntity | null) => set({ currentEntity: entity }),
+  setCurrentEntity: (entity: GraphEntity | null) => {
+    set({ currentEntity: entity });
+    // Auto-sync on entity navigation (debounced)
+    if (entity) {
+      const state = get();
+      if (state.currentJourney) {
+        get().addJourneyStep(entity.id, entity.name);
+      }
+      // Trigger sync after debounce
+      if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        const userId = state.currentJourney?.userId || 'default-user';
+        get().syncSession(userId, false).catch(console.error);
+      }, SYNC_DEBOUNCE_MS);
+    }
+  },
   setRelationships: (relationships: EntityRelationship[]) => set({ relationships }),
   setBookSources: (sources: BookSource[]) => set({ bookSources: sources }),
+  setEvidence: (evidence: EvidencePassage[]) => set({ evidence }),
   setThinkingPartnerQuestions: (questions: ThinkingPartnerQuestion[]) =>
     set({ thinkingPartnerQuestions: questions }),
   setIsLoadingEntity: (loading: boolean) => set({ isLoadingEntity: loading }),
+  setIsLoadingEvidence: (loading: boolean) => set({ isLoadingEvidence: loading }),
   setIsLoadingQuestions: (loading: boolean) => set({ isLoadingQuestions: loading }),
 
   // Journey actions
@@ -184,6 +268,8 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
       journeyStartTime: now,
       currentStepStartTime: now,
     });
+    // Start sync session
+    get().syncSession(userId, true).catch(console.error);
   },
 
   addJourneyStep: (entityId: string, entityName: string, sourcePassage?: string) => {
@@ -290,103 +376,147 @@ export const useFlowModeStore = create<FlowModeState>((set, get) => ({
 
   getCurrentJourney: () => get().currentJourney,
 
-  // Entity Overlay actions
-  setEntityOverlayEnabled: (enabled: boolean) => {
-    set((state) => ({
-      entityOverlay: {
-        ...state.entityOverlay,
-        enabled,
-      },
-    }));
-  },
-
-  setEntityOverlayEntities: (entities: EntityOverlay[]) => {
-    set((state) => ({
-      entityOverlay: {
-        ...state.entityOverlay,
-        entities,
-      },
-    }));
-  },
-
-  setVisibleTypes: (types: string[]) => {
-    set((state) => ({
-      entityOverlay: {
-        ...state.entityOverlay,
-        visibleTypes: types,
-      },
-    }));
-  },
-
-  toggleEntityType: (type: string) => {
-    set((state) => {
-      const currentTypes = state.entityOverlay.visibleTypes;
-      const isVisible = currentTypes.includes(type);
-
-      return {
-        entityOverlay: {
-          ...state.entityOverlay,
-          visibleTypes: isVisible
-            ? currentTypes.filter((t) => t !== type)
-            : [...currentTypes, type],
-        },
-      };
-    });
-  },
-
-  fetchEntitiesForBook: async (bookHash: string, title?: string, calibreId?: number) => {
-    set((state) => ({
-      entityOverlay: {
-        ...state.entityOverlay,
-        loading: true,
-        error: null,
-      },
-    }));
-
-    try {
-      // Use same host as page to support remote access
-      const apiHost = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-        ? `http://${window.location.hostname}:8081`
-        : 'http://localhost:8081';
-
-      // Prefer calibreId for more reliable lookup
-      let url: string;
-      if (calibreId !== undefined) {
-        url = `${apiHost}/graph/entities/by-calibre-id/${calibreId}`;
-        console.log('[FlowMode] Fetching entities by calibreId:', { calibreId, url });
-      } else {
-        url = title
-          ? `${apiHost}/graph/entities/by-book/${bookHash}?title=${encodeURIComponent(title)}`
-          : `${apiHost}/graph/entities/by-book/${bookHash}`;
-        console.log('[FlowMode] Fetching entities by hash/title:', { bookHash, title, url });
-      }
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch entities: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const entities: EntityOverlay[] = data.entities || [];
-      console.log('[FlowMode] Fetched entities:', { count: entities.length, total: data.total });
-
-      set((state) => ({
-        entityOverlay: {
-          ...state.entityOverlay,
-          entities,
-          loading: false,
-        },
-      }));
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      set((state) => ({
-        entityOverlay: {
-          ...state.entityOverlay,
-          loading: false,
-          error: errorMessage,
-        },
-      }));
+  // Session Sync actions (Sprint 3)
+  setReadingPosition: (position: ReadingPosition | null) => {
+    set({ readingPosition: position });
+    // Auto-sync reading position (debounced longer - 5s)
+    if (position) {
+      if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        const state = get();
+        const userId = state.currentJourney?.userId || 'default-user';
+        get().syncSession(userId, false).catch(console.error);
+      }, POSITION_SYNC_DEBOUNCE_MS);
     }
   },
+
+  setSessionId: (sessionId: string | null) => {
+    set({ sessionId });
+  },
+
+  syncSession: async (userId: string, force = false) => {
+    const state = get();
+    if (state.isSyncing && !force) return;
+
+    set({ isSyncing: true });
+    try {
+      const syncService = getSyncService();
+
+      // Convert journey path to sync format
+      const journeyPath = state.currentJourney?.path.map((step) => ({
+        entity_id: step.entityId,
+        entity_name: step.entityName,
+        timestamp: step.timestamp,
+        source_passage: step.sourcePassage,
+        dwell_time: step.dwellTimeSeconds,
+      })) || [];
+
+      const session = await syncService.createOrUpdateSession(
+        {
+          user_id: userId,
+          app_source: AppSource.READER,
+          status: SessionStatus.ACTIVE,
+          current_entity_id: state.currentEntity?.id,
+          current_entity_name: state.currentEntity?.name,
+          reading_position: state.readingPosition || undefined,
+          journey_path: journeyPath,
+        },
+        state.sessionId || undefined,
+      );
+
+      set({
+        sessionId: session.id,
+        currentSession: session,
+      });
+    } catch (error) {
+      console.error('Failed to sync session:', error);
+    } finally {
+      set({ isSyncing: false });
+    }
+  },
+
+  pauseCurrentSession: async () => {
+    const state = get();
+    if (!state.sessionId) return;
+
+    try {
+      const syncService = getSyncService();
+      const session = await syncService.pauseSession(state.sessionId);
+      set({ currentSession: session });
+    } catch (error) {
+      console.error('Failed to pause session:', error);
+    }
+  },
+
+  loadSession: async (sessionId: string) => {
+    try {
+      const syncService = getSyncService();
+      const session = await syncService.getSession(sessionId);
+
+      // Restore state from session
+      set({
+        sessionId: session.id,
+        currentSession: session,
+        readingPosition: session.reading_position || null,
+      });
+
+      // Restore current entity if available
+      if (session.current_entity_id && session.current_entity_name) {
+        set({
+          currentEntity: {
+            id: session.current_entity_id,
+            name: session.current_entity_name,
+            type: 'Concept',
+            summary: '',
+          },
+        });
+      }
+
+      // Restore journey if available
+      if (session.journey_path.length > 0) {
+        const journey: BreadcrumbJourney = {
+          id: `restored-${session.id}`,
+          userId: session.user_id,
+          startedAt: session.created_at,
+          entryPoint: {
+            type: 'book',
+            reference: session.reading_position?.book_hash || 'unknown',
+          },
+          path: session.journey_path.map((step) => ({
+            entityId: step.entity_id,
+            entityName: step.entity_name,
+            timestamp: step.timestamp,
+            sourcePassage: step.source_passage,
+            dwellTimeSeconds: step.dwell_time,
+          })),
+          marks: [],
+          thinkingPartnerExchanges: [],
+        };
+        set({ currentJourney: journey });
+      }
+    } catch (error) {
+      console.error('Failed to load session:', error);
+    }
+  },
+
+  // Question actions
+  addQuestion: (question: FlowQuestion) =>
+    set((state) => ({ questions: [...state.questions, question] })),
+
+  removeQuestion: (questionId: string) =>
+    set((state) => ({
+      questions: state.questions.filter((q) => q.id !== questionId),
+      currentQuestionId: state.currentQuestionId === questionId ? null : state.currentQuestionId,
+    })),
+
+  updateQuestion: (questionId: string, updates: Partial<FlowQuestion>) =>
+    set((state) => ({
+      questions: state.questions.map((q) =>
+        q.id === questionId ? { ...q, ...updates, updatedAt: new Date().toISOString() } : q
+      ),
+    })),
+
+  setCurrentQuestionId: (questionId: string | null) => set({ currentQuestionId: questionId }),
+
+  setQuestions: (questions: FlowQuestion[]) => set({ questions }),
 }));

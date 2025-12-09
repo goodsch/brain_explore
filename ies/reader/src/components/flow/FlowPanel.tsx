@@ -1,244 +1,60 @@
-import { X, Cloud, CloudOff, AlertCircle, Loader2, BookOpen, Link2, Eye, HelpCircle } from 'lucide-react';
-import { useFlowStore, type EntityType } from '../../store/flowStore';
-import { useEntityLookup } from '../../hooks/useEntityLookup';
-import { graphClient } from '../../services/graphClient';
-import { JourneyBreadcrumb } from './JourneyBreadcrumb';
-import { InteractiveQuestions } from './InteractiveQuestions';
-import { NotesCapture } from './NotesCapture';
-import './FlowPanel.css';
-
-const ENTITY_TYPES: EntityType[] = ['Concept', 'Person', 'Theory', 'Framework', 'Assessment'];
+import { useFlowStore } from '../../store/flowStore';
+import { QuestionSelector } from './QuestionSelector';
+import { useFlowLayout } from '../../hooks/useFlowLayout';
+import { useQuestionSync } from '../../hooks/useQuestionSync';
+import './flow-panel.css';
 
 export function FlowPanel() {
   const {
     isFlowPanelOpen,
-    flowPanelWidth,
-    currentEntity,
-    relationships,
-    bookSources,
-    isLoadingEntity,
-    setFlowPanelOpen,
-    clearEntity,
-    syncStatus,
-    lastSyncError,
-    queuedOperationsCount,
-    setSyncStatus,
-    setQueuedOperationsCount,
-    // Entity overlay state
-    isOverlayEnabled,
-    overlayEntities,
-    overlayEntityTypes,
-    isLoadingOverlay,
-    currentBookCalibreId,
-    setOverlayEnabled,
-    toggleEntityType,
+    questions,
+    currentQuestionId,
+    isLoadingQuestions,
+    setCurrentQuestionId,
+    currentEntity
   } = useFlowStore();
 
-  // Handle retry sync for offline queue
-  const handleRetrySync = async () => {
-    if (queuedOperationsCount === 0) return;
+  const { mode, isMobile } = useFlowLayout();
+  const { createQuestion, error } = useQuestionSync();
 
-    setSyncStatus('pending');
-    try {
-      const result = await graphClient.processOfflineQueue();
-      const status = graphClient.getOfflineQueueStatus();
-      setQueuedOperationsCount(status.queuedCount);
+  // Don't render if closed or if on mobile (use standalone FlowPage instead)
+  if (!isFlowPanelOpen || (isMobile && mode === 'standalone')) return null;
 
-      if (status.queuedCount === 0) {
-        setSyncStatus('synced');
-      } else if (status.failedCount > 0) {
-        setSyncStatus('error', `${result.failed} operations failed`);
-      } else {
-        setSyncStatus('offline');
-      }
-    } catch (error) {
-      setSyncStatus('error', error instanceof Error ? error.message : 'Sync failed');
-    }
-  };
-
-  const { navigateToEntity } = useEntityLookup();
-
-  if (!isFlowPanelOpen) return null;
-
-  // Get entity type color
-  const getEntityTypeClass = (type: string) => {
-    const typeMap: Record<string, string> = {
-      concept: 'entity-type-concept',
-      person: 'entity-type-person',
-      theory: 'entity-type-theory',
-      framework: 'entity-type-framework',
-      assessment: 'entity-type-assessment',
-    };
-    return typeMap[type.toLowerCase()] || 'entity-type-default';
+  const handleCreateQuestion = async (text: string) => {
+    await createQuestion(text);
   };
 
   return (
-    <div className="flow-panel" style={{ '--panel-width': `${flowPanelWidth}px` } as React.CSSProperties}>
-      {/* Header */}
-      <header className="flow-panel-header">
-        <div className="flow-panel-title">
-          <h3>Flow Mode</h3>
-          {/* Sync Status Indicator */}
-          {(syncStatus !== 'idle' || queuedOperationsCount > 0) && (
-            <button
-              className={`flow-sync-badge flow-sync-${queuedOperationsCount > 0 ? 'offline' : syncStatus}`}
-              title={
-                queuedOperationsCount > 0
-                  ? `${queuedOperationsCount} pending - click to retry`
-                  : lastSyncError || undefined
-              }
-              onClick={queuedOperationsCount > 0 ? handleRetrySync : undefined}
-              disabled={syncStatus === 'pending'}
-            >
-              {syncStatus === 'pending' && <Loader2 size={12} className="flow-sync-spinner" />}
-              {syncStatus === 'synced' && queuedOperationsCount === 0 && <Cloud size={12} />}
-              {syncStatus === 'error' && queuedOperationsCount === 0 && <AlertCircle size={12} />}
-              {queuedOperationsCount > 0 && (
-                <>
-                  <CloudOff size={12} />
-                  <span className="flow-sync-count">{queuedOperationsCount}</span>
-                </>
-              )}
-            </button>
-          )}
+    <div className="flow-panel">
+      <div className="flow-panel__header">
+        <h2 className="flow-panel__title">Flow</h2>
+      </div>
+
+      {error && (
+        <div className="flow-panel__error">
+          {error}
         </div>
-        <button
-          className="flow-panel-close ies-btn ies-btn-ghost"
-          onClick={() => {
-            clearEntity();
-            setFlowPanelOpen(false);
-          }}
-          aria-label="Close panel"
-        >
-          <X size={20} />
-        </button>
-      </header>
+      )}
 
-      {/* Entity Overlay Controls */}
-      <section className="flow-overlay-section">
-        <div className="flow-overlay-header">
-          <span className="flow-overlay-title">
-            <Eye size={14} />
-            Entity Overlay
-          </span>
-          <div className="flow-overlay-toggle">
-            {isLoadingOverlay ? (
-              <div className="flow-overlay-loading">
-                <Loader2 size={14} className="flow-loading-spinner" />
-                <span>Loading...</span>
-              </div>
-            ) : currentBookCalibreId !== null ? (
-              <>
-                <span className={`flow-overlay-count ${overlayEntities.length > 0 ? 'indexed' : ''}`}>
-                  {overlayEntities.length} entities
-                </span>
-                <button
-                  className={`flow-overlay-switch ${isOverlayEnabled ? 'active' : ''}`}
-                  onClick={() => setOverlayEnabled(!isOverlayEnabled)}
-                  aria-label={isOverlayEnabled ? 'Disable overlay' : 'Enable overlay'}
-                  disabled={overlayEntities.length === 0}
-                />
-              </>
-            ) : (
-              <span className="flow-overlay-not-indexed">No book open</span>
-            )}
+      <div className="flow-panel__question-selector">
+        <QuestionSelector
+          questions={questions}
+          currentQuestionId={currentQuestionId}
+          onSelect={setCurrentQuestionId}
+          onCreate={handleCreateQuestion}
+          isLoading={isLoadingQuestions}
+        />
+      </div>
+
+      <div className="flow-panel__content">
+        {currentEntity ? (
+          <div className="flow-panel__entity">
+            <h3 className="flow-panel__entity-name">{currentEntity.name}</h3>
+            {/* Entity details will be expanded in future phases */}
           </div>
-        </div>
-        {currentBookCalibreId !== null && overlayEntities.length > 0 && (
-          <div className="flow-overlay-types">
-            {ENTITY_TYPES.map((type) => (
-              <button
-                key={type}
-                className={`flow-overlay-type-pill type-${type.toLowerCase()} ${
-                  overlayEntityTypes[type] ? 'active' : ''
-                }`}
-                onClick={() => toggleEntityType(type)}
-                disabled={!isOverlayEnabled}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Content */}
-      <div className="flow-panel-content">
-        {isLoadingEntity ? (
-          <div className="flow-loading">
-            <Loader2 size={24} className="flow-loading-spinner" />
-            <span>Searching knowledge graph...</span>
-          </div>
-        ) : currentEntity ? (
-          <>
-            {/* Entity Section */}
-            <section className="flow-section flow-entity">
-              <span className={`flow-entity-type ${getEntityTypeClass(currentEntity.type)}`}>
-                {currentEntity.type}
-              </span>
-              <h2 className="flow-entity-name">{currentEntity.name}</h2>
-              <p className="flow-entity-summary">{currentEntity.summary}</p>
-            </section>
-
-            {/* Relationships Section */}
-            {relationships.length > 0 && (
-              <section className="flow-section">
-                <h4 className="flow-section-title">
-                  <Link2 size={14} />
-                  Related Concepts
-                </h4>
-                <ul className="flow-relationships">
-                  {relationships.map((rel, idx) => (
-                    <li key={idx}>
-                      <button
-                        className="flow-relationship-link"
-                        onClick={() => navigateToEntity(rel.target.id)}
-                      >
-                        <span className="flow-relationship-type">{rel.type}</span>
-                        <span className="flow-relationship-target">{rel.target.name}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {/* Sources Section */}
-            {bookSources.length > 0 && (
-              <section className="flow-section">
-                <h4 className="flow-section-title">
-                  <BookOpen size={14} />
-                  Found In
-                </h4>
-                <ul className="flow-sources">
-                  {bookSources.map((source, idx) => (
-                    <li key={idx} className="flow-source-item">
-                      <span className="flow-source-title">{source.bookTitle}</span>
-                      {source.chapter && (
-                        <span className="flow-source-chapter">{source.chapter}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {/* Journey Breadcrumb */}
-            <JourneyBreadcrumb />
-
-            {/* Interactive Thinking Partner Questions */}
-            <InteractiveQuestions />
-
-            {/* Quick Notes Capture */}
-            <NotesCapture />
-          </>
         ) : (
-          <div className="flow-empty">
-            <div className="flow-empty-icon">
-              <HelpCircle size={48} strokeWidth={1} />
-            </div>
-            <h4>Explore Concepts</h4>
-            <p>Select text in the book to explore related concepts in the knowledge graph.</p>
+          <div className="flow-panel__empty">
+            <p>Select a question to start exploring, or select text in the book to look up entities.</p>
           </div>
         )}
       </div>
