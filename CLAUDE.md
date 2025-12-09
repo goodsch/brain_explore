@@ -36,7 +36,7 @@ A four-layer system that enables people to think WITH an AI partner who adapts t
 
 ## Current Status
 
-**Phase 2b: Visual Interface Implementation** ✅ COMPLETE (Dec 3)
+**Phase 2c: Flow v2 Phase 1 Implementation** 🔄 IN PROGRESS (Dec 8)
 
 **All Four Layers Built and Validated:**
 - ✅ Layer 1: Knowledge graph creation (validated with psychology/therapy corpus: 50k entities, 63 books)
@@ -99,23 +99,39 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 - **Phase 1 (COMPLETE):** Core hypothesis proven — Layers 1 & 2 work; extraction pipeline validated with 11 concepts
 - **Phase 2a (COMPLETE):** Layer 3 CLI validation — CLI exploration tool proven with 5 validation sessions
 - **Phase 2b (COMPLETE):** Visual interfaces — Readest reading interface + SiYuan plugin dashboard (both MVPs complete)
-- **Phase 2c (NEXT):** User testing and refinement based on real-world usage
-- **Phase 3+:** Additional knowledge domains and continued refinement
+- **Phase 2c (IN PROGRESS):** Flow v2 Phase 1 — Dual-mode question-driven UI infrastructure (5 tasks: useFlowLayout hook, question state store, QuestionSelector component, FlowPage standalone, FlowPanel integration)
+- **Phase 3+:** Advanced question engine, enrichment pipeline completion, additional knowledge domains
 
 ## How to Work Here (Phase 2c+)
 
-**Phase 2b is complete.** All four architectural layers are built and validated. The system is ready for user testing.
+**Phase 2c: Flow v2 Phase 1 Implementation is in progress.** Building the question-driven dual-mode interface infrastructure (TDD approach).
+
+### Current Task: Flow v2 Phase 1
+
+**Plan:** `docs/plans/2025-12-08-flow-v2-phase1-implementation.md`
+
+**5 Tasks to Complete:**
+1. ✅ **useFlowLayout Hook** — Responsive mode detection (mobile=standalone, desktop=panel, tablet=user-pref)
+2. ✅ **Question State Store** — Zustand store with FlowQuestion types, question management (add/remove/update)
+3. 🔄 **QuestionSelector Component** — Dropdown UI for question selection/creation with grouped display (reader/siyuan)
+4. 🔄 **FlowPage Standalone** — Mobile-first component (full screen on mobile) integrating QuestionSelector + entity exploration
+5. 🔄 **FlowPanel Integration** — Desktop panel that auto-hides on mobile, responsive layout with ResponsiveMode detection
+
+**Key Patterns (Task 1-2 Complete):**
+- `useFlowLayout()` returns: `{ mode: 'panel' | 'standalone', isMobile, isTablet, isDesktop, setMode }`
+- `FlowQuestion` interface: `{ id, text, source: 'reader'|'siyuan'|'ai-suggested', status: 'active'|'paused'|'resolved', ... }`
+- Store uses Zustand with separate state slices: panel state, entity state, question state (for modularity)
+- Components check `isMobile && mode === 'standalone'` to conditionally render FlowPanel vs FlowPage
 
 ### Worktree Organization
 
-**The master branch contains shared backend and documentation only.** Feature work happens in separate worktrees with their own TASK.md files:
+**The master branch contains shared backend and documentation only.** Feature work happens in separate worktrees:
 
-| Worktree Location | Branch | Purpose | Task File |
-|------------------|--------|---------|-----------|
-| `.` (root) | `master` | Backend APIs, Layer 1/2, shared docs | None (master has no TASK.md) |
-| `.worktrees/readest/` | `feature/readest-integration` | Layer 4 Reading Interface | `TASK.md` in worktree |
-| `.worktrees/siyuan/` | `feature/siyuan-evolution` | Layer 3 Processing Hub | `TASK.md` in worktree |
-| `.worktrees/quick-capture/` | `feature/quick-capture` | Quick Capture iOS/SiYuan | `TASK.md` in worktree |
+| Worktree Location | Branch | Purpose |
+|------------------|--------|---------|
+| `.` (root) | `master` | Backend APIs, Layer 1/2, shared docs |
+| `.worktrees/ies-reader/` | `feature/ies-reader-enhancement` | Layer 4 IES Reader (ACTIVE) |
+| `.worktrees/siyuan/` | `feature/siyuan-evolution` | Layer 3 SiYuan Plugin |
 
 **Working in Worktrees:**
 - Each worktree is a separate directory with its own branch checked out
@@ -142,32 +158,21 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 - `docs/five-agent-synthesis.md` — Deep analysis of why architecture decisions were made
 - `docs/PHASE-1-WORKFLOW.md` — Phase 1 operational guide (for reference if running additional exploration sessions)
 
-### Phase 2c Focus
+### What Changed (Dec 8)
 
-**Current State:**
-- All four layers operational (Layers 1-4)
-- Readest reading interface with Flow mode (Layer 4)
-- SiYuan plugin dashboard with 5 thinking modes (Layer 3)
-- Backend APIs serving all functionality (Layer 2)
-- Knowledge graph fully populated (Layer 1)
+**Flow v2 Phase 1 Implementation Began:**
+- Created `useFlowLayout.ts` hook — Responsive mode detection with localStorage persistence (breakpoints: 640px mobile, 1024px desktop)
+- Updated `flowStore.ts` — Added question management to Zustand store (FlowQuestion interface, actions: add/remove/update, current question tracking)
+- Implemented `QuestionSelector.tsx` — Dropdown component with create/select functionality, question grouping (reader vs siyuan source)
+- Created `FlowPanel.tsx` integration — Conditionally renders based on mode/mobile detection, delegates to QuestionSelector
+- Updated `App.tsx` — Mock login flow to prevent blocking, proper component mounting
+- Implemented `NotesSheet.tsx` — Bottom sheet UI with note type selection (thought/question/insight), CFI range capture
+- Created `Sheet.tsx` UI component — Reusable bottom sheet with framer-motion animations, portal rendering
+- Added supporting hooks: `useEntityHighlighter`, `useEntityOverlay` for text annotation and entity tracking
 
-**Critical Gaps Blocking Real Usage:**
-
-Five critical gaps have been identified that prevent the system from functioning end-to-end in real usage:
-
-1. **SiYuan Document Structure Undefined** — No defined location for personal knowledge artifacts (sparks, insights, threads, favorite_problems). Quick Capture UI exists but doesn't know where to save captured items.
-
-2. **Personal Graph API Not Connected** — ADHD ontology exists in code but isn't wired to any frontend. Backend APIs for personal graph CRUD don't exist.
-
-3. **Book Library Inaccessible** — 63 books ingested to Neo4j but users have no way to browse or open them. No deep-linking to specific passages.
-
-4. **Cross-App Continuity Missing** — Readest and SiYuan don't share state. Can't resume reading session from SiYuan or resume exploration from Readest.
-
-5. **Journey Value Loop Not Closed** — Journeys are captured but never analyzed for patterns. Patterns not used to personalize suggestions or improve thinking partner questions.
-
-**For Complete Analysis:**
-- `docs/PLANNING-GAPS-AND-QUESTIONS.md` — Comprehensive gap analysis, technical stack review, API inventory, SiYuan/Readest architecture review, component interaction map, and 20 probing questions needing answers
-- `docs/COMPREHENSIVE-PROJECT-STATUS.md` — Complete technical status of all four layers
+**Test-Driven Approach:**
+- Implementation follows TDD with failing tests → minimal implementation → passing tests → commit cycle
+- All tests for Tasks 1-2 passing; QuestionSelector and FlowPanel under refinement
 
 ### If Running Additional Exploration Sessions
 
