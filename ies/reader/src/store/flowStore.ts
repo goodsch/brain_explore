@@ -9,6 +9,7 @@ import { visitApi } from '../services/visitApi';
 import { timelineApi } from '../services/timelineApi';
 import { questionApi } from '../services/questionApi';
 import { contextApi, type Context } from '../services/contextApi';
+import type { JourneyTrailItem, AppSource } from '../services/sessionStateApi';
 import type {
   NewItemsSummary,
   NewItemsDetailResponse,
@@ -115,6 +116,12 @@ interface FlowStore {
   extractionError: string | null;
   runExtraction: (contextId: string, questionId?: string) => Promise<void>;
   clearExtraction: () => void;
+
+  // Cross-app journey trail (synced via session-state API)
+  journeyTrail: JourneyTrailItem[];
+  lastAppSource: AppSource | null;
+  setJourneyTrail: (trail: JourneyTrailItem[]) => void;
+  setLastAppSource: (source: AppSource | null) => void;
 }
 
 export const useFlowStore = create<FlowStore>((set, get) => ({
@@ -414,4 +421,10 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   },
 
   clearExtraction: () => set({ extractionResult: null, extractionError: null }),
+
+  // Cross-app journey trail (synced via session-state API)
+  journeyTrail: [],
+  lastAppSource: null,
+  setJourneyTrail: (trail: JourneyTrailItem[]) => set({ journeyTrail: trail }),
+  setLastAppSource: (source: AppSource | null) => set({ lastAppSource: source }),
 }));

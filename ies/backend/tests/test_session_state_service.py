@@ -11,6 +11,8 @@ from ies_backend.schemas.session_state import (
     SessionStateHistory,
     ReadingPosition,
     HeartbeatRequest,
+    JourneyTrailItem,
+    AppSource,
 )
 
 
@@ -436,3 +438,328 @@ class TestSessionStateServiceSerialization:
         result = service._deserialize_history_entry(json_str)
         assert result.change_type == "question_selected"
         assert result.context_id == "ctx-123"
+
+
+class TestJourneyTrailSync:
+    """Tests for journey trail synchronization functionality."""
+
+    @pytest.fixture
+    def mock_redis_client(self):
+        """Create mock Redis client."""
+        mock = AsyncMock()
+        mock.get = AsyncMock(return_value=None)
+        mock.setex = AsyncMock()
+        mock.delete = AsyncMock()
+        mock.lpush = AsyncMock()
+        mock.ltrim = AsyncMock()
+        mock.lrange = AsyncMock(return_value=[])
+        mock.llen = AsyncMock(return_value=0)
+        mock.expire = AsyncMock()
+        return mock
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mocked Redis."""
+        return SessionStateService()
+
+    @pytest.fixture
+    def sample_trail_item(self):
+        """Create sample journey trail item."""
+        return JourneyTrailItem(
+            entity_id="ent-123",
+            entity_name="Cognitive Load",
+            entity_type="concept",
+            source_app=AppSource.READER,
+            source_context="Thinking Fast and Slow, Ch. 2",
+        )
+
+    @pytest.mark.asyncio
+    async def test_add_trail_item_to_empty_state(
+        self, service, mock_redis_client, sample_trail_item
+    ):
+        """Test adding trail item creates session state with entity tracking."""
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            update = SessionStateUpdate(add_trail_item=sample_trail_item)
+            result = await service.update_state("test-user", update)
+
+            # Trail item should be added
+            assert len(result.journey_trail) == 1
+            assert result.journey_trail[0].entity_id == "ent-123"
+            assert result.journey_trail[0].entity_name == "Cognitive Load"
+            assert result.journey_trail[0].source_app == AppSource.READER
+
+            # Entity tracking should be updated automatically
+            assert result.current_entity_id == "ent-123"
+            assert result.current_entity_name == "Cognitive Load"
+            assert result.last_app_source == AppSource.READER
+
+            # Should record history
+            mock_redis_client.lpush.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_add_trail_item_to_existing_state(
+        self, service, mock_redis_client, sample_trail_item
+    ):
+        """Test adding trail item to existing state preserves other fields."""
+        now = datetime.utcnow()
+        existing_state = SessionState(
+            user_id="test-user",
+            active_context_id="ctx-123",
+            active_question_id="q-456",
+            last_activity_at=now,
+            created_at=now,
+            updated_at=now,
+        )
+        mock_redis_client.get = AsyncMock(
+            return_value=existing_state.model_dump_json()
+        )
+
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            update = SessionStateUpdate(add_trail_item=sample_trail_item)
+            result = await service.update_state("test-user", update)
+
+            # Trail item should be added
+            assert len(result.journey_trail) == 1
+            # Other fields preserved
+            assert result.active_context_id == "ctx-123"
+            assert result.active_question_id == "q-456"
+
+    @pytest.mark.asyncio
+    async def test_trail_items_ordered_newest_first(
+        self, service, mock_redis_client
+    ):
+        """Test that trail items are stored newest first."""
+        now = datetime.utcnow()
+        existing_state = SessionState(
+            user_id="test-user",
+            journey_trail=[
+                JourneyTrailItem(
+                    entity_id="ent-old",
+                    entity_name="Old Entity",
+                    source_app=AppSource.SIYUAN,
+                )
+            ],
+            last_activity_at=now,
+            created_at=now,
+            updated_at=now,
+        )
+        mock_redis_client.get = AsyncMock(
+            return_value=existing_state.model_dump_json()
+        )
+
+        new_item = JourneyTrailItem(
+            entity_id="ent-new",
+            entity_name="New Entity",
+            source_app=AppSource.READER,
+        )
+
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            update = SessionStateUpdate(add_trail_item=new_item)
+            result = await service.update_state("test-user", update)
+
+            # New item should be first (most recent)
+            assert len(result.journey_trail) == 2
+            assert result.journey_trail[0].entity_id == "ent-new"
+            assert result.journey_trail[1].entity_id == "ent-old"
+
+    @pytest.mark.asyncio
+    async def test_trail_limited_to_max_items(
+        self, service, mock_redis_client
+    ):
+        """Test that trail is limited to MAX_TRAIL_ITEMS."""
+        from ies_backend.services.session_state_service import MAX_TRAIL_ITEMS
+
+        now = datetime.utcnow()
+        # Create state with max items already
+        existing_trail = [
+            JourneyTrailItem(
+                entity_id=f"ent-{i}",
+                entity_name=f"Entity {i}",
+                source_app=AppSource.SIYUAN,
+            )
+            for i in range(MAX_TRAIL_ITEMS)
+        ]
+        existing_state = SessionState(
+            user_id="test-user",
+            journey_trail=existing_trail,
+            last_activity_at=now,
+            created_at=now,
+            updated_at=now,
+        )
+        mock_redis_client.get = AsyncMock(
+            return_value=existing_state.model_dump_json()
+        )
+
+        new_item = JourneyTrailItem(
+            entity_id="ent-newest",
+            entity_name="Newest Entity",
+            source_app=AppSource.READER,
+        )
+
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            update = SessionStateUpdate(add_trail_item=new_item)
+            result = await service.update_state("test-user", update)
+
+            # Should still be limited to MAX_TRAIL_ITEMS
+            assert len(result.journey_trail) == MAX_TRAIL_ITEMS
+            # New item should be first
+            assert result.journey_trail[0].entity_id == "ent-newest"
+            # Oldest item should be dropped
+            assert result.journey_trail[-1].entity_id == f"ent-{MAX_TRAIL_ITEMS - 2}"
+
+    @pytest.mark.asyncio
+    async def test_update_entity_tracking_without_trail(
+        self, service, mock_redis_client
+    ):
+        """Test updating entity tracking directly without adding trail item."""
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            update = SessionStateUpdate(
+                current_entity_id="ent-direct",
+                current_entity_name="Direct Entity",
+                app_source=AppSource.SIYUAN,
+            )
+            result = await service.update_state("test-user", update)
+
+            assert result.current_entity_id == "ent-direct"
+            assert result.current_entity_name == "Direct Entity"
+            assert result.last_app_source == AppSource.SIYUAN
+            # No trail items added
+            assert len(result.journey_trail) == 0
+
+
+class TestContinueExploration:
+    """Tests for continue exploration functionality."""
+
+    @pytest.fixture
+    def mock_redis_client(self):
+        """Create mock Redis client."""
+        mock = AsyncMock()
+        mock.get = AsyncMock(return_value=None)
+        return mock
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mocked Redis."""
+        return SessionStateService()
+
+    @pytest.mark.asyncio
+    async def test_continue_no_session(self, service, mock_redis_client):
+        """Test continue exploration with no session."""
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            result = await service.get_continue_exploration("test-user")
+
+            assert result.user_id == "test-user"
+            assert result.has_active_exploration is False
+            assert result.reader_deep_link is None
+            assert result.siyuan_deep_link is None
+
+    @pytest.mark.asyncio
+    async def test_continue_with_entity(self, service, mock_redis_client):
+        """Test continue exploration with current entity."""
+        now = datetime.utcnow()
+        state = SessionState(
+            user_id="test-user",
+            current_entity_id="ent-123",
+            current_entity_name="Test Entity",
+            current_book=ReadingPosition(
+                calibre_id=42,
+                cfi="/6/4",
+            ),
+            last_activity_at=now,
+            created_at=now,
+            updated_at=now,
+        )
+        mock_redis_client.get = AsyncMock(return_value=state.model_dump_json())
+
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            result = await service.get_continue_exploration("test-user")
+
+            assert result.has_active_exploration is True
+            assert result.current_entity_id == "ent-123"
+            assert result.current_entity_name == "Test Entity"
+            assert result.reader_deep_link is not None
+            assert "calibreId=42" in result.reader_deep_link
+            assert "entity=ent-123" in result.reader_deep_link
+            assert result.siyuan_deep_link is not None
+            assert "entity=ent-123" in result.siyuan_deep_link
+            assert result.resume_hint == "Continue exploring Test Entity"
+
+    @pytest.mark.asyncio
+    async def test_continue_with_context_only(self, service, mock_redis_client):
+        """Test continue exploration with context but no entity."""
+        now = datetime.utcnow()
+        state = SessionState(
+            user_id="test-user",
+            active_context_id="ctx-123",
+            active_question_id="q-456",
+            last_activity_at=now,
+            created_at=now,
+            updated_at=now,
+        )
+        mock_redis_client.get = AsyncMock(return_value=state.model_dump_json())
+
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            result = await service.get_continue_exploration("test-user")
+
+            assert result.has_active_exploration is True
+            assert result.active_context_id == "ctx-123"
+            assert result.siyuan_deep_link is not None
+            assert "context=ctx-123" in result.siyuan_deep_link
+            assert "question=q-456" in result.siyuan_deep_link
+
+    @pytest.mark.asyncio
+    async def test_continue_trail_limit(self, service, mock_redis_client):
+        """Test that trail is limited in continue response."""
+        now = datetime.utcnow()
+        trail = [
+            JourneyTrailItem(
+                entity_id=f"ent-{i}",
+                entity_name=f"Entity {i}",
+                source_app=AppSource.READER,
+            )
+            for i in range(20)
+        ]
+        state = SessionState(
+            user_id="test-user",
+            journey_trail=trail,
+            current_entity_id="ent-0",
+            last_activity_at=now,
+            created_at=now,
+            updated_at=now,
+        )
+        mock_redis_client.get = AsyncMock(return_value=state.model_dump_json())
+
+        with patch(
+            "ies_backend.services.session_state_service.redis_client.get_client",
+            return_value=mock_redis_client,
+        ):
+            # Request only 5 items
+            result = await service.get_continue_exploration("test-user", trail_limit=5)
+
+            assert len(result.journey_trail) == 5
+            # Should be newest first
+            assert result.journey_trail[0].entity_id == "ent-0"

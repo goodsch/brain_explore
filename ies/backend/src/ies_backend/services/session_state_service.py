@@ -18,8 +18,14 @@ from ..schemas.session_state import (
     ReadingPosition,
     HeartbeatRequest,
     HeartbeatResponse,
+    JourneyTrailItem,
+    ContinueExplorationResponse,
+    AppSource,
 )
 from .redis_client import redis_client
+
+# Max trail items to keep
+MAX_TRAIL_ITEMS = 50
 
 
 class SessionStateService:
@@ -140,6 +146,27 @@ class SessionStateService:
                 change_type = "reading_progress"
 
             state.current_book = update.current_book
+
+        # Handle journey continuity fields
+        if update.current_entity_id is not None:
+            state.current_entity_id = update.current_entity_id
+
+        if update.current_entity_name is not None:
+            state.current_entity_name = update.current_entity_name
+
+        if update.app_source is not None:
+            state.last_app_source = update.app_source
+
+        if update.add_trail_item is not None:
+            # Add new trail item to the front (most recent first)
+            state.journey_trail.insert(0, update.add_trail_item)
+            # Keep only the most recent items
+            state.journey_trail = state.journey_trail[:MAX_TRAIL_ITEMS]
+            # Set the entity tracking automatically
+            state.current_entity_id = update.add_trail_item.entity_id
+            state.current_entity_name = update.add_trail_item.entity_name
+            state.last_app_source = update.add_trail_item.source_app
+            change_type = "entity_visited"
 
         # Update timestamps
         state.last_activity_at = now
@@ -356,3 +383,95 @@ class SessionStateService:
         if keys:
             await client.delete(*keys)
         return len(keys)
+
+    async def get_continue_exploration(
+        self,
+        user_id: str,
+        trail_limit: int = 10,
+    ) -> ContinueExplorationResponse:
+        """Get data needed to continue exploration from either app.
+
+        Returns current state with deep links for resuming in Reader or SiYuan.
+
+        Args:
+            user_id: User identifier
+            trail_limit: Max trail items to return (default 10)
+
+        Returns:
+            ContinueExplorationResponse with state and deep links
+        """
+        state = await self.get_state(user_id)
+
+        if state is None:
+            return ContinueExplorationResponse(
+                user_id=user_id,
+                has_active_exploration=False,
+            )
+
+        # Check if there's actually something to continue
+        has_active = bool(
+            state.current_entity_id
+            or state.active_context_id
+            or state.journey_trail
+        )
+
+        # Build deep links
+        reader_deep_link = None
+        siyuan_deep_link = None
+        resume_hint = None
+
+        if state.current_entity_id:
+            # Deep link to entity in both apps
+            entity_name = state.current_entity_name or state.current_entity_id
+
+            # Reader: open with entity focus
+            if state.current_book:
+                reader_deep_link = (
+                    f"http://localhost:5173/reader"
+                    f"?calibreId={state.current_book.calibre_id}"
+                    f"&entity={state.current_entity_id}"
+                )
+                if state.current_book.cfi:
+                    reader_deep_link += f"&cfi={state.current_book.cfi}"
+            else:
+                reader_deep_link = (
+                    f"http://localhost:5173/reader"
+                    f"?entity={state.current_entity_id}"
+                )
+
+            # SiYuan: open Flow Mode with entity
+            siyuan_deep_link = (
+                f"siyuan://plugins/ies"
+                f"?entity={state.current_entity_id}"
+            )
+            if state.active_context_id:
+                siyuan_deep_link += f"&context={state.active_context_id}"
+
+            resume_hint = f"Continue exploring {entity_name}"
+
+        elif state.active_context_id:
+            # Deep link to context
+            siyuan_deep_link = (
+                f"siyuan://plugins/ies"
+                f"?context={state.active_context_id}"
+            )
+            if state.active_question_id:
+                siyuan_deep_link += f"&question={state.active_question_id}"
+                resume_hint = "Continue with your question"
+            else:
+                resume_hint = "Continue your exploration"
+
+        return ContinueExplorationResponse(
+            user_id=user_id,
+            has_active_exploration=has_active,
+            current_entity_id=state.current_entity_id,
+            current_entity_name=state.current_entity_name,
+            active_context_id=state.active_context_id,
+            active_question_id=state.active_question_id,
+            journey_trail=state.journey_trail[:trail_limit],
+            last_app_source=state.last_app_source,
+            reader_deep_link=reader_deep_link,
+            siyuan_deep_link=siyuan_deep_link,
+            resume_hint=resume_hint,
+            last_activity_at=state.last_activity_at,
+        )

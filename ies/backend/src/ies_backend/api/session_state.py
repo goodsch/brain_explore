@@ -15,6 +15,7 @@ from ..schemas.session_state import (
     SessionStateHistoryResponse,
     HeartbeatRequest,
     HeartbeatResponse,
+    ContinueExplorationResponse,
 )
 from ..services.session_state_service import SessionStateService
 
@@ -158,6 +159,35 @@ async def clear_session_state(user_id: str = "default_user"):
         "user_id": user_id,
         "cleared": cleared,
     }
+
+
+@router.get("/{user_id}/continue", response_model=ContinueExplorationResponse)
+async def get_continue_exploration(
+    user_id: str = "default_user",
+    trail_limit: int = Query(10, ge=1, le=50, description="Max trail items to return"),
+):
+    """Get data to continue exploration from either app.
+
+    Returns current exploration state with deep links for resuming in
+    IES Reader or SiYuan. Used by "Continue Exploration" widgets.
+
+    **Example:**
+    - Get continue data: `GET /session-state/default_user/continue?trail_limit=10`
+
+    **Returns:**
+    - has_active_exploration: Whether there's something to continue
+    - current_entity_id/name: Currently focused entity
+    - journey_trail: Recent exploration steps (most recent first)
+    - reader_deep_link: URL to continue in IES Reader
+    - siyuan_deep_link: URL to continue in SiYuan
+    - resume_hint: Human-readable hint for what to continue
+
+    **Use cases:**
+    - "Continue Exploration" button in IES Reader toolbar
+    - "Resume in Reader" widget in SiYuan dashboard
+    - Cross-app handoff when user switches contexts
+    """
+    return await session_state_service.get_continue_exploration(user_id, trail_limit)
 
 
 @router.get("/{user_id}/is-active")

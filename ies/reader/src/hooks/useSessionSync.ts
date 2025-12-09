@@ -1,19 +1,20 @@
 /**
  * Session sync hook for IES Reader.
  *
- * Syncs active session state (context, question) with backend
+ * Syncs active session state (context, question, journey trail) with backend
  * to enable cross-app continuity.
  *
  * Features:
  * - Polls backend every 5s when active, 30s when backgrounded
  * - Debounces writes by 3 seconds
  * - Syncs context_id and question_id from flowStore
+ * - Syncs journey trail from backend (read-only, SiYuan writes)
  * - Updates when document visibility changes
  */
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useFlowStore } from '../store/flowStore';
-import { sessionStateApi, type SessionStateUpdate } from '../services/sessionStateApi';
+import { sessionStateApi, type SessionStateUpdate, type JourneyTrailItem } from '../services/sessionStateApi';
 
 interface UseSessionSyncOptions {
   userId?: string;
@@ -101,7 +102,11 @@ export function useSessionSync(options: UseSessionSyncOptions = {}) {
       const state = await sessionStateApi.getState(userId);
 
       // Update local state if backend has different values
-      const { currentContextId: localContext, currentQuestionId: localQuestion } = useFlowStore.getState();
+      const {
+        currentContextId: localContext,
+        currentQuestionId: localQuestion,
+        journeyTrail: localTrail,
+      } = useFlowStore.getState();
 
       if (state.active_context_id !== localContext) {
         console.log('[useSessionSync] Context updated from backend:', state.active_context_id);
@@ -113,6 +118,19 @@ export function useSessionSync(options: UseSessionSyncOptions = {}) {
         console.log('[useSessionSync] Question updated from backend:', state.active_question_id);
         useFlowStore.getState().setCurrentQuestionId(state.active_question_id || null);
         lastSyncedStateRef.current.questionId = state.active_question_id || null;
+      }
+
+      // Sync journey trail from backend (trail is managed by backend, Reader reads only)
+      const remoteTrail = state.journey_trail || [];
+      if (remoteTrail.length !== localTrail.length ||
+          (remoteTrail.length > 0 && remoteTrail[0]?.entity_id !== localTrail[0]?.entity_id)) {
+        console.log('[useSessionSync] Journey trail updated from backend:', remoteTrail.length, 'items');
+        useFlowStore.getState().setJourneyTrail(remoteTrail);
+      }
+
+      // Sync last app source
+      if (state.last_app_source) {
+        useFlowStore.getState().setLastAppSource(state.last_app_source);
       }
     } catch (error) {
       console.error('[useSessionSync] Failed to poll state:', error);
@@ -146,6 +164,44 @@ export function useSessionSync(options: UseSessionSyncOptions = {}) {
       console.log('[useSessionSync] Heartbeat sent');
     } catch (error) {
       console.error('[useSessionSync] Failed to send heartbeat:', error);
+    }
+  }, [enabled, userId]);
+
+  /**
+   * Add entity visit to journey trail.
+   * Call this when user navigates to/focuses on an entity in the Reader.
+   */
+  const addEntityVisit = useCallback(async (
+    entityId: string,
+    entityName: string,
+    options?: {
+      entityType?: string;
+      sourceContext?: string;
+      dwellSeconds?: number;
+    }
+  ) => {
+    if (!enabled) return;
+
+    const trailItem: JourneyTrailItem = {
+      entity_id: entityId,
+      entity_name: entityName,
+      entity_type: options?.entityType || null,
+      source_app: 'reader',
+      timestamp: new Date().toISOString(),
+      dwell_seconds: options?.dwellSeconds || null,
+      source_context: options?.sourceContext || null,
+    };
+
+    try {
+      const updatedState = await sessionStateApi.addTrailItem(userId, trailItem);
+
+      // Update local state with response
+      useFlowStore.getState().setJourneyTrail(updatedState.journey_trail || []);
+      useFlowStore.getState().setLastAppSource(updatedState.last_app_source || null);
+
+      console.log('[useSessionSync] Entity visit added:', entityName);
+    } catch (error) {
+      console.error('[useSessionSync] Failed to add entity visit:', error);
     }
   }, [enabled, userId]);
 
@@ -235,5 +291,6 @@ export function useSessionSync(options: UseSessionSyncOptions = {}) {
   return {
     writeState,
     sendHeartbeat,
+    addEntityVisit,
   };
 }

@@ -11,6 +11,28 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class AppSource(str, Enum):
+    """Source app that made the last update."""
+    READER = "reader"
+    SIYUAN = "siyuan"
+
+
+class JourneyTrailItem(BaseModel):
+    """A single item in the exploration journey trail.
+
+    Tracks entity visits across both Reader and SiYuan to enable
+    seamless continuation when switching between apps.
+    """
+
+    entity_id: str = Field(description="Entity ID in the knowledge graph")
+    entity_name: str = Field(description="Human-readable entity name")
+    entity_type: Optional[str] = Field(default=None, description="Entity type (concept, person, etc.)")
+    source_app: AppSource = Field(description="Which app added this item")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="When this step was taken")
+    dwell_seconds: Optional[float] = Field(default=None, description="Time spent on this entity")
+    source_context: Optional[str] = Field(default=None, description="Book title, chapter, or SiYuan note")
+
+
 class ReadingPosition(BaseModel):
     """Current reading position in a book.
 
@@ -51,6 +73,25 @@ class SessionState(BaseModel):
         default=None,
         description="Current reading position in a book"
     )
+
+    # Journey continuity fields
+    current_entity_id: Optional[str] = Field(
+        default=None,
+        description="Currently focused entity ID"
+    )
+    current_entity_name: Optional[str] = Field(
+        default=None,
+        description="Currently focused entity name"
+    )
+    journey_trail: list[JourneyTrailItem] = Field(
+        default_factory=list,
+        description="Recent exploration trail (last N steps across both apps)"
+    )
+    last_app_source: Optional[AppSource] = Field(
+        default=None,
+        description="Which app made the last update"
+    )
+
     last_activity_at: datetime = Field(description="When user was last active in any frontend")
     created_at: datetime = Field(description="When session state was first created")
     updated_at: datetime = Field(description="When session state was last updated")
@@ -73,6 +114,24 @@ class SessionStateUpdate(BaseModel):
     current_book: Optional[ReadingPosition] = Field(
         default=None,
         description="Update reading position (null to clear)"
+    )
+
+    # Journey continuity fields
+    current_entity_id: Optional[str] = Field(
+        default=None,
+        description="Update current entity ID"
+    )
+    current_entity_name: Optional[str] = Field(
+        default=None,
+        description="Update current entity name"
+    )
+    add_trail_item: Optional[JourneyTrailItem] = Field(
+        default=None,
+        description="Add a new item to the journey trail"
+    )
+    app_source: Optional[AppSource] = Field(
+        default=None,
+        description="Which app is making this update"
     )
 
 
@@ -120,3 +179,47 @@ class SessionStateHistoryResponse(BaseModel):
         description="Recent session state changes, newest first"
     )
     total: int = Field(description="Total history entries for user")
+
+
+class ContinueExplorationResponse(BaseModel):
+    """Response for "Continue Exploration" feature.
+
+    Returns the current exploration state with deep links
+    for both Reader and SiYuan to resume where the user left off.
+    """
+
+    user_id: str
+    has_active_exploration: bool = Field(
+        description="Whether there's an active exploration to continue"
+    )
+
+    # Current position
+    current_entity_id: Optional[str] = Field(default=None)
+    current_entity_name: Optional[str] = Field(default=None)
+    active_context_id: Optional[str] = Field(default=None)
+    active_question_id: Optional[str] = Field(default=None)
+
+    # Recent trail (last 10 items for UI)
+    journey_trail: list[JourneyTrailItem] = Field(
+        default_factory=list,
+        description="Recent exploration steps (most recent first)"
+    )
+
+    # Where to continue
+    last_app_source: Optional[AppSource] = Field(
+        default=None,
+        description="Which app was last used"
+    )
+    reader_deep_link: Optional[str] = Field(
+        default=None,
+        description="Deep link to continue in IES Reader"
+    )
+    siyuan_deep_link: Optional[str] = Field(
+        default=None,
+        description="Deep link to continue in SiYuan"
+    )
+    resume_hint: Optional[str] = Field(
+        default=None,
+        description="Human-readable hint for what to continue"
+    )
+    last_activity_at: Optional[datetime] = Field(default=None)

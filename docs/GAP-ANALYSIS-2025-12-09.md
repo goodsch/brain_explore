@@ -1,7 +1,7 @@
 # Implementation Gap Analysis — Redux Specs vs Current State
 
 **Created:** 2025-12-09
-**Updated:** 2025-12-09 (Redis migration for SessionStateService)
+**Updated:** 2025-12-09 (Journey Continuity API complete)
 **Purpose:** Map redux specifications to implemented features, identify gaps, prioritize next work
 
 > **Ground Truth:** For system design and semantics, see `docs/IES-SYSTEM-DESIGN.md`.
@@ -18,7 +18,7 @@ The `redux/` directory contains detailed specifications for the Context + Questi
 3. **What's missing** — Features not yet started
 4. **Priority recommendations** — What to build next
 
-**Overall Status:** ~98% of redux specifications implemented (updated Dec 9 — Cross-App Continuity sprint complete)
+**Overall Status:** ~99% of redux specifications implemented (updated Dec 9 — Journey Continuity API complete)
 
 ---
 
@@ -471,35 +471,54 @@ ExtractionProfile schema implemented with full support for context-aware extract
    - Deep link format: `/reader?calibreId={id}&cfi={encoded_cfi}`
    - Integrates with Dashboard.svelte for "Currently Reading" display
 
-4. **Journey Continuity** — FUTURE
-   - Share journey entries across both apps
-   - Enable "Continue Exploration" from either app
-   - Unified breadcrumb trail spanning Reader and SiYuan sessions
-
-### Next Sprint: Journey Continuity + Polish
-
-**Goal:** Complete the remaining P2 items and polish cross-app experience.
-
-**Recommended Tasks:**
-
-1. **Journey Continuity API**
+4. **Journey Continuity** ✅ COMPLETE (Dec 9)
    - Share journey entries across both apps via backend
    - Enable "Continue Exploration" from either app
    - Unified breadcrumb trail spanning Reader and SiYuan sessions
+   - Journey trail sync from backend to both frontends
+   - Entity visit logging from Reader and SiYuan
 
-2. **Areas of Exploration Chips** (Flow v2 gap)
+### ~~Next Sprint: Journey Continuity + Polish~~ ✅ COMPLETE (Dec 9)
+
+**Goal:** Complete the remaining P2 items and polish cross-app experience.
+
+**Completed Tasks:**
+
+1. **Journey Continuity API** ✅ COMPLETE
+   - Extended `SessionState` schema with `journey_trail`, `current_entity_id`, `current_entity_name`, `last_app_source`
+   - Added `JourneyTrailItem` schema with entity_id, entity_name, entity_type, source_app, timestamp, dwell_seconds, source_context
+   - Added `ContinueExplorationResponse` schema with deep links and resume hints
+   - Updated `SessionStateService` to handle trail item addition with max item limits (50)
+   - Added `GET /session-state/{user_id}/continue` endpoint for "Continue Exploration" feature
+   - 32 session state tests passing (including 9 new journey trail tests)
+   - SiYuan `ContextSyncService` syncs journey trail from backend, adds entity visits
+   - IES Reader `useSessionSync` hook syncs journey trail from backend, adds entity visits
+   - IES Reader `flowStore` extended with journeyTrail and lastAppSource state
+
+2. **Areas of Exploration Chips** ✅ COMPLETE (Flow v2 gap)
    - Parse Areas section and render as clickable chips
    - Link to entity search for area keywords
 
-3. **End-to-End Testing**
+3. **Production Hardening** ✅ COMPLETE
+   - SessionStateService migrated to Redis for persistence (24h TTL, 30min session timeout)
+   - Centralized journey event logging via JourneyLogger
+   - Error handling in sync hooks and services
+
+### Next Sprint: Journey Pattern Analysis
+
+**Goal:** Analyze journey patterns for personalization and insights.
+
+**Recommended Tasks:**
+
+1. **Journey Pattern Analysis**
+   - Analyze journey trail for exploration patterns
+   - Identify frequently visited entities and clusters
+   - Surface recommendations based on journey history
+
+2. **End-to-End Testing**
    - Verify full sync flow: Reader → Backend → SiYuan
    - Test offline behavior and reconnection
    - Stress test with rapid context/position changes
-
-4. **Production Hardening**
-   - Migrate SessionStateService to Redis for persistence
-   - Add error boundaries and retry logic
-   - Implement session expiration cleanup
 
 ---
 
