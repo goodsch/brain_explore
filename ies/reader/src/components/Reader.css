@@ -1,0 +1,321 @@
+/* ============================================
+   READER COMPONENT
+   IES Design System v2 — Immersive Dark Reading
+   ============================================ */
+
+.reader-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--bg-primary);
+}
+
+/* ============================================
+   TOOLBAR
+   ============================================ */
+
+.reader-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  padding-top: calc(var(--space-3) + env(safe-area-inset-top, 0px));
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: var(--glass-border);
+  z-index: var(--z-sticky);
+  gap: var(--space-3);
+}
+
+.reader-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.reader-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.reader-back-btn {
+  flex-shrink: 0;
+}
+
+.reader-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Flow Toggle Button */
+.reader-flow-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  min-height: 44px; /* Ensure minimum touch target size */
+  min-width: 44px; /* Ensure minimum touch target size */
+}
+
+.reader-flow-toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+  color: var(--text-primary);
+}
+
+.reader-flow-toggle.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--entity-concept);
+  color: var(--entity-concept);
+}
+
+.reader-flow-label {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .reader-flow-label {
+    display: inline;
+  }
+}
+
+/* ============================================
+   LOADING OVERLAY
+   ============================================ */
+
+.reader-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  z-index: var(--z-modal);
+}
+
+.reader-loading-spinner {
+  animation: spin 1s linear infinite;
+  color: var(--entity-concept);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   ERROR STATE
+   ============================================ */
+
+.reader-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--bg-primary);
+  text-align: center;
+  z-index: var(--z-modal);
+}
+
+.reader-error svg {
+  color: var(--error);
+}
+
+.reader-error h3 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.reader-error p {
+  margin: 0;
+  max-width: 400px;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.reader-error-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.reader-error-actions button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   READER CONTENT AREA
+   ============================================ */
+
+.reader-content {
+  flex: 1;
+  position: relative;
+  transition: margin-right var(--duration-base) var(--ease-out);
+  background: var(--bg-primary);
+}
+
+/* Override react-reader styles for IES aesthetic */
+.reader-content > div {
+  height: 100% !important;
+}
+
+/* React-reader navigation buttons */
+.reader-content button[aria-label] {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  transition: color var(--duration-fast) !important;
+}
+
+.reader-content button[aria-label]:hover {
+  color: var(--text-primary) !important;
+}
+
+/* ============================================
+   TEXT SELECTION
+   ============================================ */
+
+::selection {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* Style for epub.js highlights */
+.hl {
+  background: rgba(255, 255, 0, 0.3); /* Yellow with some transparency */
+  pointer-events: none; /* Allows text selection over the highlight */
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (min-width: 768px) {
+  .reader-toolbar {
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .reader-title {
+    font-size: var(--text-xl);
+  }
+}
+
+/* Mobile: Flow panel becomes bottom sheet (handled in FlowPanel.css) */
+@media (max-width: 767px) {
+  .reader-content {
+    margin-right: 0 !important;
+  }
+
+  /* Hide all react-reader buttons (nav arrows) on mobile - swipe gestures work natively */
+  .reader-content button {
+    display: none !important;
+  }
+
+  .reader-fab-note {
+    position: fixed;
+    right: var(--ies-space-4);
+    bottom: calc(var(--ies-space-4) + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--entity-concept); /* Using CSS var */
+    color: white;
+    box-shadow: var(--shadow-lg);
+    z-index: var(--z-sticky);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+@media (min-width: 768px) {
+  .reader-fab-note {
+    display: none;
+  }
+}
+
+.reader-selection-bar {
+  position: absolute;
+  top: 0; /* Will be overridden by inline style */
+  left: 0; /* Will be overridden by inline style */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
+  z-index: var(--z-sticky);
+  transform: translate(-50%, -120%); /* Adjust to appear above selection */
+}
+
+.reader-selection-bar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================
+   MOBILE UX IMPROVEMENTS
+   ============================================ */
+
+/* Ensure 44px minimum touch targets */
+.ies-btn,
+.flow-relationship-link,
+.notes-chip, /* Modified from .notes-type-chips button to .notes-chip for NotesSheet.tsx */
+.library-filter-btn,
+.book-card {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Increase tap area without changing visual size */
+.flow-section-title button::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
