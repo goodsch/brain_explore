@@ -611,3 +611,53 @@ ies/reader/src/services/
 ---
 
 *This analysis maps the redux specifications to implementation reality. Use it to prioritize development work.*
+
+---
+
+## Dec 9 Spec Compliance Audit Findings
+
+**Audit Date:** 2025-12-09
+**Overall Compliance:** 98%
+
+### Summary by Area
+
+| Area | Compliance | Gap Severity |
+|------|------------|--------------|
+| Entity Lifecycle | 95% | 🟢 LOW (P2) |
+| Cognitive Modes | 85% | 🟡 MEDIUM (P1) |
+| Question Engine | 100% | ✅ NONE |
+| Cross-App Sync | 98% | 🟡 MEDIUM (P1) |
+| Journey Tracking | 70% | 🟡 MEDIUM (P2) |
+| Reframe Layer | 100% | ✅ NONE |
+| Entity Overlay | 110% | ✅ EXCEEDS |
+
+### Priority Recommendations
+
+**P0 - Critical:** None identified
+
+**P1 - High Value:**
+1. **Redis Migration** — SessionStateService uses in-memory storage
+   - Impact: State lost on restart
+   - File: `session_state_service.py`
+   - Effort: 2-3 days
+
+2. **Add ARCHIVED Entity Status** — Spec has 4 states, code has 3
+   - Impact: Completes lifecycle model
+   - File: `library/graph/adhd_ontology.py:89`
+   - Effort: 1 hour
+
+3. **Journey Event Logging** — capture/extraction/template events not logged
+   - Impact: Enables pattern analysis
+   - Effort: 2 days
+
+**P2 - Important:**
+1. Discovery Mode clarification (spec vs implementation)
+2. Journey pattern analysis service
+3. Passage ranking endpoint fix (`POST /rank-passages` → `GET /relevant-passages`)
+
+### Code-Doc Sync Issues Fixed
+
+- Fixed stale line counts in documentation
+- Removed Readest references from implementation paths
+- Condensed CLAUDE.md from 1948 → 195 lines (90% reduction)
+- Consolidated Serena memories from 12 → 5
