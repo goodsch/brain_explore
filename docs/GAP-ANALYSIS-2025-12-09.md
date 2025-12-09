@@ -346,22 +346,24 @@ class ExtractionEngine:
 
 ## Priority Matrix
 
+> **Updated:** 2025-12-09 (commit 3fd956b)
+
 ### P0 — Critical Path (Do First)
 
-| Gap | Reason | Effort |
-|-----|--------|--------|
-| **Context Note Parser** | Required for Flow v2 context awareness | Medium |
-| **Extraction Engine** | Core value of context-aware exploration | High |
-| **Reader → SiYuan Sync** | Closes capture loop | Medium |
+| Gap | Reason | Effort | Status |
+|-----|--------|--------|--------|
+| **Context Note Parser** | Required for Flow v2 context awareness | Medium | ✅ **DONE** (ContextService.parse_context_note) |
+| **Reader → SiYuan Sync** | Closes capture loop | Medium | ✅ **DONE** (Highlights API + SiYuan sync) |
+| **Extraction Engine** | Core value of context-aware exploration | High | ❌ Not started |
 
 ### P1 — High Value (Do Next)
 
-| Gap | Reason | Effort |
-|-----|--------|--------|
-| ExtractionProfile schema | Enables targeted extraction | Low |
-| Journey query helpers | Enables pattern analysis | Low |
-| "New since last run" tracking | UX improvement | Medium |
-| Passage ranking for questions | Reading guidance | High |
+| Gap | Reason | Effort | Status |
+|-----|--------|--------|--------|
+| ExtractionProfile schema | Enables targeted extraction | Low | ✅ **DONE** (schemas/extraction.py) |
+| Journey query helpers | Enables pattern analysis | Low | ❌ Not started |
+| "New since last run" tracking | UX improvement | Medium | ❌ Not started |
+| Passage ranking for questions | Reading guidance | High | ❌ Not started |
 
 ### P2 — Important (Do Later)
 
@@ -383,19 +385,52 @@ class ExtractionEngine:
 
 ## Recommended Next Sprint
 
-### Sprint Focus: Close the Capture Loop
+### ~~Sprint Focus: Close the Capture Loop~~ ✅ COMPLETE
+
+> **Completed:** 2025-12-09 (commit 3fd956b)
+
+The capture loop is now closed:
+- Highlights API: Full CRUD + batch sync
+- SiYuan sync: Book Notes with highlights
+- Reader integration: highlightApi.ts client
+
+### Sprint Focus: Extraction Engine (NEW)
+
+**Goal:** Context-aware extraction that uses ExtractionProfile to find relevant content.
+
+**Tasks:**
+
+1. **Extraction Engine Service** (Backend)
+   - `POST /extraction/run` — Accept context_id, focus_id, profile
+   - Use profile.domain_filters to select sources
+   - Use profile.core_concepts + synonyms for keyword matching
+   - LLM batch extraction for concepts/relations
+
+2. **Journey Query Helpers** (Backend)
+   - `GET /journey?context_id=X` — Filter by context
+   - `GET /journey?focus_id=X` — Filter by question/area
+
+3. **"Run Extraction" Button** (UI)
+   - Add to FlowPanel in IES Reader
+   - Add to FlowMode in SiYuan plugin
+
+---
+
+## Previous Sprint (Completed)
+
+### Sprint Focus: Close the Capture Loop ✅
 
 **Goal:** Highlights captured in Reader appear in SiYuan Book Notes and can be queried.
 
 **Tasks:**
 
-1. **Highlight Sync API** (Backend)
-   - `POST /sync/highlights` — Accept highlight with CFI, text, note, context_id
-   - Service to find/create Book Note in SiYuan
-   - Transform to SiYuan block with basic attributes
+1. **Highlight Sync API** (Backend) ✅
+   - `POST /highlights` — Full CRUD with CFI tracking
+   - Service creates Book Note in SiYuan
+   - Transform to SiYuan block with attributes
 
-2. **Reader Highlight Export** (IES Reader)
-   - On save note in NotesSheet, call sync API
+2. **Reader Highlight Export** (IES Reader) ✅
+   - highlightApi.ts client
    - Include CFI, current entity context, book calibre_id
 
 3. **Book Note Template** (SiYuan)
