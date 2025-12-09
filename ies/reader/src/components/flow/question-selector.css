@@ -1,0 +1,198 @@
+.question-selector {
+  position: relative;
+}
+
+.question-selector__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: rgba(139, 115, 85, 0.08);
+  border: 1px solid rgba(139, 115, 85, 0.2);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+  font-size: 0.9375rem;
+  text-align: left;
+}
+
+.question-selector__trigger:hover:not(:disabled) {
+  background: rgba(139, 115, 85, 0.12);
+  border-color: rgba(139, 115, 85, 0.3);
+}
+
+.question-selector__trigger--loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.question-selector__current {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.question-selector__icon {
+  flex-shrink: 0;
+}
+
+.question-selector__placeholder {
+  color: rgba(92, 64, 51, 0.5);
+}
+
+.question-selector__chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s;
+  color: rgba(92, 64, 51, 0.5);
+}
+
+.question-selector__chevron--open {
+  transform: rotate(180deg);
+}
+
+.question-selector__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  z-index: 50;
+  background: #FDFBF7;
+  border: 1px solid rgba(139, 115, 85, 0.2);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(92, 64, 51, 0.1);
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.question-selector__create-form {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(139, 115, 85, 0.15);
+}
+
+.question-selector__input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: rgba(139, 115, 85, 0.06);
+  border: 1px solid rgba(139, 115, 85, 0.15);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #5C4033;
+}
+
+.question-selector__input:focus {
+  outline: none;
+  border-color: #8B7355;
+}
+
+.question-selector__input::placeholder {
+  color: rgba(92, 64, 51, 0.4);
+}
+
+.question-selector__create-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.question-selector__btn {
+  flex: 1;
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  background: rgba(139, 115, 85, 0.1);
+  color: #5C4033;
+  transition: background-color 0.15s;
+}
+
+.question-selector__btn:hover {
+  background: rgba(139, 115, 85, 0.15);
+}
+
+.question-selector__btn--primary {
+  background: #8B7355;
+  color: #FDFBF7;
+}
+
+.question-selector__btn--primary:hover:not(:disabled) {
+  background: #7A6548;
+}
+
+.question-selector__btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.question-selector__new-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: none;
+  border-bottom: 1px solid rgba(139, 115, 85, 0.15);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.875rem;
+  color: #5C4033;
+  transition: background-color 0.15s;
+}
+
+.question-selector__new-btn:hover {
+  background: rgba(139, 115, 85, 0.06);
+}
+
+.question-selector__section {
+  padding: 0.25rem 0;
+}
+
+.question-selector__section--bordered {
+  border-top: 1px solid rgba(139, 115, 85, 0.15);
+}
+
+.question-selector__section-header {
+  padding: 0.375rem 0.875rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(92, 64, 51, 0.5);
+}
+
+.question-selector__option {
+  width: 100%;
+  display: block;
+  padding: 0.5rem 0.875rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.875rem;
+  color: #5C4033;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.question-selector__option:hover {
+  background: rgba(139, 115, 85, 0.06);
+}
+
+.question-selector__option--selected {
+  background: rgba(139, 115, 85, 0.1);
+}
+
+.question-selector__empty {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: rgba(92, 64, 51, 0.5);
+}
