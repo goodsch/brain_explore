@@ -1,0 +1,75 @@
+.areas-chips {
+  margin-bottom: 1rem;
+}
+
+.areas-chips__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+  padding: 0 0.25rem;
+}
+
+.areas-chips__icon {
+  font-size: 0.875rem;
+}
+
+.areas-chips__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(92, 64, 51, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex: 1;
+}
+
+.areas-chips__toggle {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: rgba(139, 115, 85, 0.08);
+  color: rgba(92, 64, 51, 0.6);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.areas-chips__toggle:hover {
+  background: rgba(139, 115, 85, 0.12);
+  color: rgba(92, 64, 51, 0.8);
+}
+
+.areas-chips__container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.areas-chips__chip {
+  padding: 0.5rem 0.875rem;
+  border: 1px solid rgba(139, 115, 85, 0.2);
+  border-radius: 1.25rem;
+  background: rgba(139, 115, 85, 0.06);
+  color: #5C4033;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.areas-chips__chip:hover {
+  background: rgba(139, 115, 85, 0.1);
+  border-color: rgba(139, 115, 85, 0.3);
+}
+
+.areas-chips__chip--selected {
+  background: #8B7355;
+  border-color: #8B7355;
+  color: #FDFBF7;
+  font-weight: 500;
+}
+
+.areas-chips__chip--selected:hover {
+  background: #7A6548;
+  border-color: #7A6548;
+}

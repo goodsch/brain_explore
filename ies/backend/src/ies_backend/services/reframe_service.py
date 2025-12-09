@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+import redis.asyncio as redis
 from anthropic import AsyncAnthropic
 
 from ies_backend.config import settings
@@ -49,10 +50,19 @@ Respond ONLY with valid JSON matching:
 
 
 class ReframeService:
-    """Generate and manage reframes stored in Neo4j."""
+    """Generate and manage reframes with Redis caching."""
 
-    def __init__(self, anthropic_client: AsyncAnthropic | None = None) -> None:
+    # Cache TTL: 24 hours (reframes don't change frequently)
+    CACHE_TTL_SECONDS = 86400
+
+    def __init__(
+        self,
+        anthropic_client: AsyncAnthropic | None = None,
+        redis_url: str | None = None,
+    ) -> None:
         self._anthropic_client = anthropic_client
+        self._redis_url = redis_url or settings.redis_url
+        self._redis: redis.Redis | None = None
 
     @property
     def anthropic_client(self) -> AsyncAnthropic:
@@ -63,8 +73,63 @@ class ReframeService:
             self._anthropic_client = AsyncAnthropic(api_key=settings.anthropic_api_key)
         return self._anthropic_client
 
+    async def _get_redis(self) -> redis.Redis:
+        """Get or create Redis connection (lazy initialization)."""
+        if self._redis is None:
+            self._redis = redis.from_url(self._redis_url, decode_responses=True)
+        return self._redis
+
+    def _cache_key(self, concept_id: str) -> str:
+        """Generate Redis cache key for concept reframes."""
+        return f"ies:reframes:{concept_id}"
+
+    async def _get_cached_reframes(self, concept_id: str) -> list[ReframeResponse] | None:
+        """Retrieve reframes from Redis cache."""
+        r = await self._get_redis()
+        cached = await r.get(self._cache_key(concept_id))
+
+        if not cached:
+            return None
+
+        try:
+            # Deserialize cached reframe list
+            data = json.loads(cached)
+            return [ReframeResponse(**item) for item in data]
+        except (json.JSONDecodeError, ValueError):
+            # Invalid cache data, return None to trigger fresh fetch
+            return None
+
+    async def _cache_reframes(self, concept_id: str, reframes: list[ReframeResponse]) -> None:
+        """Store reframes in Redis cache with TTL."""
+        r = await self._get_redis()
+
+        # Serialize reframes to JSON
+        data = [reframe.model_dump(mode="json") for reframe in reframes]
+        serialized = json.dumps(data)
+
+        # Store with 24-hour TTL
+        await r.setex(
+            self._cache_key(concept_id),
+            self.CACHE_TTL_SECONDS,
+            serialized,
+        )
+
+    async def _invalidate_cache(self, concept_id: str) -> None:
+        """Invalidate Redis cache for a concept."""
+        r = await self._get_redis()
+        await r.delete(self._cache_key(concept_id))
+
     async def get_reframes(self, concept_id: str) -> list[ReframeResponse]:
-        """Return cached reframes for the requested concept."""
+        """Return cached reframes for the requested concept.
+
+        Checks Redis cache first, falls back to Neo4j if cache miss.
+        """
+        # Try Redis cache first
+        cached = await self._get_cached_reframes(concept_id)
+        if cached is not None:
+            return cached
+
+        # Cache miss - fetch from Neo4j
         query = f"""
         {CONCEPT_MATCH_CLAUSE}
         WITH c
@@ -85,10 +150,17 @@ class ReframeService:
             if node:
                 reframes.append(self._node_to_reframe(node))
 
+        # Cache the results for future requests
+        if reframes:
+            await self._cache_reframes(concept_id, reframes)
+
         return reframes
 
     async def generate_reframes(self, concept_id: str, count: int = 5) -> list[ReframeResponse]:
-        """Generate new reframes via Claude and cache them in Neo4j."""
+        """Generate new reframes via Claude and cache them in Neo4j.
+
+        Invalidates Redis cache to ensure fresh data on next fetch.
+        """
         concept = await self._get_concept_context(concept_id)
         if concept is None:
             raise ValueError(f"Concept '{concept_id}' was not found in the graph")
@@ -111,10 +183,18 @@ class ReframeService:
             if stored:
                 created.append(stored)
 
+        # Invalidate cache since we've added new reframes
+        if created:
+            await self._invalidate_cache(concept_id)
+
         return created
 
     async def record_feedback(self, reframe_id: str, vote: str) -> None:
-        """Update votes and normalized strength for a reframe."""
+        """Update votes and normalized strength for a reframe.
+
+        Note: Feedback doesn't invalidate cache since it doesn't change
+        the reframe list, only individual vote counts.
+        """
         vote_value = vote.lower()
         if vote_value not in {"helpful", "confusing"}:
             raise ValueError("Vote must be either 'helpful' or 'confusing'")
@@ -406,6 +486,12 @@ class ReframeService:
         except (TypeError, ValueError):
             return 0.5
         return max(0.0, min(1.0, val))
+
+    async def close(self) -> None:
+        """Close Redis connection."""
+        if self._redis:
+            await self._redis.close()
+            self._redis = None
 
 
 # Singleton-style access for routers/services

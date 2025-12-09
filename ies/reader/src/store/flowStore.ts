@@ -8,6 +8,7 @@ import {
 import { visitApi } from '../services/visitApi';
 import { timelineApi } from '../services/timelineApi';
 import { questionApi } from '../services/questionApi';
+import { contextApi, type Context } from '../services/contextApi';
 import type {
   NewItemsSummary,
   NewItemsDetailResponse,
@@ -42,7 +43,14 @@ interface FlowStore {
 
   // Active context for extraction
   currentContextId: string | null;
+  currentContext: Context | null;
   setCurrentContextId: (id: string | null) => void;
+  fetchCurrentContext: () => Promise<void>;
+
+  // Selected area of exploration
+  selectedArea: string | null;
+  setSelectedArea: (area: string | null) => void;
+
   startJourney: (title: string, id?: number) => void;
   endJourney: () => Journey;
   setSyncStatus: (status: string, error?: string) => void;
@@ -118,7 +126,34 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
 
   // Active context for extraction
   currentContextId: null,
-  setCurrentContextId: (id) => set({ currentContextId: id }),
+  currentContext: null,
+  setCurrentContextId: (id) => {
+    set({ currentContextId: id });
+    // Auto-fetch context when ID changes
+    if (id) {
+      get().fetchCurrentContext();
+    } else {
+      set({ currentContext: null, selectedArea: null });
+    }
+  },
+
+  fetchCurrentContext: async () => {
+    const { currentContextId } = get();
+    if (!currentContextId) return;
+
+    try {
+      const context = await contextApi.get(currentContextId);
+      set({ currentContext: context });
+    } catch (error) {
+      console.error('Failed to fetch context:', error);
+      set({ currentContext: null });
+    }
+  },
+
+  // Selected area of exploration
+  selectedArea: null,
+  setSelectedArea: (area) => set({ selectedArea: area }),
+
   startJourney: () => set({ journeyPath: [] }),
   endJourney: () => {
     const { journeyPath } = get();

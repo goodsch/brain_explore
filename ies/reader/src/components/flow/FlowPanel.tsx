@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useFlowStore } from '../../store/flowStore';
 import { QuestionSelector } from './QuestionSelector';
+import { AreasChips } from './AreasChips';
 import { WhatsNewSection } from './WhatsNewSection';
 import { RelevantPassagesSection } from './RelevantPassagesSection';
 import { FlowPanelTabs } from './FlowPanelTabs';
@@ -18,8 +19,11 @@ export function FlowPanel() {
     isLoadingQuestions,
     setCurrentQuestionId,
     currentEntity,
-    // Context for extraction
+    // Context for extraction and areas
     currentContextId,
+    currentContext,
+    selectedArea,
+    setSelectedArea,
     // P1 features
     newItemsDetail,
     isLoadingNewItems,
@@ -85,6 +89,15 @@ export function FlowPanel() {
     fetchTimeline(undefined, grouping);
   };
 
+  const handleSelectArea = (area: string | null) => {
+    setSelectedArea(area);
+    // TODO: Could trigger filtered entity search or other area-specific behavior
+    console.log('Selected area:', area);
+  };
+
+  // Get areas from current context
+  const areas = currentContext?.areas_of_exploration || [];
+
   return (
     <div className="flow-panel">
       <div className="flow-panel__header">
@@ -116,6 +129,17 @@ export function FlowPanel() {
               <RunExtractionButton
                 contextId={currentContextId}
                 questionId={currentQuestionId || undefined}
+              />
+            </div>
+          )}
+
+          {/* Areas of Exploration - shown when context has areas */}
+          {areas.length > 0 && (
+            <div className="flow-panel__areas">
+              <AreasChips
+                areas={areas}
+                selectedArea={selectedArea}
+                onSelectArea={handleSelectArea}
               />
             </div>
           )}
