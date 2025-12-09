@@ -5,6 +5,7 @@ import { WhatsNewSection } from './WhatsNewSection';
 import { RelevantPassagesSection } from './RelevantPassagesSection';
 import { FlowPanelTabs } from './FlowPanelTabs';
 import { JourneyTimeline } from './JourneyTimeline';
+import { RunExtractionButton } from './RunExtractionButton';
 import { useFlowLayout } from '../../hooks/useFlowLayout';
 import { useQuestionSync } from '../../hooks/useQuestionSync';
 import './flow-panel.css';
@@ -17,9 +18,13 @@ export function FlowPanel() {
     isLoadingQuestions,
     setCurrentQuestionId,
     currentEntity,
+    // Context for extraction
+    currentContextId,
     // P1 features
     newItemsDetail,
     isLoadingNewItems,
+    recordVisit,
+    fetchNewItemsSummary,
     fetchNewItemsDetail,
     relevantPassages,
     isLoadingPassages,
@@ -38,6 +43,18 @@ export function FlowPanel() {
 
   // Don't render if closed or if on mobile (use standalone FlowPage instead)
   if (!isFlowPanelOpen || (isMobile && mode === 'standalone')) return null;
+
+  // When panel opens, record visit and fetch "What's New"
+  useEffect(() => {
+    if (isFlowPanelOpen) {
+      // Record the visit
+      recordVisit('global', 'global');
+      // Fetch summary for badge
+      fetchNewItemsSummary('global', 'global');
+      // Fetch detailed new items for section
+      fetchNewItemsDetail('global', 'global');
+    }
+  }, [isFlowPanelOpen, recordVisit, fetchNewItemsSummary, fetchNewItemsDetail]);
 
   // When question changes, fetch relevant passages
   useEffect(() => {
@@ -91,6 +108,16 @@ export function FlowPanel() {
               isLoading={isLoadingNewItems}
               onRefresh={handleRefreshNewItems}
             />
+          )}
+
+          {/* Extraction Button - shown when context is active */}
+          {currentContextId && (
+            <div className="flow-panel__extraction">
+              <RunExtractionButton
+                contextId={currentContextId}
+                questionId={currentQuestionId || undefined}
+              />
+            </div>
           )}
 
           {/* Question Selector */}

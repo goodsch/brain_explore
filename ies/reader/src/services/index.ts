@@ -30,3 +30,12 @@ export {
   type AppSource,
   type SessionStatus,
 } from './syncApi';
+export {
+  extractionApi,
+  ExtractionApiClient,
+  type ExtractionRunRequest,
+  type ExtractionRunResponse,
+  type ExtractionResult,
+  type ExtractionProfile,
+  type ExtractionProfileCreate,
+} from './extractionApi';

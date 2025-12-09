@@ -207,7 +207,7 @@ class QuestionApiClient {
       params.source_ids.forEach((id) => searchParams.append('source_ids', id));
     }
 
-    const url = `${this.baseUrl}/questions/${questionId}/rank-passages?${searchParams.toString()}`;
+    const url = `${this.baseUrl}/questions/${questionId}/relevant-passages?${searchParams.toString()}`;
     const res = await fetch(url);
 
     if (!res.ok) {

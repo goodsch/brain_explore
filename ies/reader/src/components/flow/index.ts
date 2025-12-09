@@ -9,3 +9,6 @@ export { WhatsNewSection } from './WhatsNewSection';
 export { RelevantPassagesSection } from './RelevantPassagesSection';
 export { FlowPanelTabs } from './FlowPanelTabs';
 export { JourneyTimeline } from './JourneyTimeline';
+
+// Extraction
+export { RunExtractionButton } from './RunExtractionButton';

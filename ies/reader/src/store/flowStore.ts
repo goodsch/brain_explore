@@ -27,6 +27,7 @@ export interface FlowQuestion {
   source: 'siyuan' | 'reader' | 'ai-suggested';
   siyuanId?: string;
   parentId?: string;
+  contextId?: string;
   status: 'active' | 'paused' | 'resolved';
   createdAt: string;
   updatedAt: string;
@@ -38,6 +39,10 @@ interface FlowStore {
   flowPanelWidth: string;
   userId: string | null;
   setUserId: (id: string) => void;
+
+  // Active context for extraction
+  currentContextId: string | null;
+  setCurrentContextId: (id: string | null) => void;
   startJourney: (title: string, id?: number) => void;
   endJourney: () => Journey;
   setSyncStatus: (status: string, error?: string) => void;
@@ -95,6 +100,13 @@ interface FlowStore {
   setActivePanelTab: (tab: 'explore' | 'timeline') => void;
   fetchTimeline: (contextId?: string, grouping?: string) => Promise<void>;
   clearTimeline: () => void;
+
+  // Extraction
+  extractionResult: import('../services/extractionApi').ExtractionResult | null;
+  isExtracting: boolean;
+  extractionError: string | null;
+  runExtraction: (contextId: string, questionId?: string) => Promise<void>;
+  clearExtraction: () => void;
 }
 
 export const useFlowStore = create<FlowStore>((set, get) => ({
@@ -103,6 +115,10 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   flowPanelWidth: '30%',
   userId: null,
   setUserId: (id) => set({ userId: id }),
+
+  // Active context for extraction
+  currentContextId: null,
+  setCurrentContextId: (id) => set({ currentContextId: id }),
   startJourney: () => set({ journeyPath: [] }),
   endJourney: () => {
     const { journeyPath } = get();
@@ -338,4 +354,29 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   },
 
   clearTimeline: () => set({ journeyTimeline: null }),
+
+  // Extraction state
+  extractionResult: null,
+  isExtracting: false,
+  extractionError: null,
+
+  runExtraction: async (contextId: string, questionId?: string) => {
+    set({ isExtracting: true, extractionError: null });
+    try {
+      const { extractionApi } = await import('../services/extractionApi');
+      const response = await extractionApi.runExtraction({
+        context_id: contextId,
+        question_id: questionId,
+      });
+      set({ extractionResult: response.result, isExtracting: false });
+    } catch (error) {
+      console.error('Extraction failed:', error);
+      set({
+        isExtracting: false,
+        extractionError: (error as Error).message,
+      });
+    }
+  },
+
+  clearExtraction: () => set({ extractionResult: null, extractionError: null }),
 }));
