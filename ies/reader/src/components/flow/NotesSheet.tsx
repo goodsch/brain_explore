@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Sheet } from '../ui/Sheet';
-import { useFlowStore } from '../../store/flowStore'; // Corrected path
-import { LuSend, LuPenLine, LuLightbulb, LuHelpCircle } from 'lucide-react'; // From package.json
+import { useFlowStore } from '../../store/flowStore';
+import { Send, PenLine, Lightbulb, HelpCircle } from 'lucide-react';
 import clsx from 'clsx';
 // Assuming useTranslation is available globally or imported from a common hook
 // For now, I'll mock it or find its actual path later if needed.
@@ -62,7 +62,7 @@ export function NotesSheet({ isOpen, onClose, initialNoteData }: Props) {
             )}
             onClick={() => setNoteType('thought')}
           >
-            <LuPenLine size={16} /> {_('Thought')}
+            <PenLine size={16} /> {_('Thought')}
           </button>
           <button
             className={clsx(
@@ -71,7 +71,7 @@ export function NotesSheet({ isOpen, onClose, initialNoteData }: Props) {
             )}
             onClick={() => setNoteType('question')}
           >
-            <LuHelpCircle size={16} /> {_('Question')}
+            <HelpCircle size={16} /> {_('Question')}
           </button>
           <button
             className={clsx(
@@ -80,7 +80,7 @@ export function NotesSheet({ isOpen, onClose, initialNoteData }: Props) {
             )}
             onClick={() => setNoteType('insight')}
           >
-            <LuLightbulb size={16} /> {_('Insight')}
+            <Lightbulb size={16} /> {_('Insight')}
           </button>
         </div>
 
@@ -106,7 +106,7 @@ export function NotesSheet({ isOpen, onClose, initialNoteData }: Props) {
             {_('Cancel')}
           </button>
           <button onClick={handleSubmit} className="btn btn-primary">
-            <LuSend size={16} /> {_('Capture')}
+            <Send size={16} /> {_('Capture')}
           </button>
         </div>
       </div>

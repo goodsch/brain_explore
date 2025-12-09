@@ -1,3 +1,3 @@
-export function useEntityOverlay(bookId?: number) {
+export function useEntityOverlay(_bookId?: number) {
   // Mock implementation
 }

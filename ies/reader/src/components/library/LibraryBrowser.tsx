@@ -1,4 +1,3 @@
-import React from 'react';
 import { CalibreBook } from '../../services/graphClient';
 
 interface Props {
@@ -6,7 +5,7 @@ interface Props {
   onLocalFileSelect: (file: File) => void;
 }
 
-export function LibraryBrowser({ onBookSelect, onLocalFileSelect }: Props) {
+export function LibraryBrowser({ onBookSelect: _onBookSelect, onLocalFileSelect }: Props) {
   return (
     <div className="library-container">
       <h1>Library</h1>

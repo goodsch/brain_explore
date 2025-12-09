@@ -9,5 +9,5 @@ export const graphClient = {
   login: async () => ({ user_id: 'user-123' }),
   getBooks: async () => [],
   getBookFileUrl: (id: number) => `/books/${id}/file`,
-  saveJourney: async () => {},
+  saveJourney: async (_journey: unknown, _userId: string) => {},
 };

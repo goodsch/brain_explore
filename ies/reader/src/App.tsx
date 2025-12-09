@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Reader } from './components/Reader';
 import { LibraryBrowser } from './components/library/LibraryBrowser';
-import { graphClient, type CalibreBook } from './services/graphClient';
+import { type CalibreBook } from './services/graphClient';
 import { useFlowStore } from './store/flowStore';
 import './App.css';
 
@@ -15,7 +15,7 @@ function App() {
   const [currentBook, setCurrentBook] = useState<BookInfo | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(true);
   const { setUserId } = useFlowStore();
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [_theme, _setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
     async function login() {

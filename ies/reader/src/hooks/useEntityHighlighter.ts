@@ -1,3 +1,3 @@
-export function useEntityHighlighter(rendition: any) {
+export function useEntityHighlighter(_rendition: unknown) {
   // Mock implementation
 }
