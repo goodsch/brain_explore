@@ -1,5 +1,6 @@
 export { default as FlowPanel } from './FlowPanel';
 export { default as FlowPanelHeader } from './Header';
+export { default as QuestionSelector } from './QuestionSelector';
 export { default as EntitySection } from './EntitySection';
 export { default as RelationshipsSection } from './RelationshipsSection';
 export { default as SourcesSection } from './SourcesSection';

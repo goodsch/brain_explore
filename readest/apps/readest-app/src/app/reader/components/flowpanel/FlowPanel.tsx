@@ -12,6 +12,7 @@ import { Overlay } from '@/components/Overlay';
 import useShortcuts from '@/hooks/useShortcuts';
 
 import FlowPanelHeader from './Header';
+import QuestionSelector from './QuestionSelector';
 import EntitySection from './EntitySection';
 import RelationshipsSection from './RelationshipsSection';
 import SourcesSection from './SourcesSection';
@@ -41,6 +42,11 @@ const FlowPanel: React.FC = () => {
     isLoadingEntity,
     isLoadingEvidence,
     sessionId,
+    questions,
+    currentQuestionId,
+    isLoadingQuestions,
+    addQuestion,
+    setCurrentQuestionId,
     getFlowPanelWidth,
     setFlowPanelWidth,
     setFlowModeActive,
@@ -151,6 +157,28 @@ const FlowPanel: React.FC = () => {
             isPinned={isFlowPanelPinned}
             handleClose={() => setFlowModeActive(false)}
             handleTogglePin={handleTogglePin}
+          />
+        </div>
+
+        {/* Question Selector - new in Flow v2 */}
+        <div className='px-4 py-3 border-b border-base-300/50'>
+          <QuestionSelector
+            questions={questions}
+            currentQuestionId={currentQuestionId}
+            onSelect={setCurrentQuestionId}
+            onCreate={(text) => {
+              const newQuestion = {
+                id: `q-${Date.now()}`,
+                text,
+                source: 'reader' as const,
+                status: 'active' as const,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+              addQuestion(newQuestion);
+              setCurrentQuestionId(newQuestion.id);
+            }}
+            isLoading={isLoadingQuestions}
           />
         </div>
 
