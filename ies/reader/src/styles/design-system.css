@@ -1,0 +1,46 @@
+:root {
+  --bg-primary: #0f0f10;
+  --bg-secondary: #1a1a1c;
+  --bg-tertiary: #252528;
+  --bg-hover: #2a2a2e;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a0a0a5;
+  --text-muted: #6b6b70;
+  --border-default: #3a3a3e;
+  --border-subtle: #2a2a2e;
+  --border-focus: #5a5a60;
+  
+  --entity-concept: #3b82f6;
+  --entity-person: #10b981;
+  --entity-theory: #8b5cf6;
+  --entity-framework: #f59e0b;
+  --entity-assessment: #ef4444;
+  --entity-insight: #06b6d4;
+  --entity-thread: #84cc16;
+  --entity-spark: #ec4899;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Source Serif Pro', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  
+  --radius-md: 8px;
+  --radius-full: 9999px;
+  
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  
+  --duration-fast: 150ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  
+  --glass-bg: rgba(26, 26, 28, 0.8);
+  --glass-blur: blur(12px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  --z-sticky: 100;
+  --z-modal: 200;
+}
