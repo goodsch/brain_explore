@@ -52,6 +52,8 @@ class JourneyClassification(str, Enum):
     HIGHLIGHT = "highlight"
     EXTRACTION_RUN = "extraction_run"
     QUESTION_CLICK = "question_click"
+    ENTITY_VISIT = "entity_visit"
+    TEMPLATE_SESSION = "template_session"
 
 
 # -----------------------------------------------------------------------------

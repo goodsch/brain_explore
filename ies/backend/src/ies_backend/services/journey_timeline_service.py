@@ -292,6 +292,8 @@ class JourneyTimelineService:
             JourneyClassification.READING_NOTE: TimelineEntryType.NOTE_TAKEN,
             JourneyClassification.EXTRACTION_RUN: TimelineEntryType.EXTRACTION_RUN,
             JourneyClassification.QUESTION_CLICK: TimelineEntryType.ENTITY_VISIT,
+            JourneyClassification.ENTITY_VISIT: TimelineEntryType.ENTITY_VISIT,
+            JourneyClassification.TEMPLATE_SESSION: TimelineEntryType.TEMPLATE_SESSION,
         }
 
         for classification in classifications:

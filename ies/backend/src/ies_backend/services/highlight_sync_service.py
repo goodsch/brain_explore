@@ -12,6 +12,7 @@ from ..schemas.highlight import (
 )
 from .siyuan_client import SiYuanClient
 from .calibre_service import CalibreService
+from .journey_logger import JourneyLogger
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +126,15 @@ class HighlightSyncService:
             logger.info(
                 f"Synced highlight {highlight.id} to SiYuan block {block_id}"
             )
+
+            # Log to journey if context is available
+            if highlight.context_id:
+                await JourneyLogger.log_highlight_created(
+                    context_id=highlight.context_id,
+                    highlight_text=highlight.text,
+                    book_id=book_id,
+                    question_id=highlight.question_id,
+                )
 
             return SyncResult(
                 highlight_id=highlight.id,

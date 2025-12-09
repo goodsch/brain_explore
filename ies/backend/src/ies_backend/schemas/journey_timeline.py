@@ -26,6 +26,7 @@ class TimelineEntryType(str, Enum):
     CONTEXT_CREATED = "context_created"
     SESSION_STARTED = "session_started"
     SESSION_ENDED = "session_ended"
+    TEMPLATE_SESSION = "template_session"
 
 
 class TimelineGrouping(str, Enum):
