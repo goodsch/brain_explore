@@ -421,6 +421,79 @@ class UnifiedGraphClient:
                 evidence=rel.evidence
             )
 
+    def add_typed_relationship(
+        self,
+        source_name: str,
+        target_name: str,
+        relation_type: str,
+        evidence: str,
+        confidence: float,
+        source_book: Optional[int] = None,
+        source_chunk: Optional[str] = None
+    ):
+        """Add a Pass 2 typed relationship with metadata.
+
+        Args:
+            source_name: Source entity name
+            target_name: Target entity name
+            relation_type: CAUSES | PART_OF | CONTRASTS_WITH
+            evidence: Text evidence supporting the relationship
+            confidence: Confidence score (0.0-1.0)
+            source_book: Optional calibre_id of source book
+            source_chunk: Optional chunk ID where relationship was found
+
+        Raises:
+            ValueError: If relation_type is not one of the allowed types
+        """
+        # Validate relationship type to prevent Cypher injection
+        allowed_types = ["CAUSES", "PART_OF", "CONTRASTS_WITH"]
+        if relation_type not in allowed_types:
+            raise ValueError(
+                f"Invalid relation_type: {relation_type}. "
+                f"Must be one of: {', '.join(allowed_types)}"
+            )
+
+        now = datetime.now().isoformat()
+
+        with self.driver.session() as session:
+            # For CONTRASTS_WITH, create bidirectional relationship
+            if relation_type == "CONTRASTS_WITH":
+                session.run(f"""
+                    MATCH (a) WHERE a.name = $source
+                    MATCH (b) WHERE b.name = $target
+                    MERGE (a)-[r1:CONTRASTS_WITH]->(b)
+                    MERGE (a)<-[r2:CONTRASTS_WITH]-(b)
+                    SET r1.evidence = $evidence,
+                        r1.confidence = $confidence,
+                        r1.extracted_by = 'pass2',
+                        r1.extracted_at = $now,
+                        r1.source_book = $book,
+                        r1.source_chunk = $chunk,
+                        r2.evidence = $evidence,
+                        r2.confidence = $confidence,
+                        r2.extracted_by = 'pass2',
+                        r2.extracted_at = $now,
+                        r2.source_book = $book,
+                        r2.source_chunk = $chunk
+                """, source=source_name, target=target_name,
+                     evidence=evidence, confidence=confidence,
+                     now=now, book=source_book, chunk=source_chunk)
+            else:
+                # Unidirectional (CAUSES, PART_OF)
+                session.run(f"""
+                    MATCH (a) WHERE a.name = $source
+                    MATCH (b) WHERE b.name = $target
+                    MERGE (a)-[r:{relation_type}]->(b)
+                    SET r.evidence = $evidence,
+                        r.confidence = $confidence,
+                        r.extracted_by = 'pass2',
+                        r.extracted_at = $now,
+                        r.source_book = $book,
+                        r.source_chunk = $chunk
+                """, source=source_name, target=target_name,
+                     evidence=evidence, confidence=confidence,
+                     now=now, book=source_book, chunk=source_chunk)
+
     def add_extraction_result(self, result: ExtractionResult, book_path: str):
         """Add all entities and relationships from an extraction result."""
         self.add_chunk(result.chunk_id, "", book_path)

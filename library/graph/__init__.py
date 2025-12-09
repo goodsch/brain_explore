@@ -12,6 +12,15 @@ from library.graph.entities import (
 # Original Neo4j client (for book knowledge graph)
 from library.graph.neo4j_client import KnowledgeGraph
 
+# Pass 2: Relationship extraction
+from library.graph.relationship_extractor import (
+    RelationshipExtractor,
+    ExtractedRelationship,
+    RelationshipExtractionResult,
+    deduplicate_relationships,
+    validate_relationship,
+)
+
 # ADHD-friendly ontology (for personal knowledge - Layers 3/4)
 from library.graph.adhd_ontology import (
     ADHDEntity,
@@ -44,6 +53,12 @@ __all__ = [
     "EntityExtractor",
     "deduplicate_entities",
     "KnowledgeGraph",
+    # Pass 2: Relationship extraction
+    "RelationshipExtractor",
+    "ExtractedRelationship",
+    "RelationshipExtractionResult",
+    "deduplicate_relationships",
+    "validate_relationship",
     # ADHD-friendly (personal knowledge)
     "EntityType",
     "ResonanceSignal",
