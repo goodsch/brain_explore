@@ -12,7 +12,9 @@ Four-layer system for AI-partnered knowledge exploration:
 | 1 | Knowledge Graph | Ingests materials → entities/relationships (179 books, ~300 entities) |
 | 2 | Backend APIs | Graph, dialogue, journeys, profiles (185 tests passing) |
 | 3 | SiYuan Plugin | Dashboard, 5 thinking modes, flow exploration |
-| 4 | Readest | E-book reader with entity overlay and flow panel |
+| 4 | IES Reader | Standalone e-book reader with entity overlay and flow panel |
+
+**Note:** IES Reader replaced Readest (Dec 2025). Readest worktree is archived, no longer in active development.
 
 **The Virtuous Cycle:** Dialogue reveals thinking patterns → personalized exploration → concept discovery → enriches graph → deeper exploration.
 
@@ -24,7 +26,7 @@ Completed:
 - 5-wave backend remediation (all components production-ready)
 - IES Reader Waves 1-3 (library, PWA, interactive, mobile UX)
 - IES MCP Server (voice-driven ForgeMode via Claude Desktop)
-- SiYuan + Readest remediation complete
+- SiYuan remediation complete
 - Conversation service (parse Claude exports → Neo4j)
 
 In Progress:
@@ -45,8 +47,8 @@ cd ies/backend && uv run uvicorn ies_backend.main:app --reload --port 8081
 # SiYuan plugin development
 cd .worktrees/siyuan/ies/plugin && pnpm dev
 
-# Readest development
-cd .worktrees/readest/readest/apps/readest-app && pnpm dev
+# IES Reader development
+cd .worktrees/ies-reader/ies/reader && pnpm dev
 ```
 
 ## Project Layout
@@ -58,13 +60,15 @@ brain_explore/
 ├── library/graph/         # Neo4j client, entity extraction
 ├── .worktrees/
 │   ├── siyuan/           # SiYuan plugin (Layer 3)
-│   └── readest/          # Readest fork (Layer 4)
+│   ├── ies-reader/       # IES Reader (Layer 4) - active
+│   └── readest/          # Archived - replaced by IES Reader
 └── docs/                  # Documentation
 ```
 
 **Worktrees:** Feature work happens in worktrees, not master branch.
 - `.worktrees/siyuan/` → SiYuan plugin on `feature/siyuan-evolution`
-- `.worktrees/readest/` → Readest on `feature/readest-integration`
+- `.worktrees/ies-reader/` → IES Reader on `feature/ies-reader-enhancement` (ACTIVE)
+- `.worktrees/readest/` → Archived (replaced by IES Reader)
 - Master branch → Backend only
 
 ## Key Commands

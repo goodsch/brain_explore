@@ -25,6 +25,8 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const [showNotesSheet, setShowNotesSheet] = useState(false);
   const [initialNoteData, setInitialNoteData] = useState<{ text: string; cfiRange: string } | undefined>(undefined);
+  const [isMobile, setIsMobile] = useState(false); // New state for mobile detection
+
   interface SelectionContext {
     text: string;
     position: { top: number; left: number };
@@ -32,6 +34,15 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   }
   const [selectionContext, setSelectionContext] = useState<SelectionContext | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // Assuming 768px as mobile breakpoint
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Debug: Log URL and verify it's accessible
   useEffect(() => {
@@ -303,14 +314,15 @@ interface IFrameContents {
       {/* Flow Panel */}
       <FlowPanel />
 
-      {/* Mobile Note FAB */}
-      <button
-        className="reader-fab-note"
-        onClick={() => setShowNotesSheet(true)}
-        aria-label="Quick capture"
-      >
-        <PenLine size={24} />
-      </button>
+      {isMobile && ( // Show FAB only on mobile
+        <button
+          className="reader-fab-note"
+          onClick={() => setShowNotesSheet(true)}
+          aria-label="Quick capture"
+        >
+          <PenLine size={24} />
+        </button>
+      )}
 
       <NotesSheet
           isOpen={showNotesSheet}

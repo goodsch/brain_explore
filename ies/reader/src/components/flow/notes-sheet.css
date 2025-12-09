@@ -1,0 +1,22 @@
+.notes-type-chips .notes-chip {
+  min-height: 44px; /* Ensure minimum touch target size */
+  min-width: 44px; /* Ensure minimum touch target size */
+}
+
+.notes-type-chips .notes-chip.notes-type-chips-active-thought {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: var(--border-thin) solid var(--border-default);
+}
+
+.notes-type-chips .notes-chip.notes-type-chips-active-question {
+  background: rgba(59, 130, 246, 0.15); /* Blue from --entity-concept */
+  color: var(--entity-concept);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.notes-type-chips .notes-chip.notes-type-chips-active-insight {
+  background: rgba(6, 182, 212, 0.15); /* Cyan from --entity-insight */
+  color: var(--entity-insight);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
