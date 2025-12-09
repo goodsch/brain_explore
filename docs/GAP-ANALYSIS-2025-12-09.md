@@ -252,31 +252,39 @@ ExtractionProfile schema implemented with full support for context-aware extract
 
 | Feature | Specified | Status |
 |---------|-----------|--------|
-| Log capture events | Quick captures, voice | 🔄 Partial |
+| Log capture events | Quick captures, voice | ✅ **DONE** (JourneyLogger.log_highlight_created) |
 | Log dialogue interactions | Chat messages | ✅ Implemented |
-| Log Flow button clicks | Extraction runs | ❌ Not implemented |
-| Log Reader sessions | Passages, highlights | ❌ Not implemented |
-| Log synthesis events | Answer blocks | ❌ Not implemented |
-| `getJourneyForContext(context_id)` | Query helper | ❌ Not implemented |
-| `getJourneyForFocus(context_id, focus_id)` | Query helper | ❌ Not implemented |
-| Timeline view UI | Per-context | ❌ Not implemented |
+| Log Flow button clicks | Extraction runs | ✅ **DONE** (ExtractionEngine._log_extraction_journey) |
+| Log Reader sessions | Passages, highlights | ✅ **DONE** (highlight_sync_service integration) |
+| Log synthesis events | Answer blocks | 🔄 Partial |
+| `getJourneyForContext(context_id)` | Query helper | ✅ **DONE** (GET /journey-timeline/context/{context_id}) |
+| `getJourneyForFocus(context_id, focus_id)` | Query helper | ✅ **DONE** (via request.focus_id filter) |
+| Timeline view UI | Per-context | ✅ **DONE** (JourneyTimeline component) |
 
 ### Implementation Location
 
 | Component | File | Status |
 |-----------|------|--------|
-| JourneyService | `ies/backend/src/ies_backend/services/journey_service.py` | ✅ Basic |
-| Journey API | `ies/backend/src/ies_backend/api/journey.py` | ✅ Basic |
-| Journey store (Reader) | `ies/reader/src/store/flowStore.ts` | ✅ Basic |
+| JourneyService | `ies/backend/src/ies_backend/services/journey_service.py` | ✅ Complete |
+| JourneyLogger | `ies/backend/src/ies_backend/services/journey_logger.py` | ✅ **NEW** (Dec 9) |
+| Journey API | `ies/backend/src/ies_backend/api/journey.py` | ✅ Complete |
+| Journey Timeline API | `ies/backend/src/ies_backend/api/journey_timeline.py` | ✅ Complete |
+| Journey store (Reader) | `ies/reader/src/store/flowStore.ts` | ✅ Complete |
 
-### Gap: Comprehensive Journey Logging
+### ~~Gap: Comprehensive Journey Logging~~ ✅ **MOSTLY COMPLETE** (Dec 9)
 
-**What's missing:**
-- Event types for all specified categories
-- Query helpers for context/focus filtering
-- Timeline view component
+**Implemented:**
+- JourneyLogger utility class with methods for all event types
+- ENTITY_VISIT and TEMPLATE_SESSION classifications added
+- Highlight sync automatically logs to journey
+- Extraction runs log to journey
+- Timeline API with context/focus filtering
+- Timeline view component in SiYuan plugin
 
-**Priority:** Medium — Important for pattern analysis
+**Remaining:**
+- Log synthesis events (answer blocks) — partial
+
+**Priority:** Low — Core logging complete
 
 ---
 
@@ -645,9 +653,10 @@ ies/reader/src/services/
    - ContextStatus already has ARCHIVED (4 states)
    - EntityStatus uses different lifecycle (gardening metaphor: CAPTURED→EXPLORING→ANCHORED)
 
-3. **Journey Event Logging** — capture/extraction/template events not logged
-   - Impact: Enables pattern analysis
-   - Effort: 2 days
+3. ~~**Journey Event Logging** — capture/extraction/template events not logged~~ ✅ **MOSTLY COMPLETE** (Dec 9)
+   - Added `JourneyLogger` utility class with all event types
+   - Highlight sync, extraction runs, templates now log to journey
+   - Remaining: synthesis event logging (partial)
 
 **P2 - Important:**
 1. Discovery Mode clarification (spec vs implementation)
