@@ -25,7 +25,7 @@
     // Backend URL - use same hostname as SiYuan is accessed from
     const BACKEND_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
         ? `http://${window.location.hostname}:8081`
-        : 'http://localhost:8081';
+        : 'http://192.168.86.60:8081';
 
     // UI State
     let inputText = '';

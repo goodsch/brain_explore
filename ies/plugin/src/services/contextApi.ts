@@ -95,7 +95,7 @@ async function forwardProxy<T>(
 export class ContextApiClient {
     private backendUrl: string;
 
-    constructor(backendUrl: string = 'http://localhost:8081') {
+    constructor(backendUrl: string = 'http://192.168.86.60:8081') {
         this.backendUrl = backendUrl;
     }
 

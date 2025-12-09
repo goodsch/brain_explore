@@ -20,6 +20,9 @@
     import { showMessage, getFrontend, fetchSyncPost } from 'siyuan';
     import { createSessionDocument, resolveStructureNotebook } from '../utils/siyuan-structure';
     import ConceptExtractor from '../components/ConceptExtractor.svelte';
+    import { getQuestionApi, getContextApi } from '../services';
+    import type { Question, AnswerBlock } from '../services/questionApi';
+    import type { Context } from '../services/contextApi';
 
     export let backendUrl: string;
 
@@ -156,6 +159,13 @@
     // Advanced Concept Extractor modal state (with backend Neo4j integration)
     let showConceptExtractor = false;
     let extractorEntityName: string | null = null;
+
+    // Cross-app sync state (Context + Question layer)
+    // This enables questions generated in SiYuan to appear in IES Reader
+    let currentContext: Context | null = null;
+    let syncedQuestions: Map<string, Question> = new Map(); // keyed by local question text
+    let isSyncingQuestion = false;
+    let syncError: string | null = null;
 
     // Question class display names
     const QUESTION_CLASS_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
@@ -517,6 +527,93 @@
         }
     }
 
+    // ----- CROSS-APP SYNC: Context + Question Layer -----
+
+    /**
+     * Initialize or get context for this session.
+     * Creates a context in the backend that can be synced to IES Reader.
+     */
+    async function initializeSessionContext(): Promise<Context | null> {
+        try {
+            const contextApi = getContextApi(backendUrl);
+            const context = await contextApi.getOrCreateDefault(`${sessionTopic} (${selectedMode})`);
+            console.log('[IES Sync] Session context initialized:', context.id);
+            return context;
+        } catch (err) {
+            console.warn('[IES Sync] Failed to initialize context:', err);
+            syncError = 'Context sync unavailable';
+            return null;
+        }
+    }
+
+    /**
+     * Sync a generated question to the backend.
+     * This allows IES Reader to show questions from SiYuan sessions.
+     */
+    async function syncQuestionToBackend(questionText: string, questionClass: string): Promise<Question | null> {
+        if (!currentContext) {
+            console.warn('[IES Sync] No context - skipping question sync');
+            return null;
+        }
+
+        // Skip if already synced
+        if (syncedQuestions.has(questionText)) {
+            return syncedQuestions.get(questionText) || null;
+        }
+
+        try {
+            isSyncingQuestion = true;
+            const questionApi = getQuestionApi(backendUrl);
+            const question = await questionApi.create({
+                context_id: currentContext.id,
+                text: questionText,
+                source: 'dialogue', // Generated during thinking dialogue
+            });
+
+            syncedQuestions.set(questionText, question);
+            syncedQuestions = syncedQuestions; // Trigger reactivity
+            console.log('[IES Sync] Question synced:', question.id, questionText.substring(0, 50) + '...');
+            return question;
+        } catch (err) {
+            console.warn('[IES Sync] Failed to sync question:', err);
+            return null;
+        } finally {
+            isSyncingQuestion = false;
+        }
+    }
+
+    /**
+     * Create an answer block for a synced question.
+     * This records the user's response in the backend.
+     */
+    async function syncAnswerToBackend(questionText: string, answerContent: string): Promise<AnswerBlock | null> {
+        const question = syncedQuestions.get(questionText);
+        if (!question) {
+            console.warn('[IES Sync] Question not synced - cannot create answer');
+            return null;
+        }
+
+        try {
+            const questionApi = getQuestionApi(backendUrl);
+            const answer = await questionApi.createAnswer({
+                question_id: question.id,
+                content: answerContent,
+                quality: 'draft',
+            });
+
+            // Update question status to partial (has at least one answer)
+            await questionApi.update(question.id, { status: 'partial' });
+
+            console.log('[IES Sync] Answer synced for question:', question.id);
+            return answer;
+        } catch (err) {
+            console.warn('[IES Sync] Failed to sync answer:', err);
+            return null;
+        }
+    }
+
+    // ----- END CROSS-APP SYNC -----
+
     onMount(() => {
         const frontend = getFrontend();
         isMobile = frontend === 'mobile' || frontend === 'browser-mobile';
@@ -543,6 +640,7 @@
 
         status = 'starting';
         errorMsg = '';
+        syncError = null;
 
         const modeConfig = THINKING_MODES[selectedMode];
 
@@ -550,6 +648,14 @@
         if (modeConfig.templateId) {
             await loadTemplate(modeConfig.templateId);
         }
+
+        // Initialize cross-app context for question sync (non-blocking)
+        initializeSessionContext().then(ctx => {
+            currentContext = ctx;
+            if (ctx) {
+                console.log('[IES Sync] Context ready for cross-app sync:', ctx.id);
+            }
+        });
 
         apiPost('/session/start', {
             user_id: USER_ID,
@@ -656,6 +762,9 @@
                                 approach: classifiedQuestion.approach,
                                 generatedAt: Date.now()
                             };
+
+                            // Sync question to backend for cross-app visibility (non-blocking)
+                            syncQuestionToBackend(classifiedQuestion.question, classifiedQuestion.question_class);
                         }
                     }
 
@@ -696,6 +805,9 @@
                             approach: classifiedQuestion.approach,
                             generatedAt: Date.now()
                         };
+
+                        // Sync question to backend for cross-app visibility (non-blocking)
+                        syncQuestionToBackend(classifiedQuestion.question, classifiedQuestion.question_class);
                     }
                 }
 
@@ -1040,6 +1152,9 @@ ${sessionData?.openQuestions?.map(q => `- ${q}`).join('\n') || '*No open questio
                 timestamp: Date.now()
             }];
 
+            // Sync answer to backend for cross-app visibility (non-blocking)
+            syncAnswerToBackend(currentQuestion.question, response);
+
             // Update pending question with follow-up (or clear if none)
             if (followUp) {
                 pendingQuestion = {
@@ -1048,6 +1163,9 @@ ${sessionData?.openQuestions?.map(q => `- ${q}`).join('\n') || '*No open questio
                     approach: followUp.approach,
                     generatedAt: Date.now()
                 };
+
+                // Sync follow-up question to backend (non-blocking)
+                syncQuestionToBackend(followUp.question, followUp.question_class);
 
                 // Track the new question class
                 lastQuestionClass = followUp.question_class;
