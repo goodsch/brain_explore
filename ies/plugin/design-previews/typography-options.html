@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Typography Options</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Nunito:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Source+Sans+3:wght@400;500;600&family=Inter:wght@400;500;600&family=Libre+Baskerville:wght@400;700&family=Lora:wght@400;500;600&family=Merriweather:wght@400;700&family=Roboto+Slab:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=Outfit:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Fira+Code:wght@400;500&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #faf8f5;
+      --bg-elevated: #ffffff;
+      --text-primary: #2d2a26;
+      --text-secondary: #5c5650;
+      --text-muted: #8a847b;
+      --accent: #c9872e;
+      --border-light: rgba(45, 42, 38, 0.1);
+      --shadow-sm: 0 1px 3px rgba(45, 42, 38, 0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 32px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+    }
+
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section h2 {
+      font-size: 1.25rem;
+      color: var(--accent);
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .font-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .font-card {
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+    }
+
+    .font-card.recommended {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(201, 135, 46, 0.03), transparent);
+    }
+
+    .font-card h3 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .font-card h3 .badge {
+      background: var(--accent);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    .sample-heading {
+      font-size: 1.75rem;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .sample-subheading {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .sample-body {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+
+    .font-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding-top: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .font-meta span {
+      display: inline-block;
+      margin-right: 16px;
+    }
+
+    /* Monospace section */
+    .mono-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .mono-card {
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+    }
+
+    .mono-card h4 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .mono-sample {
+      background: #2d2a26;
+      color: #f0ede8;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Pairing recommendations */
+    .pairings {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+    }
+
+    .pairing-card {
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+    }
+
+    .pairing-card.recommended {
+      border-color: var(--accent);
+    }
+
+    .pairing-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .pairing-header h4 {
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+
+    .pairing-header .badge {
+      background: var(--accent);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+    }
+
+    .pairing-preview {
+      padding: 20px;
+      background: var(--bg-base);
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .pairing-fonts {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .pairing-fonts span {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* Scale visualization */
+    .scale-demo {
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      margin-bottom: 24px;
+    }
+
+    .scale-demo h4 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .scale-item {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .scale-label {
+      width: 80px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .scale-size {
+      width: 50px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Typography Options</h1>
+    <p>Compare display, body, and monospace font families for IES</p>
+  </div>
+
+  <!-- Display Fonts -->
+  <div class="section">
+    <h2>Display Fonts (Headings)</h2>
+    <div class="font-grid">
+      <div class="font-card recommended">
+        <h3>Crimson Pro <span class="badge">Recommended</span></h3>
+        <div class="sample-heading" style="font-family: 'Crimson Pro', serif; font-weight: 500;">
+          The Narrow Window of Awareness
+        </div>
+        <div class="sample-subheading" style="font-family: 'Crimson Pro', serif; font-weight: 400;">
+          How humans construct meaning within constraints
+        </div>
+        <p class="sample-body" style="font-family: 'Crimson Pro', serif;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience.
+        </p>
+        <div class="font-meta">
+          <span>Style: Elegant serif</span>
+          <span>Feel: Scholarly, warm</span>
+          <span>x-height: Medium</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>Source Serif 4</h3>
+        <div class="sample-heading" style="font-family: 'Source Serif 4', serif; font-weight: 500;">
+          The Narrow Window of Awareness
+        </div>
+        <div class="sample-subheading" style="font-family: 'Source Serif 4', serif; font-weight: 400;">
+          How humans construct meaning within constraints
+        </div>
+        <p class="sample-body" style="font-family: 'Source Serif 4', serif;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience.
+        </p>
+        <div class="font-meta">
+          <span>Style: Variable serif</span>
+          <span>Feel: Professional, neutral</span>
+          <span>x-height: Large</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>Libre Baskerville</h3>
+        <div class="sample-heading" style="font-family: 'Libre Baskerville', serif; font-weight: 400;">
+          The Narrow Window of Awareness
+        </div>
+        <div class="sample-subheading" style="font-family: 'Libre Baskerville', serif; font-weight: 400;">
+          How humans construct meaning within constraints
+        </div>
+        <p class="sample-body" style="font-family: 'Libre Baskerville', serif;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience.
+        </p>
+        <div class="font-meta">
+          <span>Style: Classic serif</span>
+          <span>Feel: Traditional, literary</span>
+          <span>x-height: Small</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>Lora</h3>
+        <div class="sample-heading" style="font-family: 'Lora', serif; font-weight: 500;">
+          The Narrow Window of Awareness
+        </div>
+        <div class="sample-subheading" style="font-family: 'Lora', serif; font-weight: 400;">
+          How humans construct meaning within constraints
+        </div>
+        <p class="sample-body" style="font-family: 'Lora', serif;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience.
+        </p>
+        <div class="font-meta">
+          <span>Style: Modern serif</span>
+          <span>Feel: Warm, readable</span>
+          <span>x-height: Medium-large</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>Merriweather</h3>
+        <div class="sample-heading" style="font-family: 'Merriweather', serif; font-weight: 700;">
+          The Narrow Window of Awareness
+        </div>
+        <div class="sample-subheading" style="font-family: 'Merriweather', serif; font-weight: 400;">
+          How humans construct meaning within constraints
+        </div>
+        <p class="sample-body" style="font-family: 'Merriweather', serif;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience.
+        </p>
+        <div class="font-meta">
+          <span>Style: Screen-optimized serif</span>
+          <span>Feel: Bold, substantial</span>
+          <span>x-height: Large</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>IBM Plex Serif</h3>
+        <div class="sample-heading" style="font-family: 'IBM Plex Serif', serif; font-weight: 500;">
+          The Narrow Window of Awareness
+        </div>
+        <div class="sample-subheading" style="font-family: 'IBM Plex Serif', serif; font-weight: 400;">
+          How humans construct meaning within constraints
+        </div>
+        <p class="sample-body" style="font-family: 'IBM Plex Serif', serif;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience.
+        </p>
+        <div class="font-meta">
+          <span>Style: Technical serif</span>
+          <span>Feel: Modern, precise</span>
+          <span>x-height: Large</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body Fonts -->
+  <div class="section">
+    <h2>Body Fonts (Paragraphs, UI)</h2>
+    <div class="font-grid">
+      <div class="font-card recommended">
+        <h3>Nunito <span class="badge">Recommended</span></h3>
+        <p class="sample-body" style="font-family: 'Nunito', sans-serif; font-size: 15px;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes meaning possible.
+        </p>
+        <div class="font-meta">
+          <span>Style: Rounded sans</span>
+          <span>Feel: Friendly, approachable</span>
+          <span>Best for: Long reading</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>Inter</h3>
+        <p class="sample-body" style="font-family: 'Inter', sans-serif; font-size: 15px;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes meaning possible.
+        </p>
+        <div class="font-meta">
+          <span>Style: Neutral sans</span>
+          <span>Feel: Clean, professional</span>
+          <span>Best for: UI elements</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>Source Sans 3</h3>
+        <p class="sample-body" style="font-family: 'Source Sans 3', sans-serif; font-size: 15px;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes meaning possible.
+        </p>
+        <div class="font-meta">
+          <span>Style: Humanist sans</span>
+          <span>Feel: Balanced, versatile</span>
+          <span>Best for: Mixed content</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>DM Sans</h3>
+        <p class="sample-body" style="font-family: 'DM Sans', sans-serif; font-size: 15px;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes meaning possible.
+        </p>
+        <div class="font-meta">
+          <span>Style: Geometric sans</span>
+          <span>Feel: Modern, clean</span>
+          <span>Best for: Headings + body</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>Plus Jakarta Sans</h3>
+        <p class="sample-body" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes meaning possible.
+        </p>
+        <div class="font-meta">
+          <span>Style: Geometric sans</span>
+          <span>Feel: Contemporary, friendly</span>
+          <span>Best for: Product UI</span>
+        </div>
+      </div>
+
+      <div class="font-card">
+        <h3>IBM Plex Sans</h3>
+        <p class="sample-body" style="font-family: 'IBM Plex Sans', sans-serif; font-size: 15px;">
+          This framework explores the fundamental tension between our limited perceptual bandwidth and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes meaning possible.
+        </p>
+        <div class="font-meta">
+          <span>Style: Technical sans</span>
+          <span>Feel: Precise, corporate</span>
+          <span>Best for: Technical docs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monospace Fonts -->
+  <div class="section">
+    <h2>Monospace Fonts (Code, Technical)</h2>
+    <div class="mono-grid">
+      <div class="mono-card">
+        <h4>JetBrains Mono (Recommended)</h4>
+        <div class="mono-sample" style="font-family: 'JetBrains Mono', monospace;">
+const concept = {<br>
+&nbsp;&nbsp;name: "Executive Function",<br>
+&nbsp;&nbsp;type: "Concept",<br>
+&nbsp;&nbsp;relationships: 12<br>
+};
+        </div>
+      </div>
+      <div class="mono-card">
+        <h4>Fira Code</h4>
+        <div class="mono-sample" style="font-family: 'Fira Code', monospace;">
+const concept = {<br>
+&nbsp;&nbsp;name: "Executive Function",<br>
+&nbsp;&nbsp;type: "Concept",<br>
+&nbsp;&nbsp;relationships: 12<br>
+};
+        </div>
+      </div>
+      <div class="mono-card">
+        <h4>Source Code Pro</h4>
+        <div class="mono-sample" style="font-family: 'Source Code Pro', monospace;">
+const concept = {<br>
+&nbsp;&nbsp;name: "Executive Function",<br>
+&nbsp;&nbsp;type: "Concept",<br>
+&nbsp;&nbsp;relationships: 12<br>
+};
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Font Pairings -->
+  <div class="section">
+    <h2>Recommended Pairings</h2>
+    <div class="pairings">
+      <div class="pairing-card recommended">
+        <div class="pairing-header">
+          <h4>Scholar's Library (Current IES)</h4>
+          <span class="badge">Recommended</span>
+        </div>
+        <div class="pairing-preview">
+          <div style="font-family: 'Crimson Pro', serif; font-size: 1.5rem; font-weight: 500; margin-bottom: 8px;">The Narrow Window</div>
+          <p style="font-family: 'Nunito', sans-serif; font-size: 0.95rem; color: var(--text-secondary);">
+            This framework explores the fundamental tension between limited bandwidth and infinite complexity.
+          </p>
+          <code style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: #f0ede8; padding: 2px 6px; border-radius: 4px; color: var(--accent);">meaning.construct()</code>
+        </div>
+        <div class="pairing-fonts">
+          <span><strong>Display:</strong> Crimson Pro 500</span>
+          <span><strong>Body:</strong> Nunito 400</span>
+          <span><strong>Code:</strong> JetBrains Mono 400</span>
+        </div>
+      </div>
+
+      <div class="pairing-card">
+        <div class="pairing-header">
+          <h4>Adobe Source Family</h4>
+        </div>
+        <div class="pairing-preview">
+          <div style="font-family: 'Source Serif 4', serif; font-size: 1.5rem; font-weight: 500; margin-bottom: 8px;">The Narrow Window</div>
+          <p style="font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem; color: var(--text-secondary);">
+            This framework explores the fundamental tension between limited bandwidth and infinite complexity.
+          </p>
+          <code style="font-family: 'Source Code Pro', monospace; font-size: 0.85rem; background: #f0ede8; padding: 2px 6px; border-radius: 4px; color: var(--accent);">meaning.construct()</code>
+        </div>
+        <div class="pairing-fonts">
+          <span><strong>Display:</strong> Source Serif 4</span>
+          <span><strong>Body:</strong> Source Sans 3</span>
+          <span><strong>Code:</strong> Source Code Pro</span>
+        </div>
+      </div>
+
+      <div class="pairing-card">
+        <div class="pairing-header">
+          <h4>IBM Plex Family</h4>
+        </div>
+        <div class="pairing-preview">
+          <div style="font-family: 'IBM Plex Serif', serif; font-size: 1.5rem; font-weight: 500; margin-bottom: 8px;">The Narrow Window</div>
+          <p style="font-family: 'IBM Plex Sans', sans-serif; font-size: 0.95rem; color: var(--text-secondary);">
+            This framework explores the fundamental tension between limited bandwidth and infinite complexity.
+          </p>
+          <code style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: #f0ede8; padding: 2px 6px; border-radius: 4px; color: var(--accent);">meaning.construct()</code>
+        </div>
+        <div class="pairing-fonts">
+          <span><strong>Display:</strong> IBM Plex Serif</span>
+          <span><strong>Body:</strong> IBM Plex Sans</span>
+          <span><strong>Code:</strong> JetBrains Mono</span>
+        </div>
+      </div>
+
+      <div class="pairing-card">
+        <div class="pairing-header">
+          <h4>Modern Geometric</h4>
+        </div>
+        <div class="pairing-preview">
+          <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.5rem; font-weight: 600; margin-bottom: 8px;">The Narrow Window</div>
+          <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; color: var(--text-secondary);">
+            This framework explores the fundamental tension between limited bandwidth and infinite complexity.
+          </p>
+          <code style="font-family: 'Fira Code', monospace; font-size: 0.85rem; background: #f0ede8; padding: 2px 6px; border-radius: 4px; color: var(--accent);">meaning.construct()</code>
+        </div>
+        <div class="pairing-fonts">
+          <span><strong>Display:</strong> Plus Jakarta Sans 600</span>
+          <span><strong>Body:</strong> Plus Jakarta Sans 400</span>
+          <span><strong>Code:</strong> Fira Code</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Type Scale -->
+  <div class="section">
+    <h2>Type Scale (Major Third - 1.25 ratio)</h2>
+    <div class="scale-demo">
+      <h4>Recommended Scale (15px base)</h4>
+      <div class="scale-item">
+        <span class="scale-label">Display XL</span>
+        <span style="font-family: 'Crimson Pro', serif; font-size: 2.441rem; font-weight: 500;">The Narrow Window</span>
+        <span class="scale-size">39px</span>
+      </div>
+      <div class="scale-item">
+        <span class="scale-label">Display</span>
+        <span style="font-family: 'Crimson Pro', serif; font-size: 1.953rem; font-weight: 500;">The Narrow Window</span>
+        <span class="scale-size">31px</span>
+      </div>
+      <div class="scale-item">
+        <span class="scale-label">H1</span>
+        <span style="font-family: 'Crimson Pro', serif; font-size: 1.563rem; font-weight: 500;">The Narrow Window</span>
+        <span class="scale-size">25px</span>
+      </div>
+      <div class="scale-item">
+        <span class="scale-label">H2</span>
+        <span style="font-family: 'Crimson Pro', serif; font-size: 1.25rem; font-weight: 500;">The Narrow Window</span>
+        <span class="scale-size">20px</span>
+      </div>
+      <div class="scale-item">
+        <span class="scale-label">Body</span>
+        <span style="font-family: 'Nunito', sans-serif; font-size: 1rem;">This is body text for reading.</span>
+        <span class="scale-size">15px</span>
+      </div>
+      <div class="scale-item">
+        <span class="scale-label">Small</span>
+        <span style="font-family: 'Nunito', sans-serif; font-size: 0.8rem;">Caption and label text</span>
+        <span class="scale-size">12px</span>
+      </div>
+      <div class="scale-item">
+        <span class="scale-label">XS</span>
+        <span style="font-family: 'Nunito', sans-serif; font-size: 0.64rem;">Fine print</span>
+        <span class="scale-size">10px</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

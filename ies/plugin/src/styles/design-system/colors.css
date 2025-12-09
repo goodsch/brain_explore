@@ -1,0 +1,160 @@
+/**
+ * IES Design System v2 - Colors
+ * Philosophy: "Modern Information Space" - Dark mode first, bold entity colors
+ *
+ * Aesthetic: Linear/Raycast/Arc inspired - sleek, high-contrast, modern
+ */
+
+:root {
+  /* ==========================================================================
+     BACKGROUNDS - Dark mode first, near-black with warm undertone
+     ========================================================================== */
+  --bg-primary: #0f0f10;           /* Near black, warm undertone */
+  --bg-secondary: #1a1a1c;         /* Elevated surfaces */
+  --bg-tertiary: #252528;          /* Cards, panels */
+  --bg-hover: #2a2a2e;             /* Hover states */
+  --bg-active: #323236;            /* Active/pressed states */
+
+  /* ==========================================================================
+     TEXT HIERARCHY - Clear contrast for dark backgrounds
+     ========================================================================== */
+  --text-primary: #f5f5f7;         /* Main text - high contrast */
+  --text-secondary: #a1a1a6;       /* Secondary text - supporting content */
+  --text-muted: #6e6e73;           /* Muted text - hints, metadata */
+  --text-subtle: #48484a;          /* Subtle text - disabled, placeholders */
+  --text-inverse: #0f0f10;         /* Text on light backgrounds */
+
+  /* ==========================================================================
+     ENTITY TYPE COLORS - Bold, not muted
+     ========================================================================== */
+  --entity-concept: #3b82f6;       /* Blue */
+  --entity-person: #10b981;        /* Green */
+  --entity-theory: #8b5cf6;        /* Purple */
+  --entity-framework: #f59e0b;     /* Amber */
+  --entity-assessment: #ef4444;    /* Red */
+  --entity-spark: #ec4899;         /* Pink */
+  --entity-insight: #06b6d4;       /* Cyan */
+  --entity-thread: #84cc16;        /* Lime */
+
+  /* Entity backgrounds (15% opacity) */
+  --entity-concept-bg: rgba(59, 130, 246, 0.15);
+  --entity-person-bg: rgba(16, 185, 129, 0.15);
+  --entity-theory-bg: rgba(139, 92, 246, 0.15);
+  --entity-framework-bg: rgba(245, 158, 11, 0.15);
+  --entity-assessment-bg: rgba(239, 68, 68, 0.15);
+  --entity-spark-bg: rgba(236, 72, 153, 0.15);
+  --entity-insight-bg: rgba(6, 182, 212, 0.15);
+  --entity-thread-bg: rgba(132, 204, 22, 0.15);
+
+  /* ==========================================================================
+     GRADIENTS - For active states and emphasis
+     ========================================================================== */
+  --gradient-concept: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  --gradient-person: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-theory: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --gradient-framework: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --gradient-assessment: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+
+  /* ==========================================================================
+     SEMANTIC COLORS
+     ========================================================================== */
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.15);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --error: #ef4444;
+  --error-bg: rgba(239, 68, 68, 0.15);
+  --info: #3b82f6;
+  --info-bg: rgba(59, 130, 246, 0.15);
+
+  /* ==========================================================================
+     QUESTION CLASS COLORS - 9 cognitive function badges
+     ========================================================================== */
+  --q-schema: #3b82f6;             /* Blue - structure */
+  --q-schema-bg: rgba(59, 130, 246, 0.15);
+  --q-boundary: #8b5cf6;           /* Purple - edges */
+  --q-boundary-bg: rgba(139, 92, 246, 0.15);
+  --q-dimensional: #14b8a6;        /* Teal - spectra */
+  --q-dimensional-bg: rgba(20, 184, 166, 0.15);
+  --q-causal: #f59e0b;             /* Amber - mechanisms */
+  --q-causal-bg: rgba(245, 158, 11, 0.15);
+  --q-counterfactual: #ec4899;     /* Pink - what-if */
+  --q-counterfactual-bg: rgba(236, 72, 153, 0.15);
+  --q-anchor: #10b981;             /* Green - concrete */
+  --q-anchor-bg: rgba(16, 185, 129, 0.15);
+  --q-perspective: #f97316;        /* Orange - viewpoint */
+  --q-perspective-bg: rgba(249, 115, 22, 0.15);
+  --q-meta: #6b7280;               /* Gray - thinking */
+  --q-meta-bg: rgba(107, 114, 128, 0.15);
+  --q-synthesis: #6366f1;          /* Indigo - integration */
+  --q-synthesis-bg: rgba(99, 102, 241, 0.15);
+
+  /* ==========================================================================
+     ENERGY LEVELS - ADHD mood-based navigation
+     ========================================================================== */
+  --energy-low: #6b7280;           /* Cool gray */
+  --energy-low-bg: rgba(107, 114, 128, 0.15);
+  --energy-medium: #f59e0b;        /* Amber */
+  --energy-medium-bg: rgba(245, 158, 11, 0.15);
+  --energy-high: #ef4444;          /* Red */
+  --energy-high-bg: rgba(239, 68, 68, 0.15);
+
+  /* ==========================================================================
+     BORDERS
+     ========================================================================== */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-focus: rgba(255, 255, 255, 0.2);
+  --border-strong: rgba(255, 255, 255, 0.3);
+
+  /* ==========================================================================
+     GLASS EFFECT - For floating panels
+     ========================================================================== */
+  --glass-bg: rgba(26, 26, 28, 0.8);
+  --glass-blur: blur(12px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   LIGHT THEME - Optional override
+   ========================================================================== */
+:root.light,
+[data-theme-mode="light"] {
+  /* Backgrounds */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f7;
+  --bg-tertiary: #e5e5e7;
+  --bg-hover: #d1d1d6;
+  --bg-active: #c7c7cc;
+
+  /* Text */
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-muted: #8e8e93;
+  --text-subtle: #aeaeb2;
+  --text-inverse: #ffffff;
+
+  /* Borders */
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-default: rgba(0, 0, 0, 0.1);
+  --border-focus: rgba(0, 0, 0, 0.2);
+  --border-strong: rgba(0, 0, 0, 0.3);
+
+  /* Glass effect */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   SIYUAN DARK MODE INTEGRATION
+   ========================================================================== */
+[data-theme-mode="dark"] {
+  /* Ensure dark mode is applied */
+  --bg-primary: #0f0f10;
+  --bg-secondary: #1a1a1c;
+  --bg-tertiary: #252528;
+  --bg-hover: #2a2a2e;
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-muted: #6e6e73;
+}

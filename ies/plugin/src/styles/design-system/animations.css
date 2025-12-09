@@ -1,0 +1,223 @@
+/**
+ * IES Design System v2 - Animations
+ * Philosophy: Modern Information Space - fast, purposeful, responsive
+ *
+ * Key principles:
+ * - Quick transitions (150-200ms default)
+ * - Subtle, non-distracting motion
+ * - ADHD-friendly: no aggressive animations
+ */
+
+:root {
+  /* ==========================================================================
+     EASING FUNCTIONS - Modern, snappy curves
+     ========================================================================== */
+
+  /* Default ease - smooth and quick */
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Spring - subtle bounce for confirmations */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Linear - for continuous animations */
+  --ease-linear: linear;
+
+  /* ==========================================================================
+     DURATIONS - Fast by default
+     ========================================================================== */
+  --duration-instant: 75ms;      /* Instant feedback (hover color) */
+  --duration-fast: 150ms;        /* Quick interactions (buttons, toggles) */
+  --duration-base: 200ms;        /* Default animations (cards, panels) */
+  --duration-slow: 300ms;        /* Deliberate animations (modals) */
+  --duration-slower: 500ms;      /* Very slow (page transitions) */
+
+  /* ==========================================================================
+     TRANSITION PRESETS - Common combinations
+     ========================================================================== */
+  --transition-fast: var(--duration-fast) var(--ease-out);
+  --transition-base: var(--duration-base) var(--ease-out);
+  --transition-slow: var(--duration-slow) var(--ease-out);
+  --transition-spring: var(--duration-base) var(--ease-spring);
+
+  /* Property-specific transitions */
+  --transition-colors: color var(--duration-fast) var(--ease-out),
+                       background-color var(--duration-fast) var(--ease-out),
+                       border-color var(--duration-fast) var(--ease-out);
+
+  --transition-transform: transform var(--duration-fast) var(--ease-out);
+  --transition-opacity: opacity var(--duration-fast) var(--ease-out);
+  --transition-shadow: box-shadow var(--duration-fast) var(--ease-out);
+  --transition-all: all var(--duration-fast) var(--ease-out);
+}
+
+/* ==========================================================================
+   KEYFRAME ANIMATIONS
+   ========================================================================== */
+
+/* Fade in - Subtle entrance */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fade out */
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Slide up - Content entrance from below */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide down - Dropdown appearance */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in - Modal/popover entrance */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scale out */
+@keyframes scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Pulse soft - Attention without aggression (ADHD-friendly) */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Spin - Loading indicator */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Shake - Error/warning feedback */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+/* Shimmer - Loading placeholder */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ==========================================================================
+   ANIMATION UTILITY CLASSES
+   ========================================================================== */
+
+/* Apply animations */
+.animate-fade-in {
+  animation: fade-in var(--duration-base) var(--ease-out) forwards;
+}
+
+.animate-fade-out {
+  animation: fade-out var(--duration-base) var(--ease-out) forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up var(--duration-base) var(--ease-out) forwards;
+}
+
+.animate-slide-down {
+  animation: slide-down var(--duration-base) var(--ease-out) forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in var(--duration-base) var(--ease-out) forwards;
+}
+
+.animate-scale-out {
+  animation: scale-out var(--duration-base) var(--ease-out) forwards;
+}
+
+.animate-pulse {
+  animation: pulse-soft 2s var(--ease-in-out) infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-shake {
+  animation: shake 0.4s var(--ease-out);
+}
+
+/* Shimmer loading effect */
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ==========================================================================
+   TRANSITION UTILITY CLASSES
+   ========================================================================== */
+.transition-none { transition: none; }
+.transition-all { transition: var(--transition-all); }
+.transition-colors { transition: var(--transition-colors); }
+.transition-opacity { transition: var(--transition-opacity); }
+.transition-transform { transition: var(--transition-transform); }
+.transition-shadow { transition: var(--transition-shadow); }
+
+/* Duration utilities */
+.duration-fast { transition-duration: var(--duration-fast); }
+.duration-base { transition-duration: var(--duration-base); }
+.duration-slow { transition-duration: var(--duration-slow); }
+
+/* ==========================================================================
+   REDUCED MOTION - Accessibility
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

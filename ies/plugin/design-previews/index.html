@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IES Design System Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(26, 26, 26, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 16px 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .nav button {
+      padding: 8px 16px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .nav button:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .nav button.active {
+      background: #c9872e;
+      border-color: #c9872e;
+    }
+
+    .preview-container {
+      padding-top: 80px;
+    }
+
+    iframe {
+      width: 100%;
+      height: calc(100vh - 80px);
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <button class="active" onclick="loadPreview('option-1-scholars-library.html', this)">1. Scholar's Library</button>
+    <button onclick="loadPreview('option-2-asri-modern.html', this)">2. Asri Modern</button>
+    <button onclick="loadPreview('option-3-tsundoku.html', this)">3. Tsundoku Scholarly</button>
+    <button onclick="loadPreview('option-4-neurogarden.html', this)">4. Neurogarden</button>
+    <button onclick="loadPreview('option-5-soft-focus.html', this)">5. Soft Focus</button>
+    <button onclick="loadPreview('option-6-hybrid.html', this)">6. Hybrid (Recommended)</button>
+    <button onclick="loadPreview('option-7-cupertino.html', this)">7. Cupertino</button>
+    <button onclick="loadPreview('typography-options.html', this)">Typography Options</button>
+    <button onclick="loadPreview('color-alternatives.html', this)">Color Alternatives</button>
+  </nav>
+
+  <div class="preview-container">
+    <iframe id="preview-frame" src="option-1-scholars-library.html"></iframe>
+  </div>
+
+  <script>
+    function loadPreview(file, btn) {
+      // Update iframe source
+      document.getElementById('preview-frame').src = file;
+
+      // Update active button styling
+      var buttons = document.querySelectorAll('.nav button');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove('active');
+      }
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>

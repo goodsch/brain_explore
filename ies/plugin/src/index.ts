@@ -4,12 +4,15 @@ import {
     Dialog,
     openTab,
     getFrontend,
-    openWindow
+    openWindow,
+    Menu
 } from "siyuan";
 
 import "@/index.scss";
 
 import { setPluginInstance, t } from "./utils/i18n";
+import { ensureNotebookStructure } from "./utils/siyuan-structure";
+import { initContextTracking, destroyContextTracking, noteContext } from "./stores/contextStore";
 import Dashboard from "./views/Dashboard.svelte";
 
 export const SETTINGS_FILE = "settings.json";
@@ -19,6 +22,8 @@ export const IES_TAB_TYPE = "ies-explorer-tab";
 
 export default class IESExplorerPlugin extends Plugin {
     private dashboardApp: Dashboard;
+    private docTitleMenuHandler: (e: CustomEvent) => void;
+    private selectionMenuHandler: (e: CustomEvent) => void;
 
     async onload() {
         // Set i18n plugin instance
@@ -37,6 +42,16 @@ export default class IESExplorerPlugin extends Plugin {
     </symbol>
     `);
 
+        // Add top bar button for easy access
+        this.addTopBar({
+            icon: "iconIESExplorer",
+            title: "IES Explorer",
+            position: "right",
+            callback: () => {
+                this.openIESTab();
+            }
+        });
+
         // Register IES tab type
         const pluginInstance = this;
         this.addTab({
@@ -46,9 +61,12 @@ export default class IESExplorerPlugin extends Plugin {
                 element.style.display = 'flex';
                 element.style.flexDirection = 'column';
                 element.style.height = '100%';
-                // Create Dashboard in tab
+                // Create Dashboard in tab with plugin instance for settings persistence
                 new Dashboard({
-                    target: element
+                    target: element,
+                    props: {
+                        plugin: pluginInstance
+                    }
                 });
             },
             destroy() {
@@ -58,6 +76,20 @@ export default class IESExplorerPlugin extends Plugin {
     }
 
     async onLayoutReady() {
+        // Initialize context tracking for Flow initiation
+        initContextTracking(this);
+
+        // Register context menu items for Flow initiation
+        this.registerContextMenus();
+
+        // Create IES folder structure in the notebook
+        try {
+            await ensureNotebookStructure();
+            console.log("[IES] Folder structure initialized");
+        } catch (err) {
+            console.warn("[IES] Failed to create folder structure:", err);
+        }
+
         // Register IES sidebar dock
         this.addDock({
             config: {
@@ -72,7 +104,10 @@ export default class IESExplorerPlugin extends Plugin {
             type: IES_SIDEBAR_TYPE,
             init: (dock) => {
                 this.dashboardApp = new Dashboard({
-                    target: dock.element
+                    target: dock.element,
+                    props: {
+                        plugin: this
+                    }
                 });
             },
             destroy: () => {
@@ -84,6 +119,10 @@ export default class IESExplorerPlugin extends Plugin {
     }
 
     async onunload() {
+        // Cleanup context menus
+        this.unregisterContextMenus();
+        // Cleanup context tracking
+        destroyContextTracking();
         console.log("IES Explorer plugin unloaded");
     }
 
@@ -131,5 +170,84 @@ export default class IESExplorerPlugin extends Plugin {
             width: 500,
             tab: await tab,
         });
+    }
+
+    /**
+     * Register context menu items for Flow initiation
+     */
+    private registerContextMenus() {
+        // Document title menu: "Start Flow from this note"
+        this.docTitleMenuHandler = (e: CustomEvent) => {
+            const menu = e.detail.menu as Menu;
+            const protyle = e.detail.protyle;
+
+            if (!protyle?.block?.rootID) return;
+
+            menu.addItem({
+                icon: 'iconFlow',
+                label: 'Start Flow from this note',
+                click: () => {
+                    const noteId = protyle.block.rootID;
+                    const noteTitle = protyle.title?.editElement?.textContent || 'Untitled';
+
+                    // Update context store with current note
+                    noteContext.setNote(noteId, noteTitle, protyle.notebookId || null);
+
+                    // Open IES and trigger Flow
+                    this.openFlowWithContext();
+                }
+            });
+        };
+
+        // Selection menu: "Start Flow from selection"
+        this.selectionMenuHandler = (e: CustomEvent) => {
+            const menu = e.detail.menu as Menu;
+            const selection = window.getSelection();
+            const selectedText = selection?.toString()?.trim();
+
+            if (!selectedText) return;
+
+            menu.addItem({
+                icon: 'iconFlow',
+                label: 'Start Flow from selection',
+                click: () => {
+                    // Selection is already tracked in contextStore via selectionchange listener
+                    // Just open Flow
+                    this.openFlowWithContext();
+                }
+            });
+        };
+
+        this.eventBus.on('click-editortitleicon', this.docTitleMenuHandler);
+        this.eventBus.on('open-menu-content', this.selectionMenuHandler);
+
+        console.log('[IES] Context menus registered');
+    }
+
+    /**
+     * Unregister context menu handlers
+     */
+    private unregisterContextMenus() {
+        if (this.docTitleMenuHandler) {
+            this.eventBus.off('click-editortitleicon', this.docTitleMenuHandler);
+        }
+        if (this.selectionMenuHandler) {
+            this.eventBus.off('open-menu-content', this.selectionMenuHandler);
+        }
+        console.log('[IES] Context menus unregistered');
+    }
+
+    /**
+     * Open IES tab and trigger Flow mode with current context
+     */
+    private openFlowWithContext() {
+        // Open the IES tab
+        this.openIESTab();
+
+        // Dispatch a custom event that Dashboard listens for
+        // Small delay to ensure tab is ready
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('ies-start-flow-from-context'));
+        }, 100);
     }
 }

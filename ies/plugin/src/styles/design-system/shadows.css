@@ -1,0 +1,121 @@
+/**
+ * IES Design System v2 - Shadows
+ * Philosophy: Modern Information Space - subtle depth for dark surfaces
+ *
+ * Dark mode first: Shadows are optimized for dark backgrounds
+ * Light mode overrides provided for optional light theme
+ */
+
+:root {
+  /* ==========================================================================
+     SHADOW SCALE - Optimized for dark backgrounds
+     ========================================================================== */
+
+  /* Extra small - Subtle lift */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+  /* Small - Cards at rest, default elevation */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2),
+               0 2px 6px rgba(0, 0, 0, 0.15);
+
+  /* Medium - Hovered cards, dropdowns */
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2),
+               0 8px 16px rgba(0, 0, 0, 0.15);
+
+  /* Large - Modals, popovers */
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2),
+               0 16px 32px rgba(0, 0, 0, 0.2);
+
+  /* Extra large - High elevation overlays */
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.25),
+               0 32px 64px rgba(0, 0, 0, 0.2);
+
+  /* ==========================================================================
+     GLOW EFFECTS - Entity-colored accents for focus states
+     ========================================================================== */
+
+  /* Entity glows - For focus and highlight states */
+  --shadow-glow-concept: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  --shadow-glow-person: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  --shadow-glow-theory: 0 0 0 2px rgba(139, 92, 246, 0.3);
+  --shadow-glow-framework: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  --shadow-glow-assessment: 0 0 0 2px rgba(239, 68, 68, 0.3);
+
+  /* Semantic glows */
+  --shadow-glow-success: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  --shadow-glow-warning: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  --shadow-glow-error: 0 0 0 2px rgba(239, 68, 68, 0.3);
+  --shadow-glow-info: 0 0 0 2px rgba(59, 130, 246, 0.3);
+
+  /* Default focus glow (concept blue) */
+  --shadow-focus: var(--shadow-glow-concept);
+
+  /* ==========================================================================
+     SEMANTIC SHADOWS - Named for component use
+     ========================================================================== */
+
+  /* Button shadows */
+  --shadow-button: var(--shadow-xs);
+  --shadow-button-hover: var(--shadow-sm);
+  --shadow-button-active: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+
+  /* Card shadows */
+  --shadow-card: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-md);
+
+  /* Input shadows */
+  --shadow-input: var(--shadow-xs);
+  --shadow-input-focus: var(--shadow-focus);
+
+  /* Modal/overlay shadows */
+  --shadow-modal: var(--shadow-xl);
+  --shadow-dropdown: var(--shadow-md);
+  --shadow-tooltip: var(--shadow-sm);
+  --shadow-popover: var(--shadow-lg);
+
+  /* ==========================================================================
+     INSET SHADOWS - For pressed/inset states
+     ========================================================================== */
+  --shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-inset-lg: inset 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================================
+   LIGHT THEME SHADOWS - Optional override
+   ========================================================================== */
+:root.light,
+[data-theme-mode="light"] {
+  /* Lighter shadows for light backgrounds */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04),
+               0 2px 4px rgba(0, 0, 0, 0.04);
+
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.04),
+               0 4px 8px rgba(0, 0, 0, 0.06),
+               0 8px 16px rgba(0, 0, 0, 0.06);
+
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.04),
+               0 8px 16px rgba(0, 0, 0, 0.06),
+               0 16px 32px rgba(0, 0, 0, 0.08);
+
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.06),
+               0 16px 32px rgba(0, 0, 0, 0.08),
+               0 32px 64px rgba(0, 0, 0, 0.10);
+
+  /* Inset shadows */
+  --shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-inset-lg: inset 0 4px 8px rgba(0, 0, 0, 0.10);
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+.shadow-none { box-shadow: none; }
+.shadow-xs { box-shadow: var(--shadow-xs); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }

@@ -6,6 +6,8 @@
 import { fetchPost, fetchSyncPost, IWebSocketData, openTab, Constants } from "siyuan";
 import { getFrontend, openMobileFileById } from 'siyuan';
 
+// Re-export fetchSyncPost for use in other modules
+export { fetchSyncPost };
 
 export async function request(url: string, data: any) {
     let response: IWebSocketData = await fetchSyncPost(url, data);
@@ -490,8 +492,8 @@ export async function getFile(path: string): Promise<any> {
 
 /**
  * fetchPost will secretly convert data into json, this func merely return Blob
- * @param endpoint 
- * @returns 
+ * @param endpoint
+ * @returns
  */
 export const getFileBlob = async (path: string): Promise<Blob | null> => {
     const endpoint = '/api/file/getFile'

@@ -10,9 +10,17 @@
     import { showMessage, fetchSyncPost } from 'siyuan';
 
     import ReframesTab from '../components/ReframesTab.svelte';
+    import EvidenceSection from '../components/EvidenceSection.svelte';
+    import AddFacetForm from '../components/AddFacetForm.svelte';
+    import { saveJourney, type JourneyData } from '../utils/siyuan-structure';
+    import { getBlockKramdown, exportMdContent } from '../api';
+    import * as SyncService from '../services/syncService';
 
     export let backendUrl: string;
     export let journeyId: string | null = null;
+    export let initialConcept: string | null = null;
+    export let userId: string | null = null;
+    export let contextBlockId: string | null = null; // Optional: SiYuan block ID to check for Context Note
 
     const dispatch = createEventDispatcher();
 
@@ -25,16 +33,416 @@
     let nodes: Array<{name: string, type: string, labels: string[]}> = [];
     let relationships: Array<{start: string, type: string, end: string}> = [];
     let explorationPath: string[] = [];
+    let explorationTimestamps: string[] = []; // Timestamps for each step
+    let explorationStartTime: number | null = null; // When exploration began
     let thinkingQuestion: string | null = null;
     let isLoadingQuestion = false;
     let isExploring = false;
     let mounted = false;
     let conceptDetailTab: 'connections' | 'reframes' = 'connections';
+    let entityDescription: string | null = null;
+    let entitySourceBooks: Array<{title: string, author?: string, snippet?: string}> = [];
+    // Session sync state
+    let sessionId: string | null = null;
+    let lastSyncTime: number = 0;
+    const SYNC_DEBOUNCE_MS = 3000; // Don't sync more than once every 3 seconds
+
+    interface QuestionExchange {
+        question: string;
+        response: string;
+        questionClass?: string | null;
+        approach?: string | null;
+        state?: string | null;
+    }
+
+    const QUESTION_CLASS_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
+        schema_probe: { label: 'Structure', emoji: '🏗️', color: '#4a90d9' },
+        boundary: { label: 'Boundary', emoji: '🔲', color: '#7b68ee' },
+        dimensional: { label: 'Dimensional', emoji: '📐', color: '#20b2aa' },
+        causal: { label: 'Causal', emoji: '⚡', color: '#f4a460' },
+        counterfactual: { label: 'What-If', emoji: '🔮', color: '#da70d6' },
+        anchor: { label: 'Anchor', emoji: '⚓', color: '#3cb371' },
+        perspective_shift: { label: 'Perspective', emoji: '👁️', color: '#cd853f' },
+        meta_cognitive: { label: 'Meta', emoji: '🧠', color: '#778899' },
+        reflective_synthesis: { label: 'Synthesis', emoji: '🔗', color: '#6495ed' },
+    };
+
+    let questionResponse = '';
+    let questionHistory: QuestionExchange[] = [];
+    let currentQuestionClass: string | null = null;
+    let currentApproach: string | null = null;
+    let lastDetectedState: string | null = null;
+
+    // Context Mode State
+    interface ParsedContext {
+        context_type: string;
+        title: string;
+        summary: string | null;
+        key_questions: string[];
+        areas_of_exploration: string[];
+        core_concepts: string[];
+    }
+    interface ContextSearchResult {
+        source_id: string;
+        source_title: string;
+        snippet: string | null;
+        relevance_score: number;
+        concepts_found: string[];
+    }
+    let isContextMode = false;
+    let parsedContext: ParsedContext | null = null;
+    let savedContextId: string | null = null;
+    let activeQuestionIndex: number | null = null;
+    let contextSearchResults: ContextSearchResult[] = [];
+    let isContextSearching = false;
+    let isDetectingContext = false;
+
+    // ========== Navigation State Machine (Phase 1) ==========
+    type FocusState = 'idle' | 'question' | 'entity' | 'facet';
+
+    interface TrailItem {
+        type: 'context' | 'question' | 'entity' | 'facet' | 'search';
+        label: string;
+        data?: any; // Store relevant data for navigation back
+    }
+
+    interface EntityDetails {
+        name: string;
+        type: string;
+        description?: string;
+        neighbors: Array<{name: string, type: string, relationship: string, direction: 'in' | 'out'}>;
+        sourceBooks: string[];
+        facets?: Array<{name: string, description?: string, entity_count: number}>;
+    }
+
+    interface FacetDetails {
+        parentEntityName: string;
+        parentEntityType: string;
+        facetName: string;
+        description?: string;
+        entities: Array<{name: string, type: string, relationship: string}>;
+    }
+
+    let focusState: FocusState = 'idle';
+    let trailStack: TrailItem[] = [];
+    let standaloneTrailStack: TrailItem[] = []; // Standalone mode trail
+    let focusedEntity: EntityDetails | null = null;
+    let focusedFacet: FacetDetails | null = null;
+    let isLoadingEntity = false;
+    let isLoadingFacet = false;
+    let showAddEntityForm = false;
+
+    // Reset add form when leaving facet view
+    $: if (focusState !== 'facet') {
+        showAddEntityForm = false;
+    }
+
+    // ========== Navigation Functions (Phase 1) ==========
+    function pushTrail(item: TrailItem) {
+        trailStack = [...trailStack, item];
+    }
+
+    function popTrail(): TrailItem | undefined {
+        if (trailStack.length === 0) return undefined;
+        const item = trailStack[trailStack.length - 1];
+        trailStack = trailStack.slice(0, -1);
+        return item;
+    }
+
+    function navigateToTrailIndex(index: number) {
+        if (index < 0 || index >= trailStack.length) return;
+
+        const targetItem = trailStack[index];
+        // Truncate trail to this index
+        trailStack = trailStack.slice(0, index + 1);
+
+        // Restore state based on item type
+        if (targetItem.type === 'context') {
+            focusState = 'idle';
+            focusedEntity = null;
+            focusedFacet = null;
+            activeQuestionIndex = null;
+        } else if (targetItem.type === 'question') {
+            focusState = 'question';
+            focusedEntity = null;
+            focusedFacet = null;
+            // Re-select the question if data available
+            if (targetItem.data?.questionIndex !== undefined) {
+                selectQuestion(targetItem.data.questionIndex);
+            }
+        } else if (targetItem.type === 'entity') {
+            focusState = 'entity';
+            focusedFacet = null;
+            if (targetItem.data?.entityName) {
+                navigateToEntity(targetItem.data.entityName, false); // Don't push to trail again
+            }
+        } else if (targetItem.type === 'facet') {
+            focusState = 'facet';
+            if (targetItem.data?.entityName && targetItem.data?.facetName) {
+                navigateToFacet(targetItem.data.entityName, targetItem.data.facetName, false);
+            }
+        }
+    }
+
+    async function navigateToEntity(entityName: string, addToTrail = true) {
+        isLoadingEntity = true;
+        focusState = 'entity';
+        focusedFacet = null;
+
+        try {
+            // Fetch entity details from backend
+            const data = await apiGet(`/graph/entity/${encodeURIComponent(entityName)}`);
+
+            // Simplified transformation using pre-computed data
+            const neighbors: EntityDetails['neighbors'] = data.related?.map(rel => ({
+                name: rel.name,
+                type: rel.type,
+                relationship: rel.relationship,
+                direction: 'out'
+            })) || [];
+
+            const sourceBooks: string[] = data.source_books?.map(book =>
+                book.author ? `${book.title} - ${book.author}` : book.title
+            ) || [];
+
+            // Fetch facets for this entity
+            let facets = [];
+            try {
+                const facetsData = await apiGet(`/graph/entity/${encodeURIComponent(entityName)}/facets`);
+                facets = facetsData.facets || [];
+            } catch (facetErr) {
+                // Facets are optional, don't fail if endpoint returns 404
+                console.log('[FlowMode] No facets found for entity:', entityName);
+            }
+
+            focusedEntity = {
+                name: data.name,
+                type: data.type,
+                description: data.description || null,
+                neighbors,
+                sourceBooks,
+                facets
+            };
+
+            if (addToTrail) {
+                // Add to context trail if in context mode
+                if (isContextMode) {
+                    pushTrail({
+                        type: 'entity',
+                        label: entityName,
+                        data: { entityName }
+                    });
+                } else {
+                    // Add to standalone trail
+                    standaloneTrailStack = [...standaloneTrailStack, {
+                        type: 'entity',
+                        label: entityName,
+                        data: { entityName }
+                    }];
+                }
+            }
+
+            // Track exploration
+            const now = new Date().toISOString();
+            if (!explorationPath.includes(entityName)) {
+                explorationPath = [...explorationPath, entityName];
+                explorationTimestamps = [...explorationTimestamps, now];
+            }
+
+            // Sync session after navigation (debounced)
+            syncSession();
+        } catch (err) {
+            console.error('[FlowMode] Error loading entity:', err);
+            showMessage(`Failed to load entity: ${err.message}`, 5000, 'error');
+            focusState = trailStack.length > 0 ? 'question' : 'idle';
+        } finally {
+            isLoadingEntity = false;
+        }
+    }
+
+    async function navigateToFacet(entityName: string, facetName: string, addToTrail = true) {
+        isLoadingFacet = true;
+        focusState = 'facet';
+
+        try {
+            // Fetch facets for entity
+            const data = await apiGet(`/graph/entity/${encodeURIComponent(entityName)}/facets`);
+
+            // Find the selected facet
+            const facet = data.facets.find(f => f.name === facetName);
+            if (!facet) {
+                throw new Error(`Facet '${facetName}' not found for entity '${entityName}'`);
+            }
+
+            focusedFacet = {
+                parentEntityName: data.entity_name,
+                parentEntityType: data.entity_type,
+                facetName: facet.name,
+                description: facet.description,
+                entities: facet.entities || []
+            };
+
+            if (addToTrail) {
+                // Add to context trail if in context mode
+                if (isContextMode) {
+                    pushTrail({
+                        type: 'facet',
+                        label: facetName,
+                        data: { entityName, facetName }
+                    });
+                } else {
+                    // Add to standalone trail
+                    standaloneTrailStack = [...standaloneTrailStack, {
+                        type: 'facet',
+                        label: facetName,
+                        data: { entityName, facetName }
+                    }];
+                }
+
+            // Sync session after navigation (debounced)
+            syncSession();
+            }
+        } catch (err) {
+            showMessage(`Failed to load facet: ${err.message}`, 5000, 'error');
+            focusState = 'entity';
+        } finally {
+            isLoadingFacet = false;
+        }
+    }
+
+    /**
+     * Check if a facet exists as an entity in the knowledge graph.
+     * A facet "exists in graph" if its name matches any entity in the overall graph.
+     * We determine this by checking if the facet name appears in the facet's own entities list.
+     */
+    function facetExistsInGraph(facet: any): boolean {
+        if (!facet || !facet.name || !facet.entities) {
+            return false;
+        }
+
+        const facetName = facet.name.toLowerCase().trim();
+
+        // Check if facet name matches any entity in the entities array
+        // If the facet itself exists as an entity in the graph, it should appear here
+        return facet.entities.some((entity: any) =>
+            entity.name && entity.name.toLowerCase().trim() === facetName
+        );
+    }
+
+    function navigateBack() {
+        // Handle standalone mode
+        if (!isContextMode) {
+            navigateStandaloneBack();
+            return;
+        }
+
+        // Context mode navigation
+        if (trailStack.length <= 1) {
+            // Back to idle state
+            focusState = 'idle';
+            focusedEntity = null;
+            focusedFacet = null;
+            trailStack = [];
+            return;
+        }
+
+        // Pop current item and go to previous
+        popTrail();
+        const previousItem = trailStack[trailStack.length - 1];
+
+        if (previousItem.type === 'question') {
+            focusState = 'question';
+            focusedEntity = null;
+            focusedFacet = null;
+        } else if (previousItem.type === 'context') {
+            focusState = 'idle';
+            focusedEntity = null;
+            focusedFacet = null;
+        } else if (previousItem.type === 'entity') {
+            focusState = 'entity';
+            focusedFacet = null;
+            if (previousItem.data?.entityName) {
+                navigateToEntity(previousItem.data.entityName, false);
+            }
+        }
+    }
+
+    function navigateStandaloneBack() {
+        if (standaloneTrailStack.length === 0) {
+            // No trail, just return to idle
+            focusState = 'idle';
+            focusedEntity = null;
+            focusedFacet = null;
+            return;
+        }
+
+        // Remove current item
+        standaloneTrailStack = standaloneTrailStack.slice(0, -1);
+
+        if (standaloneTrailStack.length === 0) {
+            // Back to search results
+            focusState = 'idle';
+            focusedEntity = null;
+            focusedFacet = null;
+        } else {
+            // Go to previous item
+            const previousItem = standaloneTrailStack[standaloneTrailStack.length - 1];
+
+            if (previousItem.type === 'entity') {
+                focusState = 'entity';
+                focusedFacet = null;
+                if (previousItem.data?.entityName) {
+                    navigateToEntity(previousItem.data.entityName, false);
+                }
+            } else if (previousItem.type === 'facet') {
+                focusState = 'facet';
+                if (previousItem.data?.entityName && previousItem.data?.facetName) {
+                    navigateToFacet(previousItem.data.entityName, previousItem.data.facetName, false);
+                }
+            }
+        }
+    }
+
+    function navigateStandaloneToIndex(index: number) {
+        if (index < 0 || index >= standaloneTrailStack.length) return;
+
+        // Truncate trail to this index
+        standaloneTrailStack = standaloneTrailStack.slice(0, index + 1);
+        const targetItem = standaloneTrailStack[index];
+
+        // Navigate to the selected item
+        if (targetItem.type === 'entity') {
+            focusState = 'entity';
+            focusedFacet = null;
+            if (targetItem.data?.entityName) {
+                navigateToEntity(targetItem.data.entityName, false);
+            }
+        } else if (targetItem.type === 'facet') {
+            focusState = 'facet';
+            if (targetItem.data?.entityName && targetItem.data?.facetName) {
+                navigateToFacet(targetItem.data.entityName, targetItem.data.facetName, false);
+            }
+        }
+    }
+
+    function initializeContextTrail() {
+        if (parsedContext && trailStack.length === 0) {
+            pushTrail({
+                type: 'context',
+                label: parsedContext.title || 'Context',
+                data: { contextId: savedContextId }
+            });
+        }
+    }
 
     onMount(() => {
         mounted = true;
         if (journeyId) {
             loadJourney(journeyId);
+        } else if (initialConcept) {
+            exploreConcept(initialConcept);
+        } else if (contextBlockId) {
+            detectContextNote(contextBlockId);
         }
     });
 
@@ -75,8 +483,9 @@
             if (!groups.has(key)) {
                 groups.set(key, []);
             }
+
             groups.get(key)!.push({
-                name: nodeName,
+                name: node.name,
                 type: node.type,
                 direction
             });
@@ -85,14 +494,8 @@
         return groups;
     }
 
-    // Format relationship type for display
-    function formatRelType(relType: string): string {
-        return relType.replace(/_/g, ' ').toLowerCase();
-    }
-
-    // API helper using SiYuan's forward proxy
-    async function apiGet(endpoint: string): Promise<any> {
-        const url = `${backendUrl}${endpoint}`;
+    async function apiGet(path: string): Promise<any> {
+        const url = `${backendUrl}${path}`;
 
         const response = await fetchSyncPost('/api/network/forwardProxy', {
             url: url,
@@ -114,8 +517,8 @@
         return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
     }
 
-    async function apiPost(endpoint: string, body: any): Promise<any> {
-        const url = `${backendUrl}${endpoint}`;
+    async function apiPost(path: string, body: any): Promise<any> {
+        const url = `${backendUrl}${path}`;
 
         const response = await fetchSyncPost('/api/network/forwardProxy', {
             url: url,
@@ -123,7 +526,7 @@
             timeout: 30000,
             contentType: 'application/json',
             headers: [],
-            payload: body
+            payload: JSON.stringify(body)
         });
 
         if (response.code !== 0) {
@@ -138,72 +541,329 @@
         return typeof proxyData.body === 'string' ? JSON.parse(proxyData.body) : proxyData.body;
     }
 
+    /**
+     * Sync current session state to backend (debounced)
+     */
+    async function syncSession() {
+        if (!userId) return; // No sync without user ID
+        
+        const now = Date.now();
+        if (now - lastSyncTime < SYNC_DEBOUNCE_MS) {
+            return; // Debounce - too soon since last sync
+        }
+        
+        try {
+            const journeyPath = explorationPath.map((entityName, index) => ({
+                entity_id: entityName,
+                entity_name: entityName,
+                timestamp: explorationTimestamps[index] || new Date().toISOString(),
+                dwell_time: 0 // TODO: Calculate from timestamps
+            }));
+            
+            const sessionData: SyncService.CreateSessionRequest = {
+                user_id: userId,
+                app_source: 'siyuan',
+                current_entity_id: focusedEntity?.name || null,
+                current_entity_name: focusedEntity?.name || null,
+                journey_path: journeyPath,
+                trail_stack: isContextMode ? trailStack : standaloneTrailStack,
+                resume_hint: focusedEntity ? `Exploring: ${focusedEntity.name}` : null
+            };
+            
+            const session = await SyncService.createOrUpdateSession(sessionData, backendUrl);
+            sessionId = session.id;
+            lastSyncTime = now;
+            
+            console.log('[FlowMode] Session synced:', sessionId);
+        } catch (err) {
+            console.error('[FlowMode] Session sync failed:', err);
+            // Don't show error to user - sync is background operation
+
+        }
+    }
+
+    async function resumeInReader() {
+        if (!sessionId || !focusedEntity) {
+            showMessage('No active session to resume', 3000, 'info');
+            return;
+        }
+        
+        try {
+            const resumeData = await SyncService.getResumeData(sessionId, 'reader', backendUrl);
+            
+            // Try to open deep link
+            try {
+                window.open(resumeData.deep_link, '_blank');
+                showMessage('Opening in Reader...', 2000, 'info');
+            } catch (err) {
+                // Fallback: show deep link instructions
+                showMessage(`Open this link in Reader: ${resumeData.deep_link}`, 10000, 'info');
+            }
+        } catch (err) {
+            console.error('[FlowMode] Failed to get resume data:', err);
+            showMessage(`Failed to resume in Reader: ${err.message}`, 5000, 'error');
+        }
+    }
+
     async function handleSearch() {
-        if (!searchQuery.trim()) return;
+        const query = searchQuery.trim();
+        if (!query) return;
 
         isSearching = true;
         searchResults = [];
+
         try {
-            const data = await apiGet(`/graph/search?q=${encodeURIComponent(searchQuery)}&limit=10`);
-            if (data.results && data.results.length > 0) {
-                searchResults = data.results;
-            } else {
+            const data = await apiGet(`/graph/search?q=${encodeURIComponent(query)}`);
+            searchResults = data.results || [];
+            if (searchResults.length === 0) {
                 showMessage('No concepts found', 3000);
             }
         } catch (err) {
-            showMessage(`Search failed: ${err.message}`, 5000, 'error');
+            console.error('[IES] Search failed:', err);
+            const message = err?.message || String(err);
+            showMessage(`Search failed: ${message}`, 5000, 'error');
         } finally {
             isSearching = false;
         }
     }
 
     async function exploreConcept(concept: string) {
+        if (!concept) return;
+
+        currentConcept = concept;
         isExploring = true;
-        searchResults = []; // Clear search results when exploring
+        searchResults = [];
 
         try {
-            const data = await apiGet(`/graph/explore/${encodeURIComponent(concept)}?depth=1`);
-            currentConcept = concept;
+            const data = await apiGet(`/graph/explore/${encodeURIComponent(concept)}`);
             nodes = data.nodes || [];
             relationships = data.relationships || [];
 
-            // Add to path (avoid duplicates if navigating back)
-            const existingIndex = explorationPath.indexOf(concept);
-            if (existingIndex >= 0) {
-                // Navigating back - truncate path
-                explorationPath = explorationPath.slice(0, existingIndex + 1);
-            } else {
+            // Track in path if new
+            const now = new Date().toISOString();
+            if (!explorationPath.includes(concept)) {
                 explorationPath = [...explorationPath, concept];
+                explorationTimestamps = [...explorationTimestamps, now];
             }
 
-            // Clear thinking question when navigating
-            thinkingQuestion = null;
+            if (!explorationStartTime) {
+                explorationStartTime = Date.now();
+            }
+
+            // Generate thinking question
+            if (userId) {
+                await generateThinkingQuestion();
+            }
         } catch (err) {
-            showMessage(`Explore failed: ${err.message}`, 5000, 'error');
+            console.error('[IES] Explore failed:', err);
+            const message = err?.message || String(err);
+            showMessage(`Failed to explore ${concept}: ${message}`, 5000, 'error');
         } finally {
             isExploring = false;
         }
     }
 
-    async function requestThinkingPartner() {
-        if (!currentConcept) return;
-
+    async function generateThinkingQuestion() {
         isLoadingQuestion = true;
         try {
+            const recentPath = explorationPath.slice(-5);
             const data = await apiPost('/graph/thinking-partner', {
                 concept: currentConcept,
-                path: explorationPath.slice(-5),
-                related: nodes.slice(0, 5).map(n => n.name)
+                path: recentPath,
+                related: Array.from(groupedNodes.keys())
             });
-            thinkingQuestion = data.question;
+            thinkingQuestion = data.question || null;
         } catch (err) {
-            showMessage(`Question failed: ${err.message}`, 5000, 'error');
+            console.log('[IES] Could not generate thinking question:', err);
         } finally {
             isLoadingQuestion = false;
         }
     }
 
-    function handleBack() {
+    async function detectContextNote(blockId: string) {
+        isDetectingContext = true;
+        try {
+            // Get block content
+            const kramdown = await getBlockKramdown(blockId);
+            if (!kramdown) {
+                console.log('[IES] No block content found for context detection');
+                return;
+            }
+
+            // Convert to markdown
+            const markdown = await exportMdContent(blockId);
+            if (!markdown) {
+                console.log('[IES] Failed to export markdown for context detection');
+                return;
+            }
+
+            // Call backend to parse context
+            const parsed = await apiPost('/context/parse', { text: markdown });
+            if (!parsed || !parsed.is_context) {
+                console.log('[IES] Block is not a Context Note');
+                return;
+            }
+
+            // Save context
+            const saved = await apiPost('/context/save', parsed);
+            parsedContext = parsed;
+            savedContextId = saved.context_id;
+            isContextMode = true;
+
+            // Initialize trail with context
+            initializeContextTrail();
+
+            showMessage(`Context loaded: ${parsed.title}`, 3000);
+        } catch (err) {
+            console.error('[IES] Context detection failed:', err);
+        } finally {
+            isDetectingContext = false;
+        }
+    }
+
+    function clearContextMode() {
+        isContextMode = false;
+        parsedContext = null;
+        savedContextId = null;
+        activeQuestionIndex = null;
+        contextSearchResults = [];
+        trailStack = [];
+        focusState = 'idle';
+        focusedEntity = null;
+        focusedFacet = null;
+    }
+
+    async function selectQuestion(index: number) {
+        if (!parsedContext || !savedContextId) return;
+
+        activeQuestionIndex = index;
+        focusState = 'question';
+        focusedEntity = null;
+        focusedFacet = null;
+
+        // Add question to trail if not already there
+        if (trailStack.length > 0 && trailStack[trailStack.length - 1].type !== 'question') {
+            const question = parsedContext.key_questions[index];
+            pushTrail({
+                type: 'question',
+                label: `Q${index + 1}`,
+                data: { questionIndex: index, question }
+            });
+        }
+    }
+
+    async function searchForQuestion(index: number) {
+        if (!parsedContext || !savedContextId) return;
+
+        selectQuestion(index);
+        isContextSearching = true;
+
+        try {
+            const question = parsedContext.key_questions[index];
+            const results = await apiPost('/context/search', {
+                context_id: savedContextId,
+                question
+            });
+
+            contextSearchResults = results.results || [];
+        } catch (err) {
+            console.error('[IES] Context search failed:', err);
+            showMessage(`Search failed: ${err.message}`, 5000, 'error');
+        } finally {
+            isContextSearching = false;
+        }
+    }
+
+    async function handleQuestionResponse() {
+        if (!questionResponse.trim() || !thinkingQuestion) return;
+
+        isLoadingQuestion = true;
+        const responseText = questionResponse.trim();
+
+        try {
+            const detection = await apiPost('/question-engine/detect-state', {
+                recent_messages: [thinkingQuestion, responseText],
+                user_id: 'chris'
+            });
+            lastDetectedState = detection?.primary_state || null;
+
+            const generated = await apiPost('/question-engine/generate-questions', {
+                user_id: 'chris',
+                recent_messages: [thinkingQuestion, responseText],
+                context: currentConcept || 'exploration',
+                num_questions: 1
+            });
+
+            const classified = generated?.classified_questions?.[0];
+            const followUp = classified?.question || generated?.questions?.[0] || null;
+
+            questionHistory = [
+                ...questionHistory,
+                {
+                    question: thinkingQuestion,
+                    response: responseText,
+                    questionClass: currentQuestionClass,
+                    approach: currentApproach || generated?.approach || null,
+                    state: lastDetectedState
+                }
+            ];
+
+            if (!followUp) {
+                thinkingQuestion = null;
+                currentQuestionClass = null;
+                currentApproach = null;
+                questionResponse = '';
+                showMessage('No follow-up question returned', 4000, 'error');
+                return;
+            }
+
+            thinkingQuestion = followUp;
+            currentQuestionClass = classified?.question_class || null;
+            currentApproach = classified?.approach || generated?.approach || null;
+            questionResponse = '';
+        } catch (err) {
+            console.error('[IES] Question response handling failed:', err);
+            const message = err?.message || String(err);
+            showMessage(`Could not process response: ${message}`, 5000, 'error');
+        } finally {
+            isLoadingQuestion = false;
+        }
+    }
+
+    async function handleBack() {
+        // Save journey if we have exploration data
+        if (explorationPath.length > 0 && userId) {
+            try {
+                const now = Date.now();
+                const journey: JourneyData = {
+                    entryPoint: {
+                        type: 'siyuan-flow',
+                        reference: initialConcept || explorationPath[0] || 'unknown'
+                    },
+                    path: explorationPath.map((conceptName, index) => {
+                        // Calculate dwell time: time until next step, or until now for last step
+                        const stepTime = new Date(explorationTimestamps[index]).getTime();
+                        const nextStepTime = index < explorationPath.length - 1
+                            ? new Date(explorationTimestamps[index + 1]).getTime()
+                            : now;
+                        const dwellSeconds = Math.round((nextStepTime - stepTime) / 1000);
+
+                        return {
+                            entityId: conceptName, // Using name as ID (simplification)
+                            entityName: conceptName,
+                            timestamp: explorationTimestamps[index],
+                            dwellTimeSeconds: dwellSeconds > 0 ? dwellSeconds : 1
+                        };
+                    })
+                };
+
+                await saveJourney(journey, userId);
+                console.log('[FlowMode] Journey saved successfully');
+            } catch (e) {
+                console.error('[FlowMode] Failed to save journey:', e);
+                // Don't block exit on save failure
+            }
+        }
         dispatch('back');
     }
 
@@ -219,10 +879,23 @@
         nodes = [];
         relationships = [];
         explorationPath = [];
+        explorationTimestamps = [];
+        explorationStartTime = null;
         thinkingQuestion = null;
+        questionHistory = [];
+        questionResponse = '';
+        currentQuestionClass = null;
+        currentApproach = null;
+        lastDetectedState = null;
         searchQuery = '';
         searchResults = [];
         conceptDetailTab = 'connections';
+        entityDescription = null;
+        entitySourceBooks = [];
+        standaloneTrailStack = [];
+        focusState = 'idle';
+        focusedEntity = null;
+        focusedFacet = null;
     }
 
     function navigateToPathStep(index: number) {
@@ -260,10 +933,10 @@
     // Get entity type color
     function getTypeColor(type: string): string {
         switch (type) {
-            case 'Theory': return 'var(--ies-secondary)';
-            case 'Researcher': return 'var(--ies-tertiary)';
-            case 'Concept': return 'var(--ies-accent)';
-            default: return 'var(--ies-text-muted)';
+            case 'Theory': return 'var(--entity-theory)';
+            case 'Researcher': return 'var(--entity-framework)';
+            case 'Concept': return 'var(--entity-concept)';
+            default: return 'var(--text-muted)';
         }
     }
 </script>
@@ -289,6 +962,7 @@
                 <line x1="22" y1="22" x2="16" y2="25" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
             </svg>
             <h1>Flow</h1>
+            <span class="flow-version">v0.4.0</span>
         </div>
         {#if explorationPath.length > 0}
             <button class="clear-btn" on:click={clearExploration}>
@@ -334,8 +1008,8 @@
         </button>
     </div>
 
-    <!-- Search Results -->
-    {#if searchResults.length > 0}
+    <!-- Search Results (hide when viewing entity or facet) -->
+    {#if searchResults.length > 0 && focusState === 'idle'}
         <div class="results-panel">
             <div class="results-header">
                 <span class="results-label">Found {searchResults.length} concept{searchResults.length !== 1 ? 's' : ''}</span>
@@ -345,7 +1019,7 @@
                     <button
                         class="result-card"
                         style="--delay: {i * 40}ms; --type-color: {getTypeColor(result.type)}"
-                        on:click={() => exploreConcept(result.name)}
+                        on:click={() => navigateToEntity(result.name)}
                     >
                         <span class="result-indicator"></span>
                         <span class="result-name">{result.name}</span>
@@ -356,348 +1030,663 @@
         </div>
     {/if}
 
-    <!-- Main Content Area -->
-    <div class="flow-content">
-        {#if isLoadingJourney}
-            <div class="flow-state">
-                <div class="state-icon loading">
-                    <svg viewBox="0 0 32 32" width="48" height="48">
-                        <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity="0.2"/>
-                        <path d="M16 4 A12 12 0 0 1 28 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <!-- Standalone Entity View (for search results outside Context Mode) -->
+    {#if !isContextMode && focusState === 'entity' && focusedEntity}
+        <div class="entity-panel">
+            <div class="entity-header">
+                <button class="entity-back" on:click={() => { focusState = 'idle'; focusedEntity = null; standaloneTrailStack = []; }} title="Back to Search">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
-                </div>
-                <p class="state-text">Resuming your journey...</p>
-            </div>
-        {:else if !currentConcept && searchResults.length === 0}
-            <div class="flow-state welcome">
-                <div class="state-icon">
-                    <svg viewBox="0 0 64 64" width="64" height="64">
-                        <!-- Constellation/network welcome icon -->
-                        <circle cx="32" cy="16" r="4" fill="currentColor" opacity="0.8"/>
-                        <circle cx="16" cy="32" r="3" fill="currentColor" opacity="0.6"/>
-                        <circle cx="48" cy="32" r="3" fill="currentColor" opacity="0.6"/>
-                        <circle cx="24" cy="48" r="3" fill="currentColor" opacity="0.5"/>
-                        <circle cx="40" cy="48" r="3" fill="currentColor" opacity="0.5"/>
-                        <circle cx="32" cy="36" r="5" fill="currentColor" opacity="0.9"/>
-                        <line x1="32" y1="20" x2="32" y2="31" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="19" y1="32" x2="27" y2="34" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="45" y1="32" x2="37" y2="34" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="26" y1="46" x2="29" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                        <line x1="38" y1="46" x2="35" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
-                    </svg>
-                </div>
-                <h2 class="state-title">Navigate Knowledge</h2>
-                <p class="state-text">Search for a concept to begin exploring connections in the knowledge graph.</p>
-                <p class="state-hint">Each concept reveals its relationships, creating paths of understanding.</p>
-            </div>
-        {:else if currentConcept}
-            <!-- Central Concept -->
-            <div class="concept-center" class:exploring={isExploring}>
-                <div class="concept-glow"></div>
-                <div class="concept-core">
-                    <span class="concept-label">Exploring</span>
-                    <h2 class="concept-name">{currentConcept}</h2>
-                    <span class="concept-connections">{nodes.length} connection{nodes.length !== 1 ? 's' : ''}</span>
-                </div>
-            </div>
-
-            <div class="concept-tabs">
-                <button
-                    class="tab-btn"
-                    class:active={conceptDetailTab === 'connections'}
-                    on:click={() => conceptDetailTab = 'connections'}
-                >
-                    Connections
-                </button>
-                <button
-                    class="tab-btn"
-                    class:active={conceptDetailTab === 'reframes'}
-                    on:click={() => conceptDetailTab = 'reframes'}
-                >
-                    Reframes
+                    Back
                 </button>
             </div>
 
-            {#if conceptDetailTab === 'connections'}
-                {#if groupedNodes.size > 0}
-                    <div class="relationships">
-                        {#each [...groupedNodes.entries()] as [relType, relNodes], groupIndex}
-                            <div class="rel-group" style="--delay: {groupIndex * 60}ms">
-                                <div class="rel-header">
-                                    <span class="rel-direction" class:outgoing={relNodes[0]?.direction === 'outgoing'}>
-                                        {relNodes[0]?.direction === 'outgoing' ? '→' : '←'}
-                                    </span>
-                                    <span class="rel-type">{formatRelType(relType)}</span>
-                                    <span class="rel-count">{relNodes.length}</span>
-                                </div>
-                                <div class="rel-nodes">
-                                    {#each relNodes as node, nodeIndex}
-                                        <button
-                                            class="node-chip"
-                                            style="--delay: {(groupIndex * 60) + (nodeIndex * 30)}ms; --type-color: {getTypeColor(node.type)}"
-                                            on:click={() => exploreConcept(node.name)}
-                                            title="{node.type}: {node.name}"
-                                        >
-                                            <span class="node-indicator"></span>
-                                            <span class="node-name">{node.name}</span>
-                                        </button>
-                                    {/each}
-                                </div>
-                            </div>
+            <!-- Standalone Trail Navigation -->
+            {#if standaloneTrailStack.length > 0}
+                <div class="trail-nav">
+                    <div class="trail-breadcrumbs">
+                        {#each standaloneTrailStack as item, i}
+                            {#if i > 0}
+                                <span class="trail-separator">›</span>
+                            {/if}
+                            <button
+                                class="trail-item"
+                                class:active={i === standaloneTrailStack.length - 1}
+                                class:type-entity={item.type === 'entity'}
+                                class:type-facet={item.type === 'facet'}
+                                on:click={() => navigateStandaloneToIndex(i)}
+                            >
+                                {#if item.type === 'entity'}
+                                    <span class="trail-icon">🔷</span>
+                                {:else if item.type === 'facet'}
+                                    <span class="trail-icon">📂</span>
+                                {/if}
+                                <span class="trail-label">{item.label}</span>
+                            </button>
                         {/each}
                     </div>
-                {:else if !isExploring}
-                    <div class="no-connections">
-                        <p>No connections found for this concept.</p>
-                        <p class="hint">Try the Thinking Partner for guidance.</p>
+                    {#if standaloneTrailStack.length > 1}
+                        <button class="trail-back" on:click={navigateStandaloneBack} title="Go Back">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                        </button>
+                    {/if}
+                </div>
+            {/if}
+
+            <div class="entity-focus-content">
+                <div class="entity-focus-header">
+                    <div class="entity-type-badge">{focusedEntity.type}</div>
+                    <h3 class="entity-name">{focusedEntity.name}</h3>
+                </div>
+
+                <!-- Resume in Reader Button -->
+                {#if sessionId && focusedEntity}
+                    <div class="entity-section">
+                        <button class="btn btn--resume-reader" on:click={resumeInReader}>
+                            <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path fill="currentColor" d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                            </svg>
+                            Resume in Reader
+                        </button>
                     </div>
                 {/if}
-            {:else}
-                <ReframesTab conceptId={currentConcept} backendUrl={backendUrl} />
-            {/if}
-        {/if}
-    </div>
+                {#if focusedEntity.description}
+                    <p class="entity-description">{focusedEntity.description}</p>
+                {/if}
 
-    <!-- Exploration Path -->
-    {#if explorationPath.length > 1}
-        <div class="path-trail">
-            <span class="path-label">Journey</span>
-            <div class="path-steps">
-                {#each explorationPath as step, i}
-                    <button
-                        class="path-step"
-                        class:current={i === explorationPath.length - 1}
-                        on:click={() => navigateToPathStep(i)}
-                        disabled={i === explorationPath.length - 1}
-                    >
-                        {step}
-                    </button>
-                    {#if i < explorationPath.length - 1}
-                        <span class="path-connector">
-                            <svg viewBox="0 0 16 16" width="12" height="12">
-                                <path fill="currentColor" d="M8 4l4 4-4 4V4z"/>
-                            </svg>
-                        </span>
-                    {/if}
-                {/each}
+                <!-- Facets -->
+                {#if focusedEntity.facets && focusedEntity.facets.length > 0}
+                    <div class="entity-section">
+                        <h4 class="entity-section-title">Facets ({focusedEntity.facets.length})</h4>
+                        <div class="facet-chips">
+                            {#each focusedEntity.facets as facet}
+                                <button class="facet-chip" on:click={() => navigateToFacet(focusedEntity.name, facet.name)}>
+                                    {facet.name}
+                                    {#if facetExistsInGraph(facet)}
+                                        <span class="facet-exists-badge" title="This facet exists as an entity in the knowledge graph">●</span>
+                                    {/if}
+                                    {#if facet.entity_count > 0}
+                                        <span class="facet-count">{facet.entity_count}</span>
+                                    {/if}
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+
+                <!-- Related Concepts -->
+                {#if focusedEntity.neighbors.length > 0}
+                    <div class="entity-section">
+                        <h4 class="entity-section-title">Related ({focusedEntity.neighbors.length})</h4>
+                        <div class="neighbor-list">
+                            {#each focusedEntity.neighbors as neighbor}
+                                <button class="neighbor-item" on:click={() => navigateToEntity(neighbor.name)}>
+                                    <span class="neighbor-name">{neighbor.name}</span>
+                                    <span class="neighbor-type">{neighbor.type}</span>
+                                    <span class="neighbor-rel">{neighbor.relationship}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+
+                <!-- Source Books -->
+                {#if focusedEntity.sourceBooks.length > 0}
+                    <div class="entity-section">
+                        <h4 class="entity-section-title">Sources ({focusedEntity.sourceBooks.length})</h4>
+                        <ul class="source-list">
+                            {#each focusedEntity.sourceBooks as book}
+                                <li>{book}</li>
+                            {/each}
+                        </ul>
+                    </div>
+                {/if}
+
+                <!-- Evidence Section (Sprint 2) -->
+                <EvidenceSection entityName={focusedEntity.name} {backendUrl} />
             </div>
         </div>
     {/if}
 
-    <!-- Thinking Partner Section -->
-    {#if currentConcept}
-        <div class="thinking-section">
-            {#if thinkingQuestion}
-                <div class="thinking-card">
-                    <div class="thinking-header">
-                        <svg viewBox="0 0 24 24" width="18" height="18">
-                            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-4h2v2h-2zm1.61-9.96c-2.06-.3-3.88.97-4.43 2.79-.18.58.26 1.17.87 1.17h.2c.41 0 .74-.29.88-.67.32-.89 1.27-1.5 2.3-1.28.95.2 1.65 1.13 1.57 2.1-.1 1.34-1.62 1.63-2.45 2.88 0 .01-.01.01-.01.02-.01.02-.02.03-.03.05-.09.15-.18.32-.25.5-.01.03-.03.05-.04.08-.01.02-.01.04-.02.07-.12.34-.2.75-.2 1.25h2c0-.42.11-.77.28-1.07.02-.03.03-.06.05-.09.08-.14.18-.27.28-.39.01-.01.02-.03.03-.04.1-.12.21-.23.33-.34.96-.91 2.26-1.65 1.99-3.56-.24-1.74-1.61-3.21-3.35-3.47z"/>
-                        </svg>
-                        <span>Thinking Partner</span>
-                    </div>
-                    <p class="thinking-question">{thinkingQuestion}</p>
-                </div>
-            {:else}
-                <button
-                    class="thinking-btn"
-                    on:click={requestThinkingPartner}
-                    disabled={isLoadingQuestion}
-                >
-                    {#if isLoadingQuestion}
-                        <span class="spinner small"></span>
-                        <span>Contemplating...</span>
-                    {:else}
-                        <svg viewBox="0 0 24 24" width="18" height="18">
-                            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-                        </svg>
-                        <span>Ask Thinking Partner</span>
-                    {/if}
+    <!-- Standalone Facet View (for facet exploration outside Context Mode) -->
+    {#if !isContextMode && focusState === 'facet' && focusedFacet}
+        <div class="entity-panel">
+            <div class="entity-header">
+                <button class="entity-back" on:click={navigateStandaloneBack} title="Back">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    Back to {focusedFacet.parentEntityName}
                 </button>
+            </div>
+
+            <!-- Standalone Trail Navigation -->
+            {#if standaloneTrailStack.length > 0}
+                <div class="trail-nav">
+                    <div class="trail-breadcrumbs">
+                        {#each standaloneTrailStack as item, i}
+                            {#if i > 0}
+                                <span class="trail-separator">›</span>
+                            {/if}
+                            <button
+                                class="trail-item"
+                                class:active={i === standaloneTrailStack.length - 1}
+                                class:type-entity={item.type === 'entity'}
+                                class:type-facet={item.type === 'facet'}
+                                on:click={() => navigateStandaloneToIndex(i)}
+                            >
+                                {#if item.type === 'entity'}
+                                    <span class="trail-icon">🔷</span>
+                                {:else if item.type === 'facet'}
+                                    <span class="trail-icon">📂</span>
+                                {/if}
+                                <span class="trail-label">{item.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                    {#if standaloneTrailStack.length > 1}
+                        <button class="trail-back" on:click={navigateStandaloneBack} title="Go Back">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                        </button>
+                    {/if}
+                </div>
             {/if}
+
+            <div class="entity-focus-content">
+                <div class="facet-focus-header">
+                    <div class="facet-parent-info">
+                        <span class="entity-type-badge">{focusedFacet.parentEntityType}</span>
+                        <span class="facet-parent-name">{focusedFacet.parentEntityName}</span>
+                    </div>
+                    <h3 class="entity-name">{focusedFacet.facetName}</h3>
+                    {#if focusedFacet.description}
+                        <p class="entity-description">{focusedFacet.description}</p>
+                    {/if}
+                </div>
+
+                {#if isLoadingFacet}
+                    <div class="entity-section">
+                        <span class="spinner"></span>
+                        Loading facet entities...
+                    </div>
+                {:else if focusedFacet.entities.length > 0}
+                    <div class="entity-section">
+                        <h4 class="entity-section-title">Entities ({focusedFacet.entities.length})</h4>
+                        <div class="neighbor-list">
+                            {#each focusedFacet.entities as entity}
+                                <button class="neighbor-item" on:click={() => navigateToEntity(entity.name)}>
+                                    <span class="neighbor-name">{entity.name}</span>
+                                    <span class="neighbor-type">{entity.type}</span>
+                                    <span class="neighbor-rel">{entity.relationship}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+                {:else}
+                    <div class="entity-section">
+                        <p class="entity-description">No entities in this facet yet</p>
+                    </div>
+                {/if}
+
+                <!-- Add Entity to Facet (Sprint 1) -->
+                {#if showAddEntityForm}
+                    <AddFacetForm
+                        parentEntity={focusedFacet.parentEntityName}
+                        facetName={focusedFacet.facetName}
+                        {backendUrl}
+                        on:created={(e) => {
+                            showAddEntityForm = false;
+                            showMessage(`Created entity: ${e.detail.name}`);
+                            // Refresh the facet view to show the new entity
+                            if (focusedFacet) {
+                                navigateToFacet(focusedFacet.parentEntityName, focusedFacet.facetName, false);
+                            }
+                        }}
+                        on:cancel={() => showAddEntityForm = false}
+                    />
+                {:else}
+                    <button
+                        class="add-entity-btn"
+                        on:click={() => showAddEntityForm = true}
+                    >
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Add Entity
+                    </button>
+                {/if}
+            </div>
+        </div>
+    {/if}
+
+    <!-- Context Panel (Question-Driven Exploration) -->
+    {#if isContextMode && parsedContext}
+        <div class="context-panel">
+            <div class="context-header">
+                <div class="context-info">
+                    <span class="context-type-badge">{parsedContext.context_type.replace('_', ' ')}</span>
+                    <h2 class="context-title">{parsedContext.title}</h2>
+                    {#if parsedContext.summary}
+                        <p class="context-summary">{parsedContext.summary}</p>
+                    {/if}
+                </div>
+                <button class="context-close" on:click={clearContextMode} title="Exit Context Mode">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Trail Navigation (Breadcrumbs) -->
+            {#if trailStack.length > 0}
+                <div class="trail-nav">
+                    <div class="trail-breadcrumbs">
+                        {#each trailStack as item, i}
+                            {#if i > 0}
+                                <span class="trail-separator">›</span>
+                            {/if}
+                            <button
+                                class="trail-item"
+                                class:active={i === trailStack.length - 1}
+                                class:type-context={item.type === 'context'}
+                                class:type-question={item.type === 'question'}
+                                class:type-entity={item.type === 'entity'}
+                                class:type-facet={item.type === 'facet'}
+                                on:click={() => navigateToTrailIndex(i)}
+                            >
+                                {#if item.type === 'context'}
+                                    <span class="trail-icon">📍</span>
+                                {:else if item.type === 'question'}
+                                    <span class="trail-icon">❓</span>
+                                {:else if item.type === 'entity'}
+                                    <span class="trail-icon">🔷</span>
+                                {:else if item.type === 'facet'}
+                                    <span class="trail-icon">📂</span>
+                                {/if}
+                                <span class="trail-label">{item.label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                    {#if trailStack.length > 1}
+                        <button class="trail-back" on:click={navigateBack} title="Go Back">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                        </button>
+                    {/if}
+                </div>
+            {/if}
+
+            <!-- Facet Focus View -->
+            {#if focusState === 'facet' && focusedFacet}
+                <div class="facet-focus">
+                    <div class="facet-focus-header">
+                        <div class="facet-parent-info">
+                            <span class="facet-parent-badge">{focusedFacet.parentEntityType}</span>
+                            <span class="facet-parent-name">{focusedFacet.parentEntityName}</span>
+                        </div>
+                        <h3 class="facet-name">{focusedFacet.facetName}</h3>
+                        {#if focusedFacet.description}
+                            <p class="facet-description">{focusedFacet.description}</p>
+                        {/if}
+                    </div>
+
+                    {#if isLoadingFacet}
+                        <div class="facet-loading">
+                            <span class="spinner"></span>
+                            Loading facet entities...
+                        </div>
+                    {:else if focusedFacet.entities.length > 0}
+                        <div class="facet-section">
+                            <h4 class="facet-section-title">Entities in this Facet ({focusedFacet.entities.length})</h4>
+                            <div class="facet-entities">
+                                {#each focusedFacet.entities as entity}
+                                    <button
+                                        class="facet-entity-card"
+                                        on:click={() => navigateToEntity(entity.name)}
+                                    >
+                                        <div class="facet-entity-main">
+                                            <span class="facet-entity-name">{entity.name}</span>
+                                            <span class="facet-entity-type">{entity.type}</span>
+                                        </div>
+                                        <span class="facet-entity-relationship">{entity.relationship}</span>
+                                    </button>
+                                {/each}
+                            </div>
+                        </div>
+                    {:else}
+                        <div class="facet-empty">
+                            <p>No entities in this facet yet</p>
+                        </div>
+                    {/if}
+
+                    <!-- Back to Entity Button -->
+                    <button class="back-to-entity" on:click={navigateBack}>
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        Back to {focusedFacet.parentEntityName}
+                    </button>
+                </div>
+            {/if}
+
+            <!-- Entity Focus View -->
+            {#if focusState === 'entity' && focusedEntity}
+                <div class="entity-focus">
+                    <div class="entity-focus-header">
+                        <div class="entity-type-badge">{focusedEntity.type}</div>
+                        <h3 class="entity-name">{focusedEntity.name}</h3>
+                    </div>
+                    {#if focusedEntity.description}
+                        <p class="entity-description">{focusedEntity.description}</p>
+                    {/if}
+
+                    {#if isLoadingEntity}
+                        <div class="entity-loading">
+                            <span class="spinner"></span>
+                            Loading entity details...
+                        </div>
+                    {:else}
+                        <!-- Facets Section -->
+                        {#if focusedEntity.facets && focusedEntity.facets.length > 0}
+                            <div class="entity-section">
+                                <h4 class="entity-section-title">Facets ({focusedEntity.facets.length})</h4>
+                                <div class="entity-facets">
+                                    {#each focusedEntity.facets as facet}
+                                        <button
+                                            class="facet-chip"
+                                            on:click={() => navigateToFacet(focusedEntity.name, facet.name)}
+                                        >
+                                            <span class="facet-chip-icon">📂</span>
+                                            <div class="facet-chip-content">
+                                                <span class="facet-chip-name">
+                                                    {facet.name}
+                                                    {#if facetExistsInGraph(facet)}
+                                                        <span class="facet-exists-badge" title="This facet exists as an entity in the knowledge graph">●</span>
+                                                    {/if}
+                                                </span>
+                                                <span class="facet-chip-count">{facet.entity_count} {facet.entity_count === 1 ? 'entity' : 'entities'}</span>
+                                            </div>
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+
+                        <!-- Neighbors Section -->
+                        {#if focusedEntity.neighbors.length > 0}
+                            <div class="entity-section">
+                                <h4 class="entity-section-title">Related Concepts ({focusedEntity.neighbors.length})</h4>
+                                <div class="entity-neighbors">
+                                    {#each focusedEntity.neighbors as neighbor}
+                                        <button
+                                            class="neighbor-card"
+                                            on:click={() => navigateToEntity(neighbor.name)}
+                                        >
+                                            <span class="neighbor-relationship" class:incoming={neighbor.direction === 'in'} class:outgoing={neighbor.direction === 'out'}>
+                                                {neighbor.direction === 'in' ? '←' : '→'} {neighbor.relationship}
+                                            </span>
+                                            <span class="neighbor-name">{neighbor.name}</span>
+                                            <span class="neighbor-type">{neighbor.type}</span>
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+
+                        <!-- Source Books Section -->
+                        {#if focusedEntity.sourceBooks.length > 0}
+                            <div class="entity-section">
+                                <h4 class="entity-section-title">Source Books</h4>
+                                <div class="entity-sources">
+                                    {#each focusedEntity.sourceBooks as book}
+                                        <span class="source-book">{book}</span>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+
+                        <!-- Evidence Section (Sprint 2) -->
+                        <EvidenceSection entityName={focusedEntity.name} {backendUrl} />
+                    {/if}
+
+                    <!-- Back to Question Button -->
+                    <button class="back-to-question" on:click={navigateBack}>
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        Back to Question
+                    </button>
+                </div>
+            {/if}
+
+            <!-- Key Questions Section (show when not in entity or facet focus) -->
+            {#if focusState !== 'entity' && focusState !== 'facet' && parsedContext.key_questions.length > 0}
+                <div class="context-section">
+                    <h3 class="section-title">Key Questions</h3>
+                    <div class="question-buttons">
+                        {#each parsedContext.key_questions as question, i}
+                            <button
+                                class="question-btn"
+                                class:active={activeQuestionIndex === i}
+                                class:searching={activeQuestionIndex === i && isContextSearching}
+                                on:click={() => searchForQuestion(i)}
+                            >
+                                <span class="question-number">Q{i + 1}</span>
+                                <span class="question-text">{question}</span>
+                                {#if activeQuestionIndex === i && isContextSearching}
+                                    <span class="question-spinner"></span>
+                                {/if}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+
+            <!-- Areas of Exploration Section (hide when in entity or facet focus) -->
+            {#if focusState !== 'entity' && focusState !== 'facet' && parsedContext.areas_of_exploration.length > 0}
+                <div class="context-section">
+                    <h3 class="section-title">Areas of Exploration</h3>
+                    <div class="area-chips">
+                        {#each parsedContext.areas_of_exploration as area}
+                            <span class="area-chip">{area}</span>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+
+            <!-- Context Search Results (hide when in entity or facet focus) -->
+            {#if focusState !== 'entity' && focusState !== 'facet' && contextSearchResults.length > 0}
+                <div class="context-section">
+                    <h3 class="section-title">
+                        Related Entities
+                        <span class="results-count">{contextSearchResults.length}</span>
+                    </h3>
+                    <div class="context-results-list">
+                        {#each contextSearchResults as result, i}
+                            <button
+                                class="context-result-card"
+                                style="--delay: {i * 50}ms"
+                                on:click={() => navigateToEntity(result.source_id)}
+                            >
+                                <div class="result-main">
+                                    <span class="result-entity">{result.source_title}</span>
+                                    {#if result.concepts_found.length > 0}
+                                        <span class="result-type-badge">{result.concepts_found.length} concepts</span>
+                                    {/if}
+                                </div>
+                                {#if result.snippet}
+                                    <p class="result-snippet">{result.snippet}</p>
+                                {/if}
+                                <span class="result-source">Relevance: {(result.relevance_score * 100).toFixed(0)}%</span>
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+        </div>
+    {/if}
+
+    <!-- Loading Journey State -->
+    {#if isLoadingJourney}
+        <div class="flow-state">
+            <div class="state-icon loading">
+                <svg viewBox="0 0 24 24" width="48" height="48">
+                    <path fill="currentColor" d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+                </svg>
+            </div>
+            <h2 class="state-title">Loading Journey...</h2>
+            <p class="state-text">Restoring your exploration path</p>
         </div>
     {/if}
 </div>
 
 <style>
-    /* Import design system */
-    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap');
-
+    /* Base */
     .flow-mode {
-        --ies-accent: #c9872e;
-        --ies-accent-rgb: 201, 135, 46;
-        --ies-accent-light: #f5ddb8;
-        --ies-accent-lighter: #fdf4e6;
-        --ies-accent-dark: #9a6820;
-        --ies-secondary: #5a8a7a;
-        --ies-secondary-light: #c4ddd5;
-        --ies-tertiary: #8b7aa0;
-        --ies-tertiary-light: #ddd6e8;
-        --ies-bg-deep: #f8f6f3;
-        --ies-bg-base: #fffef9;
-        --ies-bg-elevated: #ffffff;
-        --ies-text-primary: #1a1816;
-        --ies-text-secondary: #4a4641;
-        --ies-text-muted: #7a756e;
-        --ies-text-subtle: #a9a29a;
-        --ies-border-subtle: rgba(26, 24, 22, 0.06);
-        --ies-border-light: rgba(26, 24, 22, 0.1);
-        --ies-border-medium: rgba(26, 24, 22, 0.15);
-        --ies-radius-sm: 6px;
-        --ies-radius-md: 10px;
-        --ies-radius-lg: 16px;
-        --ies-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-        --ies-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-
         display: flex;
         flex-direction: column;
+        gap: var(--space-3);
         height: 100%;
-        padding: 16px;
-        gap: 16px;
-        background: var(--ies-bg-deep);
-        font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
-        color: var(--ies-text-primary);
+        padding: var(--space-3);
         opacity: 0;
-        transform: translateY(8px);
-        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        transition: opacity var(--duration-base);
     }
 
     .flow-mode.mounted {
         opacity: 1;
-        transform: translateY(0);
-    }
-
-    /* Dark theme */
-    :global([data-theme-mode="dark"]) .flow-mode {
-        --ies-bg-deep: #141312;
-        --ies-bg-base: #1c1a18;
-        --ies-bg-elevated: #242220;
-        --ies-text-primary: #f4f2ef;
-        --ies-text-secondary: #c9c5bf;
-        --ies-text-muted: #8a857e;
-        --ies-text-subtle: #5a5650;
-        --ies-border-subtle: rgba(244, 242, 239, 0.04);
-        --ies-border-light: rgba(244, 242, 239, 0.08);
-        --ies-border-medium: rgba(244, 242, 239, 0.12);
-        --ies-accent-light: #4a3a20;
-        --ies-accent-lighter: #2a2218;
-        --ies-secondary-light: #2a3a35;
-        --ies-tertiary-light: #3a3545;
-        --ies-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
-        --ies-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     /* Header */
     .flow-header {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: var(--space-3);
+        padding-bottom: var(--space-2);
+        border-bottom: 1px solid var(--border-subtle);
     }
 
     .back-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
-        background: var(--ies-bg-elevated);
-        border: 1px solid var(--ies-border-light);
-        border-radius: var(--ies-radius-sm);
+        width: 32px;
+        height: 32px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-button);
+        color: var(--text-muted);
         cursor: pointer;
-        color: var(--ies-text-secondary);
-        transition: all 0.15s ease-out;
+        transition: var(--transition-all);
     }
 
     .back-btn:hover {
-        background: var(--ies-bg-base);
-        border-color: var(--ies-accent);
-        color: var(--ies-accent);
+        background: var(--bg-secondary);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
     }
 
     .header-title {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: var(--space-2);
         flex: 1;
     }
 
+    .flow-version {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        margin-left: var(--space-1);
+    }
+
     .flow-icon {
-        color: var(--ies-accent);
+        color: var(--entity-concept);
     }
 
     .header-title h1 {
-        font-family: 'Crimson Pro', Georgia, serif;
-        font-size: 1.5rem;
-        font-weight: 600;
+        font-family: var(--font-sans);
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        color: var(--text-primary);
         margin: 0;
-        letter-spacing: -0.01em;
     }
 
     .clear-btn {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 12px;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        background: var(--ies-bg-elevated);
-        border: 1px solid var(--ies-border-light);
-        border-radius: var(--ies-radius-sm);
+        gap: var(--space-1-5);
+        padding: var(--space-1-5) var(--space-3);
+        font-family: var(--font-sans);
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-muted);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-button);
         cursor: pointer;
-        color: var(--ies-text-muted);
-        transition: all 0.15s ease-out;
+        transition: var(--transition-all);
     }
 
     .clear-btn:hover {
-        background: var(--ies-bg-base);
-        border-color: var(--ies-border-medium);
-        color: var(--ies-text-secondary);
+        background: var(--bg-secondary);
+        border-color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
     /* Search */
     .search-container {
         display: flex;
-        gap: 10px;
+        gap: var(--space-2);
     }
 
     .search-wrapper {
-        flex: 1;
         position: relative;
+        flex: 1;
         display: flex;
         align-items: center;
     }
 
     .search-icon {
         position: absolute;
-        left: 14px;
-        color: var(--ies-text-subtle);
+        left: var(--space-3);
+        color: var(--text-muted);
         pointer-events: none;
     }
 
     .search-wrapper input {
         width: 100%;
-        padding: 12px 40px 12px 44px;
-        font-family: inherit;
-        font-size: 0.9375rem;
-        color: var(--ies-text-primary);
-        background: var(--ies-bg-elevated);
-        border: 1px solid var(--ies-border-light);
-        border-radius: var(--ies-radius-md);
+        padding: var(--input-padding-y) var(--space-10) var(--input-padding-y) 44px;
+        font-family: var(--font-sans);
+        font-size: var(--text-base);
+        color: var(--text-primary);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-input);
         outline: none;
-        transition: all 0.15s ease-out;
+        transition: var(--transition-all);
+        box-shadow: var(--shadow-input);
     }
 
     .search-wrapper input::placeholder {
-        color: var(--ies-text-subtle);
+        color: var(--text-muted);
     }
 
     .search-wrapper input:focus {
-        border-color: var(--ies-accent);
-        box-shadow: 0 0 0 3px var(--ies-accent-lighter);
+        border-color: var(--entity-concept);
+        box-shadow: var(--shadow-input-focus);
     }
 
     .search-clear {
         position: absolute;
-        right: 10px;
+        right: var(--space-2-5);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -706,9 +1695,9 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: var(--ies-text-subtle);
+        color: var(--text-muted);
         opacity: 0.7;
-        transition: opacity 0.15s;
+        transition: opacity var(--duration-fast);
     }
 
     .search-clear:hover {
@@ -716,21 +1705,23 @@
     }
 
     .search-btn {
-        padding: 12px 20px;
-        font-family: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: white;
-        background: var(--ies-accent);
+        padding: var(--button-padding-y) var(--button-padding-x);
+        font-family: var(--font-sans);
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-inverse);
+        background: var(--entity-concept);
         border: none;
-        border-radius: var(--ies-radius-md);
+        border-radius: var(--radius-button);
         cursor: pointer;
-        transition: all 0.15s ease-out;
+        transition: var(--transition-all);
         min-width: 90px;
+        box-shadow: var(--shadow-button);
     }
 
     .search-btn:hover:not(:disabled) {
-        background: var(--ies-accent-dark);
+        background: var(--entity-concept-hover);
+        box-shadow: var(--shadow-button-hover);
     }
 
     .search-btn:disabled {
@@ -740,48 +1731,48 @@
 
     /* Results Panel */
     .results-panel {
-        background: var(--ies-bg-elevated);
-        border: 1px solid var(--ies-border-subtle);
-        border-radius: var(--ies-radius-md);
-        padding: 12px;
-        box-shadow: var(--ies-shadow-sm);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-card);
+        padding: var(--space-3);
+        box-shadow: var(--shadow-sm);
     }
 
     .results-header {
-        margin-bottom: 10px;
+        margin-bottom: var(--space-2-5);
     }
 
     .results-label {
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
+        font-size: var(--text-xs);
+        font-weight: var(--font-bold);
+        letter-spacing: var(--tracking-wider);
         text-transform: uppercase;
-        color: var(--ies-text-muted);
+        color: var(--text-muted);
     }
 
     .results-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: var(--space-1-5);
     }
 
     .result-card {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        background: var(--ies-bg-base);
-        border: 1px solid var(--ies-border-subtle);
-        border-radius: var(--ies-radius-sm);
+        gap: var(--space-2-5);
+        padding: var(--space-2-5) var(--space-3-5);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
         cursor: pointer;
-        transition: all 0.15s ease-out;
-        animation: slideIn 0.25s ease-out backwards;
+        transition: var(--transition-all);
+        animation: ies-slide-up var(--duration-base) var(--ease-out) backwards;
         animation-delay: var(--delay);
     }
 
     .result-card:hover {
-        background: var(--ies-accent-lighter);
-        border-color: var(--ies-accent-light);
+        background: var(--entity-concept-subtle);
+        border-color: var(--entity-concept-muted);
         transform: translateX(4px);
     }
 
@@ -795,419 +1786,247 @@
 
     .result-name {
         flex: 1;
-        font-size: 0.9375rem;
-        font-weight: 500;
-        color: var(--ies-text-primary);
+        font-size: var(--text-base);
+        font-weight: var(--font-medium);
+        color: var(--text-primary);
     }
 
     .result-type {
-        font-size: 0.6875rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
+        font-size: var(--text-xs);
+        font-weight: var(--font-semibold);
+        letter-spacing: var(--tracking-wide);
         text-transform: uppercase;
-        color: var(--ies-text-muted);
-        padding: 3px 8px;
-        background: var(--ies-bg-elevated);
-        border-radius: 4px;
+        color: var(--text-muted);
+        padding: var(--space-0-5) var(--space-2);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-sm);
     }
 
-    /* Flow Content */
-    .flow-content {
+    /* Context Panel */
+    .context-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        animation: ies-slide-up 0.3s ease-out;
+    }
+
+    .context-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .context-info {
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--ies-border-medium) transparent;
+        gap: var(--space-2);
     }
 
-    .flow-content::-webkit-scrollbar {
-        width: 6px;
+    .context-type-badge {
+        display: inline-block;
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+        font-weight: var(--font-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--entity-concept);
+        color: white;
+        border-radius: var(--radius-sm);
+        width: fit-content;
     }
 
-    .flow-content::-webkit-scrollbar-track {
-        background: transparent;
+    .context-title {
+        margin: 0;
+        font-size: var(--text-lg);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
     }
 
-    .flow-content::-webkit-scrollbar-thumb {
-        background: var(--ies-border-medium);
-        border-radius: 3px;
-    }
-
-    /* Flow States */
-    .flow-state {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 32px;
-    }
-
-    .state-icon {
-        color: var(--ies-accent);
-        margin-bottom: 16px;
-        opacity: 0.8;
-    }
-
-    .state-icon.loading svg {
-        animation: spin 1s linear infinite;
-    }
-
-    .state-title {
-        font-family: 'Crimson Pro', Georgia, serif;
-        font-size: 1.375rem;
-        font-weight: 600;
-        color: var(--ies-text-primary);
-        margin: 0 0 8px 0;
-    }
-
-    .state-text {
-        font-size: 0.9375rem;
-        color: var(--ies-text-secondary);
-        margin: 0 0 4px 0;
-        max-width: 280px;
+    .context-summary {
+        margin: 0;
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
         line-height: 1.5;
     }
 
-    .state-hint {
-        font-size: 0.8125rem;
-        color: var(--ies-text-muted);
-        margin: 0;
-        font-style: italic;
-    }
-
-    /* Central Concept */
-    .concept-center {
-        position: relative;
+    .context-close {
         display: flex;
+        align-items: center;
         justify-content: center;
-        padding: 20px;
-    }
-
-    .concept-glow {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 200px;
-        height: 200px;
-        background: radial-gradient(circle, rgba(var(--ies-accent-rgb), 0.12) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-        animation: pulse 3s ease-in-out infinite;
-    }
-
-    .concept-core {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        padding: 20px 32px;
-        background: var(--ies-bg-elevated);
-        border: 2px solid var(--ies-accent);
-        border-radius: var(--ies-radius-lg);
-        box-shadow: var(--ies-shadow-md), 0 0 20px rgba(var(--ies-accent-rgb), 0.1);
-        transition: all 0.3s ease-out;
-    }
-
-    .concept-center.exploring .concept-core {
-        opacity: 0.7;
-    }
-
-    .concept-label {
-        font-size: 0.6875rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--ies-accent);
-    }
-
-    .concept-name {
-        font-family: 'Crimson Pro', Georgia, serif;
-        font-size: 1.375rem;
-        font-weight: 600;
-        color: var(--ies-text-primary);
-        margin: 0;
-        text-align: center;
-    }
-
-    .concept-connections {
-        font-size: 0.8125rem;
-        color: var(--ies-text-muted);
-    }
-
-    .concept-tabs {
-        display: inline-flex;
-        gap: 8px;
-        margin: 16px auto 8px;
-        border-radius: var(--ies-radius-sm);
-        padding: 4px;
-        background: var(--ies-bg-elevated);
-        border: 1px solid var(--ies-border-light);
-    }
-
-    .tab-btn {
-        padding: 6px 14px;
-        border-radius: var(--ies-radius-sm);
-        border: none;
-        background: transparent;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--ies-text-muted);
+        width: 28px;
+        height: 28px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-sm);
         cursor: pointer;
-        transition: all 0.15s ease-out;
+        color: var(--text-muted);
+        transition: var(--transition-all);
     }
 
-    .tab-btn.active {
-        background: var(--ies-accent-lighter);
-        color: var(--ies-accent);
+    .context-close:hover {
+        background: var(--bg-primary);
+        border-color: var(--text-muted);
+        color: var(--text-secondary);
     }
 
-    /* Relationships */
-    .relationships {
+    .context-section {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: var(--space-2);
     }
 
-    .rel-group {
-        background: var(--ies-bg-elevated);
-        border: 1px solid var(--ies-border-subtle);
-        border-radius: var(--ies-radius-md);
-        padding: 12px;
-        animation: slideIn 0.25s ease-out backwards;
-        animation-delay: var(--delay);
-    }
-
-    .rel-header {
+    .context-section .section-title {
+        margin: 0;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding-bottom: 10px;
-        margin-bottom: 10px;
-        border-bottom: 1px solid var(--ies-border-subtle);
+        gap: var(--space-2);
     }
 
-    .rel-direction {
+    .results-count {
+        font-size: var(--text-xs);
+        padding: 2px 6px;
+        background: var(--entity-concept);
+        color: white;
+        border-radius: var(--radius-full);
+    }
+
+    /* Question Buttons */
+    .question-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .question-btn {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-align: left;
+        transition: var(--transition-all);
+    }
+
+    .question-btn:hover {
+        background: var(--bg-primary);
+        border-color: var(--entity-concept);
+    }
+
+    .question-btn.active {
+        border-color: var(--entity-concept);
+        background: var(--entity-concept-subtle);
+    }
+
+    .question-number {
         display: flex;
         align-items: center;
         justify-content: center;
         width: 24px;
         height: 24px;
-        font-size: 0.875rem;
-        font-weight: 700;
-        color: var(--ies-secondary);
-        background: var(--ies-secondary-light);
+        flex-shrink: 0;
+        background: var(--entity-concept);
+        color: white;
         border-radius: 50%;
+        font-size: var(--text-xs);
+        font-weight: var(--font-bold);
     }
 
-    .rel-direction.outgoing {
-        color: var(--ies-accent);
-        background: var(--ies-accent-lighter);
-    }
-
-    .rel-type {
+    .question-text {
         flex: 1;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        color: var(--ies-text-secondary);
-        text-transform: capitalize;
+        font-size: var(--text-sm);
+        color: var(--text-primary);
+        line-height: 1.5;
     }
 
-    .rel-count {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--ies-text-muted);
-        padding: 2px 8px;
-        background: var(--ies-bg-base);
-        border-radius: var(--ies-radius-sm);
-    }
-
-    .rel-nodes {
+    .area-chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: var(--space-2);
     }
 
-    .node-chip {
+    .area-chip {
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+    }
+
+    .context-results-list {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        background: var(--ies-bg-base);
-        border: 1px solid var(--ies-border-light);
-        border-radius: var(--ies-radius-sm);
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .context-result-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1-5);
+        padding: var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
         cursor: pointer;
-        transition: all 0.15s ease-out;
-        animation: fadeIn 0.2s ease-out backwards;
+        text-align: left;
+        transition: var(--transition-all);
+        animation: ies-slide-up 0.2s ease-out backwards;
         animation-delay: var(--delay);
     }
 
-    .node-chip:hover {
-        background: var(--ies-accent-lighter);
-        border-color: var(--ies-accent-light);
-        transform: translateY(-1px);
-        box-shadow: var(--ies-shadow-sm);
+    .context-result-card:hover {
+        background: var(--bg-primary);
+        border-color: var(--entity-concept);
     }
 
-    .node-indicator {
-        width: 6px;
-        height: 6px;
-        background: var(--type-color);
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-
-    .node-name {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: var(--ies-text-primary);
-    }
-
-    .no-connections {
-        text-align: center;
-        padding: 24px;
-        color: var(--ies-text-muted);
-    }
-
-    .no-connections p {
-        margin: 4px 0;
-    }
-
-    .no-connections .hint {
-        font-style: italic;
-        font-size: 0.875rem;
-    }
-
-    /* Path Trail */
-    .path-trail {
+    .context-result-card .result-main {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        background: var(--ies-bg-elevated);
-        border: 1px solid var(--ies-border-subtle);
-        border-radius: var(--ies-radius-md);
-        overflow-x: auto;
+        gap: var(--space-2);
     }
 
-    .path-label {
-        font-size: 0.6875rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--ies-text-muted);
-        flex-shrink: 0;
+    .context-result-card .result-entity {
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
     }
 
-    .path-steps {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex-wrap: wrap;
+    .context-result-card .result-type-badge {
+        font-size: var(--text-xs);
+        padding: 2px 6px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
     }
 
-    .path-step {
-        padding: 4px 10px;
-        font-family: inherit;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        color: var(--ies-text-secondary);
-        background: var(--ies-bg-base);
-        border: 1px solid var(--ies-border-light);
-        border-radius: var(--ies-radius-sm);
-        cursor: pointer;
-        transition: all 0.15s ease-out;
-    }
-
-    .path-step:hover:not(:disabled) {
-        background: var(--ies-accent-lighter);
-        border-color: var(--ies-accent-light);
-    }
-
-    .path-step.current {
-        background: var(--ies-accent-lighter);
-        border-color: var(--ies-accent);
-        color: var(--ies-accent-dark);
-        font-weight: 600;
-        cursor: default;
-    }
-
-    .path-connector {
-        color: var(--ies-text-subtle);
-        display: flex;
-        align-items: center;
-    }
-
-    /* Thinking Section */
-    .thinking-section {
-        padding-top: 12px;
-        border-top: 1px solid var(--ies-border-subtle);
-    }
-
-    .thinking-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        width: 100%;
-        padding: 14px 20px;
-        font-family: inherit;
-        font-size: 0.9375rem;
-        font-weight: 600;
-        color: var(--ies-text-primary);
-        background: var(--ies-bg-elevated);
-        border: 1px solid var(--ies-border-light);
-        border-radius: var(--ies-radius-md);
-        cursor: pointer;
-        transition: all 0.15s ease-out;
-    }
-
-    .thinking-btn:hover:not(:disabled) {
-        background: var(--ies-tertiary-light);
-        border-color: var(--ies-tertiary);
-        color: var(--ies-tertiary);
-    }
-
-    .thinking-btn:disabled {
-        opacity: 0.7;
-        cursor: wait;
-    }
-
-    .thinking-card {
-        padding: 16px;
-        background: var(--ies-tertiary-light);
-        border: 1px solid var(--ies-tertiary);
-        border-radius: var(--ies-radius-md);
-        animation: slideIn 0.25s ease-out;
-    }
-
-    .thinking-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--ies-tertiary);
-        margin-bottom: 10px;
-    }
-
-    .thinking-header span {
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-    }
-
-    .thinking-question {
-        font-family: 'Crimson Pro', Georgia, serif;
-        font-size: 1.0625rem;
-        font-style: italic;
-        line-height: 1.6;
-        color: var(--ies-text-primary);
+    .context-result-card .result-snippet {
         margin: 0;
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .context-result-card .result-source {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+        font-style: italic;
     }
 
     /* Spinner */
@@ -1218,26 +2037,536 @@
         border: 2px solid rgba(255, 255, 255, 0.3);
         border-top-color: white;
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+        animation: ies-spin 0.8s linear infinite;
     }
 
     .spinner.small {
         width: 14px;
         height: 14px;
         border-width: 2px;
-        border-color: var(--ies-text-muted);
-        border-top-color: var(--ies-tertiary);
+        border-color: var(--text-muted);
+        border-top-color: var(--entity-framework);
+    }
+
+    /* Trail Navigation Styles */
+    .trail-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .trail-breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        flex-wrap: wrap;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .trail-separator {
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .trail-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-2);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition-all);
+        max-width: 180px;
+    }
+
+    .trail-item:hover {
+        border-color: var(--entity-concept);
+        color: var(--text-primary);
+    }
+
+    .trail-item.active {
+        background: var(--entity-concept);
+        border-color: var(--entity-concept);
+        color: white;
+    }
+
+    .trail-item.type-context {
+        border-left: 3px solid var(--entity-framework);
+    }
+
+    .trail-item.type-question {
+        border-left: 3px solid var(--entity-concept);
+    }
+
+    .trail-item.type-entity {
+        border-left: 3px solid var(--entity-theory);
+    }
+
+    .trail-item.type-facet {
+        border-left: 3px solid var(--entity-person);
+    }
+
+    .trail-icon {
+        font-size: var(--text-xs);
+        flex-shrink: 0;
+    }
+
+    .trail-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .trail-back {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: var(--transition-all);
+        flex-shrink: 0;
+    }
+
+    .trail-back:hover {
+        background: var(--bg-secondary);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
+    }
+
+    /* Facet Focus View Styles */
+    .facet-focus {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        animation: ies-slide-up 0.2s ease-out;
+    }
+
+    .facet-focus-header {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .facet-parent-info {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+    }
+
+    .facet-parent-badge {
+        display: inline-block;
+        padding: var(--space-0-5) var(--space-1-5);
+        font-weight: var(--font-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--entity-theory);
+        color: white;
+        border-radius: var(--radius-sm);
+    }
+
+    .facet-parent-name {
+        font-weight: var(--font-medium);
+        color: var(--text-secondary);
+    }
+
+    .facet-name {
+        margin: 0;
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        color: var(--text-primary);
+    }
+
+    .facet-description {
+        margin: 0;
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .facet-loading {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .facet-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .facet-section-title {
+        margin: 0;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+    }
+
+    .facet-entities {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .facet-entity-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        padding: var(--space-2-5) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-align: left;
+        transition: var(--transition-all);
+    }
+
+    .facet-entity-card:hover {
+        background: var(--bg-secondary);
+        border-color: var(--entity-concept);
+    }
+
+    .facet-entity-main {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .facet-entity-name {
+        flex: 1;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .facet-entity-type {
+        font-size: var(--text-xs);
+        padding: var(--space-0-5) var(--space-1-5);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+    }
+
+    .facet-entity-relationship {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+        font-family: monospace;
+    }
+
+    .facet-empty {
+        padding: var(--space-4);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .back-to-entity {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-button);
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition-all);
+    }
+
+    .back-to-entity:hover {
+        background: var(--bg-secondary);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
+    }
+
+    /* Entity Focus View Styles */
+    .entity-focus {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        padding: var(--space-4);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        animation: ies-slide-up 0.2s ease-out;
+    }
+
+    .entity-focus-header {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .entity-focus .entity-type-badge {
+        display: inline-block;
+        width: fit-content;
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+        font-weight: var(--font-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--entity-theory);
+        color: white;
+        border-radius: var(--radius-sm);
+    }
+
+    .entity-focus .entity-name {
+        margin: 0;
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        color: var(--text-primary);
+    }
+
+    .entity-focus .entity-description {
+        margin: 0;
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .entity-loading {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .entity-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .entity-section-title {
+        margin: 0;
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+    }
+
+    /* Facet Chips in Entity View */
+    .entity-facets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .facet-chip {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2-5) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: var(--transition-all);
+    }
+
+    .facet-chip:hover {
+        background: var(--entity-person-subtle);
+        border-color: var(--entity-person);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-xs);
+    }
+
+    .facet-chip-icon {
+        font-size: var(--text-base);
+        flex-shrink: 0;
+    }
+
+    .facet-chip-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-0-5);
+    }
+
+    .facet-chip-name {
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .facet-chip-count {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+    }
+
+    .facet-exists-badge {
+        display: inline-block;
+        margin-left: var(--space-1);
+        color: var(--entity-concept);
+        font-size: var(--text-xs);
+        opacity: 0.7;
+        transition: opacity var(--transition-all);
+    }
+
+    .facet-chip:hover .facet-exists-badge {
+        opacity: 1;
+    }
+
+    .entity-neighbors {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .neighbor-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        padding: var(--space-2-5) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-align: left;
+        transition: var(--transition-all);
+    }
+
+    .neighbor-card:hover {
+        background: var(--bg-secondary);
+        border-color: var(--entity-concept);
+    }
+
+    .neighbor-relationship {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+        font-family: monospace;
+    }
+
+    .neighbor-relationship.incoming {
+        color: var(--entity-framework);
+    }
+
+    .neighbor-relationship.outgoing {
+        color: var(--entity-concept);
+    }
+
+    .neighbor-name {
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .neighbor-type {
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+    }
+
+    .entity-sources {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .source-book {
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+    }
+
+    .back-to-question {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-button);
+        font-size: var(--text-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition-all);
+    }
+
+    .back-to-question:hover {
+        background: var(--bg-secondary);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
+    }
+
+    /* Flow States */
+    .flow-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: var(--space-8);
+    }
+
+    .state-icon {
+        color: var(--entity-concept);
+        margin-bottom: var(--space-4);
+        opacity: 0.8;
+    }
+
+    .state-icon.loading svg {
+        animation: ies-spin 1s linear infinite;
+    }
+
+    .state-title {
+        font-family: var(--font-sans);
+        font-size: var(--text-xl);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+        margin: 0 0 var(--space-2) 0;
+    }
+
+    .state-text {
+        font-size: var(--text-base);
+        color: var(--text-secondary);
+        margin: 0 0 var(--space-1) 0;
+        max-width: 280px;
+        line-height: var(--leading-normal);
     }
 
     /* Animations */
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    @keyframes slideIn {
+    @keyframes ies-slide-up {
         from {
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(10px);
         }
         to {
             opacity: 1;
@@ -1245,13 +2574,219 @@
         }
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    @keyframes ies-fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
 
-    @keyframes pulse {
-        0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-        50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+    @keyframes ies-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Standalone Entity Panel */
+    .entity-panel {
+        background: var(--bg-primary);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-light);
+        margin-top: var(--space-3);
+        max-height: 70vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .entity-header {
+        padding: var(--space-2) var(--space-3);
+        border-bottom: 1px solid var(--border-light);
+        background: var(--bg-secondary);
+    }
+
+    .entity-back {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 0.85rem;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-sm);
+        transition: var(--transition-all);
+    }
+
+    .entity-back:hover {
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+    }
+
+    .entity-focus-content {
+        padding: var(--space-3);
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .entity-focus-header {
+        margin-bottom: var(--space-2);
+    }
+
+    .entity-type-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        padding: 2px 8px;
+        border-radius: var(--radius-sm);
+        margin-bottom: var(--space-1);
+    }
+
+    .entity-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .entity-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin: var(--space-2) 0;
+        line-height: 1.5;
+    }
+
+    .entity-section {
+        margin-top: var(--space-3);
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--border-light);
+    }
+
+    .entity-section-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin: 0 0 var(--space-2) 0;
+    }
+
+    .facet-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-1);
+    }
+
+    .facet-chip {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: var(--space-1) var(--space-2);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: var(--transition-all);
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+    }
+
+    .facet-chip:hover {
+        background: var(--bg-elevated);
+        border-color: var(--accent);
+    }
+
+    .facet-count {
+        font-size: 0.75rem;
+        background: var(--accent);
+        color: white;
+        padding: 0 6px;
+        border-radius: 10px;
+    }
+
+    .neighbor-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+
+    .neighbor-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: var(--space-2);
+        cursor: pointer;
+        transition: var(--transition-all);
+        text-align: left;
+    }
+
+    .neighbor-item:hover {
+        background: var(--bg-elevated);
+        border-color: var(--accent);
+    }
+
+    .neighbor-name {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .neighbor-type {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: var(--bg-primary);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+    }
+
+    .neighbor-rel {
+        font-size: 0.7rem;
+        color: var(--text-subtle);
+    }
+
+    .source-list {
+        margin: 0;
+        padding-left: var(--space-4);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .source-list li {
+        margin-bottom: var(--space-1);
+    }
+
+    /* Add Entity Button (Sprint 1) */
+    .add-entity-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        padding: 10px 16px;
+        margin-top: var(--space-3);
+        background: transparent;
+        border: 1px dashed var(--border-light);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: var(--transition-all);
+    }
+
+    .add-entity-btn:hover {
+        background: var(--bg-secondary);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .add-entity-btn svg {
+        opacity: 0.7;
+    }
+
+    .add-entity-btn:hover svg {
+        opacity: 1;
     }
 </style>

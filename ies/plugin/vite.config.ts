@@ -63,6 +63,23 @@ export default defineConfig({
             }
         ] : []),
 
+        // Copy IES theme to SiYuan themes directory
+        {
+            name: 'copy-ies-theme',
+            writeBundle() {
+                const themeSrc = resolve(__dirname, 'themes/ies-modern');
+                const themeDest = resolve(__dirname, '../../../../data/siyuan/workspace/conf/appearance/themes/ies-modern');
+                try {
+                    if (fs.existsSync(themeSrc)) {
+                        fs.cpSync(themeSrc, themeDest, { recursive: true });
+                        console.log('IES theme copied to SiYuan themes directory');
+                    }
+                } catch (error) {
+                    console.warn('Theme copy failed:', error.message);
+                }
+            }
+        },
+
     ],
 
     define: {

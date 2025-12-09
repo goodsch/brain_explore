@@ -3,27 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ies_backend.api import (
-    book_entities,
-    books,
-    context,
-    conversations,
-    inbox,
-    flow_session,
-    graph,
-    journey,
-    personal,
-    profile,
-    question_engine,
-    questions,
-    reframe,
-    quick_add,
-    sources,
-    session,
-    sync,
-    template,
-    thinking,
-)
+from ies_backend.api import book_entities, books, capture, concept, graph, journey, personal, profile, question_engine, reframe, session, template
 
 app = FastAPI(
     title="IES Backend",
@@ -61,8 +41,7 @@ app.include_router(books.router, tags=["books"])
 app.include_router(sources.router, tags=["sources"])
 app.include_router(quick_add.router, tags=["quick-add"])
 app.include_router(template.router, tags=["templates"])
-app.include_router(sync.router, tags=["sync"])
-app.include_router(questions.router, tags=["questions"])
+app.include_router(concept.router, tags=["concepts"])
 
 
 @app.get("/health")

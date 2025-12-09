@@ -226,11 +226,11 @@
 
 <style>
     .reframes-tab {
-        background: var(--ies-bg-elevated, rgba(255, 255, 255, 0.9));
-        border: 1px solid var(--ies-border-subtle, rgba(26, 24, 22, 0.06));
-        border-radius: var(--ies-radius-md, 10px);
+        background: var(--bg-tertiary, rgba(255, 255, 255, 0.9));
+        border: 1px solid var(--border-subtle, rgba(26, 24, 22, 0.06));
+        border-radius: var(--radius-md, 10px);
         padding: 16px;
-        box-shadow: var(--ies-shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.06));
+        box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.06));
     }
 
     .tab-header {
@@ -248,7 +248,7 @@
 
     .tab-subtitle {
         font-size: 0.85rem;
-        color: var(--ies-text-muted, #777);
+        color: var(--text-muted, #777);
     }
 
     .generate-btn {
@@ -256,10 +256,10 @@
         align-items: center;
         gap: 8px;
         padding: 10px 16px;
-        background: var(--ies-accent, #c9872e);
+        background: var(--entity-concept, #c9872e);
         color: #fff;
         border: none;
-        border-radius: var(--ies-radius-sm, 6px);
+        border-radius: var(--radius-sm, 6px);
         font-weight: 600;
         cursor: pointer;
         transition: opacity 0.2s ease;
@@ -273,7 +273,7 @@
     .tab-placeholder {
         text-align: center;
         padding: 24px 12px;
-        color: var(--ies-text-muted, #777);
+        color: var(--text-muted, #777);
     }
 
     .tab-placeholder.loading {
@@ -290,7 +290,7 @@
 
     .tab-error {
         padding: 12px;
-        border-radius: var(--ies-radius-sm, 6px);
+        border-radius: var(--radius-sm, 6px);
         background: rgba(212, 78, 66, 0.12);
         color: #a32921;
         font-size: 0.9rem;
@@ -304,10 +304,10 @@
     }
 
     .reframe-card {
-        border: 1px solid var(--ies-border-subtle, rgba(26, 24, 22, 0.08));
-        border-radius: var(--ies-radius-md, 10px);
+        border: 1px solid var(--border-subtle, rgba(26, 24, 22, 0.08));
+        border-radius: var(--radius-md, 10px);
         padding: 12px;
-        background: var(--ies-bg-base, #fff);
+        background: var(--bg-secondary, #fff);
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -324,11 +324,11 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
         font-weight: 600;
-        color: var(--ies-accent, #c9872e);
+        color: var(--entity-concept, #c9872e);
     }
 
     .timestamp {
-        color: var(--ies-text-subtle, #999);
+        color: var(--text-muted, #999);
     }
 
     .reframe-text {
@@ -346,7 +346,7 @@
         width: 36px;
         height: 32px;
         border-radius: 6px;
-        border: 1px solid var(--ies-border-light, rgba(26, 24, 22, 0.1));
+        border: 1px solid var(--border-default, rgba(26, 24, 22, 0.1));
         background: transparent;
         cursor: pointer;
         font-size: 1rem;
@@ -355,7 +355,7 @@
 
     .feedback-btn.active {
         background: rgba(201, 135, 46, 0.12);
-        border-color: var(--ies-accent, #c9872e);
+        border-color: var(--entity-concept, #c9872e);
     }
 
     .feedback-btn:disabled {

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 1: Scholar's Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Nunito:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Scholar's Library - Warm, contemplative, intellectual */
+      --bg-deep: #f5f2ed;
+      --bg-base: #faf8f5;
+      --bg-elevated: #ffffff;
+      --bg-overlay: rgba(250, 248, 245, 0.95);
+
+      --text-primary: #2d2a26;
+      --text-secondary: #5c5650;
+      --text-muted: #8a847b;
+      --text-subtle: #b5aea3;
+
+      --accent: #c9872e;
+      --accent-hover: #d4952f;
+      --accent-muted: rgba(201, 135, 46, 0.12);
+
+      --secondary: #5a8a7a;
+      --secondary-muted: rgba(90, 138, 122, 0.12);
+
+      --tertiary: #8b7aa0;
+      --tertiary-muted: rgba(139, 122, 160, 0.12);
+
+      --border-subtle: rgba(45, 42, 38, 0.06);
+      --border-light: rgba(45, 42, 38, 0.1);
+      --border-medium: rgba(45, 42, 38, 0.15);
+
+      --shadow-sm: 0 1px 3px rgba(45, 42, 38, 0.08);
+      --shadow-md: 0 4px 12px rgba(45, 42, 38, 0.1);
+      --shadow-lg: 0 8px 24px rgba(45, 42, 38, 0.12);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+
+      --font-display: 'Crimson Pro', Georgia, serif;
+      --font-body: 'Nunito', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --duration-fast: 150ms;
+      --duration-base: 250ms;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 32px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--accent-muted);
+      color: var(--accent);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-top: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-subtle);
+      transition: all var(--duration-base) var(--ease);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .card h3 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease);
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #4a7a6a;
+    }
+
+    .btn-tertiary {
+      background: var(--tertiary);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-deep);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Entity Type Colors */
+    .entity-section {
+      margin-bottom: 32px;
+    }
+
+    .entity-section h3 {
+      font-family: var(--font-display);
+      margin-bottom: 16px;
+    }
+
+    .entity-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .entity-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .entity-concept { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
+    .entity-person { background: rgba(5, 150, 105, 0.12); color: #059669; }
+    .entity-theory { background: rgba(124, 58, 237, 0.12); color: #7c3aed; }
+    .entity-framework { background: rgba(234, 88, 12, 0.12); color: #ea580c; }
+    .entity-assessment { background: rgba(220, 38, 38, 0.12); color: #dc2626; }
+
+    /* Question Classes */
+    .question-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .q-chip {
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .q-schema { background: rgba(74, 144, 217, 0.15); color: #4a90d9; }
+    .q-boundary { background: rgba(123, 104, 238, 0.15); color: #7b68ee; }
+    .q-dimensional { background: rgba(32, 178, 170, 0.15); color: #20b2aa; }
+    .q-causal { background: rgba(244, 164, 96, 0.15); color: #d4874a; }
+    .q-counterfactual { background: rgba(218, 112, 214, 0.15); color: #da70d6; }
+    .q-anchor { background: rgba(60, 179, 113, 0.15); color: #3cb371; }
+
+    /* Energy Levels */
+    .energy-section {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .energy-badge {
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .energy-low { background: rgba(107, 142, 159, 0.15); color: #6b8e9f; }
+    .energy-medium { background: rgba(201, 139, 47, 0.15); color: #c98b2f; }
+    .energy-high { background: rgba(217, 79, 92, 0.15); color: #d94f5c; }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      transition: all var(--duration-fast) var(--ease);
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+
+    .input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Typography Sample */
+    .typography-sample {
+      background: var(--bg-elevated);
+      padding: 32px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 32px;
+    }
+
+    .typography-sample h1 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .typography-sample h2 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .typography-sample p {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+    }
+
+    .typography-sample code {
+      font-family: var(--font-mono);
+      background: var(--bg-deep);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: var(--accent);
+    }
+
+    /* Color Swatches */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .swatch {
+      height: 80px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .swatch-accent { background: var(--accent); color: white; }
+    .swatch-secondary { background: var(--secondary); color: white; }
+    .swatch-tertiary { background: var(--tertiary); color: white; }
+    .swatch-bg-deep { background: var(--bg-deep); color: var(--text-secondary); border: 1px solid var(--border-light); }
+    .swatch-bg-base { background: var(--bg-base); color: var(--text-secondary); border: 1px solid var(--border-light); }
+    .swatch-text { background: var(--text-primary); color: white; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Scholar's Library</h1>
+    <p>Warm paper tones, intellectual depth, contemplative knowledge spaces</p>
+    <span class="badge">Current IES Direction</span>
+  </div>
+
+  <div class="typography-sample">
+    <h1>The Narrow Window of Awareness</h1>
+    <h2>How humans construct meaning within constraints</h2>
+    <p>This framework explores the fundamental tension between our <strong>limited perceptual bandwidth</strong> and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes <code>meaning</code> possible.</p>
+    <p style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
+      // Monospace for code and technical annotations
+    </p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Primary Actions</h3>
+      <p>Buttons use warm amber accent for primary actions, sage green for secondary.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary">Start Exploration</button>
+        <button class="btn btn-secondary">View Graph</button>
+        <button class="btn btn-outline">Cancel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Entity Types</h3>
+      <p>Color-coded chips for knowledge graph entities.</p>
+      <div class="entity-chips">
+        <span class="entity-chip entity-concept">Concept</span>
+        <span class="entity-chip entity-person">Person</span>
+        <span class="entity-chip entity-theory">Theory</span>
+        <span class="entity-chip entity-framework">Framework</span>
+        <span class="entity-chip entity-assessment">Assessment</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Question Classes</h3>
+      <p>Cognitive function badges for thinking partner questions.</p>
+      <div class="question-chips">
+        <span class="q-chip q-schema">🏗️ Schema-Probe</span>
+        <span class="q-chip q-boundary">🔲 Boundary</span>
+        <span class="q-chip q-dimensional">📐 Dimensional</span>
+        <span class="q-chip q-causal">⚡ Causal</span>
+        <span class="q-chip q-counterfactual">🔮 Counterfactual</span>
+        <span class="q-chip q-anchor">⚓ Anchor</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Energy Levels (ADHD)</h3>
+      <p>Mood-appropriate navigation for ADHD users.</p>
+      <div class="energy-section">
+        <span class="energy-badge energy-low">🔋 Low Energy</span>
+        <span class="energy-badge energy-medium">⚡ Medium</span>
+        <span class="energy-badge energy-high">🔥 High Energy</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Form Input</h3>
+      <p>Clean inputs with subtle focus states.</p>
+      <div class="form-group">
+        <label>Search concepts</label>
+        <input type="text" class="input" placeholder="e.g., executive function, shame...">
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Color Palette</h3>
+      <div class="swatches">
+        <div class="swatch swatch-accent">Accent #c9872e</div>
+        <div class="swatch swatch-secondary">Secondary #5a8a7a</div>
+        <div class="swatch swatch-tertiary">Tertiary #8b7aa0</div>
+        <div class="swatch swatch-bg-deep">BG Deep</div>
+        <div class="swatch swatch-bg-base">BG Base</div>
+        <div class="swatch swatch-text">Text #2d2a26</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+/**
+ * IES Design System - Token Index
+ *
+ * "Hybrid Contemplative" Design Philosophy
+ * =========================================
+ *
+ * A unified design system combining:
+ * - Scholar's Library: Warm paper tones, intellectual warmth, serif display
+ * - Cupertino: Layered shadows, smooth easing, tactile feedback
+ * - Neurogarden: ADHD-friendly patterns, energy levels, resonance signals
+ * - Asri: Spring animations, modern geometry
+ *
+ * Usage:
+ * ------
+ * Import this file at the root of your application:
+ *
+ *   @import 'design-system/tokens/index.css';
+ *
+ * Or in SCSS:
+ *
+ *   @use 'design-system/tokens/index.css';
+ *
+ * All tokens are CSS custom properties prefixed with --ies-
+ *
+ * Font Loading:
+ * -------------
+ * Include Google Fonts in your HTML:
+ *
+ *   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+ *
+ * Or import in CSS:
+ *
+ *   @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+ */
+
+/* Core tokens */
+@import './colors.css';
+@import './typography.css';
+@import './spacing.css';
+@import './shadows.css';
+@import './animations.css';
+
+/* ==========================================================================
+   BASE STYLES - Applied when using the design system
+   ========================================================================== */
+
+:root {
+  /* Default to light theme */
+  color-scheme: light dark;
+}
+
+/* Base element styling */
+.ies-root,
+[data-ies-theme] {
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-base);
+  line-height: var(--ies-leading-body);
+  color: var(--ies-text-primary);
+  background-color: var(--ies-bg-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   COMMON COMPONENT PATTERNS
+   ========================================================================== */
+
+/* Card pattern */
+.ies-card {
+  background: var(--ies-bg-elevated);
+  border-radius: var(--ies-radius-card);
+  padding: var(--ies-card-padding);
+  box-shadow: var(--ies-shadow-card);
+  border: 1px solid var(--ies-border-subtle);
+  transition: var(--ies-transition-all);
+}
+
+.ies-card:hover {
+  box-shadow: var(--ies-shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+/* Button patterns */
+.ies-btn {
+  padding: var(--ies-button-padding-y) var(--ies-button-padding-x);
+  border-radius: var(--ies-radius-button);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-sm);
+  font-weight: var(--ies-font-medium);
+  cursor: pointer;
+  transition: var(--ies-transition-all);
+  border: none;
+  box-shadow: var(--ies-shadow-button);
+}
+
+.ies-btn:hover {
+  box-shadow: var(--ies-shadow-button-hover);
+}
+
+.ies-btn:active {
+  transform: scale(0.98);
+}
+
+.ies-btn-primary {
+  background: var(--ies-accent);
+  color: var(--ies-text-inverse);
+}
+
+.ies-btn-primary:hover {
+  background: var(--ies-accent-hover);
+}
+
+.ies-btn-secondary {
+  background: var(--ies-secondary);
+  color: var(--ies-text-inverse);
+}
+
+.ies-btn-secondary:hover {
+  background: var(--ies-secondary-hover);
+}
+
+.ies-btn-outline {
+  background: transparent;
+  border: 1px solid var(--ies-border-medium);
+  color: var(--ies-text-secondary);
+  box-shadow: none;
+}
+
+.ies-btn-outline:hover {
+  background: var(--ies-bg-deep);
+  border-color: var(--ies-accent);
+  color: var(--ies-accent);
+}
+
+/* Input pattern */
+.ies-input {
+  width: 100%;
+  padding: var(--ies-input-padding-y) var(--ies-input-padding-x);
+  border: 1px solid var(--ies-border-light);
+  border-radius: var(--ies-radius-input);
+  font-family: var(--ies-font-body);
+  font-size: var(--ies-text-base);
+  background: var(--ies-bg-base);
+  color: var(--ies-text-primary);
+  box-shadow: var(--ies-shadow-input);
+  transition: var(--ies-transition-all);
+}
+
+.ies-input:focus {
+  outline: none;
+  border-color: var(--ies-accent);
+  box-shadow: var(--ies-shadow-input-focus);
+}
+
+.ies-input::placeholder {
+  color: var(--ies-text-subtle);
+}
+
+/* Chip/badge pattern */
+.ies-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ies-space-1-5);
+  padding: var(--ies-chip-padding-y) var(--ies-chip-padding-x);
+  border-radius: var(--ies-radius-chip);
+  font-size: var(--ies-text-xs);
+  font-weight: var(--ies-font-medium);
+  transition: var(--ies-transition-fast);
+}
+
+.ies-chip:hover {
+  transform: translateY(-1px);
+}
+
+/* Entity type chips */
+.ies-entity-concept { background: var(--ies-entity-concept-bg); color: var(--ies-entity-concept); }
+.ies-entity-person { background: var(--ies-entity-person-bg); color: var(--ies-entity-person); }
+.ies-entity-theory { background: var(--ies-entity-theory-bg); color: var(--ies-entity-theory); }
+.ies-entity-framework { background: var(--ies-entity-framework-bg); color: var(--ies-entity-framework); }
+.ies-entity-assessment { background: var(--ies-entity-assessment-bg); color: var(--ies-entity-assessment); }
+
+/* Question class chips */
+.ies-q-schema { background: var(--ies-q-schema-bg); color: var(--ies-q-schema); }
+.ies-q-boundary { background: var(--ies-q-boundary-bg); color: var(--ies-q-boundary); }
+.ies-q-dimensional { background: var(--ies-q-dimensional-bg); color: var(--ies-q-dimensional); }
+.ies-q-causal { background: var(--ies-q-causal-bg); color: var(--ies-q-causal); }
+.ies-q-counterfactual { background: var(--ies-q-counterfactual-bg); color: var(--ies-q-counterfactual); }
+.ies-q-anchor { background: var(--ies-q-anchor-bg); color: var(--ies-q-anchor); }
+.ies-q-perspective { background: var(--ies-q-perspective-bg); color: var(--ies-q-perspective); }
+.ies-q-meta { background: var(--ies-q-meta-bg); color: var(--ies-q-meta); }
+.ies-q-synthesis { background: var(--ies-q-synthesis-bg); color: var(--ies-q-synthesis); }
+
+/* Energy level badges */
+.ies-energy-low { background: var(--ies-energy-low-bg); color: var(--ies-energy-low); }
+.ies-energy-medium { background: var(--ies-energy-medium-bg); color: var(--ies-energy-medium); }
+.ies-energy-high { background: var(--ies-energy-high-bg); color: var(--ies-energy-high); }

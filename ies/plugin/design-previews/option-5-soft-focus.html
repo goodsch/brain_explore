@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 5: Soft Focus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Soft Focus - Evolved neumorphism, tactile depth */
+      --bg-deep: #e8e8ee;
+      --bg-base: #eff0f5;
+      --bg-elevated: #f5f6fa;
+      --bg-overlay: rgba(245, 246, 250, 0.98);
+
+      --text-primary: #2e2e3a;
+      --text-secondary: #5a5a6e;
+      --text-muted: #8888a0;
+      --text-subtle: #b0b0c0;
+
+      --accent: #7c6aef;
+      --accent-hover: #6b5ad9;
+      --accent-muted: rgba(124, 106, 239, 0.12);
+
+      --secondary: #10b981;
+      --secondary-muted: rgba(16, 185, 129, 0.12);
+
+      --tertiary: #f59e0b;
+      --tertiary-muted: rgba(245, 158, 11, 0.12);
+
+      --border-subtle: rgba(0, 0, 0, 0.04);
+      --border-light: rgba(0, 0, 0, 0.06);
+      --border-medium: rgba(0, 0, 0, 0.1);
+
+      /* Neumorphic shadows */
+      --shadow-raised: 6px 6px 12px rgba(0, 0, 0, 0.08),
+                       -6px -6px 12px rgba(255, 255, 255, 0.9);
+      --shadow-inset: inset 4px 4px 8px rgba(0, 0, 0, 0.06),
+                      inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+      --shadow-soft: 4px 4px 10px rgba(0, 0, 0, 0.06),
+                     -4px -4px 10px rgba(255, 255, 255, 0.8);
+      --shadow-hover: 8px 8px 16px rgba(0, 0, 0, 0.1),
+                      -8px -8px 16px rgba(255, 255, 255, 0.95);
+
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+
+      --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --duration-fast: 150ms;
+      --duration-base: 300ms;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 32px;
+      font-size: 15px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 8px 16px;
+      background: var(--bg-elevated);
+      color: var(--accent);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 12px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-raised);
+      transition: all var(--duration-base) var(--ease);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+    }
+
+    .card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    /* Buttons - Neumorphic style */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease);
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 4px 4px 10px rgba(124, 106, 239, 0.3),
+                  -2px -2px 8px rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 6px 6px 14px rgba(124, 106, 239, 0.4),
+                  -3px -3px 10px rgba(255, 255, 255, 0.6);
+    }
+
+    .btn-primary:active {
+      box-shadow: var(--shadow-inset);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+      box-shadow: 4px 4px 10px rgba(16, 185, 129, 0.25),
+                  -2px -2px 8px rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-outline {
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .btn-outline:hover {
+      color: var(--accent);
+    }
+
+    .btn-outline:active {
+      box-shadow: var(--shadow-inset);
+    }
+
+    /* Entity chips - Soft raised */
+    .entity-chips {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .entity-chip {
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-soft);
+      transition: all var(--duration-fast) var(--ease);
+    }
+
+    .entity-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-raised);
+    }
+
+    .entity-concept { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+    .entity-person { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .entity-theory { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+    .entity-framework { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .entity-assessment { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    /* Question Classes */
+    .question-chips {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .q-chip {
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: var(--shadow-soft);
+      transition: all var(--duration-fast) var(--ease);
+    }
+
+    .q-chip:hover {
+      transform: translateY(-1px);
+    }
+
+    .q-schema { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+    .q-boundary { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
+    .q-dimensional { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
+    .q-causal { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .q-counterfactual { background: rgba(236, 72, 153, 0.12); color: #ec4899; }
+    .q-anchor { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+
+    /* Energy Levels - Neumorphic badges */
+    .energy-section {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .energy-badge {
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-soft);
+      transition: all var(--duration-fast) var(--ease);
+    }
+
+    .energy-badge:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-raised);
+    }
+
+    .energy-low { background: rgba(148, 163, 184, 0.15); color: #64748b; }
+    .energy-medium { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .energy-high { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    /* Form Elements - Inset neumorphic */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .input {
+      width: 100%;
+      padding: 14px 18px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-inset);
+      transition: all var(--duration-fast) var(--ease);
+    }
+
+    .input:focus {
+      outline: none;
+      box-shadow: var(--shadow-inset), 0 0 0 3px var(--accent-muted);
+    }
+
+    .input::placeholder {
+      color: var(--text-subtle);
+    }
+
+    /* Typography Sample */
+    .typography-sample {
+      background: var(--bg-elevated);
+      padding: 32px;
+      border-radius: var(--radius-xl);
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-raised);
+    }
+
+    .typography-sample h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .typography-sample h2 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .typography-sample p {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+    }
+
+    .typography-sample code {
+      font-family: var(--font-mono);
+      background: var(--bg-base);
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      color: var(--accent);
+      box-shadow: var(--shadow-inset);
+    }
+
+    /* Color Swatches */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .swatch {
+      height: 70px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-end;
+      padding: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .swatch-accent { background: var(--accent); color: white; }
+    .swatch-secondary { background: var(--secondary); color: white; }
+    .swatch-tertiary { background: var(--tertiary); color: white; }
+    .swatch-bg-deep { background: var(--bg-deep); color: var(--text-secondary); }
+    .swatch-bg-base { background: var(--bg-base); color: var(--text-secondary); }
+    .swatch-text { background: var(--text-primary); color: white; }
+
+    /* Toggle switch - Neumorphic */
+    .toggle-demo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .toggle {
+      width: 56px;
+      height: 32px;
+      background: var(--bg-base);
+      border-radius: 100px;
+      position: relative;
+      cursor: pointer;
+      box-shadow: var(--shadow-inset);
+      transition: all var(--duration-base) var(--ease);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: var(--bg-elevated);
+      border-radius: 50%;
+      top: 4px;
+      left: 4px;
+      box-shadow: var(--shadow-soft);
+      transition: all var(--duration-base) var(--ease-bounce);
+    }
+
+    .toggle.active {
+      background: var(--accent-muted);
+    }
+
+    .toggle.active::after {
+      left: 28px;
+      background: var(--accent);
+    }
+
+    /* Slider - Neumorphic */
+    .slider-demo {
+      margin-top: 16px;
+    }
+
+    .slider-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-base);
+      border-radius: 100px;
+      box-shadow: var(--shadow-inset);
+      position: relative;
+    }
+
+    .slider-fill {
+      height: 100%;
+      width: 60%;
+      background: linear-gradient(90deg, var(--accent), var(--secondary));
+      border-radius: 100px;
+    }
+
+    .slider-thumb {
+      width: 24px;
+      height: 24px;
+      background: var(--bg-elevated);
+      border-radius: 50%;
+      position: absolute;
+      top: -8px;
+      left: 57%;
+      box-shadow: var(--shadow-raised);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Soft Focus</h1>
+    <p>Evolved neumorphism with tactile depth and soft shadows</p>
+    <span class="badge">Modern Soft UI</span>
+  </div>
+
+  <div class="typography-sample">
+    <h1>The Narrow Window of Awareness</h1>
+    <h2>How humans construct meaning within constraints</h2>
+    <p>This framework explores the fundamental tension between our <strong>limited perceptual bandwidth</strong> and the infinite complexity of experience. Rather than viewing this constraint as limitation, we discover it as the very condition that makes <code>meaning</code> possible.</p>
+    <p style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
+      // Plus Jakarta Sans - geometric yet friendly
+    </p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Primary Actions</h3>
+      <p>Raised buttons with colored shadows, inset on active.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary">Start Exploration</button>
+        <button class="btn btn-secondary">View Graph</button>
+        <button class="btn btn-outline">Cancel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Entity Types</h3>
+      <p>Soft raised chips with hover lift.</p>
+      <div class="entity-chips">
+        <span class="entity-chip entity-concept">Concept</span>
+        <span class="entity-chip entity-person">Person</span>
+        <span class="entity-chip entity-theory">Theory</span>
+        <span class="entity-chip entity-framework">Framework</span>
+        <span class="entity-chip entity-assessment">Assessment</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Question Classes</h3>
+      <p>Tactile badges for cognitive functions.</p>
+      <div class="question-chips">
+        <span class="q-chip q-schema">🏗️ Schema</span>
+        <span class="q-chip q-boundary">🔲 Boundary</span>
+        <span class="q-chip q-dimensional">📐 Dimensional</span>
+        <span class="q-chip q-causal">⚡ Causal</span>
+        <span class="q-chip q-counterfactual">🔮 Counter</span>
+        <span class="q-chip q-anchor">⚓ Anchor</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Toggle & Slider</h3>
+      <p>Neumorphic interactive controls.</p>
+      <div class="toggle-demo">
+        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+        <span>Entity Overlay</span>
+      </div>
+      <div class="slider-demo">
+        <div class="slider-track">
+          <div class="slider-fill"></div>
+          <div class="slider-thumb"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Energy Levels</h3>
+      <p>Soft tactile badges with lift on hover.</p>
+      <div class="energy-section">
+        <span class="energy-badge energy-low">🔋 Low</span>
+        <span class="energy-badge energy-medium">⚡ Medium</span>
+        <span class="energy-badge energy-high">🔥 High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Form Input</h3>
+      <p>Inset field with focus glow.</p>
+      <div class="form-group">
+        <label>Search Concepts</label>
+        <input type="text" class="input" placeholder="e.g., executive function...">
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Color Palette</h3>
+      <div class="swatches">
+        <div class="swatch swatch-accent">#7c6aef</div>
+        <div class="swatch swatch-secondary">#10b981</div>
+        <div class="swatch swatch-tertiary">#f59e0b</div>
+        <div class="swatch swatch-bg-deep">#e8e8ee</div>
+        <div class="swatch swatch-bg-base">#eff0f5</div>
+        <div class="swatch swatch-text">#2e2e3a</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
