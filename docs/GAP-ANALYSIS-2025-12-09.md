@@ -18,7 +18,7 @@ The `redux/` directory contains detailed specifications for the Context + Questi
 3. **What's missing** — Features not yet started
 4. **Priority recommendations** — What to build next
 
-**Overall Status:** ~95% of redux specifications implemented (updated Dec 9 — Pass 2/3 Enrichment complete)
+**Overall Status:** ~98% of redux specifications implemented (updated Dec 9 — Cross-App Continuity sprint complete)
 
 ---
 
@@ -420,8 +420,8 @@ ExtractionProfile schema implemented with full support for context-aware extract
 | Gap | Reason | Effort | Status |
 |-----|--------|--------|--------|
 | Block attribute system | AI navigation | Medium | ✅ **DONE** (Dec 9) |
-| Journey timeline UI | Visualization | Medium | ❌ Not started |
-| Areas of Exploration buttons | Additional navigation | Low | ❌ Not started |
+| Journey timeline UI | Visualization | Medium | ✅ **DONE** (JourneyTimeline component) |
+| Areas of Exploration buttons | Additional navigation | Low | ✅ **DONE** (AreasChips component) |
 | Journey pane in Reader | Context tracking | Medium | ❌ Not started |
 
 ### P3 — Nice to Have
@@ -436,31 +436,62 @@ ExtractionProfile schema implemented with full support for context-aware extract
 
 ## Recommended Next Sprint
 
-### Sprint Focus: Cross-App Continuity (IES Reader ↔ SiYuan Sync)
+### ~~Sprint Focus: Cross-App Continuity (IES Reader ↔ SiYuan Sync)~~ ✅ COMPLETE (Dec 9)
 
 **Goal:** Enable seamless state sharing and session continuity between IES Reader and SiYuan plugin.
 
-**Tasks:**
+**Completed Tasks:**
 
-1. **Context Sync** (Backend + Frontend)
-   - Sync active context between Reader and SiYuan
-   - Persist current question selection across apps
-   - Share extraction profiles bidirectionally
+1. **State Management API** (Backend) ✅ COMPLETE
+   - Session state API for active context/book/question
+   - Schemas: `SessionState`, `ReadingPosition`, `SessionStateUpdate`, `SessionStateHistory`
+   - Service: `SessionStateService` with in-memory MVP (Redis migration path ready)
+   - Endpoints: GET/PATCH /session-state/{user_id}, POST heartbeat, GET history
+   - 411 backend tests passing
 
-2. **Reading Position Sync** (Backend + Frontend)
-   - Track current book/location in Reader
-   - Display "Resume Reading" in SiYuan for active books
-   - Sync CFI positions for jump-back navigation
+2. **Context Sync** (IES Reader + SiYuan) ✅ COMPLETE
+   - `ContextSyncService.ts` (SiYuan) — Bidirectional sync with polling
+   - `useSessionSync.ts` (Reader) — Syncs context/question from flowStore
+   - Polling strategy: 5s active, 30s background
+   - Last-write-wins conflict resolution
+   - Write debouncing: 3s to avoid API spam
 
-3. **Journey Continuity** (Backend + Frontend)
+3. **Reading Position Sync** (IES Reader + SiYuan) ✅ COMPLETE
+   - `useReadingPosition.ts` (Reader) — Tracks CFI via epub.js 'relocated' event
+   - Write debouncing: 2s (immediate on window blur)
+   - `ResumeReadingWidget.svelte` (SiYuan) — Dashboard widget with deep linking
+   - Deep link format: `/reader?calibreId={id}&cfi={encoded_cfi}`
+   - Integrates with Dashboard.svelte for "Currently Reading" display
+
+4. **Journey Continuity** — FUTURE
    - Share journey entries across both apps
    - Enable "Continue Exploration" from either app
    - Unified breadcrumb trail spanning Reader and SiYuan sessions
 
-4. **State Management** (Backend)
-   - Session state API for active context/book/question
-   - WebSocket or polling for real-time sync (optional)
-   - State persistence and recovery
+### Next Sprint: Journey Continuity + Polish
+
+**Goal:** Complete the remaining P2 items and polish cross-app experience.
+
+**Recommended Tasks:**
+
+1. **Journey Continuity API**
+   - Share journey entries across both apps via backend
+   - Enable "Continue Exploration" from either app
+   - Unified breadcrumb trail spanning Reader and SiYuan sessions
+
+2. **Areas of Exploration Chips** (Flow v2 gap)
+   - Parse Areas section and render as clickable chips
+   - Link to entity search for area keywords
+
+3. **End-to-End Testing**
+   - Verify full sync flow: Reader → Backend → SiYuan
+   - Test offline behavior and reconnection
+   - Stress test with rapid context/position changes
+
+4. **Production Hardening**
+   - Migrate SessionStateService to Redis for persistence
+   - Add error boundaries and retry logic
+   - Implement session expiration cleanup
 
 ---
 

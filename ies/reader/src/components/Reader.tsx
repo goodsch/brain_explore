@@ -9,6 +9,8 @@ import { useFlowStore } from '../store/flowStore';
 import { useEntityLookup } from '../hooks/useEntityLookup';
 import { useEntityOverlay } from '../hooks/useEntityOverlay';
 import { useEntityHighlighter } from '../hooks/useEntityHighlighter';
+import { useSessionSync } from '../hooks/useSessionSync';
+import { useReadingPosition } from '../hooks/useReadingPosition';
 import { graphClient } from '../services/graphClient';
 import { highlightApi, type HighlightCreate } from '../services/highlightApi';
 import './Reader.css';
@@ -103,6 +105,20 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   // Fetch entities for overlay when book opens
   useEntityOverlay(calibreId);
 
+  // Session sync: syncs context_id and question_id to backend
+  useSessionSync({
+    userId: userId || 'default_user',
+    enabled: true,
+  });
+
+  // Reading position tracking: syncs CFI and progress to backend
+  useReadingPosition({
+    rendition,
+    calibreId,
+    userId: userId || 'default_user',
+    enabled: true,
+  });
+
   // Load existing highlights when book opens
   useEffect(() => {
     if (!calibreId || !rendition) return;
@@ -157,7 +173,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   const locationChanged = useCallback((epubcfi: string) => {
     setLocation(epubcfi);
 
-    // Update reading position in session
+    // Update reading position in session (for backward compatibility with old sync system)
     if (calibreId) {
       setReadingPosition({
         book_hash: String(calibreId), // Using calibreId as hash for now
@@ -424,7 +440,7 @@ interface IFrameContents {
           className="reader-selection-bar"
           style={{ top: selectionContext.position.top, left: selectionContext.position.left }}
         >
-          <button 
+          <button
             className="ies-btn ies-btn-sm ies-btn-subtle"
             onClick={() => {
                 lookupEntity(selectionContext.text);
@@ -433,13 +449,13 @@ interface IFrameContents {
           >
             <Search size={18} /> Look up
           </button>
-          <button 
+          <button
             className="ies-btn ies-btn-sm ies-btn-subtle"
             onClick={() => captureAsNote(selectionContext)}
           >
             <PenLine size={18} /> Note
           </button>
-          <button 
+          <button
             className="ies-btn ies-btn-sm ies-btn-subtle"
             onClick={() => highlightText(selectionContext)}
           >

@@ -39,3 +39,13 @@ export {
   type ExtractionProfile,
   type ExtractionProfileCreate,
 } from './extractionApi';
+export {
+  sessionStateApi,
+  SessionStateApiClient,
+  type SessionState,
+  type SessionStateUpdate,
+  type SessionStateHistory,
+  type HeartbeatResponse,
+  type SessionStateHistoryResponse,
+  type ReadingPosition as SessionReadingPosition,
+} from './sessionStateApi';

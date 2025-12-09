@@ -63,6 +63,15 @@ from ies_backend.schemas.visit_tracking import (
     VisitRecord,
     VisitScope,
 )
+from ies_backend.schemas.session_state import (
+    HeartbeatRequest,
+    HeartbeatResponse,
+    ReadingPosition,
+    SessionState,
+    SessionStateHistory,
+    SessionStateHistoryResponse,
+    SessionStateUpdate,
+)
 
 __all__ = [
     # Block attribute types
@@ -128,4 +137,12 @@ __all__ = [
     "PassageRankingRequest",
     "PassageRankingResponse",
     "RankedPassage",
+    # Session state types
+    "ReadingPosition",
+    "SessionState",
+    "SessionStateUpdate",
+    "SessionStateHistory",
+    "SessionStateHistoryResponse",
+    "HeartbeatRequest",
+    "HeartbeatResponse",
 ]

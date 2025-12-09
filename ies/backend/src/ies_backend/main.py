@@ -25,6 +25,7 @@ from ies_backend.api import (
     quick_add,
     reframe,
     session,
+    session_state,
     sources,
     sync,
     template,
@@ -77,6 +78,7 @@ app.include_router(highlight_sync.router, tags=["highlight-sync"])
 app.include_router(extraction.router, tags=["extraction"])
 app.include_router(visit_tracking.router, tags=["visit_tracking"])
 app.include_router(block_attributes.router, tags=["block-attributes"])
+app.include_router(session_state.router, prefix="/session-state", tags=["session-state"])
 
 
 @app.get("/health")
