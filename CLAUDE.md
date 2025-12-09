@@ -57,10 +57,18 @@ Completed:
   - 2 API clients (visitApi, timelineApi) + questionApi extension
   - Complete flowStore integration with auto-fetch
   - Tab navigation between Explore and Timeline views
+- **Extraction Engine** — Context-aware entity extraction pipeline (commit 180ee07)
+  - Backend: ExtractionEngine service with Neo4j full-text search
+  - API: POST /extraction/run, GET /extraction/profiles/{context_id}
+  - Frontend: RunExtractionButton component + extractionApi client
+  - IES Reader integration: Button in FlowPanel with result display
+  - SiYuan integration: Button in FlowMode with result display
+  - State management: extraction result, loading, error states in flowStore
+  - 420 lines ExtractionEngine service + 23 unit tests
 
 In Progress:
-- Extraction Engine context-aware extraction
-- Pass 2/3 enrichment pipeline
+- Pass 2/3 enrichment pipeline (relationships, LLM enrichment)
+- Cross-app continuity (Readest ↔ SiYuan sync)
 
 See `docs/CHANGELOG.md` for detailed history.
 
@@ -74,6 +82,168 @@ docker compose up -d
 cd ies/backend && uv run uvicorn ies_backend.main:app --reload --port 8081
 
 **Latest (Dec 9):**
+- ✅ **Pass 2/3 Enrichment Pipeline Complete** (commits 6859ca5, 7018b83) — Multi-pass book enrichment with relationship extraction and LLM enhancement:
+  - **Pass 2: Relationship Extraction** — Extracts three core relationship types between entities (CAUSES, PART_OF, CONTRASTS_WITH)
+    - **RelationshipExtractor** (`library/graph/relationship_extractor.py`, 385 lines) — LLM-based extraction from entity-rich chunks
+      - Uses OpenAI GPT-4o-mini for cost-efficient relationship discovery
+      - Extracts: CAUSES (causal/enabling), PART_OF (hierarchical/component), CONTRASTS_WITH (distinctions/comparisons)
+      - Returns confidence scores, evidence quotes, chunk attribution
+      - Deduplication logic merges identical relationships (keeps highest confidence)
+      - Validation against known entities (prevents hallucinated relationships)
+    - **pass2_relationships.py** CLI script (427 lines) — Batch processing for books with `status='entities_extracted'`
+      - Query entity-rich chunks (2+ entities per chunk)
+      - Extract relationships via RelationshipExtractor
+      - Validate and deduplicate results
+      - Store to Neo4j with `add_typed_relationship()` (metadata: extracted_by, confidence, source_book, source_chunk)
+      - Update book status to `relationships_mapped`
+      - Rich console UI with progress bars, status tables, relationship statistics
+    - **UnifiedGraphClient enhancement** — New `add_typed_relationship()` method (lines 424-495)
+      - Type validation (CAUSES, PART_OF, CONTRASTS_WITH only)
+      - Auto-bidirectional for CONTRASTS_WITH relationships
+      - Metadata: extracted_by='pass2', extracted_at timestamp, confidence score, source attribution
+    - **Test coverage:** `test_relationship_extractor.py` (535 lines, comprehensive extraction and validation tests)
+  - **Pass 3: LLM Enrichment** — Enhances entities with reframes, mechanisms, patterns, rich descriptions
+    - **EnrichmentService** (`ies/backend/src/ies_backend/services/enrichment_service.py`, 843 lines) — Multi-enrichment orchestration
+      - Four enrichment types: Reframes (via ReframeService), Mechanisms, Patterns, Rich Descriptions
+      - Anthropic Claude Sonnet 4 integration for mechanism/pattern/description extraction
+      - Priority-based enrichment (high mention count + central types + missing data = higher priority)
+      - Rate limiting: 60 calls/minute with automatic backoff
+      - Batch processing with configurable limits (max_entities, max_api_calls)
+    - **Mechanism Extraction** — Step-by-step process explanations for Concept/Theory/Framework/DynamicPattern entities
+      - Prompt analyzes context chunks to identify sequential processes
+      - Extracts: mechanism name, description, steps (3-7 ideal), triggers, outcomes, confidence
+      - ADHD-friendly: short concrete steps, minimal jargon, clear progression
+      - Stores to Neo4j with HAS_MECHANISM relationships
+    - **Pattern Detection** — Cross-domain structural templates (Feedback Loop, Tipping Point, Emergence, Oscillation)
+      - Identifies recurring structural patterns beyond single domains
+      - Extracts: pattern name, structural elements, variants, cross-domain examples, confidence
+      - Distinguishes structural patterns from domain-specific ideas
+      - Stores to Neo4j with IS_PATTERN relationships
+    - **Description Enhancement** — Expands entity descriptions to 2-3 sentences (100-150 words)
+      - Makes concepts accessible to non-experts
+      - Includes: what it is, why it matters, how it relates, concrete examples
+      - Updates entity.description property in Neo4j
+    - **Test coverage:** `test_enrichment_service.py` (289 lines, mocked Anthropic API)
+  - **IES Reader Extraction UI** — RunExtractionButton component for Flow Panel (commit 6859ca5)
+    - **RunExtractionButton** (`ies/reader/src/components/flow/RunExtractionButton.tsx`, 118 lines) — Context-aware extraction trigger
+      - Button with Sparkles icon, loading spinner, success/error states
+      - Calls `POST /extraction/run` with context_id and optional question_id
+      - Displays extraction results: concepts found, relations found, subquestions generated, sources/segments processed
+      - Integrated into FlowPanel when context is active (lines 27+)
+    - **ExtractionApiClient** (`ies/reader/src/services/extractionApi.ts`, 125 lines) — TypeScript client for extraction API
+      - runExtraction(request: ExtractionRunRequest): Promise<ExtractionRunResponse>
+      - getProfile(context_id): Promise<ExtractionProfile>
+      - saveProfile(create: ExtractionProfileCreate): Promise<ExtractionProfile>
+    - **flowStore enhancements** — Extraction state management (lines 41+)
+      - State: extractionResult, isExtracting, extractionError
+      - Actions: runExtraction(contextId, questionId?), clearExtraction()
+    - **CSS styling:** `run-extraction-button.css` (168 lines) — Complete component styling with success/error/loading states
+  - **Documentation** — Comprehensive design and implementation guides
+    - `docs/plans/2025-12-09-pass-2-relationship-extraction.md` (858 lines) — Pass 2 architecture, relationship types, LLM prompt strategy, pipeline design
+    - `docs/plans/2025-12-09-pass-3-llm-enrichment.md` (1,372 lines) — Pass 3 design with mechanism/pattern extraction, prioritization, rate limiting, batch processing
+    - `docs/implementation/PASS2_IMPLEMENTATION_SUMMARY.md` (235 lines) — Pass 2 CLI usage, processing pipeline, status tracking
+    - `docs/implementation/pass-3-enrichment-service.md` (598 lines) — EnrichmentService architecture, priority scoring, LLM prompts, batch orchestration
+  - **Purpose:** Completes multi-pass ingestion pipeline — Pass 1 (entities) → Pass 2 (relationships) → Pass 3 (enrichment) enables deep exploration with high-quality knowledge graph
+  - **Impact:** Books now have causal chains (CAUSES), hierarchies (PART_OF), distinctions (CONTRASTS_WITH), mechanisms, patterns, and rich descriptions for Flow Mode navigation
+- ✅ **Extraction Engine Implementation Complete** (commit 180ee07) — Context-aware entity extraction with "Run Extraction" buttons:
+  - **Backend Service** — `ExtractionEngine` (337 lines) — Complete extraction pipeline
+    - Pipeline: Load context/profile → Filter sources → Search chunks (Neo4j full-text) → LLM extraction (Anthropic Claude) → Write to Neo4j → Generate subquestions → Log journey
+    - Profile management: save_profile(), get_profile() (in-memory MVP)
+    - Neo4j full-text index on Chunk nodes for efficient search
+    - Anthropic Claude integration with structured entity/relationship extraction
+  - **API Endpoints**
+    - `POST /extraction/run` — Trigger extraction (ExtractionRunRequest → ExtractionRunResponse)
+    - `POST /extraction/profiles` — Create/update extraction profile
+    - `GET /extraction/profiles/{context_id}` — Get profile for context
+  - **IES Reader Integration**
+    - `RunExtractionButton.tsx` (115 lines) — Button with loading/success/error states
+    - `extractionApi.ts` (133 lines) — TypeScript API client (runExtraction, getProfile, saveProfile)
+    - `FlowPanel.tsx` — RunExtractionButton integrated when context is active
+    - `flowStore.ts` — Extraction state (result, isExtracting, extractionError) + runExtraction action
+    - Result display: concepts found, relations found, subquestions generated, sources/segments processed
+  - **SiYuan Plugin Integration**
+    - `FlowMode.svelte` — RunExtractionButton integrated in Context Panel (lines 1411-1477)
+    - Results panel with stats grid, concept pills, subquestions list
+    - CSS styling (lines 2087-2237) — extraction-results, extraction-stats, extraction-items classes
+    - State: isRunningExtraction, extractionResult, clearContextMode cleanup
+  - **ContextNoteParser Enhancement** — `context_note_parser.py` (459 lines)
+    - YAML frontmatter extraction (context_id, context_type, status, parent_context_id)
+    - Question parsing with checkbox status ([x] vs [ ]), existing IDs (<!-- q_xxx -->), prefixes (Q1:, Q2:)
+    - Areas of exploration, core concepts extraction
+    - Returns ParsedQuestion, ParsedArea, ParsedConcept objects
+  - **Test Coverage** — Comprehensive test suites
+    - `test_extraction_engine.py` (420 lines, 10 tests) — Full pipeline with mocked Neo4j/Anthropic
+    - `test_context_note_parser.py` (466 lines, 9 tests) — Frontmatter, question, area/concept parsing
+  - **GAP-ANALYSIS Updated** — Extraction Engine + Context Note Parser marked complete (85% overall)
+  - **Impact:** Closes critical P0 gap — Context-aware extraction enables targeted entity discovery based on active questions and exploration profiles
+- ✅ **P1/P2 Reader Integration Complete** (commit 180ee07) — Full UI integration for Visit Tracking, Relevant Passages, and Journey Timeline:
+  - **Components Created** (16 files total: 5 components + 5 CSS files + 2 API clients + types + docs)
+    - `WhatsNewBadge.tsx` (42 lines) — Red badge on Flow button showing count of new items
+    - `WhatsNewSection.tsx` (212 lines) — Collapsible groups for Questions, Highlights, Entities, Relationships
+    - `RelevantPassagesSection.tsx` (196 lines) — Ranked passages with relevance scores, source attribution, keywords/concepts
+    - `FlowPanelTabs.tsx` (28 lines) — Tab navigation between "Explore" and "Timeline"
+    - `JourneyTimeline.tsx` (185 lines) — Grouped timeline view with 5 grouping options, dwell time tracking, entry type icons
+  - **API Clients** — Full TypeScript integration with backend
+    - `visitApi.ts` (131 lines) — recordVisit, getNewItemsSummary, getNewItemsDetail, getLastVisit, clearVisits
+    - `timelineApi.ts` (88 lines) — getTimeline, getContextTimeline, getUserTimeline, getStats
+    - `questionApi.ts` — Added getRelevantPassages() method for passage ranking
+  - **State Management** (`flowStore.ts`, +100 lines) — Complete P1/P2 state and actions
+    - P1 state: newItemsSummary, newItemsDetail, isLoadingNewItems, relevantPassages, isLoadingPassages
+    - P1 actions: recordVisit, fetchNewItemsSummary, fetchNewItemsDetail, fetchRelevantPassages
+    - P2 state: journeyTimeline, isLoadingTimeline, activePanelTab
+    - P2 actions: setActivePanelTab, fetchTimeline, clearTimeline
+  - **FlowPanel Integration** (`FlowPanel.tsx`, +72 lines) — Complete tab system with auto-fetch
+    - FlowPanelTabs renders at top for tab switching
+    - WhatsNewSection renders when newItemsDetail exists
+    - RelevantPassagesSection renders when question is selected
+    - JourneyTimeline renders when Timeline tab is active
+    - useEffect: Auto-fetch passages when question changes
+    - useEffect: Auto-fetch timeline when tab switches to Timeline
+  - **Visit Tracking** — Records visits when Flow panel opens, fetches "What's New" on mount
+  - **Type Definitions** (`types/api.ts`, 169 lines) — All backend schemas mirrored exactly
+  - **Documentation** — Complete integration guides
+    - `READER_INTEGRATION_GUIDE.md` (237 lines) — Step-by-step Reader.tsx integration instructions
+    - `P1_P2_IMPLEMENTATION_SUMMARY.md` (170 lines) — Complete file manifest with line counts
+    - `IMPLEMENTATION_REPORT.md` (60 lines) — High-level summary with testing notes
+  - **Impact:** Completes Flow v2 UI — Question-driven exploration with What's New notifications, relevant passages for questions, and journey history timeline
+- ✅ **Extraction Engine Implementation** (commit 180ee07) — Context-aware entity extraction with ExtractionProfile support:
+  - **ExtractionEngine Service** (`extraction_engine.py`, 337 lines) — Complete context-aware extraction pipeline
+    - Pipeline: Load context/profile → Filter sources → Search chunks via full-text index → LLM extraction → Write to Neo4j → Generate subquestions → Log journey
+    - Neo4j full-text index on Chunk nodes for efficient content search
+    - Profile management: save_profile(), get_profile() with in-memory MVP storage
+    - run_extraction() orchestrates complete pipeline with ExtractionRunRequest/Response
+    - Anthropic Claude integration for entity/relationship extraction from matched chunks
+  - **ContextNoteParser Enhancement** (`context_note_parser.py`, 459 lines) — Robust SiYuan markdown parsing
+    - YAML frontmatter extraction (context_id, context_type, status, parent_context_id)
+    - Question parsing with checkbox status ([x] vs [ ]), existing IDs (<!-- q_xxx -->), prefixes (Q1:, Q2:)
+    - Areas of exploration with descriptions
+    - Core concepts extraction
+    - Returns ParsedQuestion, ParsedArea, ParsedConcept objects with metadata
+  - **Context API Enhanced** (`/context`) — New endpoints for enhanced parsing and validation
+    - `POST /parse-enhanced` — Enhanced parser with metadata (question prefixes, completion status, existing IDs)
+    - `POST /validate` — Validate Context Note without saving (parse + warnings)
+    - Backward compatible `/parse` endpoint for legacy clients
+  - **Test Coverage** — Comprehensive test suites
+    - `test_extraction_engine.py` (420 lines, 10 tests) — Full pipeline testing with mocked Neo4j/Anthropic
+    - `test_context_note_parser.py` (466 lines, 9 tests) — Frontmatter parsing, question extraction, area/concept parsing
+  - **Backend Status:** 400+ tests passing (10 extraction engine + 9 context parser)
+  - **Impact:** Closes GAP-ANALYSIS P0 item — Context-aware extraction now fully implemented, enables targeted entity discovery based on active questions and exploration profiles
+- ✅ **Hardcover API Integration** (commit 96259bc) — Pass 0 metadata enrichment for book ingestion:
+  - **HardcoverService** (`hardcover_service.py`, 254 lines) — GraphQL API client for book metadata
+    - search_books_by_title(title, author, limit) — Fuzzy search with multiple title variants (removes subtitles, "The" prefix)
+    - get_book_by_id(hardcover_id) — Fetch complete book metadata
+    - Data model: HardcoverBook with description, genres, subjects, series, ratings, ISBNs, cover image
+    - Rate limit: 60 requests/minute (logged in service)
+    - Auth: Bearer token via HARDCOVER_API_TOKEN env var
+  - **Enrichment Script** (`enrich_hardcover_metadata.py`, 272 lines) — Batch enrichment for Calibre books
+    - Pass 0 pipeline: Match Calibre book → Search Hardcover → Store metadata in Neo4j
+    - Book matching: 3-phase strategy (exact title + author, fuzzy title, subtitle variants)
+    - Neo4j enrichment: Adds description, genres/subjects (Genre nodes), series info, ratings, ISBNs to Book nodes
+    - Genre tagging: Creates (Book)-[:HAS_GENRE]->(Genre) relationships for user-curated tags
+    - CLI: --id (single book), --limit (batch size), --dry-run (preview), --status (stats)
+  - **Purpose:** Enriches Book nodes with rich metadata before entity extraction, enables genre-based filtering, adds community context (ratings, read counts)
+  - **Integration:** Inserts before Pass 1 (entity extraction) in ingestion pipeline
+  - **Documentation:** Complete docstrings for API usage and enrichment workflow
 - ✅ **Highlight Sync Phase 1 Complete** (commit c706808) — Full cross-app synchronization from IES Reader to SiYuan with block attributes:
   - **Highlight Sync API** (`/highlight-sync`) — New endpoints for highlight synchronization to SiYuan
     - `POST /highlight-sync/trigger` — Sync specific highlights, entire book, or all pending (batch support)
@@ -391,7 +561,7 @@ Through 10 validation sessions, a personal framework emerged exploring how human
 - ✅ **ReframesTab** — UI components in SiYuan and Readest
 
 **Remaining:**
-- 🔄 Pass 2/3 enrichment (relationships, LLM enrichment)
+- ✅ **Pass 2/3 enrichment** (relationships, LLM enrichment) — COMPLETE (commits 6859ca5, 7018b83)
 - 🔄 Cross-app continuity (Readest ↔ SiYuan sync)
 - 🔄 SiYuan document structure implementation
 

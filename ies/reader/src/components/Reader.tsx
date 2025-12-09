@@ -4,6 +4,7 @@ import type { Rendition } from 'epubjs';
 import { ArrowLeft, Globe, Loader2, AlertCircle, RefreshCw, PenLine, Search, Highlighter } from 'lucide-react';
 import { FlowPanel } from './flow/FlowPanel';
 import { NotesSheet } from './flow/NotesSheet';
+import { WhatsNewBadge } from './flow/WhatsNewBadge';
 import { useFlowStore } from '../store/flowStore';
 import { useEntityLookup } from '../hooks/useEntityLookup';
 import { useEntityOverlay } from '../hooks/useEntityOverlay';
@@ -91,6 +92,8 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
     endJourney,
     userId,
     setSyncStatus,
+    newItemsSummary,
+    isLoadingNewItems,
   } = useFlowStore();
   const { lookupEntity } = useEntityLookup();
 
@@ -299,6 +302,7 @@ interface IFrameContents {
           >
             <Globe size={18} />
             <span className="reader-flow-label">Flow</span>
+            <WhatsNewBadge summary={newItemsSummary} isLoading={isLoadingNewItems} />
           </button>
         </div>
       </header>
