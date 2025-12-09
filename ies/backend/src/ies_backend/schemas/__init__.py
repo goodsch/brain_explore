@@ -1,5 +1,17 @@
 """Pydantic schemas for API request/response models."""
 
+from ies_backend.schemas.block_attribute import (
+    BlockAttribute,
+    BlockAttributeListResponse,
+    BlockAttributeQuery,
+    BlockAttributeStats,
+    BlockAttributeUpdate,
+    BlockAttributeUpdateResponse,
+    BlockStatus,
+    BlockType,
+    EnergyLevel,
+    ResonanceSignal,
+)
 from ies_backend.schemas.context import (
     AreaOfExploration,
     Context,
@@ -32,27 +44,38 @@ from ies_backend.schemas.extraction import (
     ExtractionRunResponse,
     QuestionExtractionProfile,
 )
-from ies_backend.schemas.visit_tracking import (
-    VisitScope,
-    VisitRecord,
-    RecordVisitRequest,
-    RecordVisitResponse,
-    NewItemsSummary,
-    NewItemsDetailRequest,
-    NewItemsDetailResponse,
-    NewEntity,
-    NewHighlight,
-    NewQuestion,
-    NewRelationship,
-    GlobalActivitySummary,
-)
 from ies_backend.schemas.passage import (
     PassageRankingRequest,
     PassageRankingResponse,
     RankedPassage,
 )
+from ies_backend.schemas.visit_tracking import (
+    GlobalActivitySummary,
+    NewEntity,
+    NewHighlight,
+    NewItemsDetailRequest,
+    NewItemsDetailResponse,
+    NewItemsSummary,
+    NewQuestion,
+    NewRelationship,
+    RecordVisitRequest,
+    RecordVisitResponse,
+    VisitRecord,
+    VisitScope,
+)
 
 __all__ = [
+    # Block attribute types
+    "BlockAttribute",
+    "BlockType",
+    "BlockStatus",
+    "ResonanceSignal",
+    "EnergyLevel",
+    "BlockAttributeQuery",
+    "BlockAttributeListResponse",
+    "BlockAttributeUpdate",
+    "BlockAttributeUpdateResponse",
+    "BlockAttributeStats",
     # Context types
     "Context",
     "ContextType",

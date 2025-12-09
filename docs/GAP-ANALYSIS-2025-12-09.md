@@ -1,7 +1,7 @@
 # Implementation Gap Analysis — Redux Specs vs Current State
 
 **Created:** 2025-12-09
-**Updated:** 2025-12-09 (Passage Ranking implementation)
+**Updated:** 2025-12-09 (Block Attribute System implementation)
 **Purpose:** Map redux specifications to implemented features, identify gaps, prioritize next work
 
 > **Ground Truth:** For system design and semantics, see `docs/IES-SYSTEM-DESIGN.md`.
@@ -270,27 +270,46 @@ class ExtractionEngine:
 
 | Attribute | Purpose | Status |
 |-----------|---------|--------|
-| `custom-type` | Note classification | 🔄 Partial (used in ForgeMode) |
-| `custom-id` | Unique identifier | 🔄 Partial |
-| `custom-status` | Lifecycle stage | 🔄 Partial |
-| `custom-context` | Active Feynman problem | ❌ Not implemented |
-| `custom-section` | Section type | ❌ Not implemented |
-| `custom-block-type` | highlight/insight/reaction | ❌ Not implemented |
-| `custom-source` | Source reference | ❌ Not implemented |
-| `custom-source-cfi` | Jump-back location | ❌ Not implemented |
-| `custom-entity-refs` | Linked entities | ❌ Not implemented |
-| `custom-resonance` | Emotional signal | ❌ Not implemented |
-| `custom-energy` | Capture energy level | ❌ Not implemented |
-| `custom-processed` | Agent processing status | ❌ Not implemented |
+| `custom-be_type` | Block type classification | ✅ **DONE** (BlockAttributeService) |
+| `custom-be_id` | Backend entity linking | ✅ **DONE** (BlockAttributeService) |
+| `custom-status` | Lifecycle stage | ✅ **DONE** (BlockAttributeService) |
+| `custom-resonance` | Emotional signal | ✅ **DONE** (BlockAttributeService) |
+| `custom-energy` | Energy level | ✅ **DONE** (BlockAttributeService) |
+| `custom-context` | Active Context | ✅ **DONE** (BlockAttributeService) |
+| `custom-source` | Source reference | ✅ **DONE** (BlockAttributeService) |
+| `custom-source-cfi` | Jump-back location | ✅ **DONE** (BlockAttributeService) |
 
-### Gap: Block Attribute System
+### ~~Gap: Block Attribute System~~ ✅ COMPLETE (Dec 9)
 
-**What's missing:**
-- Consistent attribute schema across all SiYuan notes
-- Attribute writer utilities in plugin
-- Query utilities to find blocks by attributes
+**Implementation:**
+- **Backend schemas:** `ies/backend/src/ies_backend/schemas/block_attribute.py` (200 lines)
+  - `BlockAttribute` model with all IES standard attributes
+  - Enums: `BlockType`, `BlockStatus`, `ResonanceSignal`, `EnergyLevel`
+  - Query/update schemas for filtering and modification
+  - Statistics schema for analytics
+- **Service layer:** `ies/backend/src/ies_backend/services/block_attribute_service.py` (358 lines)
+  - Query blocks by type, status, resonance, energy, context
+  - Get blocks by backend entity ID (be_id)
+  - Update block attributes via SiYuan API
+  - Statistics aggregation
+- **API endpoints:** `ies/backend/src/ies_backend/api/block_attributes.py` (162 lines)
+  - `GET /block-attributes/` - List with filters
+  - `GET /block-attributes/{block_id}` - Get single block
+  - `GET /block-attributes/by-backend-id/{be_id}` - Find blocks by entity
+  - `GET /block-attributes/by-type/{be_type}` - Find blocks by type
+  - `PATCH /block-attributes/{block_id}` - Update attributes
+  - `GET /block-attributes/stats/summary` - Statistics
+- **Tests:** 12 comprehensive unit tests, all passing (322 total backend tests passing)
+- **Registered:** Router added to `main.py`
 
-**Priority:** Medium — Enables AI navigation and processing
+**Features:**
+- Query blocks by IES metadata (type, status, resonance, energy)
+- Link SiYuan blocks to backend entities via be_id
+- ADHD-friendly navigation via resonance/energy filtering
+- Statistics for understanding attribute usage
+- Full CRUD support for block attributes
+
+**Impact:** Enables AI navigation, cross-app entity linking, and ADHD-friendly block retrieval.
 
 ---
 
@@ -360,7 +379,7 @@ class ExtractionEngine:
 
 ## Priority Matrix
 
-> **Updated:** 2025-12-09 (Passage Ranking implementation)
+> **Updated:** 2025-12-09 (Block Attribute System implementation)
 
 ### P0 — Critical Path (Do First)
 
@@ -381,12 +400,12 @@ class ExtractionEngine:
 
 ### P2 — Important (Do Later)
 
-| Gap | Reason | Effort |
-|-----|--------|--------|
-| Block attribute system | AI navigation | Medium |
-| Journey timeline UI | Visualization | Medium |
-| Areas of Exploration buttons | Additional navigation | Low |
-| Journey pane in Reader | Context tracking | Medium |
+| Gap | Reason | Effort | Status |
+|-----|--------|--------|--------|
+| Block attribute system | AI navigation | Medium | ✅ **DONE** (Dec 9) |
+| Journey timeline UI | Visualization | Medium | ❌ Not started |
+| Areas of Exploration buttons | Additional navigation | Low | ❌ Not started |
+| Journey pane in Reader | Context tracking | Medium | ❌ Not started |
 
 ### P3 — Nice to Have
 
@@ -424,6 +443,15 @@ class ExtractionEngine:
 
 ## Completed in Recent Sprints
 
+### ~~Sprint: Block Attribute System~~ ✅ COMPLETE (Dec 9)
+
+The block attribute system is now implemented:
+- Backend schemas with IES standard attributes
+- BlockAttributeService for querying SiYuan
+- REST API endpoints for all CRUD operations
+- 12 comprehensive tests, all passing
+- Enables AI navigation and cross-app linking
+
 ### ~~Sprint: Close the Capture Loop~~ ✅ COMPLETE (Dec 9)
 
 The capture loop is now closed:
@@ -449,14 +477,17 @@ Based on this analysis, these new files are needed:
 ```
 ies/backend/src/ies_backend/
 ├── schemas/
-│   └── extraction.py          # ✅ DONE - ExtractionProfile, ExtractionResult
+│   ├── extraction.py          # ✅ DONE - ExtractionProfile, ExtractionResult
+│   └── block_attribute.py     # ✅ DONE - BlockAttribute, queries, stats
 ├── services/
 │   ├── extraction_engine.py   # Context-aware extraction
 │   ├── highlight_sync.py      # Reader → SiYuan sync
 │   ├── context_note_parser.py # Parse SiYuan Context Notes
-│   └── passage_ranking_service.py  # ✅ DONE - Rank passages by relevance
+│   ├── passage_ranking_service.py  # ✅ DONE - Rank passages by relevance
+│   └── block_attribute_service.py  # ✅ DONE - Query blocks by attributes
 └── api/
-    └── sync.py                # Sync endpoints (enhance existing)
+    ├── sync.py                # Sync endpoints (enhance existing)
+    └── block_attributes.py    # ✅ DONE - Block attribute endpoints
 
 .worktrees/siyuan/ies/plugin/src/
 ├── services/

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ies_backend.api import (
+    block_attributes,
     book_entities,
     books,
     concept,
@@ -15,6 +16,7 @@ from ies_backend.api import (
     highlights,
     inbox,
     journey,
+    journey_timeline,
     personal,
     profile,
     question_engine,
@@ -51,6 +53,7 @@ app.include_router(question_engine.router, prefix="/question-engine", tags=["que
 app.include_router(graph.router, prefix="/graph", tags=["graph"])
 app.include_router(book_entities.router, prefix="/graph", tags=["graph"])
 app.include_router(journey.router, tags=["journeys"])
+app.include_router(journey_timeline.router, tags=["journey-timeline"])
 # Conversation imports
 app.include_router(conversations.router, tags=["conversations"])
 # Inbox router mounted at both paths for migration
@@ -71,6 +74,7 @@ app.include_router(sync.router, prefix="/sync", tags=["sync"])
 app.include_router(highlights.router, tags=["highlights"])
 app.include_router(extraction.router, tags=["extraction"])
 app.include_router(visit_tracking.router, tags=["visit_tracking"])
+app.include_router(block_attributes.router, tags=["block-attributes"])
 
 
 @app.get("/health")

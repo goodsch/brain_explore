@@ -64,6 +64,24 @@ docker compose up -d
 cd ies/backend && uv run uvicorn ies_backend.main:app --reload --port 8081
 
 **Latest (Dec 9):**
+- ✅ **P1 Features Complete** (commit a5cac5a) — Visit tracking and passage ranking for question-driven exploration:
+  - **Visit Tracking API** (`/visits`) — Track "new since last run" for contexts, books, entities
+    - Endpoints: `POST /visits/record`, `GET /visits/new-items-summary/{scope}/{scope_id}`, `POST /visits/new-items-detail`, `GET /visits/global-activity`, `GET /visits/last-visit/{scope}/{scope_id}`, `DELETE /visits/clear`
+    - Schemas: `VisitRecord`, `VisitScope` (context/book/entity/global), `NewItemsSummary`, `NewItemsDetailResponse` with new questions, highlights, entities, relationships
+    - Service: `VisitTrackingService` with in-memory storage MVP (320 lines)
+    - Features: Record user visits by scope, surface new content since last session, global activity summary
+    - Test coverage: 17 tests in `test_visit_tracking_service.py` (497 lines)
+    - **Purpose:** Enables "What's new" panels in Flow Mode, highlights unseen content
+  - **Passage Ranking Service** — Rank book passages by relevance to questions
+    - Endpoint: `POST /questions/{question_id}/rank-passages` (registered in questions router)
+    - Schemas: `RankedPassage`, `PassageRankingRequest`, `PassageRankingResponse` (`ies/backend/src/ies_backend/schemas/passage.py`)
+    - Service: `PassageRankingService` with TF-IDF-like scoring, keyword extraction, concept matching (269 lines)
+    - Algorithm: Keyword match (+0.1), concept match (+0.3), diminishing returns, length normalization
+    - Neo4j Query: Searches Book→Chunk relationships, filters by keyword/concept terms
+    - Test coverage: 9 tests in `test_passage_ranking.py` (364 lines)
+    - **Purpose:** Enables question-driven reading by surfacing relevant book passages
+  - **Backend Update:** Both services registered in `main.py` (visit_tracking router line 73, passage ranking in questions API)
+  - **GAP-ANALYSIS Update:** Both features marked complete in `docs/GAP-ANALYSIS-2025-12-09.md` (50% overall implementation)
 - ✅ **Ground Truth Documentation** (commit 1c9e683) — Four comprehensive docs establish complete system design
   - `docs/IES-SYSTEM-DESIGN.md` — Conceptual foundation (906 lines): WHY IES exists, cognitive architecture, operating model, entity lifecycle, interaction semantics
   - `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` — Project clarity (382 lines): Resolves Readest vs IES Reader confusion, migration guide, current status
@@ -618,6 +636,32 @@ This CLAUDE.md is intentionally brief. For details:
 > This section contains auto-managed implementation notes. For conceptual understanding, read the docs.
 
 **Latest (Dec 9):**
+- **Visit Tracking + Passage Ranking (P1 Features Complete)** (commit a5cac5a) — Two critical Flow v2 features addressing "New since last run" and question-driven reading:
+  - **Visit Tracking API** (`/visits`) — "New since last run" functionality for contexts, books, and entities
+    - Endpoints: `POST /visits/record`, `GET /visits/new-items-summary/{scope}/{scope_id}`, `POST /visits/new-items-detail`, `GET /visits/global-activity`, `GET /visits/last-visit/{scope}/{scope_id}`, `DELETE /visits/clear`
+    - Schemas: `ies/backend/src/ies_backend/schemas/visit_tracking.py` (143 lines) — VisitScope, VisitRecord, NewItemsSummary, NewItemsDetailResponse, GlobalActivitySummary
+    - Service: `ies/backend/src/ies_backend/services/visit_tracking_service.py` (320 lines) — In-memory MVP with timestamp tracking per user/scope/scope_id
+    - Scopes: CONTEXT, BOOK, ENTITY, GLOBAL — each tracked independently
+    - Features: Records last visit timestamp, queries for items created since last visit (questions, highlights, entities), global activity dashboard, per-scope "what's new" feeds
+    - Integration: Enables "New since last session" badges in Flow Mode UI, highlights unseen items
+    - Tests: `ies/backend/tests/test_visit_tracking_service.py` (496 lines, 17 tests) — Full coverage of visit recording, summary queries, detail queries, scope independence
+  - **Passage Ranking API** — Question-driven reading support with relevance scoring
+    - Endpoints: `GET /questions/{id}/passages` — Returns ranked passages from books for a specific question
+    - Schemas: `ies/backend/src/ies_backend/schemas/passage.py` (47 lines) — RankedPassage, PassageRankingRequest, PassageRankingResponse
+    - Service: `ies/backend/src/ies_backend/services/passage_ranking_service.py` (268 lines) — TF-IDF-like relevance scoring
+    - Scoring Algorithm: Keyword extraction (stop words removed), concept matching (higher weight), multiple occurrence handling (diminishing returns), normalized by passage length
+    - Features: Extracts keywords from question, searches Neo4j chunks for matches, ranks by relevance score (0-1), returns top N passages with source attribution (book title, author, chapter, page), includes matched keywords and concepts
+    - Integration: Powers "Relevant Passages" section in Flow Mode when question is selected
+    - Tests: `ies/backend/tests/test_passage_ranking.py` (363 lines, 14 tests) — Keyword extraction, relevance scoring, concept bonus, no-match handling, multi-occurrence diminishing returns
+  - **Questions API Enhancement** — Added passage ranking integration to questions router
+    - New endpoint: `GET /questions/{id}/passages` with `PassageRankingRequest` query params (max_passages, min_score, source_ids)
+    - Returns `PassageRankingResponse` with ranked passages, total candidates, keywords used
+    - Error handling: 404 if question not found, proper question text extraction
+  - **GAP-ANALYSIS Updated** — Two P1 items marked complete
+    - "New since last run" highlighting: ✅ Complete (Visit Tracking API)
+    - Question-driven reading: ✅ Complete (Passage Ranking API)
+    - Overall status: ~50% of redux specs implemented (up from 45%)
+  - **Purpose:** Completes Flow v2 Phase 2 backend foundation — users can now see what's new since last session and get relevant passages for their questions
 - **Highlights API, Facet Decomposition, ExtractionProfile Schema** (commit 3fd956b) — Three major additions supporting context-aware exploration:
   - **Highlights API** (`/highlights`) — Complete CRUD system for reader highlights with CFI-based location tracking
     - Backend: `ies/backend/src/ies_backend/api/highlights.py` (100 lines) — Full REST endpoints
