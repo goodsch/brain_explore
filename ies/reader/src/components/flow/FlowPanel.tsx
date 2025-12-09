@@ -1,6 +1,7 @@
-import { useFlowStore, type FlowQuestion } from '../../store/flowStore';
+import { useFlowStore } from '../../store/flowStore';
 import { QuestionSelector } from './QuestionSelector';
 import { useFlowLayout } from '../../hooks/useFlowLayout';
+import { useQuestionSync } from '../../hooks/useQuestionSync';
 import './flow-panel.css';
 
 export function FlowPanel() {
@@ -9,27 +10,18 @@ export function FlowPanel() {
     questions,
     currentQuestionId,
     isLoadingQuestions,
-    addQuestion,
     setCurrentQuestionId,
     currentEntity
   } = useFlowStore();
 
   const { mode, isMobile } = useFlowLayout();
+  const { createQuestion, error } = useQuestionSync();
 
   // Don't render if closed or if on mobile (use standalone FlowPage instead)
   if (!isFlowPanelOpen || (isMobile && mode === 'standalone')) return null;
 
-  const handleCreateQuestion = (text: string) => {
-    const newQuestion: FlowQuestion = {
-      id: `q-${Date.now()}`,
-      text,
-      source: 'reader',
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    addQuestion(newQuestion);
-    setCurrentQuestionId(newQuestion.id);
+  const handleCreateQuestion = async (text: string) => {
+    await createQuestion(text);
   };
 
   return (
@@ -37,6 +29,12 @@ export function FlowPanel() {
       <div className="flow-panel__header">
         <h2 className="flow-panel__title">Flow</h2>
       </div>
+
+      {error && (
+        <div className="flow-panel__error">
+          {error}
+        </div>
+      )}
 
       <div className="flow-panel__question-selector">
         <QuestionSelector
