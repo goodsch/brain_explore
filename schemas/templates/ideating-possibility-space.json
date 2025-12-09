@@ -1,0 +1,46 @@
+{
+  "id": "ideating-possibility-space",
+  "mode": "ideating",
+  "name": "Possibility Space",
+  "description": "Explore creative options and generate novel ideas",
+  "sections": [
+    {
+      "id": "challenge",
+      "prompt": "What challenge or opportunity are you exploring?",
+      "input_type": "freeform",
+      "required": true
+    },
+    {
+      "id": "existing",
+      "prompt": "What approaches already exist? What's been tried?",
+      "input_type": "freeform"
+    },
+    {
+      "id": "wild_ideas",
+      "prompt": "What are 3-5 wild, unconstrained ideas? Don't filter yet.",
+      "input_type": "freeform"
+    },
+    {
+      "id": "synthesis",
+      "prompt": "Which ideas feel most promising? What patterns or combinations emerge?",
+      "input_type": "freeform"
+    }
+  ],
+  "graph_mapping": {
+    "on_complete": [
+      {
+        "action": "create_or_link",
+        "entity_type": "spark",
+        "source_section": "synthesis",
+        "metadata": {
+          "challenge": "challenge",
+          "ideas_explored": "wild_ideas"
+        }
+      },
+      {
+        "action": "update_journey",
+        "add_exchange": true
+      }
+    ]
+  }
+}

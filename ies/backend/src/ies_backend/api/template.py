@@ -17,6 +17,9 @@ async def get_template(template_id: str) -> ThinkingTemplate:
     Available templates:
     - learning-mechanism-map: Learning mode - understand how something works
     - articulating-clarify-intuition: Articulating mode - clarify vague intuitions
+    - planning-action-design: Planning mode - design concrete next actions
+    - ideating-possibility-space: Ideating mode - explore creative options
+    - reflecting-pattern-recognition: Reflecting mode - surface thinking patterns
     """
     try:
         return template_service.load_template(template_id)

@@ -1,0 +1,46 @@
+{
+  "id": "reflecting-pattern-recognition",
+  "mode": "reflecting",
+  "name": "Pattern Recognition",
+  "description": "Surface patterns in your thinking, behavior, or experience",
+  "sections": [
+    {
+      "id": "observation",
+      "prompt": "What situation, behavior, or feeling are you reflecting on?",
+      "input_type": "freeform",
+      "required": true
+    },
+    {
+      "id": "recurrence",
+      "prompt": "When have you noticed this before? What contexts trigger it?",
+      "input_type": "freeform"
+    },
+    {
+      "id": "function",
+      "prompt": "What purpose might this pattern serve? What is it protecting or seeking?",
+      "input_type": "freeform"
+    },
+    {
+      "id": "insight",
+      "prompt": "What does this pattern reveal about your values, needs, or default strategies?",
+      "input_type": "freeform"
+    }
+  ],
+  "graph_mapping": {
+    "on_complete": [
+      {
+        "action": "create_or_link",
+        "entity_type": "insight",
+        "source_section": "insight",
+        "metadata": {
+          "pattern_source": "observation",
+          "recurrence_data": "recurrence"
+        }
+      },
+      {
+        "action": "update_journey",
+        "add_exchange": true
+      }
+    ]
+  }
+}

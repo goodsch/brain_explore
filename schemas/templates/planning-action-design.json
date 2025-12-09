@@ -1,0 +1,46 @@
+{
+  "id": "planning-action-design",
+  "mode": "planning",
+  "name": "Action Design",
+  "description": "Design concrete next actions from goals or problems",
+  "sections": [
+    {
+      "id": "goal",
+      "prompt": "What outcome are you working toward? What does success look like?",
+      "input_type": "freeform",
+      "required": true
+    },
+    {
+      "id": "constraints",
+      "prompt": "What constraints or resources shape what's possible? (time, energy, dependencies)",
+      "input_type": "freeform"
+    },
+    {
+      "id": "obstacles",
+      "prompt": "What obstacles or uncertainties might get in the way?",
+      "input_type": "freeform"
+    },
+    {
+      "id": "actions",
+      "prompt": "List 2-3 concrete next actions that move you toward the goal.",
+      "input_type": "freeform"
+    }
+  ],
+  "graph_mapping": {
+    "on_complete": [
+      {
+        "action": "create_or_link",
+        "entity_type": "spark",
+        "source_section": "actions",
+        "metadata": {
+          "goal": "goal",
+          "constraints": "constraints"
+        }
+      },
+      {
+        "action": "update_journey",
+        "add_exchange": true
+      }
+    ]
+  }
+}

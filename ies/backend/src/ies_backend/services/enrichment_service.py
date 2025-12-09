@@ -244,7 +244,7 @@ class EnrichmentService:
         enable_mechanisms: bool = True,
         enable_patterns: bool = True,
         enable_descriptions: bool = True,
-        max_entities: int = 20,
+        max_entities: int = 10,
     ) -> dict[str, Any]:
         """Run Pass 3 enrichment for all high-value entities in a book.
 
@@ -254,7 +254,7 @@ class EnrichmentService:
             enable_mechanisms: Extract mechanisms (default True)
             enable_patterns: Detect patterns (default True)
             enable_descriptions: Enhance descriptions (default True)
-            max_entities: Max entities to enrich (default 20)
+            max_entities: Max entities to enrich (default 10)
 
         Returns:
             Statistics dict with counts of enrichments
@@ -371,7 +371,7 @@ class EnrichmentService:
             )
 
             message = await self.anthropic_client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model="claude-3-5-haiku-20241022",
                 max_tokens=1024,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -428,7 +428,7 @@ class EnrichmentService:
             )
 
             message = await self.anthropic_client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model="claude-3-5-haiku-20241022",
                 max_tokens=1024,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -491,7 +491,7 @@ class EnrichmentService:
             )
 
             message = await self.anthropic_client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model="claude-3-5-haiku-20241022",
                 max_tokens=512,
                 messages=[{"role": "user", "content": prompt}],
             )
