@@ -9,6 +9,7 @@ from ies_backend.api import (
     concept,
     context,
     conversations,
+    extraction,
     flow_session,
     graph,
     highlights,
@@ -67,6 +68,7 @@ app.include_router(concept.router, tags=["concepts"])
 app.include_router(questions.router, prefix="/questions", tags=["questions"])
 app.include_router(sync.router, prefix="/sync", tags=["sync"])
 app.include_router(highlights.router, tags=["highlights"])
+app.include_router(extraction.router, tags=["extraction"])
 
 
 @app.get("/health")

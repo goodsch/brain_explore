@@ -361,7 +361,7 @@ class ExtractionEngine:
 | Gap | Reason | Effort | Status |
 |-----|--------|--------|--------|
 | ExtractionProfile schema | Enables targeted extraction | Low | ✅ **DONE** (schemas/extraction.py) |
-| Journey query helpers | Enables pattern analysis | Low | ❌ Not started |
+| Journey query helpers | Enables pattern analysis | Low | ✅ **DONE** (GET /context/{id}/journey?focus_id=X) |
 | "New since last run" tracking | UX improvement | Medium | ❌ Not started |
 | Passage ranking for questions | Reading guidance | High | ❌ Not started |
 
