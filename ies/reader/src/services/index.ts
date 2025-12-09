@@ -18,3 +18,15 @@ export {
   type ContextType,
   type ContextStatus,
 } from './contextApi';
+export {
+  syncApi,
+  SyncApiClient,
+  type ExplorationSession,
+  type SessionCreateRequest,
+  type SessionUpdateRequest,
+  type ResumeData,
+  type JourneyStep,
+  type ReadingPosition,
+  type AppSource,
+  type SessionStatus,
+} from './syncApi';
