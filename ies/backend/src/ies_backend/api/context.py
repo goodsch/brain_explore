@@ -9,6 +9,9 @@ from ies_backend.schemas.context import (
     ContextListResponse,
     ContextNoteParseRequest,
     ContextNoteParseResponse,
+    ContextNoteParseResult,
+    ContextNoteValidateRequest,
+    ContextNoteValidateResponse,
     ContextSearchRequest,
     ContextSearchResponse,
     ContextStatus,
@@ -18,13 +21,14 @@ from ies_backend.schemas.context import (
     QuestionCreateRequest,
     QuestionListResponse,
 )
+from ies_backend.services.context_note_parser import ContextNoteParser
 from ies_backend.services.context_service import ContextService
 
 router = APIRouter(prefix="/context", tags=["context"])
 
 
 # -----------------------------------------------------------------------------
-# Context Endpoints
+# Context Note Parsing (Enhanced)
 # -----------------------------------------------------------------------------
 
 
@@ -33,12 +37,108 @@ async def parse_context_note(request: ContextNoteParseRequest) -> ContextNotePar
     """Parse a SiYuan Context Note into structured data.
 
     Takes markdown content and extracts:
-    - Context metadata (title, type, summary)
-    - Key Questions
+    - Context metadata (title, type, summary, status from frontmatter)
+    - Key Questions (with checkbox status and existing IDs)
     - Areas of Exploration
     - Core Concepts
+
+    Example markdown format:
+    ```
+    ---
+    context_id: ctx_abc123
+    context_type: feynman_problem
+    status: active
+    ---
+
+    # Feynman: Understanding Executive Function
+
+    ## Summary / Intent
+    Exploring how executive function works...
+
+    ## Key Questions
+    - [ ] What are the core components? <!-- q_abc123 -->
+    - [x] How does working memory affect EF?
+
+    ## Areas of Exploration
+    - Neural mechanisms <!-- area_xyz789 -->
+
+    ## Core Concepts
+    - Executive Function
+    - Working Memory
+    ```
     """
+    # Use legacy parser (backward compatible)
     return ContextService.parse_context_note(request)
+
+
+@router.post("/parse-enhanced", response_model=ContextNoteParseResult)
+async def parse_context_note_enhanced(request: ContextNoteParseRequest) -> ContextNoteParseResult:
+    """Parse a Context Note with enhanced parser.
+
+    Returns ParsedQuestion, ParsedArea, ParsedConcept objects with metadata:
+    - existing_id fields for tracking
+    - is_completed status for questions
+    - prefix labels (Q1:, Q2:, etc.)
+
+    Use this endpoint when you need the enhanced metadata.
+    Use /parse for backward compatibility with existing clients.
+    """
+    result = ContextNoteParser.parse(
+        markdown_content=request.markdown_content,
+        siyuan_block_id=request.siyuan_block_id,
+    )
+    return result
+
+
+@router.post("/validate", response_model=ContextNoteValidateResponse)
+async def validate_context_note(request: ContextNoteValidateRequest) -> ContextNoteValidateResponse:
+    """Validate a Context Note without saving.
+
+    Parses the markdown and returns:
+    - parse_result: The full parsed structure
+    - is_valid: Whether parsing succeeded
+    - warnings: Non-critical issues (missing sections, etc.)
+    - errors: Critical parsing failures
+
+    Use this for real-time validation in editors.
+    """
+    try:
+        result = ContextNoteParser.parse(
+            markdown_content=request.markdown_content,
+            siyuan_block_id=None,
+        )
+
+        warnings = []
+        errors = []
+
+        # Check for common issues
+        if not result.questions:
+            warnings.append("No questions found in 'Key Questions' section")
+
+        if not result.context.summary:
+            warnings.append("No summary found in 'Summary / Intent' section")
+
+        if not result.concepts:
+            warnings.append("No concepts found in 'Core Concepts' section")
+
+        return ContextNoteValidateResponse(
+            parse_result=result,
+            is_valid=True,
+            warnings=warnings,
+            errors=errors,
+        )
+    except Exception as e:
+        # Parsing failed
+        return ContextNoteValidateResponse(
+            parse_result=ContextNoteParseResult(
+                context=Context(title="Parse Failed", type="feynman_problem"),
+                questions=[],
+                areas=[],
+                concepts=[],
+            ),
+            is_valid=False,
+            errors=[f"Parsing failed: {str(e)}"],
+        )
 
 
 @router.post("/save-parsed", response_model=Context)
@@ -46,9 +146,15 @@ async def save_parsed_context(request: ContextNoteParseRequest) -> Context:
     """Parse and save a Context Note to Neo4j.
 
     Convenience endpoint that parses + saves in one call.
+    Uses legacy parser for backward compatibility.
     """
     parsed = ContextService.parse_context_note(request)
     return await ContextService.save_parsed_context(parsed)
+
+
+# -----------------------------------------------------------------------------
+# Context CRUD
+# -----------------------------------------------------------------------------
 
 
 @router.post("", response_model=ContextCreateResponse)

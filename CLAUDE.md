@@ -22,7 +22,7 @@ Four-layer system for AI-partnered knowledge exploration:
 | Layer | Component | Purpose |
 |-------|-----------|---------|
 | 1 | Knowledge Graph | Ingests materials → entities/relationships (179 books, ~300 entities) |
-| 2 | Backend APIs | Graph, dialogue, journeys, profiles (185 tests passing) |
+| 2 | Backend APIs | Graph, dialogue, journeys, profiles (335 tests passing) |
 | 3 | SiYuan Plugin | Dashboard, 5 thinking modes, flow exploration |
 | 4 | IES Reader | Standalone e-book reader with entity overlay and flow panel |
 
@@ -32,7 +32,7 @@ Four-layer system for AI-partnered knowledge exploration:
 
 ## Current Status
 
-**Phase 2c: Integration Features** 🔄 IN PROGRESS (75% complete, Dec 8)
+**Phase 2c: Integration Features** 🔄 IN PROGRESS (85% complete, Dec 9)
 
 Completed:
 - 5-wave backend remediation (all components production-ready)
@@ -47,9 +47,19 @@ Completed:
   - REST APIs: `/questions/*`, `/context/*`
   - IES Reader API clients (`questionApi.ts`, `contextApi.ts`)
   - SiYuan plugin API clients with forwardProxy pattern
+- **Highlight Sync Phase 1** — Cross-app highlight synchronization with block attributes
+  - HighlightSyncService with batch sync support
+  - SiYuan block attribute management (set/get custom attributes)
+  - Sync status tracking (PENDING → SYNCED → ERROR → MODIFIED)
+  - 379 backend tests passing
+- **P1/P2 Reader Integration** — Complete UI for Visit Tracking, Relevant Passages, Journey Timeline
+  - 5 new components with full styling (WhatsNewBadge, WhatsNewSection, RelevantPassagesSection, FlowPanelTabs, JourneyTimeline)
+  - 2 API clients (visitApi, timelineApi) + questionApi extension
+  - Complete flowStore integration with auto-fetch
+  - Tab navigation between Explore and Timeline views
 
 In Progress:
-- Cross-app sync (SiYuan → backend)
+- Extraction Engine context-aware extraction
 - Pass 2/3 enrichment pipeline
 
 See `docs/CHANGELOG.md` for detailed history.
@@ -64,6 +74,87 @@ docker compose up -d
 cd ies/backend && uv run uvicorn ies_backend.main:app --reload --port 8081
 
 **Latest (Dec 9):**
+- ✅ **Highlight Sync Phase 1 Complete** (commit c706808) — Full cross-app synchronization from IES Reader to SiYuan with block attributes:
+  - **Highlight Sync API** (`/highlight-sync`) — New endpoints for highlight synchronization to SiYuan
+    - `POST /highlight-sync/trigger` — Sync specific highlights, entire book, or all pending (batch support)
+    - `GET /highlight-sync/status` — Get sync status summary by book or globally
+    - `POST /highlight-sync/book/{book_id}` — Sync all highlights for a book
+    - `POST /highlight-sync/{highlight_id}` — Sync single highlight by ID
+  - **HighlightSyncService** (`highlight_sync_service.py`, 225 lines) — Core sync orchestration
+    - `sync_highlight(highlight)` — Creates/finds SiYuan book note, syncs with full metadata, sets block attributes
+    - `sync_book_highlights(book_id)` — Batch sync all pending/error highlights for a book
+    - `get_sync_status(book_id)` — Returns sync statistics (synced/pending/error/modified counts)
+    - Auto-creates book notes from Calibre metadata when needed
+    - Handles errors gracefully with detailed logging
+  - **SiYuan Client Enhancement** (`siyuan_client.py`) — Block attribute management for cross-app integration
+    - `set_block_attributes(block_id, attrs)` — Set custom attributes on SiYuan blocks
+    - `get_block_attributes(block_id)` — Get custom attributes from blocks
+    - `append_highlight_to_book_note()` — Now sets IES block attributes (`custom-be_type`, `custom-be_id`, `custom-source-cfi`, `custom-context`, `custom-question`, `custom-note-type`, `custom-status`)
+    - `find_book_note_by_calibre_id(calibre_id)` — Find existing book notes by Calibre ID
+  - **Schema Updates** (`highlight.py`) — Sync tracking and note classification
+    - `SyncStatus` enum: PENDING → SYNCED → ERROR → MODIFIED lifecycle
+    - `NoteType` enum: THOUGHT, QUESTION, INSIGHT, CLARIFICATION
+    - New Highlight fields: `sync_status`, `sync_error`, `synced_at`, `note_type`, `question_id`
+    - Response schemas: `SyncResult` (single), `BatchSyncResult` (batch), `SyncStatusResponse` (status)
+  - **HighlightService Updates** (`highlight_service.py`) — Integrated sync workflow
+    - `create_highlight()` — Sets initial `sync_status=PENDING`
+    - `update_highlight()` — Marks as `MODIFIED` if already synced (triggers re-sync)
+    - Legacy sync methods delegate to HighlightSyncService for backward compatibility
+  - **Test Coverage** (`test_highlight_sync_service.py`, 361 lines, 9 tests) — Comprehensive sync testing
+    - Single highlight sync, book note auto-creation, block attribute setting
+    - Batch sync, error handling, sync status tracking
+    - Error retry, book filtering, existing block ID preservation
+  - **Backend Status:** 379 tests passing (9 new highlight sync tests)
+  - **Impact:** Completes cross-app workflow — Reader highlights → Backend persistence → SiYuan blocks with full metadata for querying and analysis
+  - **Documentation:** `docs/implementation/highlight-sync-phase1.md` (276 lines) — Complete implementation guide with usage examples
+- ✅ **P1/P2 Reader Integration Complete** (commit c706808) — Full UI integration for Visit Tracking, Relevant Passages, and Journey Timeline:
+  - **Components Created** (16 files total: 5 components + 5 CSS files + 2 API clients + types + docs)
+    - `WhatsNewBadge.tsx` (42 lines) — Red badge on Flow button showing count of new items
+    - `WhatsNewSection.tsx` (212 lines) — Collapsible groups for Questions, Highlights, Entities, Relationships
+    - `RelevantPassagesSection.tsx` (196 lines) — Ranked passages with relevance scores, source attribution, keywords/concepts
+    - `FlowPanelTabs.tsx` (28 lines) — Tab navigation between "Explore" and "Timeline"
+    - `JourneyTimeline.tsx` (185 lines) — Grouped timeline view with 5 grouping options, dwell time tracking, entry type icons
+  - **API Clients** — Full TypeScript integration with backend
+    - `visitApi.ts` (131 lines) — recordVisit, getNewItemsSummary, getNewItemsDetail, getLastVisit, clearVisits
+    - `timelineApi.ts` (88 lines) — getTimeline, getContextTimeline, getUserTimeline, getStats
+    - `questionApi.ts` — Added getRelevantPassages() method for passage ranking
+  - **State Management** (`flowStore.ts`, +100 lines) — Complete P1/P2 state and actions
+    - P1 state: newItemsSummary, newItemsDetail, isLoadingNewItems, relevantPassages, isLoadingPassages
+    - P1 actions: recordVisit, fetchNewItemsSummary, fetchNewItemsDetail, fetchRelevantPassages
+    - P2 state: journeyTimeline, isLoadingTimeline, activePanelTab
+    - P2 actions: setActivePanelTab, fetchTimeline, clearTimeline
+  - **FlowPanel Integration** (`FlowPanel.tsx`, +72 lines) — Complete tab system with auto-fetch
+    - FlowPanelTabs renders at top for tab switching
+    - WhatsNewSection renders when newItemsDetail exists
+    - RelevantPassagesSection renders when question is selected
+    - JourneyTimeline renders when Timeline tab is active
+    - useEffect: Auto-fetch passages when question changes
+    - useEffect: Auto-fetch timeline when tab switches to Timeline
+  - **Visit Tracking** — Records visits when Flow panel opens, fetches "What's New" on mount
+  - **Type Definitions** (`types/api.ts`, 169 lines) — All backend schemas mirrored exactly
+  - **Documentation** — Complete integration guides
+    - `READER_INTEGRATION_GUIDE.md` (237 lines) — Step-by-step Reader.tsx integration instructions
+    - `P1_P2_IMPLEMENTATION_SUMMARY.md` (170 lines) — Complete file manifest with line counts
+    - `IMPLEMENTATION_REPORT.md` (60 lines) — High-level summary with testing notes
+  - **Impact:** Completes Flow v2 UI — Question-driven exploration with What's New notifications, relevant passages for questions, and journey history timeline
+- ✅ **P2 Features Complete** (commit 654a2fc) — Block attributes and journey timeline for cross-app integration:
+  - **Block Attribute System** (`/block-attributes`) — Query and manage SiYuan block metadata from backend
+    - Endpoints: `GET /block-attributes/` (list with filters), `GET /block-attributes/{block_id}`, `GET /block-attributes/by-backend-id/{be_id}`, `GET /block-attributes/by-type/{be_type}`, `PATCH /block-attributes/{block_id}`, `GET /block-attributes/stats`
+    - Schemas: `BlockAttribute`, `BlockType` (spark/insight/question/context/session/concept/thread/favorite_problem/note/highlight), `BlockStatus` (captured/exploring/anchored/archived), `ResonanceSignal` (8 emotional cues), `EnergyLevel` (low/medium/high)
+    - Service: `BlockAttributeService` queries SiYuan API for custom block attributes (241 lines)
+    - Features: Links SiYuan blocks to backend entities via `be_id`, supports ADHD-friendly metadata (resonance, energy, status), context/notebook filtering
+    - Test coverage: 12 tests in `test_block_attribute_service.py` (469 lines)
+    - **Purpose:** Enables backend to query SiYuan blocks, supports cross-app sync and "What's in SiYuan" queries
+  - **Journey Timeline API** (`/journey-timeline`) — Aggregates exploration history across contexts
+    - Endpoints: `POST /journey-timeline`, `GET /journey-timeline/context/{context_id}`, `GET /journey-timeline/user/{user_id}`, `GET /journey-timeline/stats`
+    - Schemas: `TimelineEntry`, `TimelineEntryType` (entity_visit/question_asked/highlight_created/note_taken/relationship_formed/concept_learned/facet_explored/book_opened), `TimelineGrouping` (by_day/by_week/by_session/by_context/flat)
+    - Service: `JourneyTimelineService` aggregates ContextJourneyEntry, BreadcrumbJourney, and highlight records (369 lines)
+    - Features: Grouped timeline views, dwell time tracking, entry type filtering, date range queries, statistics (total entries, unique entities, time span, most active days)
+    - Test coverage: 13 tests in `test_journey_timeline.py` (544 lines)
+    - **Purpose:** Enables "Exploration History" views, supports reflection on thinking patterns, visualizes knowledge discovery paths
+  - **Backend Update:** Both routers registered in `main.py` (block_attributes router line 77, journey_timeline router line 78)
+  - **Test Status:** 335 backend tests passing (12 block attribute + 13 journey timeline)
+  - **GAP-ANALYSIS Update:** P2 features marked complete (55% overall implementation)
 - ✅ **P1 Features Complete** (commit a5cac5a) — Visit tracking and passage ranking for question-driven exploration:
   - **Visit Tracking API** (`/visits`) — Track "new since last run" for contexts, books, entities
     - Endpoints: `POST /visits/record`, `GET /visits/new-items-summary/{scope}/{scope_id}`, `POST /visits/new-items-detail`, `GET /visits/global-activity`, `GET /visits/last-visit/{scope}/{scope_id}`, `DELETE /visits/clear`
@@ -81,7 +172,8 @@ cd ies/backend && uv run uvicorn ies_backend.main:app --reload --port 8081
     - Test coverage: 9 tests in `test_passage_ranking.py` (364 lines)
     - **Purpose:** Enables question-driven reading by surfacing relevant book passages
   - **Backend Update:** Both services registered in `main.py` (visit_tracking router line 73, passage ranking in questions API)
-  - **GAP-ANALYSIS Update:** Both features marked complete in `docs/GAP-ANALYSIS-2025-12-09.md` (50% overall implementation)
+  - **Test Status:** 310 backend tests passing (17 visit tracking + 9 passage ranking)
+  - **GAP-ANALYSIS Update:** P1 features marked complete (50% overall implementation)
 - ✅ **Ground Truth Documentation** (commit 1c9e683) — Four comprehensive docs establish complete system design
   - `docs/IES-SYSTEM-DESIGN.md` — Conceptual foundation (906 lines): WHY IES exists, cognitive architecture, operating model, entity lifecycle, interaction semantics
   - `docs/UNIFIED-PROJECT-SPEC-2025-12-09.md` — Project clarity (382 lines): Resolves Readest vs IES Reader confusion, migration guide, current status
@@ -1344,6 +1436,40 @@ Each class has distinct cognitive function and maps to specific AST thinking mod
 5. Entity transformer processes HTML content, wrapping entity names in styled spans
 6. User toggles overlay on/off and filters visible entity types via EntityTypeFilter component
 7. Entities highlighted inline in text according to type (color-coded)
+
+---
+
+**6. Highlight Sync API** (`/highlight-sync`) — Cross-app highlight synchronization to SiYuan (Phase 1 Complete - Dec 9)
+
+**Endpoints:**
+- `POST /highlight-sync/trigger` - Trigger sync for specific highlights, entire book, or all pending
+- `GET /highlight-sync/status` - Get sync status summary (optionally filtered by book)
+- `POST /highlight-sync/book/{book_id}` - Sync all pending highlights for a book
+- `POST /highlight-sync/{highlight_id}` - Sync single highlight by ID
+
+**Features:**
+- Batch sync support for multiple highlights
+- Auto-creates SiYuan book notes from Calibre metadata
+- Sets IES block attributes for cross-app querying (`custom-be_type`, `custom-be_id`, `custom-source-cfi`, `custom-context`, `custom-question`, `custom-note-type`, `custom-status`)
+- Sync status lifecycle: PENDING → SYNCED → ERROR → MODIFIED
+- Error handling with retry support
+
+**Implementation:**
+- `ies/backend/src/ies_backend/api/highlight_sync.py` (160 lines)
+- `ies/backend/src/ies_backend/services/highlight_sync_service.py` (225 lines)
+- `ies/backend/src/ies_backend/services/siyuan_client.py` - Enhanced with `set_block_attributes()`, `get_block_attributes()`, `find_book_note_by_calibre_id()`
+- `ies/backend/tests/test_highlight_sync_service.py` (361 lines, 9 tests)
+- Documentation: `docs/implementation/highlight-sync-phase1.md` (276 lines)
+
+**Workflow:**
+1. Reader creates highlight (`sync_status=PENDING`)
+2. Trigger sync via API
+3. Service finds/creates SiYuan book note
+4. Highlight appended with full metadata + block attributes
+5. Status updated to `SYNCED`
+6. Edits in Reader → `MODIFIED` status (triggers re-sync)
+
+**Impact:** Completes cross-app workflow — Reader highlights → Backend persistence → SiYuan blocks with queryable metadata for context/question associations and journey analysis.
 
 ---
 

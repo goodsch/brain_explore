@@ -223,7 +223,7 @@ class QuestionListResponse(BaseModel):
 class ContextNoteParseRequest(BaseModel):
     """Request to parse a SiYuan Context Note."""
 
-    siyuan_block_id: str
+    siyuan_block_id: str | None = None
     markdown_content: str
 
 
@@ -234,6 +234,77 @@ class ContextNoteParseResponse(BaseModel):
     questions: list[Question]
     areas: list[AreaOfExploration]
     raw_sections: dict[str, list[str]] = Field(default_factory=dict)
+
+
+# -----------------------------------------------------------------------------
+# Enhanced Parsing Schemas (for context_note_parser.py)
+# -----------------------------------------------------------------------------
+
+
+class ParsedQuestion(BaseModel):
+    """Parsed question from markdown with metadata."""
+
+    text: str
+    existing_id: str | None = None  # From <!-- q_xxx --> comment
+    is_completed: bool = False  # [x] vs [ ]
+    prefix: str | None = None  # Q1:, Q2:, etc.
+    siyuan_block_id: str | None = None
+
+
+class ParsedArea(BaseModel):
+    """Parsed area of exploration."""
+
+    title: str
+    description: str | None = None
+    existing_id: str | None = None
+
+
+class ParsedConcept(BaseModel):
+    """Parsed concept from core concepts list."""
+
+    name: str
+    existing_id: str | None = None  # Future: resolve from KG
+
+
+class ContextNoteFrontmatter(BaseModel):
+    """Parsed YAML frontmatter from Context Note."""
+
+    context_id: str | None = None
+    context_type: str | None = None
+    status: str | None = None
+    created: str | None = None
+    parent_context_id: str | None = None
+    siyuan_doc_id: str | None = None
+
+
+class ContextNoteParseResult(BaseModel):
+    """Complete parse result from enhanced parser with metadata."""
+
+    context: Context
+    questions: list[ParsedQuestion]
+    areas: list[ParsedArea]
+    concepts: list[ParsedConcept]
+    raw_sections: dict[str, list[str]] = Field(default_factory=dict)
+
+
+class ContextNoteValidateRequest(BaseModel):
+    """Request to validate (but not save) a Context Note."""
+
+    markdown_content: str
+
+
+class ContextNoteValidateResponse(BaseModel):
+    """Response from validation (parse result + validation messages)."""
+
+    parse_result: ContextNoteParseResult
+    is_valid: bool = True
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+
+
+# -----------------------------------------------------------------------------
+# Search and Journey Schemas
+# -----------------------------------------------------------------------------
 
 
 class ContextSearchRequest(BaseModel):

@@ -6,7 +6,7 @@ relevant concepts and relationships from sources.
 Pipeline:
 1. Load context and profile
 2. Filter sources by domain_filters
-3. Search sources for core_concepts + synonyms
+3. Search sources for core_concepts + synonyms (using full-text index)
 4. Extract entities and relationships via LLM
 5. Write to knowledge graph
 6. Generate subquestions
@@ -14,6 +14,7 @@ Pipeline:
 """
 
 import logging
+import re
 import uuid
 from datetime import datetime, timezone
 
@@ -31,8 +32,10 @@ from ..schemas.extraction import (
     ExtractionRunRequest,
     ExtractionRunResponse,
 )
+from ..schemas.question import QuestionCreate, QuestionSource
 from .context_service import ContextService
 from .neo4j_client import Neo4jClient
+from .question_service import QuestionService
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,21 @@ class ExtractionEngine:
 
     # In-memory profile storage (MVP)
     _profiles: dict[str, ExtractionProfile] = {}
+
+    @classmethod
+    async def initialize_schema(cls) -> None:
+        """Initialize Neo4j schema including full-text index for chunks."""
+        try:
+            # Create full-text index on Chunk nodes for efficient search
+            query = """
+            CREATE FULLTEXT INDEX chunk_content IF NOT EXISTS
+            FOR (c:Chunk)
+            ON EACH [c.content, c.text]
+            """
+            await Neo4jClient.execute_write(query)
+            logger.info("Neo4j full-text index initialized for chunk content")
+        except Exception as e:
+            logger.error(f"Failed to initialize schema: {e}")
 
     @classmethod
     def save_profile(cls, profile: ExtractionProfile) -> ExtractionProfile:
@@ -93,11 +111,16 @@ class ExtractionEngine:
         # Build search keywords
         keywords = cls._build_keywords(profile, question)
 
-        # Search for relevant segments
-        segments = await cls._search_segments(
-            keywords=keywords,
+        # Filter sources by domain if specified
+        filtered_sources = await cls._filter_sources_by_domain(
             source_ids=request.source_ids or context.linked_sources,
             domain_filters=profile.domain_filters,
+        )
+
+        # Search for relevant segments using full-text index
+        segments = await cls._search_inverted_index(
+            keywords=keywords,
+            source_ids=filtered_sources,
             max_segments=request.max_segments or 50,
         )
 
@@ -107,6 +130,19 @@ class ExtractionEngine:
             context=context,
             profile=profile,
             question=question,
+        )
+
+        # Persist to knowledge graph
+        await cls._persist_to_knowledge_graph(
+            result=extraction_result,
+            context_id=context_id,
+        )
+
+        # Create subquestions
+        await cls._create_subquestions(
+            questions=extraction_result.subquestions_generated,
+            context_id=context_id,
+            parent_question_id=question_id,
         )
 
         # Log journey entry
@@ -145,8 +181,11 @@ class ExtractionEngine:
 
         # Add question terms if provided
         if question:
-            # Simple tokenization of question text
-            words = question.text.lower().split()
+            # Simple tokenization of question text with punctuation removal
+            text = question.text.lower()
+            # Remove punctuation
+            text = re.sub(r'[^\w\s]', ' ', text)
+            words = text.split()
             # Filter common words
             stopwords = {
                 "what", "how", "why", "when", "where", "is", "are", "the",
@@ -158,22 +197,129 @@ class ExtractionEngine:
         return list(set(keywords))
 
     @classmethod
-    async def _search_segments(
+    async def _filter_sources_by_domain(
+        cls,
+        source_ids: list[str],
+        domain_filters: list[str],
+    ) -> list[str]:
+        """Filter source IDs by domain tags.
+
+        Args:
+            source_ids: List of calibre_ids or book identifiers
+            domain_filters: List of domain tags to filter by
+
+        Returns:
+            Filtered list of source IDs
+        """
+        if not domain_filters or not source_ids:
+            return source_ids
+
+        try:
+            # Query books with matching domain tags
+            # Books may have 'domain' or 'tags' properties
+            query = """
+            MATCH (b:Book)
+            WHERE b.calibre_id IN $source_ids
+              AND (
+                ANY(tag IN $domain_filters WHERE tag IN b.tags)
+                OR ANY(domain IN $domain_filters WHERE domain = b.domain)
+              )
+            RETURN DISTINCT b.calibre_id as calibre_id
+            """
+            results = await Neo4jClient.execute_query(
+                query,
+                {
+                    "source_ids": [int(sid) if sid.isdigit() else sid for sid in source_ids],
+                    "domain_filters": domain_filters,
+                }
+            )
+            filtered = [str(r["calibre_id"]) for r in (results or [])]
+
+            if filtered:
+                logger.info(f"Filtered {len(source_ids)} sources to {len(filtered)} by domains: {domain_filters}")
+                return filtered
+            else:
+                # Graceful fallback: if no domains set, return all sources
+                logger.warning(f"No sources matched domain filters {domain_filters}, using all sources")
+                return source_ids
+
+        except Exception as e:
+            logger.error(f"Domain filtering failed: {e}, using all sources")
+            return source_ids
+
+    @classmethod
+    async def _search_inverted_index(
         cls,
         keywords: list[str],
         source_ids: list[str],
-        domain_filters: list[str],
         max_segments: int,
     ) -> list[dict]:
-        """Search for relevant text segments in sources.
+        """Search for relevant text segments using Neo4j full-text index.
 
-        Returns list of {source_id, text, score} dicts.
+        Returns list of {source_id, text, score, chunk_id} dicts.
         """
         if not keywords:
             return []
 
-        # Build Cypher query to find chunks containing keywords
-        # Using Neo4j full-text search or CONTAINS
+        try:
+            # Build Lucene query for full-text search
+            # Core concepts get exact match, synonyms get OR
+            # Lucene query syntax: "exact phrase" OR term1 OR term2
+            core_terms = keywords[:5]  # Limit to top concepts
+            lucene_parts = [f'"{term}"' for term in core_terms]
+            lucene_query = " OR ".join(lucene_parts)
+
+            # Use full-text index if available, fallback to CONTAINS
+            query = """
+            CALL db.index.fulltext.queryNodes('chunk_content', $lucene_query)
+            YIELD node as c, score
+            MATCH (b:Book)-[:HAS_CHUNK]->(c)
+            WHERE b.calibre_id IN $source_ids
+            RETURN b.calibre_id as source_id,
+                   b.title as source_title,
+                   c.text as text,
+                   c.id as chunk_id,
+                   score
+            ORDER BY score DESC
+            LIMIT $max_segments
+            """
+
+            results = await Neo4jClient.execute_query(
+                query,
+                {
+                    "lucene_query": lucene_query,
+                    "source_ids": [int(sid) if sid.isdigit() else sid for sid in source_ids],
+                    "max_segments": max_segments,
+                }
+            )
+
+            segments = [
+                {
+                    "source_id": str(r["source_id"]),
+                    "source_title": r["source_title"],
+                    "text": r["text"],
+                    "chunk_id": r["chunk_id"],
+                    "score": r.get("score", 0.0),
+                }
+                for r in (results or [])
+            ]
+
+            logger.info(f"Full-text search found {len(segments)} segments for {len(keywords)} keywords")
+            return segments
+
+        except Exception as e:
+            # Fallback to simple CONTAINS search if full-text index doesn't exist
+            logger.warning(f"Full-text search failed: {e}, falling back to CONTAINS")
+            return await cls._search_segments_fallback(keywords, source_ids, max_segments)
+
+    @classmethod
+    async def _search_segments_fallback(
+        cls,
+        keywords: list[str],
+        source_ids: list[str],
+        max_segments: int,
+    ) -> list[dict]:
+        """Fallback search using CONTAINS (for when full-text index unavailable)."""
         keyword_conditions = " OR ".join(
             [f"toLower(c.text) CONTAINS toLower('{kw}')" for kw in keywords[:10]]
         )
@@ -181,6 +327,7 @@ class ExtractionEngine:
         query = f"""
         MATCH (b:Book)-[:HAS_CHUNK]->(c:Chunk)
         WHERE ({keyword_conditions})
+          AND b.calibre_id IN $source_ids
         RETURN b.calibre_id as source_id, b.title as source_title,
                c.text as text, c.id as chunk_id
         LIMIT $max_segments
@@ -188,7 +335,11 @@ class ExtractionEngine:
 
         try:
             results = await Neo4jClient.execute_query(
-                query, {"max_segments": max_segments}
+                query,
+                {
+                    "source_ids": [int(sid) if sid.isdigit() else sid for sid in source_ids],
+                    "max_segments": max_segments,
+                }
             )
             return [
                 {
@@ -196,11 +347,12 @@ class ExtractionEngine:
                     "source_title": r["source_title"],
                     "text": r["text"],
                     "chunk_id": r["chunk_id"],
+                    "score": 0.0,
                 }
                 for r in (results or [])
             ]
         except Exception as e:
-            logger.error(f"Segment search failed: {e}")
+            logger.error(f"Fallback segment search failed: {e}")
             return []
 
     @classmethod
@@ -243,7 +395,7 @@ Segments:
 Return as JSON:
 {
   "concepts": ["concept1", "concept2"],
-  "relationships": [{"source": "A", "target": "B", "type": "enables"}],
+  "relationships": [{"source": "A", "target": "B", "type": "enables", "evidence": "quote"}],
   "questions": ["New question 1?"]
 }
 """
@@ -280,6 +432,119 @@ Return as JSON:
             sources_processed=len(set(s.get("source_id", "") for s in segments)),
             segments_analyzed=len(segments),
         )
+
+    @classmethod
+    async def _persist_to_knowledge_graph(
+        cls,
+        result: ExtractionResult,
+        context_id: str,
+    ) -> None:
+        """Persist extracted entities and relationships to Neo4j knowledge graph.
+
+        Args:
+            result: Extraction result with concepts and relationships
+            context_id: Context this extraction ran within
+        """
+        if not result.concepts_found and not result.relations_found:
+            return
+
+        try:
+            # Create/update concept nodes
+            for concept_name in result.concepts_found:
+                query = """
+                MERGE (c:Concept {name: $name})
+                ON CREATE SET
+                    c.created_at = datetime(),
+                    c.description = '',
+                    c.linked_contexts = [$context_id]
+                ON MATCH SET
+                    c.linked_contexts = CASE
+                        WHEN NOT $context_id IN c.linked_contexts
+                        THEN c.linked_contexts + $context_id
+                        ELSE c.linked_contexts
+                    END
+                RETURN c.name as name
+                """
+                await Neo4jClient.execute_write(
+                    query,
+                    {"name": concept_name, "context_id": context_id}
+                )
+
+            logger.info(f"Persisted {len(result.concepts_found)} concepts to knowledge graph")
+
+            # Create relationships between concepts
+            for rel in result.relations_found:
+                source = rel.get("source")
+                target = rel.get("target")
+                rel_type = rel.get("type", "RELATED_TO").upper().replace(" ", "_")
+                evidence = rel.get("evidence", "")
+
+                if not source or not target:
+                    continue
+
+                query = f"""
+                MATCH (a:Concept {{name: $source}})
+                MATCH (b:Concept {{name: $target}})
+                MERGE (a)-[r:{rel_type}]->(b)
+                ON CREATE SET
+                    r.created_at = datetime(),
+                    r.evidence = $evidence,
+                    r.context_id = $context_id
+                RETURN type(r) as rel_type
+                """
+                try:
+                    await Neo4jClient.execute_write(
+                        query,
+                        {
+                            "source": source,
+                            "target": target,
+                            "evidence": evidence,
+                            "context_id": context_id,
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to create relationship {source}->{target}: {e}")
+
+            logger.info(f"Persisted {len(result.relations_found)} relationships to knowledge graph")
+
+        except Exception as e:
+            logger.error(f"Failed to persist to knowledge graph: {e}")
+
+    @classmethod
+    async def _create_subquestions(
+        cls,
+        questions: list[str],
+        context_id: str,
+        parent_question_id: str | None,
+    ) -> None:
+        """Create AI-generated subquestions and save to QuestionService.
+
+        Args:
+            questions: List of question texts to create
+            context_id: Context these questions belong to
+            parent_question_id: Optional parent question ID
+        """
+        if not questions:
+            return
+
+        try:
+            question_service = QuestionService()
+            created_count = 0
+
+            for question_text in questions:
+                question_create = QuestionCreate(
+                    context_id=context_id,
+                    text=question_text,
+                    source=QuestionSource.AI_SUGGESTED,
+                    parent_question_id=parent_question_id,
+                )
+                await question_service.create(question_create)
+                created_count += 1
+
+            logger.info(f"Created {created_count} AI-generated subquestions")
+
+        except Exception as e:
+            logger.error(f"Failed to create subquestions: {e}")
 
     @classmethod
     async def _log_extraction_journey(

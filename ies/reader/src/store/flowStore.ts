@@ -5,6 +5,16 @@ import {
   type JourneyStep,
   type ReadingPosition,
 } from '../services';
+import { visitApi } from '../services/visitApi';
+import { timelineApi } from '../services/timelineApi';
+import { questionApi } from '../services/questionApi';
+import type {
+  NewItemsSummary,
+  NewItemsDetailResponse,
+  JourneyTimelineResponse,
+  PassageRankingResponse,
+  VisitScope,
+} from '../types/api';
 
 interface Journey {
   path: JourneyStep[];
@@ -62,6 +72,29 @@ interface FlowStore {
   resumeSession: (sessionId: string) => Promise<ExplorationSession | null>;
   setReadingPosition: (position: ReadingPosition) => void;
   getActiveSessions: () => Promise<ExplorationSession[]>;
+
+  // P1: Visit tracking (What's New)
+  newItemsSummary: NewItemsSummary | null;
+  newItemsDetail: NewItemsDetailResponse | null;
+  isLoadingNewItems: boolean;
+  recordVisit: (scope: VisitScope, scopeId: string) => Promise<void>;
+  fetchNewItemsSummary: (scope: VisitScope, scopeId: string) => Promise<void>;
+  fetchNewItemsDetail: (scope: VisitScope, scopeId: string, limit?: number) => Promise<void>;
+  clearNewItems: () => void;
+
+  // P1: Relevant passages
+  relevantPassages: PassageRankingResponse | null;
+  isLoadingPassages: boolean;
+  fetchRelevantPassages: (questionId: string, maxPassages?: number) => Promise<void>;
+  clearRelevantPassages: () => void;
+
+  // P2: Journey timeline
+  journeyTimeline: JourneyTimelineResponse | null;
+  isLoadingTimeline: boolean;
+  activePanelTab: 'explore' | 'timeline';
+  setActivePanelTab: (tab: 'explore' | 'timeline') => void;
+  fetchTimeline: (contextId?: string, grouping?: string) => Promise<void>;
+  clearTimeline: () => void;
 }
 
 export const useFlowStore = create<FlowStore>((set, get) => ({
@@ -210,4 +243,99 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       return [];
     }
   },
+
+  // P1: Visit tracking (What's New)
+  newItemsSummary: null,
+  newItemsDetail: null,
+  isLoadingNewItems: false,
+
+  recordVisit: async (scope: VisitScope, scopeId: string) => {
+    const { userId } = get();
+    try {
+      await visitApi.recordVisit({
+        user_id: userId || 'default_user',
+        scope,
+        scope_id: scopeId,
+      });
+    } catch (error) {
+      console.error('Failed to record visit:', error);
+    }
+  },
+
+  fetchNewItemsSummary: async (scope: VisitScope, scopeId: string) => {
+    const { userId } = get();
+    set({ isLoadingNewItems: true });
+    try {
+      const summary = await visitApi.getNewItemsSummary(
+        scope,
+        scopeId,
+        userId || 'default_user'
+      );
+      set({ newItemsSummary: summary, isLoadingNewItems: false });
+    } catch (error) {
+      console.error('Failed to fetch new items summary:', error);
+      set({ isLoadingNewItems: false });
+    }
+  },
+
+  fetchNewItemsDetail: async (scope: VisitScope, scopeId: string, limit = 50) => {
+    const { userId } = get();
+    set({ isLoadingNewItems: true });
+    try {
+      const detail = await visitApi.getNewItemsDetail({
+        user_id: userId || 'default_user',
+        scope,
+        scope_id: scopeId,
+        limit,
+      });
+      set({ newItemsDetail: detail, isLoadingNewItems: false });
+    } catch (error) {
+      console.error('Failed to fetch new items detail:', error);
+      set({ isLoadingNewItems: false });
+    }
+  },
+
+  clearNewItems: () => set({ newItemsSummary: null, newItemsDetail: null }),
+
+  // P1: Relevant passages
+  relevantPassages: null,
+  isLoadingPassages: false,
+
+  fetchRelevantPassages: async (questionId: string, maxPassages = 10) => {
+    set({ isLoadingPassages: true });
+    try {
+      const passages = await questionApi.getRelevantPassages(questionId, {
+        max_passages: maxPassages,
+        min_score: 0.1,
+      });
+      set({ relevantPassages: passages, isLoadingPassages: false });
+    } catch (error) {
+      console.error('Failed to fetch relevant passages:', error);
+      set({ isLoadingPassages: false });
+    }
+  },
+
+  clearRelevantPassages: () => set({ relevantPassages: null }),
+
+  // P2: Journey timeline
+  journeyTimeline: null,
+  isLoadingTimeline: false,
+  activePanelTab: 'explore',
+
+  setActivePanelTab: (tab: 'explore' | 'timeline') => set({ activePanelTab: tab }),
+
+  fetchTimeline: async (contextId?: string, grouping = 'by_day') => {
+    set({ isLoadingTimeline: true });
+    try {
+      const timeline = contextId
+        ? await timelineApi.getContextTimeline(contextId, grouping as any)
+        : await timelineApi.getTimeline({ grouping: grouping as any });
+      set({ journeyTimeline: timeline, isLoadingTimeline: false });
+    } catch (error) {
+      console.error('Failed to fetch timeline:', error);
+      set({ isLoadingTimeline: false });
+    }
+  },
+
+  clearTimeline: () => set({ journeyTimeline: null }),
 }));

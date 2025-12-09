@@ -4,6 +4,8 @@
  * Connects to the IES backend to sync questions with the Context + Question layer.
  */
 
+import type { PassageRankingRequest, PassageRankingResponse } from '../types/api';
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 
 export interface Question {
@@ -184,6 +186,32 @@ class QuestionApiClient {
 
     if (!res.ok) {
       throw new Error(`Failed to create answer: ${res.statusText}`);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Get relevant passages for a question (P1 feature).
+   *
+   * Returns ranked passages from books based on question content.
+   */
+  async getRelevantPassages(
+    questionId: string,
+    params?: PassageRankingRequest
+  ): Promise<PassageRankingResponse> {
+    const searchParams = new URLSearchParams();
+    if (params?.max_passages) searchParams.set('max_passages', String(params.max_passages));
+    if (params?.min_score) searchParams.set('min_score', String(params.min_score));
+    if (params?.source_ids) {
+      params.source_ids.forEach((id) => searchParams.append('source_ids', id));
+    }
+
+    const url = `${this.baseUrl}/questions/${questionId}/rank-passages?${searchParams.toString()}`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch relevant passages: ${res.statusText}`);
     }
 
     return res.json();

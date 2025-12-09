@@ -1,0 +1,240 @@
+.relevant-passages-section {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.relevant-passages-section__header {
+  margin-bottom: 16px;
+}
+
+.relevant-passages-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.relevant-passages-section__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background-color: #8b5cf6;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.relevant-passages-section__keywords {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.relevant-passages-section__keyword {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 500;
+}
+
+.relevant-passages-section__keyword-more {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.relevant-passages-section__loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.relevant-passages-section__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: relevant-passages-spin 0.6s linear infinite;
+}
+
+@keyframes relevant-passages-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.relevant-passages-section__empty {
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.relevant-passages-section__empty p {
+  margin: 0 0 8px 0;
+}
+
+.relevant-passages-section__hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Passage List */
+
+.relevant-passages-section__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Passage Card */
+
+.passage-card {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: white;
+  transition: border-color 0.15s ease;
+}
+
+.passage-card:hover {
+  border-color: #d1d5db;
+}
+
+.passage-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.passage-card__source {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.passage-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.passage-card__author {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.passage-card__location {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.passage-card__relevance {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background-color: #8b5cf6;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.passage-card__text {
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+/* Meta */
+
+.passage-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.passage-card__matches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.passage-card__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.passage-card__tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.passage-card__tag--keyword {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.passage-card__tag--concept {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+
+/* Actions */
+
+.passage-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.passage-card__btn {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.passage-card__btn:hover {
+  background-color: #f9fafb;
+}
+
+.passage-card__btn--primary {
+  border-color: #8b5cf6;
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.passage-card__btn--primary:hover {
+  background-color: #7c3aed;
+}
