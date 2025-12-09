@@ -3,10 +3,10 @@
 Tracks active session state (context, question, reading position) across
 IES Reader and SiYuan plugin to enable seamless transitions.
 
-Uses in-memory storage (MVP). Will migrate to Redis later for
-multi-instance support and persistence.
+Uses Redis for persistent storage and multi-instance support.
 """
 
+import json
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -19,27 +19,56 @@ from ..schemas.session_state import (
     HeartbeatRequest,
     HeartbeatResponse,
 )
+from .redis_client import redis_client
 
 
 class SessionStateService:
     """Service for cross-app session state management.
 
     Maintains active session state and history for each user.
-    In-memory storage (MVP) - will migrate to Redis for production.
+    Uses Redis for persistence across restarts and multi-instance deployments.
     """
 
     # Session timeout: 30 minutes of inactivity = session considered inactive
     SESSION_TIMEOUT = timedelta(minutes=30)
 
+    # Session TTL in Redis: 24 hours (auto-cleanup of abandoned sessions)
+    SESSION_TTL_SECONDS = 24 * 60 * 60
+
     # History retention: Keep last N state changes per user
     MAX_HISTORY_PER_USER = 100
 
-    def __init__(self):
-        # In-memory store: user_id -> SessionState
-        self._states: dict[str, SessionState] = {}
+    # Redis key prefixes
+    STATE_KEY_PREFIX = "ies:session:state:"
+    HISTORY_KEY_PREFIX = "ies:session:history:"
 
-        # In-memory history: user_id -> list[SessionStateHistory] (newest first)
-        self._history: dict[str, list[SessionStateHistory]] = {}
+    def __init__(self):
+        """Initialize service (connection happens lazily)."""
+        pass
+
+    def _state_key(self, user_id: str) -> str:
+        """Get Redis key for user's session state."""
+        return f"{self.STATE_KEY_PREFIX}{user_id}"
+
+    def _history_key(self, user_id: str) -> str:
+        """Get Redis key for user's history list."""
+        return f"{self.HISTORY_KEY_PREFIX}{user_id}"
+
+    def _serialize_state(self, state: SessionState) -> str:
+        """Serialize session state to JSON."""
+        return state.model_dump_json()
+
+    def _deserialize_state(self, data: str) -> SessionState:
+        """Deserialize session state from JSON."""
+        return SessionState.model_validate_json(data)
+
+    def _serialize_history_entry(self, entry: SessionStateHistory) -> str:
+        """Serialize history entry to JSON."""
+        return entry.model_dump_json()
+
+    def _deserialize_history_entry(self, data: str) -> SessionStateHistory:
+        """Deserialize history entry from JSON."""
+        return SessionStateHistory.model_validate_json(data)
 
     async def get_state(self, user_id: str) -> Optional[SessionState]:
         """Get current session state for a user.
@@ -50,7 +79,11 @@ class SessionStateService:
         Returns:
             Current session state or None if user has no active session
         """
-        return self._states.get(user_id)
+        client = await redis_client.get_client()
+        data = await client.get(self._state_key(user_id))
+        if data is None:
+            return None
+        return self._deserialize_state(data)
 
     async def update_state(
         self,
@@ -70,9 +103,10 @@ class SessionStateService:
             Updated session state
         """
         now = datetime.utcnow()
+        client = await redis_client.get_client()
 
         # Get or create session state
-        state = self._states.get(user_id)
+        state = await self.get_state(user_id)
         if state is None:
             # Create new session state
             state = SessionState(
@@ -81,7 +115,6 @@ class SessionStateService:
                 created_at=now,
                 updated_at=now,
             )
-            self._states[user_id] = state
 
         # Track what changed for history
         change_type: Optional[str] = None
@@ -112,6 +145,13 @@ class SessionStateService:
         state.last_activity_at = now
         state.updated_at = now
 
+        # Save to Redis with TTL
+        await client.setex(
+            self._state_key(user_id),
+            self.SESSION_TTL_SECONDS,
+            self._serialize_state(state),
+        )
+
         # Record to history if something changed
         if change_type:
             await self._record_history(
@@ -138,9 +178,10 @@ class SessionStateService:
             Response with updated timestamp and session active status
         """
         now = datetime.utcnow()
+        client = await redis_client.get_client()
 
         # Get or create session state
-        state = self._states.get(request.user_id)
+        state = await self.get_state(request.user_id)
         if state is None:
             state = SessionState(
                 user_id=request.user_id,
@@ -148,10 +189,16 @@ class SessionStateService:
                 created_at=now,
                 updated_at=now,
             )
-            self._states[request.user_id] = state
         else:
             state.last_activity_at = now
             state.updated_at = now
+
+        # Save to Redis with TTL refresh
+        await client.setex(
+            self._state_key(request.user_id),
+            self.SESSION_TTL_SECONDS,
+            self._serialize_state(state),
+        )
 
         # Check if session is still active (within timeout window)
         session_active = (now - state.last_activity_at) < self.SESSION_TIMEOUT
@@ -176,12 +223,24 @@ class SessionStateService:
         Returns:
             List of recent session state changes (newest first)
         """
-        history_entries = self._history.get(user_id, [])
+        client = await redis_client.get_client()
+        history_key = self._history_key(user_id)
+
+        # Get total count
+        total = await client.llen(history_key)
+
+        # Get entries (stored newest first)
+        raw_entries = await client.lrange(history_key, 0, limit - 1)
+
+        history_entries = [
+            self._deserialize_history_entry(entry)
+            for entry in raw_entries
+        ]
 
         return SessionStateHistoryResponse(
             user_id=user_id,
-            history=history_entries[:limit],
-            total=len(history_entries),
+            history=history_entries,
+            total=total,
         )
 
     async def clear_state(self, user_id: str) -> bool:
@@ -195,7 +254,7 @@ class SessionStateService:
         Returns:
             True if state existed and was cleared, False otherwise
         """
-        state = self._states.get(user_id)
+        state = await self.get_state(user_id)
         if state is None:
             return False
 
@@ -209,8 +268,9 @@ class SessionStateService:
             timestamp=datetime.utcnow(),
         )
 
-        # Clear state
-        del self._states[user_id]
+        # Clear state from Redis
+        client = await redis_client.get_client()
+        await client.delete(self._state_key(user_id))
         return True
 
     async def is_session_active(self, user_id: str) -> bool:
@@ -222,7 +282,7 @@ class SessionStateService:
         Returns:
             True if session is active, False otherwise
         """
-        state = self._states.get(user_id)
+        state = await self.get_state(user_id)
         if state is None:
             return False
 
@@ -257,16 +317,17 @@ class SessionStateService:
             change_type=change_type,
         )
 
-        # Get or create history list
-        if user_id not in self._history:
-            self._history[user_id] = []
+        client = await redis_client.get_client()
+        history_key = self._history_key(user_id)
 
-        # Add to front (newest first)
-        self._history[user_id].insert(0, history_entry)
+        # Add to front of list (LPUSH for newest first)
+        await client.lpush(history_key, self._serialize_history_entry(history_entry))
 
         # Trim to max history length
-        if len(self._history[user_id]) > self.MAX_HISTORY_PER_USER:
-            self._history[user_id] = self._history[user_id][:self.MAX_HISTORY_PER_USER]
+        await client.ltrim(history_key, 0, self.MAX_HISTORY_PER_USER - 1)
+
+        # Set TTL on history (same as session)
+        await client.expire(history_key, self.SESSION_TTL_SECONDS)
 
     async def clear_all_states(self) -> int:
         """Clear all session states (for testing).
@@ -274,9 +335,13 @@ class SessionStateService:
         Returns:
             Number of states cleared
         """
-        count = len(self._states)
-        self._states.clear()
-        return count
+        client = await redis_client.get_client()
+        keys = []
+        async for key in client.scan_iter(f"{self.STATE_KEY_PREFIX}*"):
+            keys.append(key)
+        if keys:
+            await client.delete(*keys)
+        return len(keys)
 
     async def clear_all_history(self) -> int:
         """Clear all history (for testing).
@@ -284,6 +349,10 @@ class SessionStateService:
         Returns:
             Number of users whose history was cleared
         """
-        count = len(self._history)
-        self._history.clear()
-        return count
+        client = await redis_client.get_client()
+        keys = []
+        async for key in client.scan_iter(f"{self.HISTORY_KEY_PREFIX}*"):
+            keys.append(key)
+        if keys:
+            await client.delete(*keys)
+        return len(keys)
