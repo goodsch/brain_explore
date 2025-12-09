@@ -42,7 +42,7 @@ function getComputedBackendUrl(): string {
     if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
         _backendUrl = `http://${window.location.hostname}:8081`;
     } else {
-        _backendUrl = 'http://localhost:8081';
+        _backendUrl = 'http://192.168.86.60:8081';
     }
     console.log('[IES-chat] Computed backend URL:', _backendUrl);
     return _backendUrl;

@@ -11,6 +11,8 @@
 
     import ReframesTab from '../components/ReframesTab.svelte';
     import EvidenceSection from '../components/EvidenceSection.svelte';
+    import QuestionsSection from '../components/QuestionsSection.svelte';
+    import ClarificationDialog from '../components/ClarificationDialog.svelte';
     import AddFacetForm from '../components/AddFacetForm.svelte';
     import { saveJourney, type JourneyData } from '../utils/siyuan-structure';
     import { getBlockKramdown, exportMdContent } from '../api';
@@ -131,6 +133,11 @@
     let isLoadingEntity = false;
     let isLoadingFacet = false;
     let showAddEntityForm = false;
+
+    // Sprint 4: Clarification dialog state
+    let showClarificationDialog = false;
+    let clarificationEntityName = '';
+    let clarificationUserGoal = '';
 
     // Reset add form when leaving facet view
     $: if (focusState !== 'facet') {
@@ -433,6 +440,58 @@
                 data: { contextId: savedContextId }
             });
         }
+    }
+
+    // ========== Clarification Dialog Handlers (Sprint 4) ==========
+    function openClarificationDialog(entityName: string, userGoal: string = '') {
+        clarificationEntityName = entityName;
+        clarificationUserGoal = userGoal;
+        showClarificationDialog = true;
+    }
+
+    function handleClarificationProceed(event: CustomEvent) {
+        const { entityName, userResponse, selectedFacets, clarification } = event.detail;
+        showClarificationDialog = false;
+
+        // Navigate to entity with clarification context
+        // The selectedFacets can be used to filter or prioritize facet display
+        console.log('[FlowMode] Clarification proceed:', {
+            entityName,
+            userResponse,
+            selectedFacets,
+            clarification
+        });
+
+        // Navigate to the entity
+        navigateToEntity(entityName);
+
+        // Optionally show a message about focused exploration
+        if (selectedFacets && selectedFacets.length > 0) {
+            showMessage(`Exploring ${entityName} with focus on: ${selectedFacets.join(', ')}`, 3000);
+        }
+    }
+
+    function handleClarificationSkip(event: CustomEvent) {
+        const { entityName } = event.detail;
+        showClarificationDialog = false;
+
+        // Navigate directly without clarification
+        navigateToEntity(entityName);
+    }
+
+    function handleClarificationClose() {
+        showClarificationDialog = false;
+        clarificationEntityName = '';
+        clarificationUserGoal = '';
+    }
+
+    function handleClarificationNavigate(event: CustomEvent) {
+        const { entityName } = event.detail;
+        // Close the current dialog and open for the prerequisite
+        showClarificationDialog = false;
+
+        // Navigate to the prerequisite concept
+        openClarificationDialog(entityName);
     }
 
     onMount(() => {
@@ -1080,6 +1139,17 @@
                 <div class="entity-focus-header">
                     <div class="entity-type-badge">{focusedEntity.type}</div>
                     <h3 class="entity-name">{focusedEntity.name}</h3>
+                    <!-- Clarify Button (Sprint 4) -->
+                    <button
+                        class="btn btn--clarify"
+                        on:click={() => openClarificationDialog(focusedEntity.name)}
+                        title="Get guided clarification before exploring facets"
+                    >
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <path fill="currentColor" d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
+                        </svg>
+                        Clarify
+                    </button>
                 </div>
 
                 <!-- Resume in Reader Button -->
@@ -1147,6 +1217,9 @@
 
                 <!-- Evidence Section (Sprint 2) -->
                 <EvidenceSection entityName={focusedEntity.name} {backendUrl} />
+
+                <!-- Questions Section (Sprint 4) -->
+                <QuestionsSection entityName={focusedEntity.name} {backendUrl} />
             </div>
         </div>
     {/if}
@@ -1453,6 +1526,9 @@
 
                         <!-- Evidence Section (Sprint 2) -->
                         <EvidenceSection entityName={focusedEntity.name} {backendUrl} />
+
+                        <!-- Questions Section (Sprint 4) -->
+                        <QuestionsSection entityName={focusedEntity.name} {backendUrl} />
                     {/if}
 
                     <!-- Back to Question Button -->
@@ -1544,6 +1620,18 @@
             <p class="state-text">Restoring your exploration path</p>
         </div>
     {/if}
+
+    <!-- Clarification Dialog (Sprint 4) -->
+    <ClarificationDialog
+        entityName={clarificationEntityName}
+        {backendUrl}
+        userGoal={clarificationUserGoal}
+        isOpen={showClarificationDialog}
+        on:proceed={handleClarificationProceed}
+        on:skip={handleClarificationSkip}
+        on:close={handleClarificationClose}
+        on:navigateToEntity={handleClarificationNavigate}
+    />
 </div>
 
 <style>
@@ -2345,6 +2433,37 @@
         font-size: var(--text-xl);
         font-weight: var(--font-bold);
         color: var(--text-primary);
+    }
+
+    /* Clarify Button (Sprint 4) */
+    .btn--clarify {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-2);
+        margin-top: var(--space-2);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        font-size: var(--text-xs);
+        cursor: pointer;
+        transition: var(--transition-all);
+        width: fit-content;
+    }
+
+    .btn--clarify:hover {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+
+    .btn--clarify svg {
+        opacity: 0.7;
+    }
+
+    .btn--clarify:hover svg {
+        opacity: 1;
     }
 
     .entity-focus .entity-description {
