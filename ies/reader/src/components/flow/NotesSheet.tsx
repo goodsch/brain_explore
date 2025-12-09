@@ -34,10 +34,10 @@ export function NotesSheet({ isOpen, onClose, initialNoteData }: Props) {
     // If no journey is active, this might need handling, but we assume flow is somewhat active
     if (currentEntity) {
       addJourneyMark({
-        type: noteType === 'question' ? 'question' : 'annotation', // Simplified mapping
-        entityId: currentEntity.id,
-        content: `[${noteType.toUpperCase()}] ${noteInput}`,
-        // Assuming currentBookId and selectedText are available from a broader context or props if needed
+        entity_id: currentEntity.id,
+        entity_name: currentEntity.name,
+        timestamp: new Date().toISOString(),
+        source_passage: `[${noteType.toUpperCase()}] ${noteInput}`,
       });
     } else {
       // Fallback if no entity - maybe just log or add to a general note store?

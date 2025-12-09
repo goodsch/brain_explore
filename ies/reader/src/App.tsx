@@ -29,6 +29,27 @@ function App() {
     login();
   }, [setUserId]);
 
+  // Session management: Check for active sessions on app load
+  const { getActiveSessions } = useFlowStore();
+  useEffect(() => {
+    async function checkActiveSessions() {
+      if (!useFlowStore.getState().userId) return;
+
+      try {
+        const sessions = await getActiveSessions();
+        if (sessions.length > 0) {
+          console.log('[App] Found active sessions:', sessions.length);
+          // TODO: Show resume dialog to user
+          // For now, just log - user can manually resume if needed
+        }
+      } catch (error) {
+        console.error('[App] Failed to check active sessions:', error);
+      }
+    }
+
+    checkActiveSessions();
+  }, [getActiveSessions]);
+
   const handleBookSelect = useCallback((book: CalibreBook) => {
     setCurrentBook({
       title: book.title,
@@ -45,7 +66,11 @@ function App() {
     });
   }, []);
 
-  const closeBook = useCallback(() => {
+  const closeBook = useCallback(async () => {
+    // Pause session before closing
+    const { pauseSession } = useFlowStore.getState();
+    await pauseSession();
+
     if (currentBook?.url.startsWith('blob:')) {
       URL.revokeObjectURL(currentBook.url);
     }

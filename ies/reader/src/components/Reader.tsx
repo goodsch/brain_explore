@@ -94,6 +94,9 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
     setSyncStatus,
     newItemsSummary,
     isLoadingNewItems,
+    createSession,
+    setReadingPosition,
+    currentEntity,
   } = useFlowStore();
   const { lookupEntity } = useEntityLookup();
 
@@ -140,10 +143,29 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
   // Apply entity highlighting to epub content
   useEntityHighlighter(rendition);
 
+  // Update session when current entity changes
+  const updateSession = useFlowStore((state) => state.updateSession);
+  const currentSessionId = useFlowStore((state) => state.currentSessionId);
+  useEffect(() => {
+    if (currentSessionId && currentEntity) {
+      console.log('[Reader] Entity changed, updating session:', currentEntity.name);
+      updateSession();
+    }
+  }, [currentEntity, currentSessionId, updateSession]);
+
   // Handle location changes
   const locationChanged = useCallback((epubcfi: string) => {
     setLocation(epubcfi);
-  }, []);
+
+    // Update reading position in session
+    if (calibreId) {
+      setReadingPosition({
+        book_hash: String(calibreId), // Using calibreId as hash for now
+        calibre_id: calibreId,
+        cfi: epubcfi,
+      });
+    }
+  }, [calibreId, setReadingPosition]);
 
 interface IFrameContents {
   window: Window & {
@@ -255,8 +277,15 @@ interface IFrameContents {
 
       // Start journey when book opens
       startJourney(title, calibreId);
+
+      // Create exploration session
+      createSession().then(session => {
+        if (session) {
+          console.log('[Reader] Session created:', session.id);
+        }
+      });
     },
-    [lookupEntity, startJourney, title, calibreId, getSelectionPosition]
+    [lookupEntity, startJourney, title, calibreId, getSelectionPosition, createSession]
   );
 
   // Toggle Flow panel

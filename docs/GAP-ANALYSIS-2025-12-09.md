@@ -18,7 +18,7 @@ The `redux/` directory contains detailed specifications for the Context + Questi
 3. **What's missing** — Features not yet started
 4. **Priority recommendations** — What to build next
 
-**Overall Status:** ~90% of redux specifications implemented (updated Dec 9 — P0 complete: Extraction Engine + UI buttons)
+**Overall Status:** ~95% of redux specifications implemented (updated Dec 9 — Pass 2/3 Enrichment complete)
 
 ---
 
@@ -122,6 +122,7 @@ ExtractionProfile schema implemented with full support for context-aware extract
 - ✅ IES Reader: `flowStore.ts` extraction state and actions
 - ✅ IES Reader: `FlowPanel.tsx` integration with context-aware button
 - ✅ SiYuan Plugin: Extraction button in FlowMode with full results display (lines 1413-1479, 2089-2233)
+- ✅ SiYuan Plugin: `extractionApi.ts` client for extraction API (Dec 9 — forwardProxy pattern)
 
 **Features:**
 - Button appears when context is active
@@ -435,28 +436,68 @@ ExtractionProfile schema implemented with full support for context-aware extract
 
 ## Recommended Next Sprint
 
-### Sprint Focus: Pass 2/3 Enrichment Pipeline
+### Sprint Focus: Cross-App Continuity (IES Reader ↔ SiYuan Sync)
 
-**Goal:** Enhance book metadata with relationship extraction and LLM enrichment.
+**Goal:** Enable seamless state sharing and session continuity between IES Reader and SiYuan plugin.
 
 **Tasks:**
 
-1. **Pass 2 Enrichment** (Backend)
-   - Implement relationship extraction in ingestion pipeline
-   - Extract causal relationships (CAUSES, ENABLES)
-   - Extract component relationships (PART_OF)
-   - Extract contrast relationships (CONTRASTS_WITH)
-   - Status: `entities_extracted → relationships_mapped`
+1. **Context Sync** (Backend + Frontend)
+   - Sync active context between Reader and SiYuan
+   - Persist current question selection across apps
+   - Share extraction profiles bidirectionally
 
-3. **Pass 3 Enrichment** (Backend)
-   - Integrate Reframe API for concept enrichment
-   - Generate mechanisms and patterns
-   - Add rich descriptions via LLM
-   - Status: `relationships_mapped → enriched`
+2. **Reading Position Sync** (Backend + Frontend)
+   - Track current book/location in Reader
+   - Display "Resume Reading" in SiYuan for active books
+   - Sync CFI positions for jump-back navigation
+
+3. **Journey Continuity** (Backend + Frontend)
+   - Share journey entries across both apps
+   - Enable "Continue Exploration" from either app
+   - Unified breadcrumb trail spanning Reader and SiYuan sessions
+
+4. **State Management** (Backend)
+   - Session state API for active context/book/question
+   - WebSocket or polling for real-time sync (optional)
+   - State persistence and recovery
 
 ---
 
 ## Completed in Recent Sprints
+
+### ~~Sprint: Pass 2/3 Enrichment Pipeline~~ ✅ COMPLETE (Dec 9)
+
+**Pass 2 - Relationship Extraction:**
+- RelationshipExtractor service (385 lines) with LLM-based extraction via OpenAI GPT-4o-mini
+- Three core relationship types: CAUSES (causal/enabling), PART_OF (hierarchical/component), CONTRASTS_WITH (distinctions/comparisons)
+- Confidence scoring, evidence quotes, chunk attribution for all relationships
+- Deduplication logic merges identical relationships, keeping highest confidence
+- Validation against known entities prevents hallucinated relationships
+- pass2_relationships.py CLI script (427 lines) for batch processing books with `status='entities_extracted'`
+- Query entity-rich chunks (2+ entities), extract relationships, deduplicate, store to Neo4j
+- UnifiedGraphClient `add_typed_relationship()` method (lines 424-495) with type validation and metadata
+- Rich console UI with progress bars, status tables, relationship statistics
+- Test coverage: `test_relationship_extractor.py` (535 lines, comprehensive extraction and validation tests)
+
+**Pass 3 - LLM Enrichment:**
+- EnrichmentService (843 lines) orchestrates four enrichment types: Reframes, Mechanisms, Patterns, Rich Descriptions
+- Anthropic Claude Sonnet 4 integration for mechanism/pattern/description extraction
+- Priority-based enrichment: high mention count + central types + missing data = higher priority
+- Rate limiting: 60 calls/minute with automatic backoff
+- Mechanism extraction: Step-by-step process explanations with triggers, outcomes, confidence (ADHD-friendly: short concrete steps)
+- Pattern detection: Cross-domain structural templates (Feedback Loop, Tipping Point, Emergence, Oscillation)
+- Description enhancement: Expands entity descriptions to 2-3 sentences (100-150 words) for non-expert accessibility
+- Stores mechanisms via HAS_MECHANISM relationships, patterns via IS_PATTERN relationships
+- Test coverage: `test_enrichment_service.py` (289 lines, mocked Anthropic API)
+
+**Documentation:**
+- `docs/plans/2025-12-09-pass-2-relationship-extraction.md` (858 lines) — Pass 2 architecture and LLM prompt strategy
+- `docs/plans/2025-12-09-pass-3-llm-enrichment.md` (1,372 lines) — Pass 3 design with prioritization and batch processing
+- `docs/implementation/PASS2_IMPLEMENTATION_SUMMARY.md` (235 lines) — CLI usage and processing pipeline
+- `docs/implementation/pass-3-enrichment-service.md` (598 lines) — EnrichmentService architecture and LLM prompts
+
+**Impact:** Completes multi-pass ingestion pipeline — Pass 1 (entities) → Pass 2 (relationships) → Pass 3 (enrichment) enables deep exploration with high-quality knowledge graph.
 
 ### ~~Sprint: Extraction Engine + Context Note Parser~~ ✅ COMPLETE (Dec 9)
 
