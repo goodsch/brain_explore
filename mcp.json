@@ -23,12 +23,13 @@
     "siyuan-mcp": {
       "type": "stdio",
       "command": "npx",
-      "args": ["siyuan-mcp@latest"],
-      "env": {
-        "SIYUAN_HOST": "192.168.86.60",
-        "SIYUAN_PORT": "6806",
-        "SIYUAN_TOKEN": "4we79so0hs4dmtlm"
-      }
+      "args": [
+        "-y",
+        "@porkll/siyuan-mcp",
+        "stdio",
+        "--token", "8ddw4vp2tokab94y.",
+        "--baseUrl", "http://192.168.86.60:6806"
+      ]
     },
 		"mcp-sequentialthinking-tools": {
 			"command": "npx",

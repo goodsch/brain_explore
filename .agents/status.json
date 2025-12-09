@@ -1,20 +1,40 @@
 {
   "status": "active",
-  "last_update": "2025-12-08T01:52:00Z",
+  "last_update": "2025-12-08T05:30:00Z",
   "agents": {
-    "codex": {
+    "claude": {
       "status": "active",
-      "current_task": "Implement PlanBuilderService Quick Add prompt-to-create (plans/checklists/sparks)",
-      "branch": "feature/ies-reader-enhancement",
-      "last_active": "2025-12-07T20:40:59-05:00",
+      "current_task": "Sprint 1 COMPLETE - Facet Core ready for testing",
+      "branch": "feature/siyuan-evolution",
+      "last_active": "2025-12-08T05:30:00Z",
+      "recent_commits": [
+        "05ffa88 feat(flow): Add 'exists in graph' badge to facet chips",
+        "ce73296 feat(flow): Add trail breadcrumbs to standalone Flow Mode"
+      ]
+    },
+    "codex": {
+      "status": "idle",
+      "current_task": "Completed: Conversation import → learning loop",
+      "branch": "master",
+      "last_active": "2025-12-08T04:01:59Z",
       "recent_commits": []
     },
     "gemini": {
-      "status": "idle",
-      "current_task": "Completed EPUB Beautification; Waiting for instructions",
-      "branch": "feature/ies-reader",
-      "last_active": "2025-12-08T01:52:00Z",
-      "recent_commits": []
+      "status": "waiting_for_review",
+      "current_task": "Completed: IES Reader Wave 3 Mobile Enhancements (Sheet, Notes, FAB, Selection Actions)",
+      "branch": "feature/ies-reader-enhancement",
+      "last_active": "2025-12-08T20:00:00Z",
+      "recent_commits": [
+        "f78c909 feat(reader): implement mobile enhancements - sheet, notes capture, fab, and selection actions",
+        "21c3f43 chore: remove test file"
+      ]
     }
-  }
+  },
+  "sprint_1_status": {
+    "backend": "COMPLETE",
+    "plugin": "COMPLETE",
+    "commits": ["05ffa88", "ce73296"],
+    "completed_at": "2025-12-08T05:30:00Z"
+  },
+  "last_updated": "2025-12-08T05:30:00Z"
 }

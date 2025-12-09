@@ -8,7 +8,7 @@
 
 **Tech Stack:** React, TypeScript, Zustand, Tailwind CSS
 
-**Worktree:** `.worktrees/ies-reader/readest/apps/readest-app/`
+**Worktree:** `.worktrees/ies-reader/ies/reader/`
 
 ---
 
@@ -61,7 +61,7 @@ describe('useFlowLayout', () => {
 **Step 2: Run test to verify it fails**
 
 ```bash
-cd .worktrees/ies-reader/readest/apps/readest-app
+cd .worktrees/ies-reader/ies/reader
 pnpm test src/__tests__/hooks/useFlowLayout.test.ts
 ```
 
@@ -137,7 +137,7 @@ export function useFlowLayout(): FlowLayoutState {
 **Step 4: Run test to verify it passes**
 
 ```bash
-cd .worktrees/ies-reader/readest/apps/readest-app
+cd .worktrees/ies-reader/ies/reader
 pnpm test src/__tests__/hooks/useFlowLayout.test.ts
 ```
 
@@ -223,7 +223,7 @@ describe('flowModeStore - questions', () => {
 **Step 2: Run test to verify it fails**
 
 ```bash
-cd .worktrees/ies-reader/readest/apps/readest-app
+cd .worktrees/ies-reader/ies/reader
 pnpm test src/__tests__/store/flowModeStore.test.ts
 ```
 
@@ -302,7 +302,7 @@ Add actions (~line 195):
 **Step 4: Run test to verify it passes**
 
 ```bash
-cd .worktrees/ies-reader/readest/apps/readest-app
+cd .worktrees/ies-reader/ies/reader
 pnpm test src/__tests__/store/flowModeStore.test.ts
 ```
 
@@ -415,7 +415,7 @@ describe('QuestionSelector', () => {
 **Step 2: Run test to verify it fails**
 
 ```bash
-cd .worktrees/ies-reader/readest/apps/readest-app
+cd .worktrees/ies-reader/ies/reader
 pnpm test src/__tests__/components/QuestionSelector.test.tsx
 ```
 
@@ -622,7 +622,7 @@ export default QuestionSelector;
 **Step 4: Run test to verify it passes**
 
 ```bash
-cd .worktrees/ies-reader/readest/apps/readest-app
+cd .worktrees/ies-reader/ies/reader
 pnpm test src/__tests__/components/QuestionSelector.test.tsx
 ```
 
@@ -881,7 +881,7 @@ function ChatTab() {
 **Step 3: Verify it builds**
 
 ```bash
-cd .worktrees/ies-reader/readest/apps/readest-app
+cd .worktrees/ies-reader/ies/reader
 pnpm build
 ```
 
@@ -965,7 +965,7 @@ export { default as QuestionSelector } from './QuestionSelector';
 **Step 5: Verify it builds and renders**
 
 ```bash
-cd .worktrees/ies-reader/readest/apps/readest-app
+cd .worktrees/ies-reader/ies/reader
 pnpm build && pnpm dev
 ```
 

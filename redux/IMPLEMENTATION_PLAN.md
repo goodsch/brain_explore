@@ -339,31 +339,86 @@ Questions:
 
 ## Implementation Order
 
-### Sprint 1: Facet Core (1-2 weeks)
+### Sprint 1: Facet Core (1-2 weeks) ✅ COMPLETE
 - [x] Backend: `/entities/{id}/facets` endpoint with AI generation
 - [x] Backend: Facet caching (persisted to Neo4j)
 - [x] Backend: Create entity from facet endpoint (`POST /entity`)
-- [ ] Plugin: Facet display component
-- [ ] Plugin: Trail breadcrumbs
+- [x] Plugin: Facet display component (FlowMode.svelte lines 1106, 1403 - clickable chips)
+- [x] Plugin: Trail breadcrumbs (FlowMode.svelte - trailStack, standaloneTrailStack)
 
-### Sprint 2: Evidence (1-2 weeks)
+### Sprint 2: Evidence (1-2 weeks) ✅ COMPLETE
 - [x] Backend: `/entities/{id}/evidence` endpoint (GET /graph/entity/{name}/evidence)
-- [ ] Backend: Evidence extraction queue (Chunk→Entity MENTIONS population)
+- [x] Backend: Evidence extraction queue (Chunk→Entity MENTIONS population) — `scripts/enrich_chunk_evidence.py`
 - [x] Backend: Inverted index queries (two-tier: chunks then book mentions)
-- [ ] Plugin: Evidence panel component
-- [ ] Plugin: "Open in Reader" action
+- [x] Plugin: Evidence panel component (EvidenceSection.svelte - lines 1149, 1455)
+- [x] Plugin: "Open in Reader" action — Deferred (not needed per user feedback)
 
-### Sprint 3: Reader Sync (1-2 weeks)
-- [ ] Backend: Highlight sync endpoint
-- [ ] Backend: Book Note auto-creation
-- [ ] Reader: Export highlights to IES
-- [ ] Plugin: Highlight display in Book Notes
+### Sprint 3: Reader Sync (1-2 weeks) ✅ COMPLETE
+- [x] Backend: Highlight sync endpoint (`/highlights` API with CRUD + batch sync)
+- [x] Backend: Book Note auto-creation (`SiYuanClient.create_book_note()` + auto-append highlights)
+- [x] Reader: Export highlights to IES (`highlightApi.ts` client + Reader integration)
+- [x] Plugin: Highlight display in Book Notes (`HighlightsSection.svelte` + `highlightApi.ts`)
 
-### Sprint 4: Questions (1 week)
+### Sprint 4: Questions + Clarification (1-2 weeks)
 - [ ] Backend: Question extraction from facets
 - [ ] Backend: Question status tracking
+- [ ] Backend: Guided clarification endpoint (pre-decomposition dialogue)
 - [ ] Plugin: Question display in Flow panel
 - [ ] Plugin: "Mark as answered" action
+- [ ] Plugin: Clarification dialogue before facet generation
+
+**Clarification Flow (from System Summary):**
+When user opens a new question/concept for exploration:
+1. Brief dialogue: "What specifically do you want to understand about X?"
+2. AI clarifies: What is being asked, why it matters, what's unclear
+3. Identify prerequisite concepts
+4. Then proceed to facet decomposition
+
+### Sprint 5: Journey Persistence (1-2 weeks)
+- [ ] Backend: Journey export endpoint (`POST /journeys/export`)
+- [ ] Backend: Journey resumption endpoint (`GET /journeys/{id}/resume`)
+- [ ] Plugin: "Save Journey" action in Flow panel
+- [ ] Plugin: Journey browser in `/Flow_Outputs/Journeys/`
+- [ ] Plugin: "Resume Journey" with suggested next steps
+- [ ] SiYuan: Journey document template
+
+**Journey Record Structure:**
+```markdown
+# Journey: Understanding ADHD Physiology
+Date: 2025-12-09
+Starting Question: "How does ADHD affect the brain?"
+
+## Path
+1. ADHD (focus) → decomposed
+2. Physiology (clicked) → decomposed
+3. Dopamine (clicked) → evidence found
+4. Prefrontal Cortex (clicked)
+
+## Sources Consulted
+- "Stolen Focus" (p.42, p.87)
+- "ADHD 2.0" (p.15)
+
+## Insights Captured
+- Connection between dopamine and motivation
+- PFC development differences
+
+## Suggested Next Steps
+- Explore: Executive Function (related to PFC)
+- Question: How does medication affect dopamine?
+```
+
+### Sprint 6: Multi-Source Flow Reader (2-3 weeks) — FUTURE
+- [ ] Reader: Question-driven reading mode
+- [ ] Reader: Cross-book passage navigation by entity
+- [ ] Backend: Multi-source evidence aggregation
+- [ ] Backend: Source recommendation when evidence is thin
+- [ ] Plugin: "Open in Flow Reader" action
+
+**Multi-Source Reading (from System Summary):**
+- Start from question, not book
+- See passages from *multiple* sources organized by entity/sub-question
+- Navigate across books following conceptual threads
+- Recommend new sources when coverage is incomplete
 
 ---
 
@@ -405,6 +460,12 @@ Questions:
 
 5. **No Pre-Planning:** User never has to define structure upfront. It emerges from exploration.
 
+6. **Journey Persistence:** Any exploration session can be saved and resumed later with full context restored.
+
+7. **Clarification Value:** Pre-exploration dialogue surfaces at least 1 prerequisite concept or clarifying question per session.
+
+8. **Multi-Source Navigation (Future):** Given a question, surface relevant passages from 3+ sources in under 5 seconds.
+
 ---
 
 ## Files Superseded by This Plan
@@ -434,3 +495,29 @@ These documents are now consolidated here:
 
 4. **Cost management for LLM calls?**
    - Proposal: Aggressive caching, batch processing, use cheaper models where quality allows.
+
+5. **Journey storage location?**
+   - Proposal: Journey metadata in Neo4j (for graph queries), full document in SiYuan `/Flow_Outputs/Journeys/`.
+
+6. **Source acquisition recommendations?**
+   - Proposal: When evidence coverage is thin, query external APIs (OpenLibrary, arXiv) for suggestions. User confirms before adding to Calibre.
+
+---
+
+## Alignment with System Summary
+
+This plan now incorporates all major workflows from `System_Summary_FULL.md`:
+
+| System Summary Section | Plan Coverage |
+|------------------------|---------------|
+| §2A: Exploring a New Question | Sprint 4 (clarification) + Sprint 1-2 (facets/evidence) |
+| §2A.5: Flow Mode | Sprint 1 (facets) + Sprint 2 (evidence) |
+| §2A.6: Reader Integration | Sprint 3 (highlight sync) + Sprint 6 (multi-source) |
+| §2A.7: Journey Tracking | Sprint 5 (journey persistence) |
+| §2B: Reading With Flow Overlay | Existing entity overlay (complete) |
+| §2C: Reviewing Past Journeys | Sprint 5 (journey browser/resume) |
+
+**Key additions from System Summary review (Dec 9):**
+- Guided clarification dialogue before facet decomposition
+- Journey persistence with resumption
+- Multi-source Flow Reader mode (future phase)
