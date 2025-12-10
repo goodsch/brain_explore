@@ -1,0 +1,205 @@
+/* ============================================
+   INPUT COMPONENT
+   IES Design System v2 — Form Elements
+   ============================================ */
+
+.ies-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ies-input-wrapper--full-width {
+  width: 100%;
+}
+
+.ies-input-label {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.ies-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+/* Sizes */
+.ies-input-container--sm {
+  height: 32px;
+}
+
+.ies-input-container--md {
+  height: 40px;
+}
+
+.ies-input-container--lg {
+  height: 48px;
+}
+
+/* Input element */
+.ies-input {
+  flex: 1;
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.ies-input-container--sm .ies-input {
+  padding: 0 var(--space-3);
+  font-size: 0.875rem;
+}
+
+.ies-input-container--md .ies-input {
+  padding: 0 var(--space-4);
+  font-size: 1rem;
+}
+
+.ies-input-container--lg .ies-input {
+  padding: 0 var(--space-4);
+  font-size: 1.125rem;
+}
+
+/* Adjust padding when icons are present */
+.ies-input-container--with-left-icon .ies-input {
+  padding-left: 0;
+}
+
+.ies-input-container--with-right-icon .ies-input {
+  padding-right: 0;
+}
+
+.ies-input::placeholder {
+  color: var(--text-subtle);
+}
+
+/* Variants */
+.ies-input-container--default:hover:not(.ies-input-container--disabled) {
+  border-color: var(--border-focus);
+  background: var(--bg-hover);
+}
+
+.ies-input-container--default:has(.ies-input:focus) {
+  border-color: var(--border-focus);
+  background: var(--bg-hover);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+.ies-input-container--success {
+  border-color: var(--success);
+}
+
+.ies-input-container--success:hover:not(.ies-input-container--disabled) {
+  background: var(--bg-hover);
+}
+
+.ies-input-container--success:has(.ies-input:focus) {
+  background: var(--bg-hover);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.ies-input-container--error {
+  border-color: var(--error);
+}
+
+.ies-input-container--error:hover:not(.ies-input-container--disabled) {
+  background: var(--bg-hover);
+}
+
+.ies-input-container--error:has(.ies-input:focus) {
+  background: var(--bg-hover);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* Disabled state */
+.ies-input-container--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ies-input-container--disabled .ies-input {
+  cursor: not-allowed;
+}
+
+/* Icons */
+.ies-input-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.ies-input-icon--left {
+  padding-left: var(--space-3);
+  padding-right: var(--space-2);
+}
+
+.ies-input-icon--right {
+  padding-left: var(--space-2);
+  padding-right: var(--space-3);
+}
+
+.ies-input-container--sm .ies-input-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.ies-input-container--md .ies-input-icon,
+.ies-input-container--lg .ies-input-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Helper text */
+.ies-input-helper {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Error message */
+.ies-input-error {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--error);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Autofill styles */
+.ies-input:-webkit-autofill,
+.ies-input:-webkit-autofill:hover,
+.ies-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary);
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-tertiary) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Accessibility - Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .ies-input-container {
+    transition: none;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .ies-input-container--lg {
+    height: 44px;
+  }
+}

@@ -1,0 +1,185 @@
+/* ============================================
+   CHIP COMPONENT
+   IES Design System v2 — Interactive Elements
+   ============================================ */
+
+.ies-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  border-radius: var(--radius-chip);
+  border: 1px solid transparent;
+  cursor: default;
+  transition: all var(--duration-fast) var(--easing-out);
+  position: relative;
+  letter-spacing: var(--font-letter-spacing-normal);
+}
+
+.ies-chip:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Sizes */
+.ies-chip--sm {
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--font-size-xs);
+  line-height: var(--font-line-height-tight);
+  height: 24px;
+}
+
+.ies-chip--sm .ies-chip__icon {
+  width: 12px;
+  height: 12px;
+}
+
+.ies-chip--sm .ies-chip__remove {
+  width: 16px;
+  height: 16px;
+  margin-right: calc(-1 * var(--space-1));
+}
+
+.ies-chip--md {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--font-line-height-tight);
+  height: 32px;
+}
+
+.ies-chip--md .ies-chip__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.ies-chip--md .ies-chip__remove {
+  width: 20px;
+  height: 20px;
+  margin-right: calc(-1 * var(--space-1-5));
+}
+
+/* Variants - Default State */
+.ies-chip--default {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-subtle);
+}
+
+.ies-chip--default.ies-chip--clickable:hover:not(.ies-chip--disabled) {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-default);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.ies-chip--default.ies-chip--clickable:active:not(.ies-chip--disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Variants - Selected State */
+.ies-chip--selected,
+.ies-chip--default.ies-chip--selected {
+  background: rgba(139, 92, 246, 0.2);
+  color: #8b5cf6;
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.ies-chip--selected.ies-chip--clickable:hover:not(.ies-chip--disabled),
+.ies-chip--default.ies-chip--selected.ies-chip--clickable:hover:not(.ies-chip--disabled) {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+}
+
+/* Clickable State */
+.ies-chip--clickable {
+  cursor: pointer;
+}
+
+.ies-chip--clickable:not(.ies-chip--disabled):active {
+  transform: translateY(0);
+}
+
+/* Disabled State */
+.ies-chip--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Icon */
+.ies-chip__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ies-chip__icon--leading {
+  margin-left: calc(-1 * var(--space-1));
+}
+
+/* Label */
+.ies-chip__label {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Remove Button */
+.ies-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: currentColor;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: all var(--duration-instant) var(--easing-out);
+  opacity: 0.7;
+}
+
+.ies-chip__remove:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.ies-chip__remove:active {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.15);
+  transform: scale(0.95);
+}
+
+.ies-chip__remove:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+  opacity: 1;
+}
+
+/* Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .ies-chip,
+  .ies-chip__remove {
+    transition: none;
+  }
+
+  .ies-chip--clickable:hover:not(.ies-chip--disabled) {
+    transform: none;
+  }
+
+  .ies-chip--clickable:active {
+    transform: none;
+  }
+
+  .ies-chip__remove:active {
+    transform: none;
+  }
+}

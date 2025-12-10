@@ -1,0 +1,118 @@
+/* ============================================
+   BADGE COMPONENT
+   IES Design System v2 — Display Elements
+   ============================================ */
+
+.ies-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  border-radius: var(--radius-badge);
+  letter-spacing: var(--font-letter-spacing-wide);
+  border: 1px solid transparent;
+}
+
+/* Sizes */
+.ies-badge--sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  line-height: var(--font-line-height-tight);
+  height: 20px;
+}
+
+.ies-badge--md {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--font-line-height-tight);
+  height: 24px;
+}
+
+/* Semantic Variants */
+.ies-badge--default {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-subtle);
+}
+
+.ies-badge--success {
+  background: var(--color-semantic-success-bg);
+  color: var(--color-semantic-success);
+  border-color: var(--color-semantic-success);
+}
+
+.ies-badge--warning {
+  background: var(--color-semantic-warning-bg);
+  color: var(--color-semantic-warning);
+  border-color: var(--color-semantic-warning);
+}
+
+.ies-badge--error {
+  background: var(--color-semantic-error-bg);
+  color: var(--color-semantic-error);
+  border-color: var(--color-semantic-error);
+}
+
+.ies-badge--info {
+  background: var(--color-semantic-info-bg);
+  color: var(--color-semantic-info);
+  border-color: var(--color-semantic-info);
+}
+
+/* Entity Type Variants */
+.ies-badge--concept {
+  background: var(--color-entity-concept-bg);
+  color: var(--color-entity-concept);
+  border-color: var(--color-entity-concept);
+}
+
+.ies-badge--person {
+  background: var(--color-entity-person-bg);
+  color: var(--color-entity-person);
+  border-color: var(--color-entity-person);
+}
+
+.ies-badge--theory {
+  background: var(--color-entity-theory-bg);
+  color: var(--color-entity-theory);
+  border-color: var(--color-entity-theory);
+}
+
+.ies-badge--framework {
+  background: var(--color-entity-framework-bg);
+  color: var(--color-entity-framework);
+  border-color: var(--color-entity-framework);
+}
+
+.ies-badge--assessment {
+  background: var(--color-entity-assessment-bg);
+  color: var(--color-entity-assessment);
+  border-color: var(--color-entity-assessment);
+}
+
+.ies-badge--spark {
+  background: var(--color-entity-spark-bg);
+  color: var(--color-entity-spark);
+  border-color: var(--color-entity-spark);
+}
+
+.ies-badge--insight {
+  background: var(--color-entity-insight-bg);
+  color: var(--color-entity-insight);
+  border-color: var(--color-entity-insight);
+}
+
+.ies-badge--thread {
+  background: var(--color-entity-thread-bg);
+  color: var(--color-entity-thread);
+  border-color: var(--color-entity-thread);
+}
+
+/* Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .ies-badge {
+    transition: none;
+  }
+}

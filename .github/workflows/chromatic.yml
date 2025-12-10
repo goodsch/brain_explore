@@ -1,0 +1,56 @@
+name: Chromatic Visual Testing
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'ies/reader/src/**'
+      - 'ies/reader/.storybook/**'
+      - 'ies/design-tokens/**'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'ies/reader/src/**'
+      - 'ies/reader/.storybook/**'
+      - 'ies/design-tokens/**'
+
+jobs:
+  chromatic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for TurboSnap
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'ies/reader/pnpm-lock.yaml'
+
+      - name: Install dependencies
+        working-directory: ies/reader
+        run: pnpm install
+
+      - name: Build design tokens
+        working-directory: ies/design-tokens
+        run: |
+          npm install
+          npm run build
+
+      - name: Run Chromatic
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          workingDir: ies/reader
+          buildScriptName: build-storybook
+          onlyChanged: true  # TurboSnap - only test changed stories
+          exitZeroOnChanges: true  # Don't fail CI on visual changes
+          autoAcceptChanges: master  # Auto-accept on master merges

@@ -1,0 +1,198 @@
+/* ============================================
+   CARD COMPONENT
+   IES Design System v2 — Container Elements
+   ============================================ */
+
+.ies-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-card);
+  transition: all var(--duration-base) var(--easing-out);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Variants */
+.ies-card--default {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.ies-card--elevated {
+  background: var(--color-bg-secondary);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.ies-card--elevated:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.ies-card--outlined {
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+}
+
+.ies-card--glass {
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-border-subtle);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Padding variants */
+.ies-card--padding-none .ies-card__content {
+  padding: 0;
+}
+
+.ies-card--padding-sm .ies-card__content {
+  padding: var(--space-3);
+}
+
+.ies-card--padding-md .ies-card__content {
+  padding: var(--space-4);
+}
+
+.ies-card--padding-lg .ies-card__content {
+  padding: var(--space-6);
+}
+
+/* Header styling */
+.ies-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  gap: var(--space-3);
+}
+
+/* Apply same padding to header as content when using padding variants */
+.ies-card--padding-sm .ies-card__header {
+  padding: var(--space-3);
+}
+
+.ies-card--padding-md .ies-card__header {
+  padding: var(--space-4);
+}
+
+.ies-card--padding-lg .ies-card__header {
+  padding: var(--space-6);
+}
+
+.ies-card--padding-none .ies-card__header {
+  padding: var(--space-4);
+}
+
+.ies-card__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--font-line-height-tight);
+}
+
+.ies-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Content */
+.ies-card__content {
+  flex: 1;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  line-height: var(--font-line-height-relaxed);
+}
+
+/* Footer styling */
+.ies-card__footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Apply same padding to footer as content when using padding variants */
+.ies-card--padding-sm .ies-card__footer {
+  padding: var(--space-3);
+}
+
+.ies-card--padding-md .ies-card__footer {
+  padding: var(--space-4);
+}
+
+.ies-card--padding-lg .ies-card__footer {
+  padding: var(--space-6);
+}
+
+.ies-card--padding-none .ies-card__footer {
+  padding: var(--space-4);
+}
+
+/* Clickable state */
+.ies-card--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.ies-card--clickable:hover {
+  transform: translateY(-2px);
+}
+
+.ies-card--clickable.ies-card--default:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-focus);
+}
+
+.ies-card--clickable.ies-card--outlined:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--color-border-focus);
+}
+
+.ies-card--clickable.ies-card--glass:hover {
+  background: rgba(26, 26, 28, 0.9);
+  border-color: var(--color-border-focus);
+}
+
+.ies-card--clickable:active {
+  transform: translateY(0);
+}
+
+.ies-card--clickable:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ies-card,
+  .ies-card--clickable,
+  .ies-card--elevated {
+    transition: none;
+    transform: none !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .ies-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .ies-card__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .ies-card--padding-lg .ies-card__content,
+  .ies-card--padding-lg .ies-card__header,
+  .ies-card--padding-lg .ies-card__footer {
+    padding: var(--space-4);
+  }
+}
