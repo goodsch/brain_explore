@@ -140,11 +140,12 @@ class TestJourneyTimelineService:
 
     async def test_grouping_by_day(self):
         """Test timeline grouping by day."""
-        now = datetime.now(timezone.utc)
+        # Use fixed reference time at noon UTC to avoid day boundary issues
+        reference_time = datetime(2025, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
         entries_day1 = [
             JourneyTimelineEntry(
                 id=f"tle_{i}",
-                timestamp=now - timedelta(days=1, hours=i),
+                timestamp=reference_time - timedelta(days=1, hours=i),
                 entry_type=TimelineEntryType.NOTE_TAKEN,
                 title=f"Entry {i}",
                 context_id="ctx_test",
@@ -154,7 +155,7 @@ class TestJourneyTimelineService:
         entries_day2 = [
             JourneyTimelineEntry(
                 id=f"tle_{i+3}",
-                timestamp=now - timedelta(hours=i),
+                timestamp=reference_time - timedelta(hours=i),
                 entry_type=TimelineEntryType.NOTE_TAKEN,
                 title=f"Entry {i+3}",
                 context_id="ctx_test",

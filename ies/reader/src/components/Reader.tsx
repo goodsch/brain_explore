@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ReactReader } from 'react-reader';
 import type { Rendition } from 'epubjs';
-import { ArrowLeft, Globe, Loader2, AlertCircle, RefreshCw, PenLine, Search, Highlighter } from 'lucide-react';
+import { ArrowLeft, Globe, Loader2, AlertCircle, RefreshCw, PenLine, Search, Highlighter, CheckCircle2, CloudOff, RefreshCcw } from 'lucide-react';
 import { FlowPanel } from './flow/FlowPanel';
 import { NotesSheet } from './flow/NotesSheet';
 import { WhatsNewBadge } from './flow/WhatsNewBadge';
@@ -35,7 +35,7 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
 
   interface SelectionContext {
     text: string;
-    position: { top: number; left: number };
+    position: { top: number; left: number; placement: 'above' | 'below' };
     cfiRange: string;
   }
   const [selectionContext, setSelectionContext] = useState<SelectionContext | null>(null);
@@ -99,6 +99,8 @@ export function Reader({ url, title = 'Book', calibreId, onClose }: ReaderProps)
     createSession,
     setReadingPosition,
     currentEntity,
+    syncStatus,
+    syncError,
   } = useFlowStore();
   const { lookupEntity } = useEntityLookup();
 
@@ -195,15 +197,46 @@ interface IFrameContents {
   const getSelectionPosition = useCallback((contents: IFrameContents) => {
       const selection = contents.window.getSelection();
       if (!selection || selection.rangeCount === 0) {
-          return { top: 0, left: 0 };
+          return { top: 0, left: 0, placement: 'above' as const };
       }
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       // Adjust for iframe offset
       const iframeRect = contents.window.frameElement.getBoundingClientRect();
+
+      // Calculate absolute position
+      const absoluteTop = iframeRect.top + rect.top;
+      const absoluteLeft = iframeRect.left + rect.left + (rect.width / 2);
+
+      // Bar dimensions (approx 48px height, 280px width)
+      const barHeight = 56;
+      const barWidth = 280;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      // Determine vertical placement - prefer above, but use below if not enough space
+      const spaceAbove = absoluteTop;
+      const placement: 'above' | 'below' = spaceAbove >= barHeight + 8 ? 'above' : 'below';
+
+      // Calculate final top position based on placement
+      let finalTop: number;
+      if (placement === 'above') {
+          finalTop = absoluteTop - barHeight - 8;
+      } else {
+          finalTop = absoluteTop + rect.height + 8;
+      }
+
+      // Clamp vertical position to viewport
+      finalTop = Math.max(8, Math.min(finalTop, viewportHeight - barHeight - 8));
+
+      // Clamp horizontal position to keep bar within viewport
+      let finalLeft = absoluteLeft;
+      finalLeft = Math.max(barWidth / 2 + 8, Math.min(finalLeft, viewportWidth - barWidth / 2 - 8));
+
       return {
-          top: iframeRect.top + rect.top + contents.window.scrollY,
-          left: iframeRect.left + rect.left + contents.window.scrollX,
+          top: finalTop,
+          left: finalLeft,
+          placement,
       };
   }, []);
 
@@ -340,6 +373,17 @@ interface IFrameContents {
         </div>
 
         <div className="reader-toolbar-right">
+          {/* Sync status indicator */}
+          <div
+            className={`reader-sync-indicator reader-sync-indicator--${syncStatus}`}
+            title={syncError || (syncStatus === 'synced' ? 'Synced with SiYuan' : syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'error' ? 'Sync error' : 'Ready')}
+          >
+            {syncStatus === 'synced' && <CheckCircle2 size={14} />}
+            {syncStatus === 'syncing' && <RefreshCcw size={14} className="reader-sync-spinner" />}
+            {syncStatus === 'error' && <CloudOff size={14} />}
+            {syncStatus === 'idle' && <CheckCircle2 size={14} />}
+          </div>
+
           <button
             className={`reader-flow-toggle ${isFlowPanelOpen ? 'active' : ''}`}
             onClick={toggleFlowPanel}
@@ -437,7 +481,7 @@ interface IFrameContents {
       />
       {selectionContext && (
         <div
-          className="reader-selection-bar"
+          className={`reader-selection-bar reader-selection-bar--${selectionContext.position.placement}`}
           style={{ top: selectionContext.position.top, left: selectionContext.position.left }}
         >
           <button

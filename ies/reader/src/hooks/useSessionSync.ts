@@ -60,6 +60,8 @@ export function useSessionSync(options: UseSessionSyncOptions = {}) {
     }
 
     try {
+      useFlowStore.getState().setSyncStatus('syncing');
+
       const update: SessionStateUpdate = {
         active_context_id: currentContextId || null,
         active_question_id: currentQuestionId || null,
@@ -73,9 +75,11 @@ export function useSessionSync(options: UseSessionSyncOptions = {}) {
         questionId: currentQuestionId,
       };
 
+      useFlowStore.getState().setSyncStatus('synced');
       console.log('[useSessionSync] State synced:', update);
     } catch (error) {
       console.error('[useSessionSync] Failed to write state:', error);
+      useFlowStore.getState().setSyncStatus('error', String(error));
     }
   }, [enabled, userId, currentContextId, currentQuestionId]);
 
@@ -106,6 +110,7 @@ export function useSessionSync(options: UseSessionSyncOptions = {}) {
         currentContextId: localContext,
         currentQuestionId: localQuestion,
         journeyTrail: localTrail,
+        syncStatus,
       } = useFlowStore.getState();
 
       if (state.active_context_id !== localContext) {
@@ -132,8 +137,14 @@ export function useSessionSync(options: UseSessionSyncOptions = {}) {
       if (state.last_app_source) {
         useFlowStore.getState().setLastAppSource(state.last_app_source);
       }
+
+      // Update sync status to synced if we successfully polled
+      if (syncStatus === 'idle' || syncStatus === 'error') {
+        useFlowStore.getState().setSyncStatus('synced');
+      }
     } catch (error) {
       console.error('[useSessionSync] Failed to poll state:', error);
+      useFlowStore.getState().setSyncStatus('error', String(error));
     }
   }, [enabled, userId]);
 
