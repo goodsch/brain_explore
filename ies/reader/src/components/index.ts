@@ -1,5 +1,6 @@
 /**
  * IES Design System v2 — Component Library
+ * @module @ies/components
  *
  * Phase 1 Components (Dec 2025):
  * - EntityBadge: Entity type indicator with icon
