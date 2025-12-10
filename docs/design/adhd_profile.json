@@ -1,0 +1,41 @@
+{
+  "adhd_traits": {
+    "time_perception": "Profound Time Blindness. You struggle to 'feel' the passage of time or estimate task duration. You rely heavily on externalizing time (visual timers, automated briefings) to anchor yourself in the present.",
+    "attention_regulation": "Bimodal Focus. You oscillate between 'Scattered Scanning' (taking in everything, unable to prioritize) and 'Deep Hyperfocus' (obsessively working on a project for hours, ignoring biology). You lack a 'middle gear' for mundane, steady-state work.",
+    "executive_function": "Initiation Deficit. You have high friction for starting vague or boring tasks ('The Wall of Awful'). You often use 'Yak Shaving' (tool optimization) as a way to simulate productivity while avoiding the actual hard task.",
+    "working_memory": "Volatile RAM. If you don't write it down *immediately*, it ceases to exist. This drives your desperate need for 'Universal Capture' and 'Always-On' recording tools.",
+    "emotional_regulation": "Rejection Sensitive Dysphoria (RSD) & Frustration Intolerance. You have a low threshold for frustration when technology fails or systems break, viewing it as a personal blockage to your agency."
+  },
+  "strengths": [
+    "Systemic Synthesis: The ability to connect disparate domains (e.g., parenting + software architecture) to create novel solutions.",
+    "Hyperfocus Engineering: The capacity to learn complex technical skills (Docker, Linux, Networking) in record time when motivated by a specific project.",
+    "Creative Problem Reframing: Refusal to accept the 'standard way' if it doesn't work for you, leading to innovative 'hacks' and tools.",
+    "High-Agency Tooling: Instead of complaining about a problem, you build a tool to solve it."
+  ],
+  "constraints": [
+    "Maintenance Failure: You are excellent at '0 to 1' (creation) but struggle with '1 to N' (long-term maintenance/consistency).",
+    "Complexity Addiction: You often over-engineer solutions, creating systems that are too complex to maintain on 'low dopamine' days.",
+    "Context Switching Cost: Interruptions are devastating; it takes significant energy to 'reload' the mental state of a project."
+  ],
+  "triggers": [
+    "Ambiguity: Vague instructions or undefined next steps cause paralysis.",
+    "Boredom: Repetitive, manual tasks trigger immediate resistance/avoidance.",
+    "Tech Friction: When a tool that is supposed to help you actually gets in the way (e.g., slow load times, bugs), it causes disproportionate rage/abandonment."
+  ],
+  "management_strategies": [
+    "Externalization of Executive Function: Using AI agents (Goose) and digital tools (Home Assistant) to act as a 'manager' for your life.",
+    "Gamification: Turning chores and parenting into games to manufacture dopamine.",
+    "Body Doubling/Co-Thinking: Using the AI chat as a 'partner' to keep you on track and focused.",
+    "Visual Anchoring: Using e-ink displays and dashboards to make invisible things (time, chores) visible."
+  ],
+  "domain_effects": {
+    "parenting": "You approach parenting with high creativity but anxiety about consistency. You use systems (games, trackers) to compensate for your own difficulty with routine.",
+    "work": "You thrive in 'Architect/Builder' roles but likely struggle with 'Administrator/Maintainer' roles.",
+    "technology": "You build 'Self-Healing' and 'Automated' systems because you know you won't reliably maintain them manually."
+  },
+  "ies_integration": "The IES must be an 'ADHD-Proof' system. 
+1. **Zero-Friction Entry:** Capture must be faster than the thought disappears. 
+2. **Context Restoration:** When opening a project, it must 'reload' your brain ('Here is what you were doing, here is why, here is the next step'). 
+3. **Complexity Gating:** It should warn you when you are creating a project structure that is too deep/complex to maintain. 
+4. **Dopamine Visualization:** It should vividly display progress and connections to reward the 'seeking' system."
+}

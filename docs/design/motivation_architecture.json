@@ -1,0 +1,26 @@
+{
+  "drivers": [
+    "Curiosity (Dopamine-driven)",
+    "Novelty",
+    "Meaningful Connection",
+    "Momentum (Movement)",
+    "External scaffolding (Agentic support)"
+  ],
+  "inhibitors": [
+    "Blank slates (Zero-start)",
+    "Boredom / Lack of novelty",
+    "High activation energy barriers",
+    "Administrative friction"
+  ],
+  "mechanisms": {
+    "Activation Energy": "Requires external hooks or 'entry points' to lower the threshold for starting.",
+    "Momentum": "Cognition is reactive; action begets more action. 'Movement creates meaning'.",
+    "Interest-Based Nervous System": "Driven by what is interesting/challenging rather than importance/priority."
+  },
+  "strategies": [
+    "Just-in-time processing (don't pre-structure)",
+    "Visual thinking (Flow Mode)",
+    "Conversational interfaces (Dialogue Mode) to bootstrap thinking",
+    "Automated context preservation"
+  ]
+}

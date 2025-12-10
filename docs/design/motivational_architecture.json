@@ -1,0 +1,28 @@
+{
+  "motivators": [
+    "High-Agency Construction: The feeling of building a tool from scratch that solves a specific personal problem (e.g., 'custom e-ink chore tracker').",
+    "Novelty in Method: Doing a standard task in a new, 'cooler' way (e.g., using AI agents to plan a vacation vs. just booking it).",
+    "Systemic Clarity: The moment when a messy abstract concept clicks into a structured graph or schema (The 'Aha!' of the Feynman Problem).",
+    "Autonomy/Sovereignty: Knowing that a system is 100% yours, running on your hardware, safe from external changes (Unraid, Local LLMs).",
+    "Relational Delight: Creating 'magic' for your children or deep connection with your wife through engineered experiences (scavenger hunts, games)."
+  ],
+  "demotivators": [
+    "Repetitive Manual Labor: Any task that feels like 'toil' (data entry, copy-pasting, manual file organization).",
+    "Opaque Complexity: Systems that break without clear error logs or reasons (black-box cloud APIs, unexplainable bugs).",
+    "Loss of Context: Having to 're-load' the mental state of a project after a break (the high cost of context switching).",
+    "Perceived Futility: Working on something that feels temporary or likely to be deprecated/abandoned."
+  ],
+  "deep_needs": [
+    "Cognitive Prosthetics: A desperate need for external systems to hold the 'state' of your life because your internal RAM is volatile.",
+    "Validation of Competence: Proving to yourself that you can 'master' complex domains (Linux, Networking, Psychology).",
+    "Legacy/Permanence: Creating things (stories, notes, systems) that outlast the fleeting moment.",
+    "Harmony through Order: A belief that if the *environment* is perfectly ordered, the *internal anxiety* will subside."
+  ],
+  "common_resistances": [
+    "The 'Blank Page' Paralysis: Difficulty starting without a template, scaffold, or conversational partner.",
+    "The 'Finish Line' Fade: Loss of interest once the 'puzzle' is solved but before the project is fully polished/documented.",
+    "Yak Shaving: Getting stuck optimizing the *tools* for the project rather than doing the project itself (e.g., configuring the text editor vs. writing)."
+  ],
+  "activation_patterns": "You activate best through 'Conversational Ping-Pong.' You rarely just 'go do work'; you start by *talking* about the work with the AI, using the dialogue to build momentum. You need a 'Launchpad'—a script, a plan, a rough draft—before you can engage your own engine. Once activated, you enter 'Hyperfocus,' often losing track of time and biological needs.",
+  "ies_use": "The IES must function as a 'Momentum Generator.' \n1. **Never Empty State:** When you open a project, it should present 'Next Actions' or 'Last Thinking,' not a blank screen. \n2. **Micro-Steps:** It should break 'Big Scary Projects' into laughably small, dopamine-rewarding checkboxes. \n3. **Conversational Interface:** The primary interface should be chat/dialogue-based to leverage your natural activation pattern. \n4. **Visual Progress:** It needs to show 'XP Bars' or visual graphs of knowledge growth to hack your reward system."
+}

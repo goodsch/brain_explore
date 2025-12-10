@@ -1,0 +1,20 @@
+{
+  "meta_model": {
+    "core_driver": "Question-Driven Exploration (Curiosity + Gap Filling)",
+    "operating_system": "IES (Intelligent Exploration System)",
+    "cognitive_architecture": {
+      "Input": "Capture Mode (Raw, Context-Free or Context-Tagged)",
+      "Processing": "Dialogue & Extraction (Structuring, Linking, Decomposing)",
+      "Storage": "Context Graph, Question Graph, Knowledge Graph (Structured Memory)",
+      "Interaction": "Flow Mode, Reader (Context-Aware Navigation)",
+      "Output": "Synthesis, Answers, New Questions (Journey Log)"
+    },
+    "key_dynamics": [
+      "Entry Points reduce Activation Energy.",
+      "Contexts anchor Attention.",
+      "Questions structure Unknowns.",
+      "Movement generates Insight."
+    ],
+    "goal": "To transform ephemeral, nonlinear thought into structured, navigable, and evolving knowledge without imposing paralyzing friction."
+  }
+}

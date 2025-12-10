@@ -1,0 +1,25 @@
+{
+  "engine_components": {
+    "Reflection Loop": {
+      "input": "Journey Log, Notes, Thinking Sessions",
+      "process": "Analyze for recurring themes, unanswered questions, and emotional valence.",
+      "output": "Insights, New Questions, Context Promotion Suggestions"
+    },
+    "Prediction Model": {
+      "input": "Current Context, Past Trajectories",
+      "process": "Predict likely next steps or needed information based on previous successful flows.",
+      "output": "Suggested Sources, Next Question Prompts"
+    },
+    "Question Generator": {
+      "input": "Concept Graph, Source Text",
+      "process": "Identify gaps in knowledge graph structure (missing relations, low evidence).",
+      "output": "Generated Sub-questions (e.g., 'How does X relate to Y?')"
+    }
+  },
+  "insight_types": [
+    "Gap Identification (Unknowns)",
+    "Connection Discovery (Unexpected Relations)",
+    "Pattern Recognition (Recurring Themes)",
+    "Self-Correction (Contradiction Detection)"
+  ]
+}

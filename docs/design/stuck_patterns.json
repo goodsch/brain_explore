@@ -1,0 +1,32 @@
+{
+  "patterns": [
+    {
+      "name": "Blank Slate Paralysis",
+      "description": "Inability to initiate action or thought without a concrete anchor or starting point.",
+      "trigger": "Unstructured environments, empty pages, open-ended prompts.",
+      "mechanism": "Lack of 'entry point' leads to infinite degrees of freedom and decision paralysis."
+    },
+    {
+      "name": "Ephemeral Fragment Loss",
+      "description": "Brilliant but fleeting insights are lost because the friction to capture and structure them is too high.",
+      "trigger": "High-speed ideation, shower thoughts, conversations.",
+      "mechanism": "Gap between nonlinear thought speed and linear capture tools."
+    },
+    {
+      "name": "Context Collapse",
+      "description": "Losing the 'thread' or emotional resonance of an idea when moving from capture to processing.",
+      "trigger": "Time delay between idea generation and organization.",
+      "mechanism": "State-dependent memory failure."
+    },
+    {
+      "name": "Structural Resistance",
+      "description": "Rejection of rigid, top-down organizational systems that feel like 'chores'.",
+      "trigger": "Standard productivity advice, rigid templates.",
+      "mechanism": "Mismatched cognitive style (Exploration must precede Structure)."
+    }
+  ],
+  "loops": [
+    "Idea Generation -> Lack of Structure -> Overwhelm -> Abandonment",
+    "Need to Start -> No Entry Point -> Paralysis -> Frustration -> Dopamine Drop -> Harder to Start"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "concept_atoms": [
+    {
+      "concept": "The Active Exocortex",
+      "description": "The belief that the biological brain is inherently limited (RAM, retention, executive function) and must be supplemented by an external, active digital system. Unlike a passive 'Second Brain' (storage), the Exocortex must 'think' (agents), 'prompt' (resurfacing), and 'structure' (graphing) to be useful.",
+      "why_it_matters": "This is the foundational axiom of your IES. You are not building a library; you are building a prosthetic prefrontal cortex to handle the heavy lifting of organization and retrieval."
+    },
+    {
+      "concept": "The Question Graph (Inverse Knowledge)",
+      "description": "The insight that 'Knowing' is defined by the boundaries of 'Not Knowing.' Instead of mapping what you have (notes), you map what you need (questions). The structure 'To understand X, I must first understand Y' is the fundamental unit of your learning and system design.",
+      "why_it_matters": "This atom transforms your note-taking from 'collecting' to 'investigating.' It drives the 'Question Engine' architecture and your fascination with 'Feynman Problems.'"
+    },
+    {
+      "concept": "Digital Sovereignty",
+      "description": "The absolute requirement to own the 'metal' and the data. A rejection of 'black box' cloud dependencies in favor of Local LLMs, Unraid servers, and open-source protocols. If you can't SSH into it, you don't trust it.",
+      "why_it_matters": "This drives your 'Home Lab' obsession and creates a boundary condition for all tools: they must be self-hostable and privacy-focused to be integrated into your core identity."
+    },
+    {
+      "concept": "Gamified Systems Engineering",
+      "description": "The application of Game Design and UX principles to solve 'messy' human problems (parenting, chores, motivation). You view behavioral friction as a 'bad UI' problem that can be solved with better feedback loops, visual indicators (e-ink dashboards), and reward mechanics.",
+      "why_it_matters": "This is your primary method for solving interpersonal and intrapersonal conflict. It reframes 'discipline' as 'gameplay,' making it palatable to your ADHD brain."
+    },
+    {
+      "concept": "Agentic Decomposition",
+      "description": "The tendency to solve complex problems by breaking them down into specialized 'roles' or 'agents' (e.g., a 'Research Agent,' a 'Planning Agent'). You view intelligence not as a monolith but as a 'Crew' of specialized functions working in concert.",
+      "why_it_matters": "This shapes how you architect software (Goose, Crews) and how you organize your own life—you effectively try to 'hire' different parts of your brain for different tasks."
+    },
+    {
+      "concept": "Self-Trust as Physics",
+      "description": "The theory that 'Confidence' and 'Self-Trust' are not fleeting emotions but structural variables that determine the system's (the human's) capacity for output. If Self-Trust is low, the system thrashes; if high, it flows.",
+      "why_it_matters": "This is the bridge between your technical systems and your psychological explorations. You build systems specifically to generate evidence of competence, thereby increasing the 'Self-Trust' metric."
+    }
+  ],
+  "ies_roots": [
+    "The Active Exocortex",
+    "The Question Graph",
+    "Digital Sovereignty",
+    "Gamified Systems",
+    "Agentic Decomposition",
+    "Self-Trust Theory"
+  ]
+}

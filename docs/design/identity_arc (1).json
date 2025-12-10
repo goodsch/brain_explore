@@ -1,0 +1,36 @@
+{
+  "identity_arc": {
+    "core_values": [
+      "Sovereignty & Privacy (Local-first, Self-hosting)",
+      "Intentionality in Relationships (Gamified parenting, Scheduled connection)",
+      "Systemic Understanding (Feynman method, 'Why' over 'What')",
+      "Friction Reduction (Automation, Workflow optimization)",
+      "Self-Trust (as a psychological foundation)"
+    ],
+    "identity_drivers": "The user is driven by a need to 'engineer' their way out of neurodivergent friction. They are motivated by the belief that with the right *system* or *tool*, they can overcome inherent limitations (time blindness, executive dysfunction) and unlock their full creative and relational potential.",
+    "self_image": "The user sees themselves as a 'System Builder' trapped in a 'Chaotic Mind.' They identify strongly as a Technician/Hacker (Linux, Docker, Python) but also deeply as a Healer/Therapist (Psychology, Self-Trust theory). They view themselves as a loving but potentially scattered parent who uses creativity to compensate for lack of routine.",
+    "recurring_conflicts": "1. **Ideation vs. Execution:** The struggle to maintain the energy of a 'new idea' long enough to reach 'stable maintenance.' 
+2. **Complexity vs. Utility:** The tendency to build sophisticated tools (e.g., complex AI crews) for simple problems, creating 'meta-work.' 
+3. **Control vs. Chaos:** The fight to impose rigid digital order (Unraid, Obsidian schemas) on a life and mind that naturally drift toward entropy.",
+    "growth_themes": "A clear trajectory from 'Reactive Troubleshooting' to 'Proactive Architecture.' The user has moved from asking 'How do I fix this error?' to 'How do I design a system where this error never happens?' There is also a deepening synthesis of their dual identities: the Tech Nerd and the Therapist are merging into a single 'Cognitive Engineer' persona.",
+    "long_term_arcs": "The user is on a long-term quest to build an 'External Soul'—a digital repository (IES) that holds their memories, values, and knowledge in a way that is safe, private, and interactable. They are effectively trying to upload their best self into a server to ensure consistency for themselves and their family."
+  },
+  "timeline": [
+    {
+      "phase": "The Tinkerer (Early)",
+      "summary": "Focus on immediate, isolated technical hurdles. Queries are transactional: 'How do I fix this Docker container?', 'What is this Linux command?', 'Help me with this specific Python script.' The user is reacting to the immediate needs of their Home Lab."
+    },
+    {
+      "phase": "The Architect (Middle)",
+      "summary": "Shift toward interconnected systems and lifestyle design. Focus on Home Assistant automations, family chore gamification, and 'Plan, Discuss, Connect' frameworks. The user is applying systems thinking to their personal life and relationships."
+    },
+    {
+      "phase": "The Meta-Cognitive Engineer (Recent)",
+      "summary": "Deep introspection and meta-tooling. The focus shifts to the 'Idea Extraction System' (IES), 'Question Engines,' and 'Goose Agents.' The user is now designing the *tools that think,* explicitly analyzing their own cognitive patterns ('Feynman Problems') and trying to build an autonomous extension of their executive function."
+    }
+  ],
+  "ies_applications": "The IES must function as a 'Coherent Self.' 
+1. **Integration:** It should automatically link 'Tech Projects' with 'Life Goals' (e.g., linking a 'Server Upgrade' project to the 'Sovereign Digital Home' value). 
+2. **Reflection:** It needs features that show the user their own growth (e.g., 'You were worried about X a year ago, look how you solved it'). 
+3. **Legacy:** It should be treated as a repository for the user's children (the 'Boy and Bear' stories, the 'Dad's Advice' notes), prioritizing long-term preservation over temporary efficiency."
+}

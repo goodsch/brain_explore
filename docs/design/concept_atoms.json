@@ -1,0 +1,58 @@
+{
+  "concept_atoms": [
+    {
+      "name": "Context",
+      "definition": "The structured environment or 'place' where attention lives, providing necessary anchors for thought.",
+      "related_concepts": [
+        "Entry Point",
+        "Activation Energy",
+        "Flow Mode"
+      ]
+    },
+    {
+      "name": "Question",
+      "definition": "The fundamental unit of exploration and knowledge gaps; a structured unknown that drives learning.",
+      "related_concepts": [
+        "Feynman Problem",
+        "Lack-of-Knowledge Graph",
+        "Curiosity"
+      ]
+    },
+    {
+      "name": "Flow",
+      "definition": "A cognitive state of frictionless movement between ideas, facilitated by external structure and reduced activation energy.",
+      "related_concepts": [
+        "Movement Creates Meaning",
+        "Hyperfocus",
+        "Time Distortion"
+      ]
+    },
+    {
+      "name": "Graph",
+      "definition": "A network of relationships between entities (concepts, questions, sources) representing knowledge and gaps.",
+      "related_concepts": [
+        "Knowledge Graph",
+        "Question Graph",
+        "Context Graph"
+      ]
+    },
+    {
+      "name": "Atom",
+      "definition": "The smallest indivisible unit of meaning or structure in the system (e.g., a single concept node or question node).",
+      "related_concepts": [
+        "Entity",
+        "Node",
+        "Block"
+      ]
+    },
+    {
+      "name": "Mode",
+      "definition": "A distinct operational state of the system or user interaction (Capture, Dialogue, Flow, Reader, Journey).",
+      "related_concepts": [
+        "Cognitive State",
+        "User Interface",
+        "Workflow"
+      ]
+    }
+  ]
+}

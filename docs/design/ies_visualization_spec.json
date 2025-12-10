@@ -1,0 +1,51 @@
+{
+  "visualization_specs": [
+    {
+      "view_name": "Flow Mode Context Cockpit",
+      "description": "Main interface for navigating a specific Context.",
+      "layout": {
+        "top": "Context Summary (Title, Type, Status)",
+        "middle": [
+          "Key Questions (Clickable Chips)",
+          "Areas of Exploration (Clickable Chips)",
+          "Core Concepts (Clickable Chips)"
+        ],
+        "bottom": "Actions (Run Extraction, Open Reader, Chat)"
+      },
+      "interactions": [
+        "Click Question -> Filter View to Question -> Trigger Extraction",
+        "Click Concept -> Show Definition Popover",
+        "Click Source -> Open Reader"
+      ]
+    },
+    {
+      "view_name": "Reader Journey Mode",
+      "description": "Reading interface grounded in a specific Context/Question.",
+      "layout": {
+        "left_pane": "Context Navigation (Questions, Areas)",
+        "center_pane": "Source Text (with Overlays)",
+        "right_pane": "Journey Log & Notes"
+      },
+      "interactions": [
+        "Select Text -> Create Note tagged with Context/Question",
+        "Click Overlay -> Show Concept Info",
+        "Chat Input -> Grounded Q&A"
+      ]
+    },
+    {
+      "view_name": "Graph Explorer",
+      "description": "Visual graph of Concepts and Questions.",
+      "nodes": [
+        "Context (Hub)",
+        "Question (Child)",
+        "Concept (Linked)",
+        "Source (Linked)"
+      ],
+      "edges": [
+        "requires (Question->Question)",
+        "relates_to (Concept->Concept)",
+        "evidence_for (Source->Question)"
+      ]
+    }
+  ]
+}

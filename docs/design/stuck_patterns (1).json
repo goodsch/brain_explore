@@ -1,0 +1,40 @@
+{
+  "stuck_patterns": [
+    {
+      "name": "The 'Meta-Optimization' Loop",
+      "description": "You get stuck trying to find the 'perfect' tool or configuration before starting the actual work. You will spend hours researching the best 'notes app' or 'server OS' instead of writing notes or running services.",
+      "trigger": "Ambiguity in the project path or fear that the current tool is 'suboptimal' and will need to be changed later."
+    },
+    {
+      "name": "The 'Scope Explosion' Spiral",
+      "description": "A simple request (e.g., 'plan a vacation') balloons into a massive engineering project (e.g., 'build a multi-agent AI crew to plan vacations'). You confuse *complexity* with *efficacy*.",
+      "trigger": "Boredom with the simple solution or a desire to use a new, shiny technology (Goose, Agents, Vectors)."
+    },
+    {
+      "name": "The 'Context Collapse' Freeze",
+      "description": "You return to a project after a few days and feel completely lost. You cannot remember where you left off, what the next step was, or why you made certain decisions. You abandon the project rather than pay the high cognitive cost of reconstruction.",
+      "trigger": "Interruption or time gaps between work sessions without a 'state save'."
+    }
+  ],
+  "unsticking_keys": [
+    {
+      "name": "Radical Simplification (The MVP)",
+      "action": "Forcing yourself (or being forced by the AI) to define the 'stupidest, simplest version' that works. Dropping the 'Agent Crew' idea and just writing a list.",
+      "mechanism": "Reduces the barrier to entry and provides quick feedback."
+    },
+    {
+      "name": "Conversational Re-entry",
+      "action": "Asking the AI to 'summarize where we left off' or 'tell me what to do next.' Using the chat history as an external memory bank.",
+      "mechanism": "Offloads the 'Context Reconstruction' cost to the machine."
+    },
+    {
+      "name": "Template Injection",
+      "action": "Asking for a 'boilerplate' or 'folder structure.' Having a concrete artifact to modify is infinitely easier for you than creating from zero.",
+      "mechanism": "Bypasses the 'Blank Page Paralysis' by providing a scaffold."
+    }
+  ],
+  "ies_integration": "The IES acts as an 'Anti-Stuck' Watchdog. 
+1. **Complexity Alarm:** If the system detects you adding too many 'agents' or 'steps' to a simple task, it should prompt: 'Are we over-engineering this? What is the V1?' 
+2. **Auto-Save Context:** Every session should end with an auto-generated 'Resume State' note (e.g., 'Here is exactly where we stopped and the very first thing to do next time'). 
+3. **Scaffold Library:** The system should have a library of 'Project Starters' (templates) for your common recurring tasks (e.g., 'New Server Setup,' 'Trip Plan') so you never start from zero."
+}
