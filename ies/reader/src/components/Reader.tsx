@@ -3,6 +3,7 @@ import { ReactReader } from 'react-reader';
 import type { Rendition } from 'epubjs';
 import { ArrowLeft, Globe, Loader2, AlertCircle, RefreshCw, PenLine, Search, Highlighter, CheckCircle2, CloudOff, RefreshCcw } from 'lucide-react';
 import { FlowPanel } from './flow/FlowPanel';
+import { ErrorBoundary } from './ErrorBoundary';
 import { NotesSheet } from './flow/NotesSheet';
 import { WhatsNewBadge } from './flow/WhatsNewBadge';
 import { useFlowStore } from '../store/flowStore';
@@ -365,7 +366,7 @@ interface IFrameContents {
       <header className="reader-toolbar">
         <div className="reader-toolbar-left">
           {onClose && (
-            <button className="reader-back-btn ies-btn ies-btn-ghost" onClick={onClose} title="Back to library">
+            <button className="reader-back-btn ies-btn ies-btn-ghost" onClick={onClose} title="Back to library" aria-label="Back to library">
               <ArrowLeft size={20} />
             </button>
           )}
@@ -462,7 +463,9 @@ interface IFrameContents {
       )}
 
       {/* Flow Panel */}
-      <FlowPanel />
+      <ErrorBoundary fallbackMessage="Flow panel encountered an error">
+        <FlowPanel />
+      </ErrorBoundary>
 
       {isMobile && ( // Show FAB only on mobile
         <button
@@ -484,7 +487,7 @@ interface IFrameContents {
           className={`reader-selection-bar reader-selection-bar--${selectionContext.position.placement}`}
           style={{ top: selectionContext.position.top, left: selectionContext.position.left }}
         >
-          <button
+          <button aria-label="Look up entity"
             className="ies-btn ies-btn-sm ies-btn-subtle"
             onClick={() => {
                 lookupEntity(selectionContext.text);
@@ -493,13 +496,13 @@ interface IFrameContents {
           >
             <Search size={18} /> Look up
           </button>
-          <button
+          <button aria-label="Capture as note"
             className="ies-btn ies-btn-sm ies-btn-subtle"
             onClick={() => captureAsNote(selectionContext)}
           >
             <PenLine size={18} /> Note
           </button>
-          <button
+          <button aria-label="Highlight text"
             className="ies-btn ies-btn-sm ies-btn-subtle"
             onClick={() => highlightText(selectionContext)}
           >

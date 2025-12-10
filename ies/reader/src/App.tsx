@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Reader } from './components/Reader';
 import { LibraryBrowser } from './components/library/LibraryBrowser';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { type CalibreBook } from './services/graphClient';
 import { useFlowStore } from './store/flowStore';
 import './App.css';
@@ -77,26 +78,38 @@ function App() {
     setCurrentBook(null);
   }, [currentBook]);
 
+  const handleReaderError = useCallback(() => {
+    // On error reset, close the book and return to library
+    closeBook();
+  }, [closeBook]);
+
   if (isLoggingIn) {
     return <div className="loading-screen">Loading...</div>;
   }
 
   if (currentBook) {
     return (
-      <Reader
-        url={currentBook.url}
-        title={currentBook.title}
-        calibreId={currentBook.calibreId}
-        onClose={closeBook}
-      />
+      <ErrorBoundary
+        fallbackMessage="The reader encountered an error"
+        onReset={handleReaderError}
+      >
+        <Reader
+          url={currentBook.url}
+          title={currentBook.title}
+          calibreId={currentBook.calibreId}
+          onClose={closeBook}
+        />
+      </ErrorBoundary>
     );
   }
 
   return (
-    <LibraryBrowser
-      onBookSelect={handleBookSelect}
-      onLocalFileSelect={handleLocalFileSelect}
-    />
+    <ErrorBoundary fallbackMessage="The library browser encountered an error">
+      <LibraryBrowser
+        onBookSelect={handleBookSelect}
+        onLocalFileSelect={handleLocalFileSelect}
+      />
+    </ErrorBoundary>
   );
 }
 

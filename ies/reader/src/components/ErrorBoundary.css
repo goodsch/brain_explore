@@ -1,0 +1,142 @@
+/* ============================================
+   ERROR BOUNDARY
+   IES Design System v2 — Error Handling UI
+   ============================================ */
+
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--space-4);
+  background: var(--bg-primary);
+}
+
+.error-boundary__content {
+  max-width: 500px;
+  text-align: center;
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.error-boundary__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--error-bg, rgba(220, 38, 38, 0.1));
+  color: var(--error-fg, #ef4444);
+}
+
+.error-boundary__title {
+  margin: 0 0 var(--space-3) 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.error-boundary__description {
+  margin: 0 0 var(--space-4) 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.error-boundary__details {
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.error-boundary__details summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-primary);
+  user-select: none;
+  padding: var(--space-2);
+}
+
+.error-boundary__details summary:hover {
+  color: var(--accent);
+}
+
+.error-boundary__error-text {
+  margin: var(--space-3) 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  word-wrap: break-word;
+}
+
+.error-boundary__stack {
+  margin-top: var(--space-3);
+  font-size: 0.875rem;
+}
+
+.error-boundary__stack pre {
+  margin: var(--space-2) 0 0 0;
+  padding: var(--space-3);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+  white-space: pre-wrap;
+}
+
+.error-boundary__reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--accent);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.error-boundary__reset-btn:hover {
+  background: var(--accent-hover, #8b5cf6);
+  transform: translateY(-1px);
+}
+
+.error-boundary__reset-btn:active {
+  transform: translateY(0);
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .error-boundary__content {
+    padding: var(--space-4);
+  }
+
+  .error-boundary__icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .error-boundary__title {
+    font-size: 1.25rem;
+  }
+
+  .error-boundary__description {
+    font-size: 0.875rem;
+  }
+}
