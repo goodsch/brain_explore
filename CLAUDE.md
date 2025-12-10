@@ -39,13 +39,15 @@
 - Journey continuity API (`/session-state/continue`)
 - Journey pattern analysis (entity clustering, path detection, recommendations)
 
-✅ Completed (Phase 1 - Design System Foundation):
+✅ Completed (Phase 1 - Design System):
 - Design tokens package with 158 tokens (colors, spacing, typography, motion)
 - Storybook v8.5 with a11y addon
 - Accessibility: prefers-reduced-motion support (CSS + React hook)
 - WCAG contrast fixes in SiYuan plugin
+- Component library: 6 Phase 1 components (EntityBadge, QuestionClassBadge, ProgressRing, SearchInput, EntityCard, BreadcrumbTrail)
+- All components with Storybook stories and full accessibility support
 
-**Next:** Component library in Storybook + visual regression testing
+**Next:** Visual regression testing with Chromatic
 
 ## Quick Start
 
@@ -280,17 +282,75 @@ Schema-Probe, Boundary, Dimensional, Causal, Counterfactual, Anchor, Perspective
 - `.storybook/` — Storybook v8.5 configuration
   - Addons: a11y (accessibility testing), vitest (unit tests), docs (auto-docs), interactions (interaction testing), chromatic (visual regression)
   - Framework: React + Vite
-  - Stories: `**/*.stories.tsx` (Button, ErrorBoundary)
+  - Stories: `**/*.stories.tsx` (11 components: Phase 1 + Foundation)
   - Dark theme default: bg #0f0f10, text #f5f5f5
   - Viewports: Mobile (375px), Tablet (768px), Desktop (1440px, default), Desktop Wide (1920px)
   - Port: 6006
   - Command: `pnpm storybook`
+  - CI/CD: Chromatic workflow (`.github/workflows/chromatic.yml`) runs on push/PR to master for visual regression testing
+
+**Phase 1 Components (Dec 2025):**
+- `components/EntityBadge.tsx` — Entity type indicator with icon + color
+  - 14 entity types: Concept, Person, Theory, Framework, Assessment, Spark, Insight, Thread, FavoriteProblem, Reframe, Pattern, DynamicPattern, StoryInsight, SchemaBreak
+  - Icons from Lucide (Lightbulb, User, FlaskConical, etc.)
+  - Sizes: sm (14px icon), md (16px), lg (20px)
+  - Interactive mode: role="button", keyboard support (Enter/Space)
+  - Story: `EntityBadge.stories.tsx` with all 14 types and size variants
+- `components/QuestionClassBadge.tsx` — Question class indicator for thinking sessions
+  - 9 question classes: schema-probe, boundary, dimensional, causal, counterfactual, anchor, perspective-shift, meta-cognitive, reflective-synthesis
+  - Icons from Lucide (Building2, Square, Ruler, Zap, etc.)
+  - Sizes: sm (12px icon), md (14px), lg (16px)
+  - Icon-only mode for compact display
+  - Story: `QuestionClassBadge.stories.tsx` with all 9 classes
+- `components/ProgressRing.tsx` — SVG circular progress indicator
+  - Sizes: sm (24px), md (40px), lg (64px), xl (96px)
+  - Variants: default, success, warning, error, info
+  - Optional center label (percentage or custom text)
+  - Accessibility: role="progressbar", aria-valuenow/min/max
+  - Story: `ProgressRing.stories.tsx` with all variants and sizes
+- `components/SearchInput.tsx` — Debounced search input with clear button
+  - Sizes: sm, md, lg
+  - Built-in debounce (configurable delay, default 0ms)
+  - Clear button (X icon) when value present
+  - Loading spinner state (Loader2 icon)
+  - Keyboard support: Escape clears input, Enter triggers onSubmit
+  - Accessibility: role="searchbox", aria-label
+  - Story: `SearchInput.stories.tsx` with debounce demo and states
+- `components/EntityCard.tsx` — Entity display card with expandable details
+  - Header: EntityBadge + Name
+  - Body: Description preview (2-3 lines, expandable)
+  - Footer: Connection count + source count + last visited timestamp
+  - States: selected (highlighted border), compact mode
+  - Actions: onViewDetails, onViewSources
+  - Keyboard navigable: Tab, Enter/Space to click
+  - Accessibility: role="article", aria-expanded
+  - Story: `EntityCard.stories.tsx` with all states
+- `components/BreadcrumbTrail.tsx` — Journey navigation trail
+  - Displays exploration path through knowledge graph
+  - Horizontal scroll with overflow handling
+  - Collapsible overflow menu (MoreHorizontal icon + dropdown)
+  - EntityBadge integration (optional)
+  - Max visible items (default 5), rest in dropdown
+  - Current item highlighted (aria-current)
+  - Click handler for navigation
+  - Accessibility: nav element with aria-label, ol/li structure
+  - Story: `BreadcrumbTrail.stories.tsx` with overflow demo
+
+**Foundation Components (existing):**
 - `components/Button.tsx` — Design system button component with variants
   - Variants: primary, secondary, success, warning, danger
   - Sizes: small, medium, large
   - States: default, hover, active, disabled
   - Full accessibility: ARIA labels, keyboard navigation
   - Story: `Button.stories.tsx` with all variants and interaction tests
+- `components/Input.tsx` — Form input component with validation states
+  - Story: `Input.stories.tsx` with all input states
+- `components/Card.tsx` — Container card component
+  - Story: `Card.stories.tsx` with card variants
+- `components/Badge.tsx` — Label badge component
+  - Story: `Badge.stories.tsx` with badge styles
+- `components/Chip.tsx` — Interactive chip component
+  - Story: `Chip.stories.tsx` with chip variants
 - `FlowPanel.tsx` — Entity exploration panel
 - `useSessionSync` — Backend state sync hook (5s active / 30s background polling, 3s write debounce)
   - Syncs context_id, question_id from flowStore → backend

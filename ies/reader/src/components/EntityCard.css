@@ -1,0 +1,212 @@
+/* ============================================
+   ENTITY CARD COMPONENT
+   IES Design System v2 — Entity Display
+   ============================================ */
+
+.ies-entity-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  transition: background-color var(--duration-fast) var(--easing-out),
+              border-color var(--duration-fast) var(--easing-out),
+              box-shadow var(--duration-fast) var(--easing-out),
+              transform var(--duration-fast) var(--easing-out);
+}
+
+/* ===== Clickable State ===== */
+
+.ies-entity-card--clickable {
+  cursor: pointer;
+}
+
+.ies-entity-card--clickable:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-default);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.ies-entity-card--clickable:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== Focus State ===== */
+
+.ies-entity-card--clickable:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ===== Selected State ===== */
+
+.ies-entity-card--selected {
+  border-color: var(--color-semantic-info);
+  border-width: 2px;
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== Compact Mode ===== */
+
+.ies-entity-card--compact {
+  padding: var(--space-3);
+  gap: var(--space-2);
+}
+
+/* ===== Header ===== */
+
+.ies-entity-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ies-entity-card__name {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--font-line-height-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ies-entity-card--compact .ies-entity-card__name {
+  font-size: var(--font-size-sm);
+}
+
+/* ===== Expand Button ===== */
+
+.ies-entity-card__expand-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing-out),
+              background-color var(--duration-fast) var(--easing-out);
+}
+
+.ies-entity-card__expand-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.ies-entity-card__expand-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ===== Description ===== */
+
+.ies-entity-card__description {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--font-line-height-relaxed);
+}
+
+.ies-entity-card__description--compact {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Footer ===== */
+
+.ies-entity-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ies-entity-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.ies-entity-card__stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ies-entity-card__timestamp {
+  color: var(--color-text-subtle);
+}
+
+/* ===== Actions ===== */
+
+.ies-entity-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ies-entity-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing-out),
+              background-color var(--duration-fast) var(--easing-out),
+              border-color var(--duration-fast) var(--easing-out);
+}
+
+.ies-entity-card__action:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-default);
+}
+
+.ies-entity-card__action:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ===== Accessibility - Reduced Motion ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .ies-entity-card {
+    transition: none;
+  }
+
+  .ies-entity-card__expand-btn,
+  .ies-entity-card__action {
+    transition: none;
+  }
+
+  .ies-entity-card--clickable:hover {
+    transform: none;
+  }
+}

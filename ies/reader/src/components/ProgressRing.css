@@ -1,0 +1,121 @@
+/* ============================================
+   PROGRESS RING COMPONENT
+   IES Design System v2 — Progress Indicators
+   ============================================ */
+
+.ies-progress-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== SVG ===== */
+
+.ies-progress-ring__svg {
+  display: block;
+}
+
+/* ===== Track (Background) ===== */
+
+.ies-progress-ring__track {
+  stroke: var(--color-bg-tertiary);
+  opacity: 0.5;
+}
+
+/* ===== Progress Arc ===== */
+
+.ies-progress-ring__progress {
+  transition: stroke-dashoffset var(--duration-slow) var(--easing-out);
+}
+
+/* ===== Label ===== */
+
+.ies-progress-ring__label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+/* ===== Sizes ===== */
+
+.ies-progress-ring--sm .ies-progress-ring__label {
+  font-size: 8px;
+}
+
+.ies-progress-ring--md .ies-progress-ring__label {
+  font-size: 10px;
+}
+
+.ies-progress-ring--lg .ies-progress-ring__label {
+  font-size: 14px;
+}
+
+.ies-progress-ring--xl .ies-progress-ring__label {
+  font-size: 18px;
+}
+
+/* ===== Variant Colors ===== */
+
+/* Default */
+.ies-progress-ring--default .ies-progress-ring__progress {
+  stroke: var(--color-text-secondary);
+}
+
+/* Success */
+.ies-progress-ring--success .ies-progress-ring__progress {
+  stroke: var(--color-semantic-success);
+}
+
+/* Warning */
+.ies-progress-ring--warning .ies-progress-ring__progress {
+  stroke: var(--color-semantic-warning);
+}
+
+/* Error */
+.ies-progress-ring--error .ies-progress-ring__progress {
+  stroke: var(--color-semantic-error);
+}
+
+/* Info */
+.ies-progress-ring--info .ies-progress-ring__progress {
+  stroke: var(--color-semantic-info);
+}
+
+/* ===== Indeterminate (Spinning) Animation ===== */
+
+@keyframes ies-progress-ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ies-progress-ring--indeterminate .ies-progress-ring__svg {
+  animation: ies-progress-ring-spin 1.5s linear infinite;
+}
+
+.ies-progress-ring--indeterminate .ies-progress-ring__progress {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 0;
+  transition: none;
+}
+
+/* ===== Accessibility - Reduced Motion ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .ies-progress-ring__progress {
+    transition: none;
+  }
+
+  .ies-progress-ring--indeterminate .ies-progress-ring__svg {
+    animation: none;
+  }
+}

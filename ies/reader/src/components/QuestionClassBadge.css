@@ -1,0 +1,144 @@
+/* ============================================
+   QUESTION CLASS BADGE COMPONENT
+   IES Design System v2 — Question Display
+   ============================================ */
+
+.ies-question-class-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  border-radius: var(--radius-full);
+  letter-spacing: var(--font-letter-spacing-normal);
+  border: 1px solid transparent;
+  transition: opacity var(--duration-fast) var(--easing-out);
+}
+
+/* ===== Sizes ===== */
+
+.ies-question-class-badge--sm {
+  padding: 2px 6px;
+  font-size: 10px;
+  line-height: 1.2;
+  height: 18px;
+}
+
+.ies-question-class-badge--md {
+  padding: 3px 8px;
+  font-size: var(--font-size-xs);
+  line-height: var(--font-line-height-tight);
+  height: 22px;
+}
+
+.ies-question-class-badge--lg {
+  padding: 4px 10px;
+  font-size: var(--font-size-sm);
+  line-height: var(--font-line-height-tight);
+  height: 26px;
+}
+
+/* ===== Icon Only ===== */
+
+.ies-question-class-badge--icon-only {
+  padding: 4px;
+  border-radius: 50%;
+}
+
+.ies-question-class-badge--icon-only.ies-question-class-badge--sm {
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+}
+
+.ies-question-class-badge--icon-only.ies-question-class-badge--md {
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+}
+
+.ies-question-class-badge--icon-only.ies-question-class-badge--lg {
+  width: 26px;
+  height: 26px;
+  padding: 5px;
+}
+
+/* ===== Icon ===== */
+
+.ies-question-class-badge__icon {
+  flex-shrink: 0;
+}
+
+/* ===== Question Class Variants ===== */
+
+/* Schema-Probe — Blue (structure questions) */
+.ies-question-class-badge--schema-probe {
+  background: var(--color-question-schema-bg);
+  color: var(--color-question-schema);
+  border-color: var(--color-question-schema);
+}
+
+/* Boundary — Purple (edge/limit questions) */
+.ies-question-class-badge--boundary {
+  background: var(--color-question-boundary-bg);
+  color: var(--color-question-boundary);
+  border-color: var(--color-question-boundary);
+}
+
+/* Dimensional — Teal (spectrum questions) */
+.ies-question-class-badge--dimensional {
+  background: var(--color-question-dimensional-bg);
+  color: var(--color-question-dimensional);
+  border-color: var(--color-question-dimensional);
+}
+
+/* Causal — Amber (mechanism questions) */
+.ies-question-class-badge--causal {
+  background: var(--color-question-causal-bg);
+  color: var(--color-question-causal);
+  border-color: var(--color-question-causal);
+}
+
+/* Counterfactual — Pink (what-if questions) */
+.ies-question-class-badge--counterfactual {
+  background: var(--color-question-counterfactual-bg);
+  color: var(--color-question-counterfactual);
+  border-color: var(--color-question-counterfactual);
+}
+
+/* Anchor — Green (concrete example questions) */
+.ies-question-class-badge--anchor {
+  background: var(--color-question-anchor-bg);
+  color: var(--color-question-anchor);
+  border-color: var(--color-question-anchor);
+}
+
+/* Perspective-Shift — Orange (viewpoint change questions) */
+.ies-question-class-badge--perspective-shift {
+  background: var(--color-question-perspective-bg);
+  color: var(--color-question-perspective);
+  border-color: var(--color-question-perspective);
+}
+
+/* Meta-Cognitive — Gray (thinking pattern questions) */
+.ies-question-class-badge--meta-cognitive {
+  background: var(--color-question-meta-bg);
+  color: var(--color-question-meta);
+  border-color: var(--color-question-meta);
+}
+
+/* Reflective-Synthesis — Indigo (integration questions) */
+.ies-question-class-badge--reflective-synthesis {
+  background: var(--color-question-synthesis-bg);
+  color: var(--color-question-synthesis);
+  border-color: var(--color-question-synthesis);
+}
+
+/* ===== Accessibility - Reduced Motion ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .ies-question-class-badge {
+    transition: none;
+  }
+}

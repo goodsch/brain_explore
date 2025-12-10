@@ -1,0 +1,211 @@
+/* ============================================
+   BREADCRUMB TRAIL COMPONENT
+   IES Design System v2 — Navigation
+   ============================================ */
+
+.ies-breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ies-breadcrumb-trail::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===== List ===== */
+
+.ies-breadcrumb-trail__list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ===== Item ===== */
+
+.ies-breadcrumb-trail__item {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ===== Link (clickable past items) ===== */
+
+.ies-breadcrumb-trail__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing-out),
+              background-color var(--duration-fast) var(--easing-out);
+}
+
+.ies-breadcrumb-trail__link:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.ies-breadcrumb-trail__link:hover .ies-breadcrumb-trail__item-name {
+  text-decoration: underline;
+}
+
+.ies-breadcrumb-trail__link:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ===== Current Item ===== */
+
+.ies-breadcrumb-trail__current {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* ===== Item Name ===== */
+
+.ies-breadcrumb-trail__item-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== Separator ===== */
+
+.ies-breadcrumb-trail__separator {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+/* ===== Overflow Button ===== */
+
+.ies-breadcrumb-trail__overflow {
+  position: relative;
+}
+
+.ies-breadcrumb-trail__overflow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing-out),
+              background-color var(--duration-fast) var(--easing-out),
+              border-color var(--duration-fast) var(--easing-out);
+}
+
+.ies-breadcrumb-trail__overflow-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-default);
+}
+
+.ies-breadcrumb-trail__overflow-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ===== Overflow Menu ===== */
+
+.ies-breadcrumb-trail__overflow-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 100;
+  min-width: 200px;
+  max-width: 280px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.ies-breadcrumb-trail__overflow-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-out),
+              color var(--duration-fast) var(--easing-out);
+}
+
+.ies-breadcrumb-trail__overflow-item:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.ies-breadcrumb-trail__overflow-item:focus-visible {
+  outline: none;
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.ies-breadcrumb-trail__overflow-item .ies-breadcrumb-trail__item-name {
+  flex: 1;
+  max-width: none;
+}
+
+/* ===== Compact Mode ===== */
+
+.ies-breadcrumb-trail--compact .ies-breadcrumb-trail__link,
+.ies-breadcrumb-trail--compact .ies-breadcrumb-trail__current {
+  padding: var(--space-0-5) var(--space-1);
+  font-size: var(--font-size-xs);
+  gap: var(--space-1);
+}
+
+.ies-breadcrumb-trail--compact .ies-breadcrumb-trail__item-name {
+  max-width: 100px;
+}
+
+.ies-breadcrumb-trail--compact .ies-breadcrumb-trail__overflow-btn {
+  width: 24px;
+  height: 24px;
+}
+
+/* ===== Accessibility - Reduced Motion ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .ies-breadcrumb-trail__link,
+  .ies-breadcrumb-trail__overflow-btn,
+  .ies-breadcrumb-trail__overflow-item {
+    transition: none;
+  }
+}

@@ -1,0 +1,205 @@
+/* ============================================
+   ENTITY BADGE COMPONENT
+   IES Design System v2 — Entity Display
+   ============================================ */
+
+.ies-entity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  border-radius: 4px;
+  letter-spacing: var(--font-letter-spacing-wide);
+  border: 1px solid transparent;
+  transition: opacity var(--duration-fast) var(--easing-out),
+              background-color var(--duration-fast) var(--easing-out),
+              border-color var(--duration-fast) var(--easing-out),
+              box-shadow var(--duration-fast) var(--easing-out);
+}
+
+/* ===== Sizes ===== */
+
+.ies-entity-badge--sm {
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  line-height: var(--font-line-height-tight);
+  height: 18px;
+}
+
+.ies-entity-badge--md {
+  padding: 4px 8px;
+  font-size: var(--font-size-sm);
+  line-height: var(--font-line-height-tight);
+  height: 24px;
+}
+
+.ies-entity-badge--lg {
+  padding: 6px 10px;
+  font-size: var(--font-size-base);
+  line-height: var(--font-line-height-tight);
+  height: 32px;
+}
+
+/* ===== Icon ===== */
+
+.ies-entity-badge__icon {
+  flex-shrink: 0;
+}
+
+/* ===== Entity Type Variants ===== */
+
+/* Domain Entity Types */
+.ies-entity-badge--concept {
+  background: var(--color-entity-concept-bg);
+  color: var(--color-entity-concept);
+  border-color: var(--color-entity-concept);
+}
+
+.ies-entity-badge--person {
+  background: var(--color-entity-person-bg);
+  color: var(--color-entity-person);
+  border-color: var(--color-entity-person);
+}
+
+.ies-entity-badge--theory {
+  background: var(--color-entity-theory-bg);
+  color: var(--color-entity-theory);
+  border-color: var(--color-entity-theory);
+}
+
+.ies-entity-badge--framework {
+  background: var(--color-entity-framework-bg);
+  color: var(--color-entity-framework);
+  border-color: var(--color-entity-framework);
+}
+
+.ies-entity-badge--assessment {
+  background: var(--color-entity-assessment-bg);
+  color: var(--color-entity-assessment);
+  border-color: var(--color-entity-assessment);
+}
+
+/* Personal Entity Types */
+.ies-entity-badge--spark {
+  background: var(--color-entity-spark-bg);
+  color: var(--color-entity-spark);
+  border-color: var(--color-entity-spark);
+}
+
+.ies-entity-badge--insight {
+  background: var(--color-entity-insight-bg);
+  color: var(--color-entity-insight);
+  border-color: var(--color-entity-insight);
+}
+
+.ies-entity-badge--thread {
+  background: var(--color-entity-thread-bg);
+  color: var(--color-entity-thread);
+  border-color: var(--color-entity-thread);
+}
+
+/* Extended Entity Types (use semantic colors as fallback) */
+.ies-entity-badge--favorite-problem {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.ies-entity-badge--reframe {
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+  border-color: #6366f1;
+}
+
+.ies-entity-badge--pattern {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.ies-entity-badge--dynamic-pattern {
+  background: rgba(236, 72, 153, 0.15);
+  color: #ec4899;
+  border-color: #ec4899;
+}
+
+.ies-entity-badge--story-insight {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border-color: #06b6d4;
+}
+
+.ies-entity-badge--schema-break {
+  background: rgba(132, 204, 22, 0.15);
+  color: #84cc16;
+  border-color: #84cc16;
+}
+
+/* ===== States ===== */
+
+/* Interactive (clickable) */
+.ies-entity-badge--interactive {
+  cursor: pointer;
+  user-select: none;
+}
+
+.ies-entity-badge--interactive:hover {
+  opacity: 0.9;
+}
+
+.ies-entity-badge--interactive:active {
+  border-width: 2px;
+  padding: 3px 7px; /* Adjust padding to maintain size */
+}
+
+.ies-entity-badge--sm.ies-entity-badge--interactive:active {
+  padding: 1px 5px;
+}
+
+.ies-entity-badge--lg.ies-entity-badge--interactive:active {
+  padding: 5px 9px;
+}
+
+/* Focus state for keyboard navigation */
+.ies-entity-badge--interactive:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Muted state */
+.ies-entity-badge--muted {
+  opacity: 0.4;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+  border-color: var(--color-border-subtle);
+}
+
+/* ===== Accessibility - Reduced Motion ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .ies-entity-badge {
+    transition: none;
+  }
+}
+
+/* ===== Touch Target Size ===== */
+
+/* Ensure minimum 44x44px touch target for interactive badges */
+.ies-entity-badge--interactive {
+  min-height: 44px;
+  min-width: 44px;
+  /* Use padding to achieve touch target while maintaining visual size */
+  position: relative;
+}
+
+.ies-entity-badge--interactive::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+}

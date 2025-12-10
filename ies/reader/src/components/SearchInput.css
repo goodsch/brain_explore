@@ -1,0 +1,189 @@
+/* ============================================
+   SEARCH INPUT COMPONENT
+   IES Design System v2 — Input Elements
+   ============================================ */
+
+.ies-search-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast) var(--easing-out),
+              background-color var(--duration-fast) var(--easing-out),
+              box-shadow var(--duration-fast) var(--easing-out);
+}
+
+/* ===== Focus State ===== */
+
+.ies-search-input:focus-within {
+  border-color: var(--color-border-focus);
+  background: var(--color-bg-secondary);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Sizes ===== */
+
+.ies-search-input--sm {
+  height: 32px;
+  padding: 0 var(--space-2);
+  gap: var(--space-1);
+}
+
+.ies-search-input--md {
+  height: 40px;
+  padding: 0 var(--space-3);
+  gap: var(--space-2);
+}
+
+.ies-search-input--lg {
+  height: 48px;
+  padding: 0 var(--space-4);
+  gap: var(--space-2);
+}
+
+/* ===== Search Icon ===== */
+
+.ies-search-input__icon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: color var(--duration-fast) var(--easing-out);
+}
+
+.ies-search-input--sm .ies-search-input__icon {
+  width: 14px;
+  height: 14px;
+}
+
+.ies-search-input--md .ies-search-input__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.ies-search-input--lg .ies-search-input__icon {
+  width: 18px;
+  height: 18px;
+}
+
+.ies-search-input:focus-within .ies-search-input__icon {
+  color: var(--color-text-secondary);
+}
+
+/* ===== Input Field ===== */
+
+.ies-search-input__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary);
+}
+
+.ies-search-input--sm .ies-search-input__input {
+  font-size: var(--font-size-sm);
+}
+
+.ies-search-input--md .ies-search-input__input {
+  font-size: var(--font-size-base);
+}
+
+.ies-search-input--lg .ies-search-input__input {
+  font-size: var(--font-size-lg);
+}
+
+.ies-search-input__input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ===== Clear Button ===== */
+
+.ies-search-input__clear {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing-out),
+              background-color var(--duration-fast) var(--easing-out);
+}
+
+.ies-search-input__clear:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.ies-search-input__clear:active {
+  background: var(--color-bg-active);
+}
+
+/* ===== Loading Spinner ===== */
+
+.ies-search-input__spinner {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  animation: ies-search-spin 1s linear infinite;
+}
+
+.ies-search-input--sm .ies-search-input__spinner {
+  width: 14px;
+  height: 14px;
+}
+
+.ies-search-input--md .ies-search-input__spinner {
+  width: 16px;
+  height: 16px;
+}
+
+.ies-search-input--lg .ies-search-input__spinner {
+  width: 18px;
+  height: 18px;
+}
+
+@keyframes ies-search-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== Disabled State ===== */
+
+.ies-search-input--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--color-bg-tertiary);
+}
+
+.ies-search-input--disabled .ies-search-input__input {
+  cursor: not-allowed;
+}
+
+/* ===== Accessibility - Reduced Motion ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .ies-search-input {
+    transition: none;
+  }
+
+  .ies-search-input__icon,
+  .ies-search-input__clear {
+    transition: none;
+  }
+
+  .ies-search-input__spinner {
+    animation: none;
+  }
+}
