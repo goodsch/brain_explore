@@ -1,0 +1,256 @@
+{
+  "color": {
+    "bg": {
+      "primary": {
+        "value": "#0f0f10",
+        "comment": "Near black, warm undertone - main canvas"
+      },
+      "secondary": {
+        "value": "#1a1a1c",
+        "comment": "Elevated surfaces - cards, panels"
+      },
+      "tertiary": {
+        "value": "#252528",
+        "comment": "Nested elements - inputs, dropdowns"
+      },
+      "hover": {
+        "value": "#2a2a2e",
+        "comment": "Hover states"
+      },
+      "active": {
+        "value": "#323236",
+        "comment": "Active/pressed states"
+      }
+    },
+    "text": {
+      "primary": {
+        "value": "#f5f5f7",
+        "comment": "Main text - WCAG AAA (>7:1 contrast)"
+      },
+      "secondary": {
+        "value": "#a1a1a6",
+        "comment": "Secondary text - supporting content"
+      },
+      "muted": {
+        "value": "#6e6e73",
+        "comment": "Muted text - hints, metadata"
+      },
+      "subtle": {
+        "value": "#48484a",
+        "comment": "Subtle text - disabled, placeholders"
+      },
+      "inverse": {
+        "value": "#0f0f10",
+        "comment": "Text on light backgrounds (rare)"
+      }
+    },
+    "entity": {
+      "concept": {
+        "value": "#3b82f6",
+        "comment": "Blue - ideas, principles"
+      },
+      "concept-bg": {
+        "value": "rgba(59, 130, 246, 0.15)",
+        "comment": "Concept background (15% opacity)"
+      },
+      "person": {
+        "value": "#10b981",
+        "comment": "Green - people, authors"
+      },
+      "person-bg": {
+        "value": "rgba(16, 185, 129, 0.15)",
+        "comment": "Person background (15% opacity)"
+      },
+      "theory": {
+        "value": "#8b5cf6",
+        "comment": "Purple - theories, models"
+      },
+      "theory-bg": {
+        "value": "rgba(139, 92, 246, 0.15)",
+        "comment": "Theory background (15% opacity)"
+      },
+      "framework": {
+        "value": "#f59e0b",
+        "comment": "Amber - frameworks, methods"
+      },
+      "framework-bg": {
+        "value": "rgba(245, 158, 11, 0.15)",
+        "comment": "Framework background (15% opacity)"
+      },
+      "assessment": {
+        "value": "#ef4444",
+        "comment": "Red - assessments, tools"
+      },
+      "assessment-bg": {
+        "value": "rgba(239, 68, 68, 0.15)",
+        "comment": "Assessment background (15% opacity)"
+      },
+      "spark": {
+        "value": "#ec4899",
+        "comment": "Pink - raw insights, resonance"
+      },
+      "spark-bg": {
+        "value": "rgba(236, 72, 153, 0.15)",
+        "comment": "Spark background (15% opacity)"
+      },
+      "insight": {
+        "value": "#06b6d4",
+        "comment": "Cyan - processed understanding"
+      },
+      "insight-bg": {
+        "value": "rgba(6, 182, 212, 0.15)",
+        "comment": "Insight background (15% opacity)"
+      },
+      "thread": {
+        "value": "#84cc16",
+        "comment": "Lime - exploration paths"
+      },
+      "thread-bg": {
+        "value": "rgba(132, 204, 22, 0.15)",
+        "comment": "Thread background (15% opacity)"
+      }
+    },
+    "question": {
+      "schema": {
+        "value": "#3b82f6",
+        "comment": "Blue - structure questions"
+      },
+      "schema-bg": {
+        "value": "rgba(59, 130, 246, 0.15)"
+      },
+      "boundary": {
+        "value": "#8b5cf6",
+        "comment": "Purple - edge/limit questions"
+      },
+      "boundary-bg": {
+        "value": "rgba(139, 92, 246, 0.15)"
+      },
+      "dimensional": {
+        "value": "#14b8a6",
+        "comment": "Teal - spectrum questions"
+      },
+      "dimensional-bg": {
+        "value": "rgba(20, 184, 166, 0.15)"
+      },
+      "causal": {
+        "value": "#f59e0b",
+        "comment": "Amber - mechanism questions"
+      },
+      "causal-bg": {
+        "value": "rgba(245, 158, 11, 0.15)"
+      },
+      "counterfactual": {
+        "value": "#ec4899",
+        "comment": "Pink - what-if questions"
+      },
+      "counterfactual-bg": {
+        "value": "rgba(236, 72, 153, 0.15)"
+      },
+      "anchor": {
+        "value": "#10b981",
+        "comment": "Green - concrete example questions"
+      },
+      "anchor-bg": {
+        "value": "rgba(16, 185, 129, 0.15)"
+      },
+      "perspective": {
+        "value": "#f97316",
+        "comment": "Orange - viewpoint change questions"
+      },
+      "perspective-bg": {
+        "value": "rgba(249, 115, 22, 0.15)"
+      },
+      "meta": {
+        "value": "#6b7280",
+        "comment": "Gray - thinking pattern questions"
+      },
+      "meta-bg": {
+        "value": "rgba(107, 114, 128, 0.15)"
+      },
+      "synthesis": {
+        "value": "#6366f1",
+        "comment": "Indigo - integration questions"
+      },
+      "synthesis-bg": {
+        "value": "rgba(99, 102, 241, 0.15)"
+      }
+    },
+    "semantic": {
+      "success": {
+        "value": "#10b981",
+        "comment": "Green - confirmation, completion"
+      },
+      "success-bg": {
+        "value": "rgba(16, 185, 129, 0.15)"
+      },
+      "warning": {
+        "value": "#f59e0b",
+        "comment": "Amber - caution, attention needed"
+      },
+      "warning-bg": {
+        "value": "rgba(245, 158, 11, 0.15)"
+      },
+      "error": {
+        "value": "#ef4444",
+        "comment": "Red - errors, failures"
+      },
+      "error-bg": {
+        "value": "rgba(239, 68, 68, 0.15)"
+      },
+      "info": {
+        "value": "#3b82f6",
+        "comment": "Blue - informational messages"
+      },
+      "info-bg": {
+        "value": "rgba(59, 130, 246, 0.15)"
+      }
+    },
+    "energy": {
+      "low": {
+        "value": "#6b7280",
+        "comment": "Cool gray - low energy, passive tasks"
+      },
+      "low-bg": {
+        "value": "rgba(107, 114, 128, 0.15)"
+      },
+      "medium": {
+        "value": "#f59e0b",
+        "comment": "Amber - moderate energy, active tasks"
+      },
+      "medium-bg": {
+        "value": "rgba(245, 158, 11, 0.15)"
+      },
+      "high": {
+        "value": "#ef4444",
+        "comment": "Red - high energy, demanding tasks"
+      },
+      "high-bg": {
+        "value": "rgba(239, 68, 68, 0.15)"
+      }
+    },
+    "border": {
+      "subtle": {
+        "value": "rgba(255, 255, 255, 0.05)",
+        "comment": "Barely visible separation"
+      },
+      "default": {
+        "value": "rgba(255, 255, 255, 0.1)",
+        "comment": "Standard borders"
+      },
+      "focus": {
+        "value": "rgba(255, 255, 255, 0.2)",
+        "comment": "Focused elements"
+      },
+      "strong": {
+        "value": "rgba(255, 255, 255, 0.3)",
+        "comment": "Emphasized separation"
+      }
+    },
+    "glass": {
+      "bg": {
+        "value": "rgba(26, 26, 28, 0.8)",
+        "comment": "80% opaque bg-secondary"
+      }
+    }
+  }
+}

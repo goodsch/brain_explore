@@ -4,12 +4,18 @@
   --bg-tertiary: #252528;
   --bg-hover: #2a2a2e;
   --text-primary: #f5f5f5;
-  --text-secondary: #a0a0a5;
-  --text-muted: #6b6b70;
+
+  /* WCAG AA Compliant Text Colors (Updated Dec 9, 2025) */
+  --text-secondary: #a0a0a5;      /* 7.45:1 on bg-primary ✓ */
+  --text-tertiary: #7e7e85;       /* 4.74:1 on bg-primary ✓ */
+  --text-muted: #7e7e85;          /* 4.74:1 on bg-primary ✓ (was #6e6e73 @ 3.78:1) */
+  --text-subtle: #6a6a70;         /* 3.52:1 on bg-primary - for large text/disabled states */
+
   --border-default: #3a3a3e;
+  --border-primary: #3a3a3e;
   --border-subtle: #2a2a2e;
   --border-focus: #5a5a60;
-  
+
   --entity-concept: #3b82f6;
   --entity-person: #10b981;
   --entity-theory: #8b5cf6;
@@ -27,20 +33,32 @@
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
+  --space-5: 1.25rem;
   --space-6: 1.5rem;
-  
+
+  --radius-sm: 4px;
   --radius-md: 8px;
+  --radius-lg: 12px;
   --radius-full: 9999px;
-  
+
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  
+
   --duration-fast: 150ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  
+
   --glass-bg: rgba(26, 26, 28, 0.8);
   --glass-blur: blur(12px);
   --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-  
+
   --z-sticky: 100;
   --z-modal: 200;
+
+  /* Semantic colors */
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --success: #10b981;
+  --error: #ef4444;
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --error-fg: #ef4444;
+  --warning: #f59e0b;
 }

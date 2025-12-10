@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IES Design Tokens Test</title>
+  <link rel="stylesheet" href="dist/tokens.css">
+  <style>
+    body {
+      font-family: var(--font-family-sans);
+      background: var(--color-bg-primary);
+      color: var(--color-text-primary);
+      padding: var(--space-8);
+      margin: 0;
+    }
+
+    h1 {
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--space-6);
+    }
+
+    .section {
+      background: var(--color-bg-secondary);
+      padding: var(--space-6);
+      border-radius: var(--radius-card);
+      margin-bottom: var(--space-4);
+      border: 1px solid var(--color-border-default);
+    }
+
+    .section h2 {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-medium);
+      margin-top: 0;
+      margin-bottom: var(--space-4);
+    }
+
+    .entity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-3);
+    }
+
+    .entity-badge {
+      background: var(--color-bg-tertiary);
+      padding: var(--space-3);
+      border-radius: var(--radius-badge);
+      text-align: center;
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      transition: all var(--duration-fast) var(--easing-out);
+      border: 2px solid transparent;
+    }
+
+    .entity-badge:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .entity-badge.concept {
+      color: var(--color-entity-concept);
+      background: var(--color-entity-concept-bg);
+      border-color: var(--color-entity-concept);
+    }
+
+    .entity-badge.person {
+      color: var(--color-entity-person);
+      background: var(--color-entity-person-bg);
+      border-color: var(--color-entity-person);
+    }
+
+    .entity-badge.theory {
+      color: var(--color-entity-theory);
+      background: var(--color-entity-theory-bg);
+      border-color: var(--color-entity-theory);
+    }
+
+    .entity-badge.framework {
+      color: var(--color-entity-framework);
+      background: var(--color-entity-framework-bg);
+      border-color: var(--color-entity-framework);
+    }
+
+    .entity-badge.assessment {
+      color: var(--color-entity-assessment);
+      background: var(--color-entity-assessment-bg);
+      border-color: var(--color-entity-assessment);
+    }
+
+    .entity-badge.spark {
+      color: var(--color-entity-spark);
+      background: var(--color-entity-spark-bg);
+      border-color: var(--color-entity-spark);
+    }
+
+    .entity-badge.insight {
+      color: var(--color-entity-insight);
+      background: var(--color-entity-insight-bg);
+      border-color: var(--color-entity-insight);
+    }
+
+    .entity-badge.thread {
+      color: var(--color-entity-thread);
+      background: var(--color-entity-thread-bg);
+      border-color: var(--color-entity-thread);
+    }
+
+    .spacing-demo {
+      display: flex;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+    }
+
+    .spacing-box {
+      background: var(--color-entity-concept-bg);
+      border: 1px solid var(--color-entity-concept);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+    }
+
+    .semantic-row {
+      display: flex;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+
+    .semantic-badge {
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-badge);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+    }
+
+    .semantic-badge.success {
+      background: var(--color-semantic-success-bg);
+      color: var(--color-semantic-success);
+      border: 1px solid var(--color-semantic-success);
+    }
+
+    .semantic-badge.warning {
+      background: var(--color-semantic-warning-bg);
+      color: var(--color-semantic-warning);
+      border: 1px solid var(--color-semantic-warning);
+    }
+
+    .semantic-badge.error {
+      background: var(--color-semantic-error-bg);
+      color: var(--color-semantic-error);
+      border: 1px solid var(--color-semantic-error);
+    }
+
+    .semantic-badge.info {
+      background: var(--color-semantic-info-bg);
+      color: var(--color-semantic-info);
+      border: 1px solid var(--color-semantic-info);
+    }
+  </style>
+</head>
+<body>
+  <h1>IES Design Tokens v2.0 Test</h1>
+
+  <div class="section">
+    <h2>Entity Type Colors</h2>
+    <div class="entity-grid">
+      <div class="entity-badge concept">Concept</div>
+      <div class="entity-badge person">Person</div>
+      <div class="entity-badge theory">Theory</div>
+      <div class="entity-badge framework">Framework</div>
+      <div class="entity-badge assessment">Assessment</div>
+      <div class="entity-badge spark">Spark</div>
+      <div class="entity-badge insight">Insight</div>
+      <div class="entity-badge thread">Thread</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Semantic Colors</h2>
+    <div class="semantic-row">
+      <div class="semantic-badge success">Success</div>
+      <div class="semantic-badge warning">Warning</div>
+      <div class="semantic-badge error">Error</div>
+      <div class="semantic-badge info">Info</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Spacing Scale (4px base unit)</h2>
+    <div class="spacing-demo">
+      <div class="spacing-box" style="width: var(--space-4); height: var(--space-4);">4</div>
+      <div class="spacing-box" style="width: var(--space-8); height: var(--space-8);">8</div>
+      <div class="spacing-box" style="width: var(--space-12); height: var(--space-12);">12</div>
+      <div class="spacing-box" style="width: var(--space-16); height: var(--space-16);">16</div>
+      <div class="spacing-box" style="width: var(--space-20); height: var(--space-20);">20</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Typography Scale</h2>
+    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+      <div style="font-size: var(--font-size-xs);">Extra Small (12px)</div>
+      <div style="font-size: var(--font-size-sm);">Small (14px)</div>
+      <div style="font-size: var(--font-size-base);">Base (16px)</div>
+      <div style="font-size: var(--font-size-lg);">Large (18px)</div>
+      <div style="font-size: var(--font-size-xl);">Extra Large (20px)</div>
+      <div style="font-size: var(--font-size-2xl);">2XL (24px)</div>
+      <div style="font-size: var(--font-size-3xl);">3XL (30px)</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Background Layers</h2>
+    <div style="background: var(--color-bg-primary); padding: var(--space-4); border-radius: var(--radius-md);">
+      Primary Background
+      <div style="background: var(--color-bg-secondary); padding: var(--space-4); margin-top: var(--space-2); border-radius: var(--radius-md);">
+        Secondary Background
+        <div style="background: var(--color-bg-tertiary); padding: var(--space-4); margin-top: var(--space-2); border-radius: var(--radius-md);">
+          Tertiary Background
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

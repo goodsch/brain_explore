@@ -1,0 +1,98 @@
+{
+  "duration": {
+    "instant": {
+      "value": "75ms",
+      "comment": "Instant feedback (hover color change)"
+    },
+    "fast": {
+      "value": "150ms",
+      "comment": "Quick interactions (buttons, toggles)"
+    },
+    "base": {
+      "value": "200ms",
+      "comment": "Default animations (cards, panels)"
+    },
+    "slow": {
+      "value": "300ms",
+      "comment": "Deliberate animations (modals, drawers)"
+    },
+    "slower": {
+      "value": "500ms",
+      "comment": "Very slow (page transitions, rare)"
+    }
+  },
+  "easing": {
+    "out": {
+      "value": "cubic-bezier(0, 0, 0.2, 1)",
+      "comment": "Quick start, smooth stop"
+    },
+    "in": {
+      "value": "cubic-bezier(0.4, 0, 1, 1)",
+      "comment": "Smooth start, quick stop"
+    },
+    "in-out": {
+      "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "comment": "Smooth both ends"
+    },
+    "spring": {
+      "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      "comment": "Subtle bounce (confirmations)"
+    },
+    "linear": {
+      "value": "linear",
+      "comment": "Continuous animations (spinners)"
+    }
+  },
+  "shadow": {
+    "xs": {
+      "value": "0 1px 2px rgba(0, 0, 0, 0.1)",
+      "comment": "Buttons, chips, small cards"
+    },
+    "sm": {
+      "value": "0 2px 4px rgba(0, 0, 0, 0.1)",
+      "comment": "Input fields on focus, dropdowns"
+    },
+    "md": {
+      "value": "0 4px 6px rgba(0, 0, 0, 0.1)",
+      "comment": "Floating cards, tooltips"
+    },
+    "lg": {
+      "value": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+      "comment": "Modals, popovers, flow panel"
+    },
+    "xl": {
+      "value": "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+      "comment": "Full-screen overlays (rare)"
+    }
+  },
+  "zIndex": {
+    "base": {
+      "value": "0",
+      "comment": "Default layer"
+    },
+    "dropdown": {
+      "value": "50",
+      "comment": "Dropdowns, tooltips"
+    },
+    "sticky": {
+      "value": "100",
+      "comment": "Sticky headers, tabs"
+    },
+    "overlay": {
+      "value": "150",
+      "comment": "Overlays, backdrops"
+    },
+    "modal": {
+      "value": "200",
+      "comment": "Modals, dialogs"
+    },
+    "popover": {
+      "value": "250",
+      "comment": "Popovers, toasts"
+    },
+    "tooltip": {
+      "value": "300",
+      "comment": "Tooltips (highest)"
+    }
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "font": {
+    "family": {
+      "sans": {
+        "value": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "comment": "UI text, labels, buttons, body text"
+      },
+      "serif": {
+        "value": "'Source Serif Pro', serif",
+        "comment": "Long-form reading (reserved)"
+      },
+      "mono": {
+        "value": "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+        "comment": "Code blocks, technical identifiers"
+      },
+      "system": {
+        "value": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "comment": "System fallback"
+      }
+    },
+    "size": {
+      "xs": {
+        "value": "0.75rem",
+        "comment": "12px - Small labels, badges, timestamps"
+      },
+      "sm": {
+        "value": "0.875rem",
+        "comment": "14px - Secondary text, captions, metadata"
+      },
+      "base": {
+        "value": "1rem",
+        "comment": "16px - Body text (default)"
+      },
+      "lg": {
+        "value": "1.125rem",
+        "comment": "18px - Large body, emphasized text"
+      },
+      "xl": {
+        "value": "1.25rem",
+        "comment": "20px - Section headings"
+      },
+      "2xl": {
+        "value": "1.5rem",
+        "comment": "24px - Card headings, panel titles"
+      },
+      "3xl": {
+        "value": "1.875rem",
+        "comment": "30px - Page headings"
+      },
+      "4xl": {
+        "value": "2.25rem",
+        "comment": "36px - Large headings, hero titles"
+      },
+      "5xl": {
+        "value": "3rem",
+        "comment": "48px - Hero headings (rarely used)"
+      }
+    },
+    "weight": {
+      "normal": {
+        "value": "400",
+        "comment": "Body text, standard UI labels"
+      },
+      "medium": {
+        "value": "500",
+        "comment": "Emphasized text, active states"
+      },
+      "semibold": {
+        "value": "600",
+        "comment": "Headings, important labels"
+      },
+      "bold": {
+        "value": "700",
+        "comment": "Hero text, strong emphasis (rarely used)"
+      }
+    },
+    "lineHeight": {
+      "none": {
+        "value": "1",
+        "comment": "Icons, single-line labels"
+      },
+      "tight": {
+        "value": "1.25",
+        "comment": "Headings, compact UI"
+      },
+      "snug": {
+        "value": "1.375",
+        "comment": "Subheadings, button text"
+      },
+      "normal": {
+        "value": "1.5",
+        "comment": "Standard UI text"
+      },
+      "relaxed": {
+        "value": "1.625",
+        "comment": "Comfortable reading"
+      },
+      "loose": {
+        "value": "2",
+        "comment": "Spacious reading (rare)"
+      },
+      "heading": {
+        "value": "1.25",
+        "comment": "All headings"
+      },
+      "body": {
+        "value": "1.6",
+        "comment": "Body text in reader"
+      },
+      "code": {
+        "value": "1.5",
+        "comment": "Code blocks, monospace text"
+      }
+    },
+    "letterSpacing": {
+      "tighter": {
+        "value": "-0.05em",
+        "comment": "Large headings (36px+)"
+      },
+      "tight": {
+        "value": "-0.025em",
+        "comment": "Headings (20-36px)"
+      },
+      "normal": {
+        "value": "0",
+        "comment": "Body text, UI labels (default)"
+      },
+      "wide": {
+        "value": "0.025em",
+        "comment": "Small caps, badge text"
+      },
+      "wider": {
+        "value": "0.05em",
+        "comment": "All-caps labels"
+      },
+      "widest": {
+        "value": "0.1em",
+        "comment": "Wide all-caps (rarely used)"
+      }
+    }
+  }
+}

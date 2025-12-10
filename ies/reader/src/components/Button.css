@@ -1,0 +1,134 @@
+/* ============================================
+   BUTTON COMPONENT
+   IES Design System v2 — Interactive Elements
+   ============================================ */
+
+.ies-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  position: relative;
+  white-space: nowrap;
+}
+
+.ies-button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Sizes */
+.ies-button--sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.875rem;
+  height: 32px;
+}
+
+.ies-button--md {
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.9375rem;
+  height: 40px;
+}
+
+.ies-button--lg {
+  padding: var(--space-4) var(--space-6);
+  font-size: 1rem;
+  height: 48px;
+}
+
+/* Variants */
+.ies-button--primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.ies-button--primary:hover:not(.ies-button--disabled) {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.ies-button--secondary {
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  color: var(--text-primary);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.ies-button--secondary:hover:not(.ies-button--disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
+.ies-button--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.ies-button--ghost:hover:not(.ies-button--disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ies-button--danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.ies-button--danger:hover:not(.ies-button--disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
+}
+
+/* States */
+.ies-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.ies-button--loading {
+  cursor: wait;
+}
+
+.ies-button__content--loading {
+  opacity: 0;
+}
+
+/* Spinner */
+.ies-button__spinner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .ies-button--lg {
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.9375rem;
+    height: 44px;
+  }
+}

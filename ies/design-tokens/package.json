@@ -1,0 +1,29 @@
+{
+  "name": "@ies/design-tokens",
+  "version": "2.0.0",
+  "description": "IES Design System design tokens - Dark theme, entity colors, spacing, typography, and motion",
+  "type": "module",
+  "main": "dist/tokens.js",
+  "types": "dist/tokens.d.ts",
+  "files": [
+    "dist/**/*",
+    "tokens/**/*"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js --watch",
+    "clean": "rm -rf dist/*"
+  },
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "style-dictionary",
+    "css-variables",
+    "dark-theme"
+  ],
+  "author": "IES Team",
+  "license": "MIT",
+  "devDependencies": {
+    "style-dictionary": "^4.0.1"
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "space": {
+    "0": {
+      "value": "0",
+      "comment": "Zero spacing"
+    },
+    "px": {
+      "value": "1px",
+      "comment": "Single pixel"
+    },
+    "0-5": {
+      "value": "0.125rem",
+      "comment": "2px"
+    },
+    "1": {
+      "value": "0.25rem",
+      "comment": "4px - base unit"
+    },
+    "1-5": {
+      "value": "0.375rem",
+      "comment": "6px"
+    },
+    "2": {
+      "value": "0.5rem",
+      "comment": "8px"
+    },
+    "2-5": {
+      "value": "0.625rem",
+      "comment": "10px"
+    },
+    "3": {
+      "value": "0.75rem",
+      "comment": "12px"
+    },
+    "3-5": {
+      "value": "0.875rem",
+      "comment": "14px"
+    },
+    "4": {
+      "value": "1rem",
+      "comment": "16px"
+    },
+    "5": {
+      "value": "1.25rem",
+      "comment": "20px"
+    },
+    "6": {
+      "value": "1.5rem",
+      "comment": "24px"
+    },
+    "7": {
+      "value": "1.75rem",
+      "comment": "28px"
+    },
+    "8": {
+      "value": "2rem",
+      "comment": "32px"
+    },
+    "9": {
+      "value": "2.25rem",
+      "comment": "36px"
+    },
+    "10": {
+      "value": "2.5rem",
+      "comment": "40px"
+    },
+    "11": {
+      "value": "2.75rem",
+      "comment": "44px"
+    },
+    "12": {
+      "value": "3rem",
+      "comment": "48px"
+    },
+    "14": {
+      "value": "3.5rem",
+      "comment": "56px"
+    },
+    "16": {
+      "value": "4rem",
+      "comment": "64px"
+    },
+    "20": {
+      "value": "5rem",
+      "comment": "80px"
+    },
+    "24": {
+      "value": "6rem",
+      "comment": "96px"
+    },
+    "32": {
+      "value": "8rem",
+      "comment": "128px"
+    }
+  },
+  "radius": {
+    "none": {
+      "value": "0",
+      "comment": "No rounding"
+    },
+    "sm": {
+      "value": "4px",
+      "comment": "Subtle rounding"
+    },
+    "md": {
+      "value": "8px",
+      "comment": "Default cards, buttons"
+    },
+    "lg": {
+      "value": "12px",
+      "comment": "Large cards, modals"
+    },
+    "xl": {
+      "value": "16px",
+      "comment": "Extra large elements"
+    },
+    "2xl": {
+      "value": "24px",
+      "comment": "Very rounded (rarely used)"
+    },
+    "full": {
+      "value": "9999px",
+      "comment": "Pills, avatars, badges"
+    },
+    "button": {
+      "value": "8px",
+      "comment": "Button border radius"
+    },
+    "input": {
+      "value": "8px",
+      "comment": "Input border radius"
+    },
+    "card": {
+      "value": "12px",
+      "comment": "Card border radius"
+    },
+    "modal": {
+      "value": "16px",
+      "comment": "Modal border radius"
+    },
+    "chip": {
+      "value": "9999px",
+      "comment": "Chip border radius (full pill)"
+    },
+    "badge": {
+      "value": "9999px",
+      "comment": "Badge border radius (full pill)"
+    }
+  },
+  "breakpoint": {
+    "sm": {
+      "value": "480px",
+      "comment": "Mobile landscape"
+    },
+    "md": {
+      "value": "768px",
+      "comment": "Tablet portrait"
+    },
+    "lg": {
+      "value": "1024px",
+      "comment": "Tablet landscape"
+    },
+    "xl": {
+      "value": "1280px",
+      "comment": "Desktop"
+    },
+    "2xl": {
+      "value": "1536px",
+      "comment": "Wide desktop"
+    }
+  }
+}

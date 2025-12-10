@@ -1,8 +1,15 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
 
-// https://vite.dev/config/
+const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+
+// More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [
     react(),
@@ -20,155 +27,148 @@ export default defineConfig({
         scope: '/',
         start_url: '/',
         categories: ['books', 'education', 'productivity'],
-        icons: [
-          {
-            src: '/icons/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
+        icons: [{
+          src: '/icons/icon-192.png',
+          sizes: '192x192',
+          type: 'image/png'
+        }, {
+          src: '/icons/icon-512.png',
+          sizes: '512x512',
+          type: 'image/png'
+        }, {
+          src: '/icons/icon-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable'
+        }]
       },
       workbox: {
+        // Increase file size limit for Storybook builds (3.15 MB file)
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB
         // Cache strategies
-        runtimeCaching: [
-          {
-            // Cache book files for offline reading
-            urlPattern: /\/books\/\d+\/file$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'book-files',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
+        runtimeCaching: [{
+          // Cache book files for offline reading
+          urlPattern: /\/books\/\d+\/file$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'book-files',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
             },
-          },
-          {
-            // Cache book covers
-            urlPattern: /\/books\/\d+\/cover$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'book-covers',
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        }, {
+          // Cache book covers
+          urlPattern: /\/books\/\d+\/cover$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'book-covers',
+            expiration: {
+              maxEntries: 200,
+              maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
             },
-          },
-          {
-            // Network-first for API calls (book list, search, etc.)
-            urlPattern: /\/api\//,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60, // 1 hour
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        }, {
+          // Network-first for API calls (book list, search, etc.)
+          urlPattern: /\/api\//,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cache',
+            networkTimeoutSeconds: 10,
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 // 1 hour
             },
-          },
-          {
-            // Cache Google Fonts
-            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'google-fonts-stylesheets',
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        }, {
+          // Cache Google Fonts
+          urlPattern: /^https:\/\/fonts\.googleapis\.com/,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'google-fonts-stylesheets'
+          }
+        }, {
+          urlPattern: /^https:\/\/fonts\.gstatic\.com/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'google-fonts-webfonts',
+            expiration: {
+              maxEntries: 30,
+              maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
             },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-webfonts',
-              expiration: {
-                maxEntries: 30,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-        ],
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        }],
         // Don't cache-bust URLs with hashes (Vite already does this)
-        dontCacheBustURLsMatching: /\.[a-f0-9]{8}\./,
+        dontCacheBustURLsMatching: /\.[a-f0-9]{8}\./
       },
       devOptions: {
-        enabled: true, // Enable PWA in dev mode for testing
-      },
-    }),
+        enabled: true // Enable PWA in dev mode for testing
+      }
+    })
   ],
   server: {
-    host: true, // Expose on network for mobile testing
+    host: true,
+    // Expose on network for mobile testing
     proxy: {
       '/gutenberg': {
         target: 'https://www.gutenberg.org',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/gutenberg/, ''),
+        rewrite: path => path.replace(/^\/gutenberg/, '')
       },
       // Backend API proxy - use 127.0.0.1 to avoid IPv6 resolution issues
       '/api': {
         target: 'http://127.0.0.1:8081',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: path => path.replace(/^\/api/, '')
       },
       // Books endpoint proxy
       '/books': {
         target: 'http://127.0.0.1:8081',
-        changeOrigin: true,
+        changeOrigin: true
       },
       // Graph endpoint proxy
       '/graph': {
         target: 'http://127.0.0.1:8081',
-        changeOrigin: true,
+        changeOrigin: true
       },
       // Profile endpoint proxy
       '/profile': {
         target: 'http://127.0.0.1:8081',
-        changeOrigin: true,
+        changeOrigin: true
       },
       // Question engine proxy
       '/question-engine': {
         target: 'http://127.0.0.1:8081',
-        changeOrigin: true,
+        changeOrigin: true
       },
       // Journeys proxy
       '/journeys': {
         target: 'http://127.0.0.1:8081',
-        changeOrigin: true,
+        changeOrigin: true
       },
       // Health check proxy
       '/health': {
         target: 'http://127.0.0.1:8081',
-        changeOrigin: true,
+        changeOrigin: true
       },
       // Conversations proxy
       '/conversations': {
         target: 'http://127.0.0.1:8081',
-        changeOrigin: true,
-      },
-    },
+        changeOrigin: true
+      }
+    }
   },
   build: {
     // Improve chunk splitting
@@ -176,9 +176,32 @@ export default defineConfig({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
-          'epub-vendor': ['epubjs', 'react-reader'],
-        },
-      },
-    },
+          'epub-vendor': ['epubjs', 'react-reader']
+        }
+      }
+    }
   },
-})
+  test: {
+    projects: [{
+      extends: true,
+      plugins: [
+      // The plugin will run tests for the stories defined in your Storybook config
+      // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
+      storybookTest({
+        configDir: path.join(dirname, '.storybook')
+      })],
+      test: {
+        name: 'storybook',
+        browser: {
+          enabled: true,
+          headless: true,
+          provider: playwright({}),
+          instances: [{
+            browser: 'chromium'
+          }]
+        },
+        setupFiles: ['.storybook/vitest.setup.ts']
+      }
+    }]
+  }
+});
