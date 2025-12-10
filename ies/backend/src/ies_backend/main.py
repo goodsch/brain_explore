@@ -17,6 +17,7 @@ from ies_backend.api import (
     highlights,
     inbox,
     journey,
+    journey_patterns,
     journey_timeline,
     personal,
     profile,
@@ -56,6 +57,7 @@ app.include_router(graph.router, prefix="/graph", tags=["graph"])
 app.include_router(book_entities.router, prefix="/graph", tags=["graph"])
 app.include_router(journey.router, tags=["journeys"])
 app.include_router(journey_timeline.router, tags=["journey-timeline"])
+app.include_router(journey_patterns.router, tags=["journey-patterns"])
 # Conversation imports
 app.include_router(conversations.router, tags=["conversations"])
 # Inbox router mounted at both paths for migration
