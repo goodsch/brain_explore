@@ -111,7 +111,9 @@ function TimelineGroupView({ group }: TimelineGroupViewProps) {
 
   return (
     <div className="timeline-group">
-      <button className="timeline-group__header" onClick={() => setIsExpanded(!isExpanded)}>
+      <button className="timeline-group__header" onClick={() => setIsExpanded(!isExpanded)}
+        aria-label="Toggle timeline group"
+      >
         <div className="timeline-group__label">
           <span className="timeline-group__title">{group.group_label}</span>
           <span className="timeline-group__count">{group.entry_count} entries</span>

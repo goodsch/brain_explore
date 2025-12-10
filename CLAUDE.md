@@ -25,7 +25,7 @@
 
 ## Current Sprint (Dec 9, 2025)
 
-**Phase 2c: 99% Complete**
+**Phase 2c: 100% Complete**
 
 ✅ Completed:
 - Cross-app session sync (IES Reader ↔ SiYuan)
@@ -37,9 +37,7 @@
 - Redis migration for session persistence
 - Centralized journey event logging (JourneyLogger)
 - Journey continuity API (`/session-state/continue`)
-
-🔄 In Progress:
-- Journey pattern analysis (final 1%)
+- Journey pattern analysis (entity clustering, path detection, recommendations)
 
 **Next Phase: UX Foundation** — Frontend polish for production readiness
 
@@ -114,12 +112,13 @@ For detailed implementation info, use these resources instead of expecting every
 | Need | Resource |
 |------|----------|
 | API endpoints | `docs/ARCHITECTURE-AND-INTERACTIONS.md` |
-| Implementation status | `docs/GAP-ANALYSIS-2025-12-09.md` (99% complete, journey logging done) |
+| Implementation status | `docs/GAP-ANALYSIS-2025-12-09.md` (100% complete, Phase 2c done) |
 | **SiYuan folder structure** | `docs/SIYUAN-FOLDER-STRUCTURE.md` (10 top folders, seedlings/sessions hierarchy) |
 | **User Journey Analysis** | `docs/USER-JOURNEY-ANALYSIS-2025-12-09.md` (67 issues: 18 critical, 24 high) |
 | **Cross-App Journey Analysis** | `docs/CROSS-APP-JOURNEY-ANALYSIS-2025-12-09.md` (5 journey scenarios, state transfer matrix) |
-| **UX/UI Design** | `docs/design/00-design-package-index.md` (270KB design package) |
-| **Design Playground** | `docs/design/interactive-design-playground.html` (Interactive theme/style tester) |
+| **UX/UI Design Package** | `docs/design/00-design-package-index.md` (323KB, 8 complete docs) |
+| **Design Playground** | `docs/design/interactive-design-playground.html` (6 themes, live component preview) |
+| **Aesthetic Options** | `docs/design/08-aesthetic-directions-and-component-systems.md` (53KB, 6 themes + 4 component systems) |
 | **UX Issues** | `docs/UX-CRITIQUE-2025-12-09.md` (30 issues, severity-rated) |
 | **Flow Mode Redesign** | `docs/design/06-flow-mode-blueprint.md` (Graph viz specification) |
 | **Design System** | `docs/design/04-design-language-guide.md` (Colors, typography, motion) |
@@ -172,6 +171,7 @@ Claude acts as project manager. Identify optimal next action and proceed — don
 | `/highlights` | Highlight CRUD with SiYuan sync |
 | `/visits` | "What's new" tracking |
 | `/journey-timeline` | Exploration history |
+| `/journey-patterns` | Pattern analysis, entity clustering, recommendations |
 | `/extraction` | Context-aware entity extraction |
 | `/books` | Calibre catalog, covers, files |
 | `/reframes` | Concept metaphors/analogies |
@@ -199,6 +199,7 @@ Claude acts as project manager. Identify optimal next action and proceed — don
 - `HighlightSyncService` — Reader → SiYuan sync with journey logging
 - `PassageRankingService` — Question-driven reading
 - `JourneyTimelineService` — Aggregates ContextJourneyEntry + BreadcrumbJourney
+- `JourneyPatternService` — Pattern analysis (entity clustering, frequent entities, common paths, recommendations)
 
 **Entity Types (14):**
 - Domain: Concept, Person, Theory, Framework, Assessment
@@ -228,6 +229,12 @@ Schema-Probe, Boundary, Dimensional, Causal, Counterfactual, Anchor, Perspective
   - Sync indicator animations (spin keyframe for syncing state)
   - Flow toggle button with active state styling
   - Mobile-responsive breakpoints (480px, 768px)
+- `ErrorBoundary.tsx` — React error boundary component with graceful fallback UI
+  - Catches component errors using `getDerivedStateFromError()` and `componentDidCatch()`
+  - Displays error details (message, component stack) with expand/collapse
+  - Reset functionality via `handleReset()` to recover from errors
+  - Integrated in `App.tsx` wrapping Reader component
+  - Styling in `ErrorBoundary.css` with glassmorphic error card design
 - `FlowPanel.tsx` — Entity exploration panel
 - `useSessionSync` — Backend state sync hook (5s active / 30s background polling, 3s write debounce)
   - Syncs context_id, question_id from flowStore → backend
@@ -242,6 +249,22 @@ Schema-Probe, Boundary, Dimensional, Causal, Counterfactual, Anchor, Perspective
 **SiYuan Plugin** (`.worktrees/siyuan/ies/plugin/src/`):
 - `FlowMode.svelte` — Graph exploration (113KB)
 - `ForgeMode.svelte` — Structured thinking (110KB)
+- `FlowModeWithErrorHandling.svelte` — Error boundary wrapper for FlowMode
+  - Catches runtime errors (ErrorEvent, PromiseRejectionEvent)
+  - Displays graceful error UI via ErrorDisplay component
+  - Component re-mount on retry using `{#key componentKey}` pattern
+- `ForgeModeWithErrorHandling.svelte` — Error boundary wrapper for ForgeMode
+  - Same error handling pattern as FlowModeWithErrorHandling
+- `ErrorDisplay.svelte` — Reusable error UI component for Svelte
+  - Props: error, message, showDetails, showRetry
+  - Alert circle icon, error message, expandable stack trace
+  - Retry button dispatches 'retry' event
+  - Styled with SiYuan theme variables (b3-theme-error, b3-spacing-*)
+- `QuestionEditModal.svelte` — Question text and context link editor
+  - Multi-select for linked contexts
+  - Uses forwardProxy pattern for backend API calls
+- `UserQuestionsPanel.svelte` — User questions management panel
+  - CRUD operations for questions with delete confirmation
 - `ContextSyncService.ts` — Bidirectional session sync (5s visible / 30s hidden polling)
   - Pushes local context/question changes to backend
   - Pulls remote changes and updates local state (last-write-wins)

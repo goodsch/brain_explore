@@ -1332,6 +1332,219 @@
       border-bottom: 2px solid currentColor;
       padding: 2px 0;
     }
+
+    /* ===== ICON STYLE VARIATIONS ===== */
+
+    /* Lucide-style stroke icons */
+    .icons-lucide .entity-badge .icon,
+    .icons-lucide .filter-pill .icon,
+    .icons-lucide .node-circle .icon {
+      background: none !important;
+      clip-path: none !important;
+      border: none !important;
+      transform: none !important;
+    }
+
+    .icons-lucide .entity-badge .icon svg,
+    .icons-lucide .filter-pill .icon svg,
+    .icons-lucide .node-circle .icon svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .icons-lucide .node-circle .icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Phosphor duotone style */
+    .icons-phosphor .entity-badge .icon,
+    .icons-phosphor .filter-pill .icon,
+    .icons-phosphor .node-circle .icon {
+      background: none !important;
+      clip-path: none !important;
+      border: none !important;
+      transform: none !important;
+    }
+
+    .icons-phosphor .entity-badge .icon svg,
+    .icons-phosphor .filter-pill .icon svg,
+    .icons-phosphor .node-circle .icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .icons-phosphor .node-circle .icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Monogram letters */
+    .icons-monogram .entity-badge .icon,
+    .icons-monogram .filter-pill .icon,
+    .icons-monogram .node-circle .icon {
+      background: none !important;
+      clip-path: none !important;
+      border: none !important;
+      transform: none !important;
+      width: auto !important;
+      height: auto !important;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+
+    .icons-monogram .node-circle .icon {
+      font-size: 1rem;
+    }
+
+    /* Minimal dots */
+    .icons-minimal .entity-badge .icon,
+    .icons-minimal .filter-pill .icon {
+      width: 6px !important;
+      height: 6px !important;
+      border-radius: 50% !important;
+      background: currentColor !important;
+      clip-path: none !important;
+      border: none !important;
+      transform: none !important;
+    }
+
+    .icons-minimal .node-circle .icon {
+      width: 12px !important;
+      height: 12px !important;
+      border-radius: 50% !important;
+      background: currentColor !important;
+      clip-path: none !important;
+      transform: none !important;
+    }
+
+    .icons-minimal .graph-node.concept .node-circle .icon { background: var(--entity-concept) !important; }
+    .icons-minimal .graph-node.person .node-circle .icon { background: var(--entity-person) !important; }
+    .icons-minimal .graph-node.theory .node-circle .icon { background: var(--entity-theory) !important; }
+    .icons-minimal .graph-node.framework .node-circle .icon { background: var(--entity-framework) !important; }
+
+    /* No icons */
+    .icons-none .entity-badge .icon,
+    .icons-none .filter-pill .icon,
+    .icons-none .node-circle .icon,
+    .icons-none .question-badge .icon,
+    .icons-none .tab .icon,
+    .icons-none .selection-btn .icon,
+    .icons-none .card-footer .icon {
+      display: none !important;
+    }
+
+    .icons-none .entity-badge,
+    .icons-none .filter-pill {
+      gap: 0;
+    }
+
+    /* ===== BORDER RADIUS VARIATIONS ===== */
+    .radius-sharp { --radius-sm: 0; --radius-md: 0; --radius-lg: 0; --radius-xl: 0; --radius-full: 0; }
+    .radius-subtle { --radius-sm: 2px; --radius-md: 4px; --radius-lg: 6px; --radius-xl: 8px; --radius-full: 9999px; }
+    .radius-rounded { --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-full: 9999px; }
+    .radius-pill { --radius-sm: 9999px; --radius-md: 9999px; --radius-lg: 9999px; --radius-xl: 9999px; --radius-full: 9999px; }
+    .radius-mixed .card { border-radius: 16px 4px 16px 4px; }
+    .radius-mixed .button { border-radius: 4px 12px 4px 12px; }
+    .radius-mixed .entity-badge { border-radius: 12px 4px 12px 4px; }
+
+    /* ===== ANIMATION SPEED VARIATIONS ===== */
+    .motion-none * { transition: none !important; animation: none !important; }
+    .motion-snappy { --duration-fast: 60ms; --duration-base: 100ms; --ease-out: cubic-bezier(0.2, 0, 0, 1); }
+    .motion-smooth { --duration-fast: 250ms; --duration-base: 350ms; --ease-out: cubic-bezier(0.4, 0, 0.2, 1); }
+    .motion-bouncy { --duration-fast: 200ms; --duration-base: 400ms; --ease-out: cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .motion-slow { --duration-fast: 400ms; --duration-base: 600ms; --ease-out: cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* ===== SHADOW DEPTH VARIATIONS ===== */
+    .shadow-none .card, .shadow-none .panel, .shadow-none .selection-bar { box-shadow: none !important; }
+
+    .shadow-subtle .card { box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+    .shadow-subtle .panel { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .shadow-subtle .selection-bar { box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+    .shadow-medium .card { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .shadow-medium .panel { box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+    .shadow-medium .selection-bar { box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+
+    .shadow-deep .card { box-shadow: 0 8px 30px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15); }
+    .shadow-deep .panel { box-shadow: 0 16px 48px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2); }
+    .shadow-deep .selection-bar { box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
+
+    .shadow-glow .card { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+    .shadow-glow .panel { box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
+    .shadow-glow .entity-badge:hover { box-shadow: 0 0 15px currentColor; }
+    .shadow-glow .button.primary { box-shadow: 0 0 20px var(--entity-concept); }
+
+    .shadow-layered .card {
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .shadow-layered .panel {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1), 0 16px 32px rgba(0,0,0,0.15);
+    }
+
+    /* ===== TYPOGRAPHY VARIATIONS ===== */
+    .type-mono { --font-sans: 'JetBrains Mono', 'Fira Code', monospace; }
+    .type-mono .card-body { font-size: 0.8125rem; }
+
+    .type-system { --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+
+    .type-compact {
+      --font-sans: 'Inter', system-ui, sans-serif;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    .type-compact .card-title { font-size: 0.9375rem; }
+    .type-compact .card-body { font-size: 0.8125rem; line-height: 1.5; }
+
+    .type-readable {
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+    .type-readable .card-title { font-size: 1.125rem; }
+    .type-readable .card-body { font-size: 0.9375rem; line-height: 1.8; }
+    .type-readable .entity-badge { font-size: 0.875rem; }
+
+    .type-elegant {
+      --font-sans: 'Source Serif Pro', Georgia, serif;
+    }
+    .type-elegant .card-title, .type-elegant .panel-title {
+      font-family: 'Source Serif Pro', Georgia, serif;
+      font-weight: 600;
+    }
+    .type-elegant .entity-badge, .type-elegant .button {
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    /* ===== HOVER EFFECT VARIATIONS ===== */
+    .hover-none .card:hover, .hover-none .button:hover, .hover-none .entity-badge:hover {
+      transform: none !important;
+      box-shadow: inherit !important;
+      background: inherit !important;
+    }
+
+    .hover-lift .card:hover { transform: translateY(-4px); }
+    .hover-lift .button:hover { transform: translateY(-2px); }
+    .hover-lift .entity-badge:hover { transform: translateY(-2px); }
+
+    .hover-scale .card:hover { transform: scale(1.02); }
+    .hover-scale .button:hover { transform: scale(1.05); }
+    .hover-scale .entity-badge:hover { transform: scale(1.08); }
+
+    .hover-glow .card:hover { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    .hover-glow .button:hover { box-shadow: 0 0 15px var(--entity-concept); }
+    .hover-glow .entity-badge:hover { box-shadow: 0 0 12px currentColor; }
+
+    .hover-border .card:hover { border-color: var(--entity-concept); }
+    .hover-border .button:hover { border-color: var(--text-primary); }
+    .hover-border .entity-badge:hover {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
   </style>
 
   <!-- Google Fonts -->
@@ -1431,6 +1644,192 @@
         </div>
       </div>
 
+      <!-- Icon Style -->
+      <div class="control-section">
+        <h2>Icon Style</h2>
+        <div class="option-grid">
+          <button class="option-btn active" data-icons="geometric" onclick="setIcons('geometric')">
+            <span class="label">Geometric</span>
+            <span class="desc">CSS shapes</span>
+          </button>
+          <button class="option-btn" data-icons="lucide" onclick="setIcons('lucide')">
+            <span class="label">Lucide</span>
+            <span class="desc">Stroke icons</span>
+          </button>
+          <button class="option-btn" data-icons="phosphor" onclick="setIcons('phosphor')">
+            <span class="label">Phosphor</span>
+            <span class="desc">Duotone</span>
+          </button>
+          <button class="option-btn" data-icons="monogram" onclick="setIcons('monogram')">
+            <span class="label">Monogram</span>
+            <span class="desc">Letters</span>
+          </button>
+          <button class="option-btn" data-icons="minimal" onclick="setIcons('minimal')">
+            <span class="label">Minimal</span>
+            <span class="desc">Dots only</span>
+          </button>
+          <button class="option-btn" data-icons="none" onclick="setIcons('none')">
+            <span class="label">None</span>
+            <span class="desc">Text only</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Border Radius -->
+      <div class="control-section">
+        <h2>Border Radius</h2>
+        <div class="option-grid">
+          <button class="option-btn" data-radius="sharp" onclick="setRadius('sharp')">
+            <span class="label">Sharp</span>
+            <span class="desc">0px corners</span>
+          </button>
+          <button class="option-btn" data-radius="subtle" onclick="setRadius('subtle')">
+            <span class="label">Subtle</span>
+            <span class="desc">4px corners</span>
+          </button>
+          <button class="option-btn active" data-radius="default" onclick="setRadius('default')">
+            <span class="label">Default</span>
+            <span class="desc">8px corners</span>
+          </button>
+          <button class="option-btn" data-radius="rounded" onclick="setRadius('rounded')">
+            <span class="label">Rounded</span>
+            <span class="desc">16px corners</span>
+          </button>
+          <button class="option-btn" data-radius="pill" onclick="setRadius('pill')">
+            <span class="label">Pill</span>
+            <span class="desc">Full round</span>
+          </button>
+          <button class="option-btn" data-radius="mixed" onclick="setRadius('mixed')">
+            <span class="label">Mixed</span>
+            <span class="desc">Varied</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Animation Speed -->
+      <div class="control-section">
+        <h2>Animation Speed</h2>
+        <div class="option-grid">
+          <button class="option-btn" data-motion="none" onclick="setMotion('none')">
+            <span class="label">None</span>
+            <span class="desc">No animation</span>
+          </button>
+          <button class="option-btn" data-motion="snappy" onclick="setMotion('snappy')">
+            <span class="label">Snappy</span>
+            <span class="desc">80ms, sharp</span>
+          </button>
+          <button class="option-btn active" data-motion="default" onclick="setMotion('default')">
+            <span class="label">Default</span>
+            <span class="desc">150ms</span>
+          </button>
+          <button class="option-btn" data-motion="smooth" onclick="setMotion('smooth')">
+            <span class="label">Smooth</span>
+            <span class="desc">300ms, ease</span>
+          </button>
+          <button class="option-btn" data-motion="bouncy" onclick="setMotion('bouncy')">
+            <span class="label">Bouncy</span>
+            <span class="desc">Spring physics</span>
+          </button>
+          <button class="option-btn" data-motion="slow" onclick="setMotion('slow')">
+            <span class="label">Slow</span>
+            <span class="desc">500ms, zen</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Shadow Depth -->
+      <div class="control-section">
+        <h2>Shadow Depth</h2>
+        <div class="option-grid">
+          <button class="option-btn" data-shadow="none" onclick="setShadow('none')">
+            <span class="label">Flat</span>
+            <span class="desc">No shadows</span>
+          </button>
+          <button class="option-btn active" data-shadow="subtle" onclick="setShadow('subtle')">
+            <span class="label">Subtle</span>
+            <span class="desc">Light depth</span>
+          </button>
+          <button class="option-btn" data-shadow="medium" onclick="setShadow('medium')">
+            <span class="label">Medium</span>
+            <span class="desc">Balanced</span>
+          </button>
+          <button class="option-btn" data-shadow="deep" onclick="setShadow('deep')">
+            <span class="label">Deep</span>
+            <span class="desc">Strong depth</span>
+          </button>
+          <button class="option-btn" data-shadow="glow" onclick="setShadow('glow')">
+            <span class="label">Glow</span>
+            <span class="desc">Color glow</span>
+          </button>
+          <button class="option-btn" data-shadow="layered" onclick="setShadow('layered')">
+            <span class="label">Layered</span>
+            <span class="desc">Multi-layer</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Text Style -->
+      <div class="control-section">
+        <h2>Typography</h2>
+        <div class="option-grid">
+          <button class="option-btn active" data-type="default" onclick="setTypography('default')">
+            <span class="label">Default</span>
+            <span class="desc">Inter, balanced</span>
+          </button>
+          <button class="option-btn" data-type="mono" onclick="setTypography('mono')">
+            <span class="label">Mono</span>
+            <span class="desc">JetBrains</span>
+          </button>
+          <button class="option-btn" data-type="system" onclick="setTypography('system')">
+            <span class="label">System</span>
+            <span class="desc">Native fonts</span>
+          </button>
+          <button class="option-btn" data-type="compact" onclick="setTypography('compact')">
+            <span class="label">Compact</span>
+            <span class="desc">Tighter text</span>
+          </button>
+          <button class="option-btn" data-type="readable" onclick="setTypography('readable')">
+            <span class="label">Readable</span>
+            <span class="desc">Larger, relaxed</span>
+          </button>
+          <button class="option-btn" data-type="elegant" onclick="setTypography('elegant')">
+            <span class="label">Elegant</span>
+            <span class="desc">Serif accent</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Interaction Style -->
+      <div class="control-section">
+        <h2>Hover Effects</h2>
+        <div class="option-grid">
+          <button class="option-btn" data-hover="none" onclick="setHover('none')">
+            <span class="label">None</span>
+            <span class="desc">Static</span>
+          </button>
+          <button class="option-btn active" data-hover="subtle" onclick="setHover('subtle')">
+            <span class="label">Subtle</span>
+            <span class="desc">Color shift</span>
+          </button>
+          <button class="option-btn" data-hover="lift" onclick="setHover('lift')">
+            <span class="label">Lift</span>
+            <span class="desc">Rise up</span>
+          </button>
+          <button class="option-btn" data-hover="scale" onclick="setHover('scale')">
+            <span class="label">Scale</span>
+            <span class="desc">Grow</span>
+          </button>
+          <button class="option-btn" data-hover="glow" onclick="setHover('glow')">
+            <span class="label">Glow</span>
+            <span class="desc">Light up</span>
+          </button>
+          <button class="option-btn" data-hover="border" onclick="setHover('border')">
+            <span class="label">Border</span>
+            <span class="desc">Outline</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Export -->
       <div class="export-section">
         <button class="export-btn" onclick="exportConfig()">Export Configuration</button>
@@ -1438,6 +1837,7 @@
 Theme: default
 Style: default
 Spacing: normal
+Icons: geometric
         </div>
       </div>
     </div>
@@ -1691,11 +2091,53 @@ Spacing: normal
     let currentTheme = 'default';
     let currentStyle = 'default';
     let currentSpacing = 'normal';
+    let currentIcons = 'geometric';
+    let currentRadius = 'default';
+    let currentMotion = 'default';
+    let currentShadow = 'subtle';
+    let currentTypography = 'default';
+    let currentHover = 'subtle';
 
     // Theme classes
     const themeClasses = ['theme-obsidian', 'theme-ember', 'theme-neon', 'theme-zen', 'theme-glass'];
     const styleClasses = ['style-minimal', 'style-outlined', 'style-filled', 'style-glass', 'style-neon'];
     const spacingClasses = ['spacing-compact', 'spacing-normal', 'spacing-comfortable', 'spacing-spacious'];
+    const iconClasses = ['icons-geometric', 'icons-lucide', 'icons-phosphor', 'icons-monogram', 'icons-minimal', 'icons-none'];
+    const radiusClasses = ['radius-sharp', 'radius-subtle', 'radius-default', 'radius-rounded', 'radius-pill', 'radius-mixed'];
+    const motionClasses = ['motion-none', 'motion-snappy', 'motion-default', 'motion-smooth', 'motion-bouncy', 'motion-slow'];
+    const shadowClasses = ['shadow-none', 'shadow-subtle', 'shadow-medium', 'shadow-deep', 'shadow-glow', 'shadow-layered'];
+    const typeClasses = ['type-default', 'type-mono', 'type-system', 'type-compact', 'type-readable', 'type-elegant'];
+    const hoverClasses = ['hover-none', 'hover-subtle', 'hover-lift', 'hover-scale', 'hover-glow', 'hover-border'];
+
+    // SVG Icons (Lucide-style)
+    const lucideIcons = {
+      concept: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>',
+      person: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      theory: '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
+      framework: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+      spark: '<svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>',
+      insight: '<svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><path d="M9 22h6"/></svg>'
+    };
+
+    // Phosphor-style icons (duotone)
+    const phosphorIcons = {
+      concept: '<svg viewBox="0 0 256 256"><circle cx="128" cy="128" r="96" fill="currentColor" opacity="0.2"/><circle cx="128" cy="128" r="96" fill="none" stroke="currentColor" stroke-width="16"/></svg>',
+      person: '<svg viewBox="0 0 256 256"><circle cx="128" cy="96" r="64" fill="currentColor" opacity="0.2"/><circle cx="128" cy="96" r="64" fill="none" stroke="currentColor" stroke-width="16"/><path d="M32,216c0-52.94,43.06-96,96-96s96,43.06,96,96" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round"/></svg>',
+      theory: '<svg viewBox="0 0 256 256"><path d="M128,24,32,80l96,56,96-56Z" fill="currentColor" opacity="0.2"/><path d="M128,24,32,80l96,56,96-56Z" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/><path d="M32,176l96,56,96-56" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/><path d="M32,128l96,56,96-56" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      framework: '<svg viewBox="0 0 256 256"><rect x="40" y="40" width="176" height="176" rx="8" fill="currentColor" opacity="0.2"/><rect x="40" y="40" width="176" height="176" rx="8" fill="none" stroke="currentColor" stroke-width="16"/><line x1="128" y1="40" x2="128" y2="216" stroke="currentColor" stroke-width="16"/><line x1="40" y1="128" x2="216" y2="128" stroke="currentColor" stroke-width="16"/></svg>',
+      spark: '<svg viewBox="0 0 256 256"><polygon points="160 16 144 96 208 120 96 240 112 160 48 136 160 16" fill="currentColor" opacity="0.2"/><polygon points="160 16 144 96 208 120 96 240 112 160 48 136 160 16" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      insight: '<svg viewBox="0 0 256 256"><path d="M88,144H168l-8,96-32-48-32,48Z" fill="currentColor" opacity="0.2"/><path d="M80,168a80,80,0,1,1,96,0" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><path d="M88,144H168l-8,96-32-48-32,48Z" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    };
+
+    // Monogram letters
+    const monograms = {
+      concept: 'C',
+      person: 'P',
+      theory: 'T',
+      framework: 'F',
+      spark: 'S',
+      insight: 'I'
+    };
 
     function setTheme(theme) {
       currentTheme = theme;
@@ -1755,6 +2197,126 @@ Spacing: normal
       updateConfig();
     }
 
+    function setIcons(iconStyle) {
+      currentIcons = iconStyle;
+      const playground = document.getElementById('playground');
+
+      // Remove all icon classes
+      iconClasses.forEach(c => playground.classList.remove(c));
+
+      // Add new icon class (except geometric which is default CSS)
+      if (iconStyle !== 'geometric') {
+        playground.classList.add(`icons-${iconStyle}`);
+      }
+
+      // Update icon content based on style
+      updateIconContent(iconStyle);
+
+      // Update button states
+      document.querySelectorAll('[data-icons]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.icons === iconStyle);
+      });
+
+      updateConfig();
+    }
+
+    function updateIconContent(iconStyle) {
+      const entityTypes = ['concept', 'person', 'theory', 'framework', 'spark', 'insight'];
+
+      entityTypes.forEach(type => {
+        // Find all icons for this entity type
+        const badges = document.querySelectorAll(`.entity-badge.${type} .icon, .filter-pill.${type} .icon`);
+        const nodeIcons = document.querySelectorAll(`.graph-node.${type} .node-circle .icon`);
+
+        let content = '';
+        switch(iconStyle) {
+          case 'lucide':
+            content = lucideIcons[type] || '';
+            break;
+          case 'phosphor':
+            content = phosphorIcons[type] || '';
+            break;
+          case 'monogram':
+            content = monograms[type] || '';
+            break;
+          case 'geometric':
+          case 'minimal':
+          case 'none':
+          default:
+            content = '';
+            break;
+        }
+
+        badges.forEach(icon => { icon.innerHTML = content; });
+        nodeIcons.forEach(icon => { icon.innerHTML = content; });
+      });
+    }
+
+    function setRadius(radius) {
+      currentRadius = radius;
+      const playground = document.getElementById('playground');
+      radiusClasses.forEach(c => playground.classList.remove(c));
+      if (radius !== 'default') {
+        playground.classList.add(`radius-${radius}`);
+      }
+      document.querySelectorAll('[data-radius]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.radius === radius);
+      });
+      updateConfig();
+    }
+
+    function setMotion(motion) {
+      currentMotion = motion;
+      const playground = document.getElementById('playground');
+      motionClasses.forEach(c => playground.classList.remove(c));
+      if (motion !== 'default') {
+        playground.classList.add(`motion-${motion}`);
+      }
+      document.querySelectorAll('[data-motion]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.motion === motion);
+      });
+      updateConfig();
+    }
+
+    function setShadow(shadow) {
+      currentShadow = shadow;
+      const playground = document.getElementById('playground');
+      shadowClasses.forEach(c => playground.classList.remove(c));
+      if (shadow !== 'subtle') {
+        playground.classList.add(`shadow-${shadow}`);
+      }
+      document.querySelectorAll('[data-shadow]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.shadow === shadow);
+      });
+      updateConfig();
+    }
+
+    function setTypography(typography) {
+      currentTypography = typography;
+      const playground = document.getElementById('playground');
+      typeClasses.forEach(c => playground.classList.remove(c));
+      if (typography !== 'default') {
+        playground.classList.add(`type-${typography}`);
+      }
+      document.querySelectorAll('[data-type]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === typography);
+      });
+      updateConfig();
+    }
+
+    function setHover(hover) {
+      currentHover = hover;
+      const playground = document.getElementById('playground');
+      hoverClasses.forEach(c => playground.classList.remove(c));
+      if (hover !== 'subtle') {
+        playground.classList.add(`hover-${hover}`);
+      }
+      document.querySelectorAll('[data-hover]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.hover === hover);
+      });
+      updateConfig();
+    }
+
     function setActiveTab(tab) {
       tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
@@ -1766,40 +2328,16 @@ Spacing: normal
     }
 
     function updateConfig() {
-      const themeNames = {
-        'default': 'Current IES (F)',
-        'obsidian': 'Obsidian Depths (A)',
-        'ember': 'Warm Ember (B)',
-        'neon': 'Neon Grid (C)',
-        'zen': 'Zen Paper (D)',
-        'glass': 'Glass Prism (E)'
-      };
-
-      const styleNames = {
-        'default': 'Default (filled + border)',
-        'minimal': 'Minimal (text only)',
-        'outlined': 'Outlined (border focus)',
-        'filled': 'Filled (solid colors)',
-        'glass': 'Glass (backdrop blur)',
-        'neon': 'Neon (glow effects)'
-      };
-
-      const spacingNames = {
-        'compact': 'Compact (0.75x)',
-        'normal': 'Normal (1x)',
-        'comfortable': 'Comfortable (1.25x)',
-        'spacious': 'Spacious (1.5x)'
-      };
-
       document.getElementById('currentConfig').textContent =
-`Theme: ${themeNames[currentTheme]}
-Style: ${styleNames[currentStyle]}
-Spacing: ${spacingNames[currentSpacing]}
-
-CSS Variables to copy:
---theme: ${currentTheme}
---component-style: ${currentStyle}
---space-unit: ${currentSpacing === 'compact' ? '0.75' : currentSpacing === 'normal' ? '1' : currentSpacing === 'comfortable' ? '1.25' : '1.5'}`;
+`Theme: ${currentTheme}
+Style: ${currentStyle}
+Spacing: ${currentSpacing}
+Icons: ${currentIcons}
+Radius: ${currentRadius}
+Motion: ${currentMotion}
+Shadow: ${currentShadow}
+Typography: ${currentTypography}
+Hover: ${currentHover}`;
     }
 
     function exportConfig() {
@@ -1807,6 +2345,12 @@ CSS Variables to copy:
         theme: currentTheme,
         style: currentStyle,
         spacing: currentSpacing,
+        icons: currentIcons,
+        radius: currentRadius,
+        motion: currentMotion,
+        shadow: currentShadow,
+        typography: currentTypography,
+        hover: currentHover,
         timestamp: new Date().toISOString()
       };
 
@@ -1820,8 +2364,18 @@ CSS Variables to copy:
       });
     }
 
-    // Initialize
-    setSpacing('normal');
+    // Initialize with defaults
+    function init() {
+      setSpacing('normal');
+      setIcons('geometric');
+      setRadius('default');
+      setMotion('default');
+      setShadow('subtle');
+      setTypography('default');
+      setHover('subtle');
+    }
+
+    init();
   </script>
 </body>
 </html>

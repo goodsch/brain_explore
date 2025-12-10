@@ -46,7 +46,7 @@ export function WhatsNewSection({ detail, isLoading, onRefresh }: WhatsNewSectio
         <div className="whats-new-section__empty">
           <p>No new items since your last visit</p>
           {onRefresh && (
-            <button className="whats-new-section__refresh-btn" onClick={onRefresh}>
+            <button className="whats-new-section__refresh-btn" onClick={onRefresh} aria-label="Refresh new items">
               Refresh
             </button>
           )}
@@ -69,7 +69,7 @@ export function WhatsNewSection({ detail, isLoading, onRefresh }: WhatsNewSectio
           <span className="whats-new-section__count">{detail.total_new_items}</span>
         </h3>
         {onRefresh && (
-          <button className="whats-new-section__refresh-btn" onClick={onRefresh}>
+          <button className="whats-new-section__refresh-btn" onClick={onRefresh} aria-label="Refresh new items">
             Refresh
           </button>
         )}
@@ -80,6 +80,7 @@ export function WhatsNewSection({ detail, isLoading, onRefresh }: WhatsNewSectio
           <button
             className="whats-new-section__group-header"
             onClick={() => toggleSection('questions')}
+            aria-label="Toggle questions section"
           >
             <span className="whats-new-section__group-title">
               Questions ({questions.length})
@@ -110,6 +111,7 @@ export function WhatsNewSection({ detail, isLoading, onRefresh }: WhatsNewSectio
           <button
             className="whats-new-section__group-header"
             onClick={() => toggleSection('highlights')}
+            aria-label="Toggle highlights section"
           >
             <span className="whats-new-section__group-title">
               Highlights ({highlights.length})
@@ -143,6 +145,7 @@ export function WhatsNewSection({ detail, isLoading, onRefresh }: WhatsNewSectio
           <button
             className="whats-new-section__group-header"
             onClick={() => toggleSection('entities')}
+            aria-label="Toggle entities section"
           >
             <span className="whats-new-section__group-title">
               Entities ({entities.length})
@@ -173,6 +176,7 @@ export function WhatsNewSection({ detail, isLoading, onRefresh }: WhatsNewSectio
           <button
             className="whats-new-section__group-header"
             onClick={() => toggleSection('relationships')}
+            aria-label="Toggle relationships section"
           >
             <span className="whats-new-section__group-title">
               Relationships ({relationships.length})
