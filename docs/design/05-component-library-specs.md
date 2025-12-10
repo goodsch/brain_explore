@@ -19,6 +19,144 @@ This document defines reusable UI components for the IES system, covering both R
 
 ---
 
+## Accessibility Standards
+
+All components must meet WCAG 2.1 Level AA compliance requirements. Accessibility is not optional - it's built into every component by default.
+
+### Core Requirements
+
+1. **Focus Visible** - All interactive elements must have visible focus indicators
+   - Minimum: 2px outline with 4.5:1 contrast ratio
+   - Style: Use design system focus ring (primary-500 with 2px offset)
+   - Never remove focus styles without providing alternative
+
+2. **Color Contrast**
+   - Normal text: 4.5:1 minimum contrast ratio
+   - Large text (18px+ or 14px+ bold): 3:1 minimum
+   - Interactive elements: 3:1 for visual indicators
+   - Test all color combinations, especially entity type colors
+
+3. **Keyboard Navigation**
+   - All functionality accessible via keyboard
+   - Logical tab order following visual layout
+   - Escape key closes modals/overlays
+   - Arrow keys for navigation in lists/grids
+   - Enter/Space for activation
+
+4. **Screen Reader Support**
+   - Meaningful labels for all interactive elements
+   - State changes announced via aria-live
+   - Form validation errors associated with inputs
+   - Loading states announced
+   - Dynamic content changes announced
+
+5. **Motion Sensitivity**
+   - Respect `prefers-reduced-motion` media query
+   - Provide alternative to animations for essential info
+   - Disable auto-playing animations when motion is reduced
+
+### Common ARIA Patterns
+
+Standard ARIA attributes for common component types:
+
+| Element Type | Required ARIA Attributes | Notes |
+|--------------|-------------------------|-------|
+| Icon button | `aria-label="Action description"` | Must describe action, not icon |
+| Expandable section | `aria-expanded="true/false"`, `aria-controls="id"` | Links button to controlled content |
+| Search input | `aria-label="Search description"`, `role="searchbox"` | Describes what's being searched |
+| Entity badge (clickable) | `aria-label="{type}: {name}"`, `role="button"` | Includes entity type and name |
+| Entity badge (static) | `aria-label="{type}: {name}"`, `role="status"` | Non-interactive status indicator |
+| Navigation | `role="navigation"`, `aria-label="Navigation type"` | Describes navigation purpose |
+| Loading state | `aria-busy="true"`, `aria-live="polite"` | Announces loading to screen readers |
+| Error message | `aria-live="assertive"`, `role="alert"` | Immediate announcement of errors |
+| Tooltip | `aria-describedby="tooltip-id"` | Associates tooltip with trigger |
+| Modal dialog | `role="dialog"`, `aria-modal="true"`, `aria-labelledby` | Focus trap required |
+| Tab interface | `role="tablist"`, `role="tab"`, `aria-selected` | Full tab widget pattern |
+| Combobox | `role="combobox"`, `aria-expanded`, `aria-controls` | For search with suggestions |
+
+### Focus Management Patterns
+
+**Focus Trap** (required for modals, dialogs, sheets):
+```typescript
+// On open:
+1. Save currently focused element
+2. Move focus to first focusable element in modal
+3. Trap Tab/Shift+Tab within modal boundaries
+4. Escape key closes and restores focus
+
+// On close:
+5. Return focus to saved element
+```
+
+**Focus Order** (for complex components):
+```typescript
+// Logical tab order:
+1. Interactive header elements
+2. Main content (left-to-right, top-to-bottom)
+3. Action buttons (usually bottom-right)
+4. Close/cancel actions (typically last)
+```
+
+### Keyboard Shortcuts Reference
+
+Standard keyboard interactions by component type:
+
+| Component Type | Keyboard Actions |
+|----------------|-----------------|
+| Button | Enter, Space |
+| Link | Enter |
+| Checkbox/Toggle | Space |
+| Radio button | Arrow keys (between group), Space (select) |
+| Dropdown | Enter/Space (open), Arrow keys (navigate), Enter (select), Escape (close) |
+| Modal/Dialog | Escape (close) |
+| Tabs | Arrow keys (navigate), Enter/Space (activate) |
+| List/Grid | Arrow keys (navigate), Enter (select/activate) |
+| Search | Escape (clear), Down arrow (show suggestions) |
+| Graph canvas | Arrow keys (pan), +/- (zoom), Home (fit to view) |
+
+### Screen Reader Announcements
+
+Use `aria-live` regions for dynamic updates:
+
+```typescript
+// Polite (wait for pause in speech):
+<div aria-live="polite" aria-atomic="true">
+  Search found 12 results
+</div>
+
+// Assertive (interrupt immediately):
+<div aria-live="assertive" role="alert">
+  Error: Connection failed. Retrying...
+</div>
+
+// Status (for non-critical updates):
+<div role="status" aria-live="polite">
+  Synced 2 minutes ago
+</div>
+```
+
+### Testing Checklist
+
+For every component, verify:
+
+- [ ] Keyboard-only navigation works completely
+- [ ] Focus indicator visible and high-contrast
+- [ ] Screen reader announces all states/changes
+- [ ] Color contrast meets WCAG AA standards
+- [ ] Works with browser zoom up to 200%
+- [ ] Respects prefers-reduced-motion
+- [ ] ARIA attributes validated (no errors)
+- [ ] Interactive elements have sufficient touch target size (44x44px minimum)
+
+### Tools for Testing
+
+- **Automated**: axe DevTools, Lighthouse, WAVE
+- **Manual**: Keyboard-only navigation, screen reader (NVDA, JAWS, VoiceOver)
+- **Color contrast**: WebAIM Contrast Checker, Chrome DevTools
+- **Focus order**: Tab through interface, verify logical flow
+
+---
+
 ## Core Components
 
 ### 1. EntityBadge
@@ -69,10 +207,18 @@ type EntityType =
 
 **Accessibility:**
 
-- `role="status"` for non-interactive badges
-- `role="button"` with `tabindex="0"` if interactive
-- `aria-label="Entity type: {type}"`
-- Keyboard: `Enter`/`Space` to activate if interactive
+- **Role:** `role="status"` for non-interactive badges, `role="button"` if interactive
+- **ARIA Label:** `aria-label="{type} entity"` (e.g., "Concept entity", "Spark entity")
+- **Tabindex:** `tabindex="0"` if interactive, not focusable if static
+- **Keyboard Interactions:**
+  - `Enter` or `Space`: Activate onClick handler (interactive only)
+  - Focus indicator: 2px offset ring in primary-500
+- **States:**
+  - Hover: Announced as "button" by screen readers if interactive
+  - Active: No additional announcement needed
+  - Muted: Include "muted" or "inactive" in aria-label
+- **Touch Target:** Minimum 44x44px for interactive badges (add padding if needed)
+- **Color Contrast:** Verify entity type colors meet 4.5:1 ratio with background
 
 **Examples:**
 
@@ -161,11 +307,28 @@ interface EntityCardProps {
 
 **Accessibility:**
 
-- `role="article"`
-- `aria-expanded` if expandable
-- `aria-label="Entity card: {name}"`
-- Keyboard: `Enter` to navigate, `Space` to expand
-- Focus visible outline
+- **Role:** `role="article"` for card container
+- **ARIA Label:** `aria-labelledby="entity-name-{id}"` pointing to entity name element
+- **ARIA Expanded:** `aria-expanded="true/false"` if expandable (on expand button)
+- **ARIA Described By:** `aria-describedby="entity-desc-{id}"` for description
+- **Keyboard Interactions:**
+  - `Tab`: Focus on card (entire card is focusable container)
+  - `Enter`: Open entity details / navigate to entity page
+  - `Space`: Toggle expand/collapse description
+  - `Shift+Tab`: Navigate backwards
+- **Focus Management:**
+  - Card container: focusable with `tabindex="0"`
+  - Expand button (if present): separate focusable element
+  - Focus indicator: 2px offset ring, primary-500
+- **States:**
+  - Selected: `aria-current="true"` and visible border
+  - Expanded: `aria-expanded="true"` on expand button
+  - Hover: No announcement needed (visual only)
+- **Screen Reader:**
+  - Announce: "Entity card: {name}, {type}, {connection count} connections"
+  - If expandable: "Press Space to expand description"
+  - Selected state: "Selected" appended to announcement
+- **Touch Target:** Minimum 44px height for entire card
 
 **Examples:**
 
@@ -266,10 +429,42 @@ type QuestionClass =
 
 **Accessibility:**
 
-- `role="button"` if interactive
-- `aria-label="Question class: {class}"`
-- Tooltip with `aria-describedby`
-- Keyboard: `Enter`/`Space` to activate
+- **Role:** `role="button"` if interactive, `role="status"` if display-only
+- **ARIA Label:** `aria-label="{class} question class"` (e.g., "Schema-Probe question class")
+- **ARIA Pressed:** `aria-pressed="true"` if active/selected (when filtering by this class)
+- **ARIA Describedby:** `aria-describedby="question-class-tooltip-{id}"` for class description
+- **Keyboard Interactions:**
+  - `Tab`: Focus badge (if interactive)
+  - `Enter` or `Space`: Activate badge (filter by class, select question)
+  - Focus indicator: 2px offset ring in primary-500
+- **Tooltip:**
+  - `role="tooltip"`
+  - Contains question class description
+  - Example: "Schema-Probe: Questions that examine mental frameworks and assumptions"
+  - Appears on hover/focus (showTooltip prop)
+  - Associated via `aria-describedby`
+- **Icon (Emoji):**
+  - `aria-hidden="true"` (decorative, class name in label)
+  - Or include emoji meaning in aria-label for clarity
+- **States:**
+  - Default: Standard colors, not pressed
+  - Active: `aria-pressed="true"`, border treatment, shadow
+  - Hover: Tooltip appears, subtle scale (respect prefers-reduced-motion)
+  - Label Hidden (icon-only): Full class name in `aria-label`
+- **Screen Reader Announcements:**
+  - Non-interactive: "{class} question class"
+  - Interactive: "{class} question class, button"
+  - Active: "{class} question class, selected"
+  - Tooltip content read automatically when present
+- **Color Contrast:**
+  - Background color meets 4.5:1 with text
+  - Border/icon meet 3:1 with background
+  - Each question class color verified for accessibility
+- **Touch Target:** Minimum 44x44px if interactive (add padding if needed)
+- **Label Hidden Mode:**
+  - Icon must be at least 24px for recognizability
+  - Full class name in `aria-label`
+  - Tooltip essential for visual users
 
 **Examples:**
 
@@ -359,11 +554,37 @@ interface BreadcrumbItem {
 
 **Accessibility:**
 
-- `role="navigation"`
-- `aria-label="Breadcrumb trail"`
-- Each item has `aria-current="page"` if current
-- Keyboard: Arrow keys to navigate, `Enter` to select
-- Focus visible
+- **Role:** `role="navigation"` on container
+- **ARIA Label:** `aria-label="Exploration history"` or `aria-label="Breadcrumb trail"`
+- **List Structure:**
+  - Use ordered list: `<ol>` with list items `<li>`
+  - Semantic structure helps screen readers announce "item 1 of 5"
+- **Current Item:**
+  - `aria-current="page"` on current/active breadcrumb
+  - Visual indicator (bold, different color) with sufficient contrast
+- **Keyboard Interactions:**
+  - `Tab`: Focus on first breadcrumb item
+  - `Arrow Left/Right`: Navigate between breadcrumb items
+  - `Enter`: Activate breadcrumb (navigate to that entity)
+  - `Home`: Jump to first breadcrumb
+  - `End`: Jump to last breadcrumb
+- **Focus Management:**
+  - Each breadcrumb item is focusable: `tabindex="0"`
+  - Current item remains focusable
+  - Focus indicator: 2px offset ring
+- **Truncation:**
+  - Ellipsis button: `aria-label="Show hidden items"`, `aria-expanded="false"`
+  - When expanded: `aria-expanded="true"`
+  - Tooltip shows full path: `aria-describedby="breadcrumb-tooltip-{id}"`
+- **Screen Reader:**
+  - Announce: "Navigation, exploration history"
+  - Each item: "{entity name}, {entity type}"
+  - Current item: "Current: {entity name}"
+  - Truncation: "5 items total, 3 hidden"
+- **Separators:**
+  - Arrow separators are decorative: `aria-hidden="true"`
+  - Or use CSS pseudo-elements (automatically hidden from screen readers)
+- **Touch Target:** Minimum 44x44px for each breadcrumb item
 
 **Examples:**
 
@@ -469,11 +690,49 @@ interface ViewportBounds {
 
 **Accessibility:**
 
-- `role="img"`
-- `aria-label="Graph minimap"`
-- Keyboard: Arrow keys to pan viewport
-- Focus visible on viewport indicator
-- `aria-describedby` for instructions
+- **Role:** `role="img"` or `role="region"` with label
+- **ARIA Label:** `aria-label="Graph overview minimap, shows {nodeCount} entities"`
+- **ARIA Roledescription:** `aria-roledescription="minimap navigation"`
+- **ARIA Describedby:** `aria-describedby="minimap-instructions-{id}"` for usage instructions
+- **Keyboard Interactions:**
+  - `Tab`: Focus minimap viewport indicator
+  - `Arrow Keys`: Pan main viewport (20px per press)
+  - `+/-`: Zoom main viewport
+  - `Enter`: Center main viewport on minimap focus point
+  - `Escape`: Return focus to main graph
+- **Viewport Indicator:**
+  - Focusable element: `tabindex="0"`
+  - `aria-label="Current viewport, use arrow keys to pan"`
+  - Focus indicator: Distinct from viewport rectangle
+  - Draggable with mouse: Visual feedback during drag
+- **Focus Management:**
+  - Minimap is independently focusable
+  - Does not trap focus
+  - Focus indicator visible on viewport rectangle
+  - Focus returns to main graph when appropriate
+- **Screen Reader Support:**
+  - Viewport changes announced via `aria-live="polite"` in main canvas
+  - "Viewport moved to {position}"
+  - Node clusters: Described in instructions
+- **Collapse/Expand:**
+  - Toggle button: `aria-label="Collapse minimap"` or `aria-label="Expand minimap"`
+  - `aria-expanded="true/false"` on toggle button
+  - Collapsed: Only toggle button visible
+  - Expanded: Full minimap shown
+- **Instructions (Hidden but Accessible):**
+  - "Use arrow keys to pan the main graph viewport"
+  - "Drag the viewport rectangle to navigate"
+  - "Click to jump to a location"
+- **Touch Target:**
+  - Viewport indicator: Minimum 44x44px for dragging
+  - Collapse button: Minimum 44x44px
+- **Color Contrast:**
+  - Viewport rectangle: 3:1 contrast with minimap background
+  - Node dots: Sufficient contrast for visibility
+- **Alternative:**
+  - Not essential for navigation (redundant with main graph controls)
+  - Can be hidden without losing functionality
+  - Primarily visual aid
 
 **Examples:**
 
@@ -566,12 +825,41 @@ interface SearchInputProps {
 
 **Accessibility:**
 
-- `role="searchbox"`
-- `aria-label="Search entities and content"`
-- `aria-describedby` for error messages
-- `aria-busy="true"` when loading
-- Keyboard shortcut registered globally
-- Clear button: `aria-label="Clear search"`
+- **Role:** `role="searchbox"` on input element
+- **ARIA Label:** `aria-label="Search entities and content"` (or more specific: "Search {context}")
+- **ARIA Described By:** `aria-describedby="search-error-{id}"` when error present
+- **ARIA Busy:** `aria-busy="true"` when loading (announces "searching" to screen readers)
+- **ARIA Invalid:** `aria-invalid="true"` when error state
+- **Keyboard Interactions:**
+  - Global shortcut (Cmd/Ctrl+K): Focus search input
+  - `Escape`: Clear search input and close suggestions
+  - `Down Arrow`: Navigate to first suggestion (if suggestions present)
+  - `Enter`: Submit search / select highlighted suggestion
+  - Tab: Exit search field normally
+- **Clear Button:**
+  - `aria-label="Clear search"`
+  - `role="button"`
+  - `tabindex="0"`
+  - Visible only when input has value
+- **Loading State:**
+  - Spinner has `aria-hidden="true"` (decorative)
+  - Loading announced via `aria-busy` and live region
+- **Error State:**
+  - Error message: `role="alert"` with `aria-live="assertive"`
+  - Associated with input via `aria-describedby`
+  - Red border with 3:1 contrast ratio
+- **Suggestions (if present):**
+  - Container: `role="listbox"`
+  - Items: `role="option"`
+  - Active item: `aria-selected="true"`
+  - Input has `aria-controls="suggestions-list-{id}"`
+  - Input has `aria-expanded="true"` when suggestions visible
+- **Screen Reader Announcements:**
+  - On search start: "Searching..."
+  - On results: "Found {count} results"
+  - On error: Error message
+  - On clear: "Search cleared"
+- **Touch Target:** Minimum 44px height for input and clear button
 
 **Examples:**
 
@@ -653,11 +941,41 @@ interface FilterPillsProps {
 
 **Accessibility:**
 
-- `role="group"`
-- `aria-label="Entity type filters"`
-- Each pill: `role="checkbox"`, `aria-checked`
-- Keyboard: `Tab` to navigate, `Space` to toggle
-- Focus visible ring
+- **Role:** `role="group"` on container
+- **ARIA Label:** `aria-label="Filter by entity type"` or `aria-label="Entity type filters"`
+- **Each Pill:**
+  - `role="checkbox"` (multi-select) or `role="radio"` (single-select)
+  - `aria-checked="true/false"` for current state
+  - `aria-label="{EntityType} filter"` (e.g., "Concept filter")
+  - Checkmark icon: `aria-hidden="true"` (decorative, state conveyed by aria-checked)
+- **Keyboard Interactions:**
+  - `Tab`: Move to next pill
+  - `Shift+Tab`: Move to previous pill
+  - `Space`: Toggle pill on/off
+  - `Enter`: Alternative toggle (also supported)
+  - Arrow keys (optional): Navigate between pills within group
+- **Focus Management:**
+  - Each pill is independently focusable: `tabindex="0"`
+  - Focus indicator: 2px offset ring in primary-500
+  - High contrast against pill background
+  - Disabled pills: `tabindex="-1"`, not focusable
+- **States:**
+  - Selected (ON): `aria-checked="true"`, visual checkmark, entity color background
+  - Unselected (OFF): `aria-checked="false"`, gray background
+  - Disabled: `aria-disabled="true"`, reduced opacity, cursor not-allowed
+- **Screen Reader Announcements:**
+  - On toggle: "Concept filter checked" or "Concept filter unchecked"
+  - Group label read before first pill
+  - State changes announced automatically via aria-checked
+- **Multi-Select Context:**
+  - If multiSelect=true: Use `role="checkbox"`
+  - If multiSelect=false: Use `role="radiogroup"` on container, `role="radio"` on pills
+  - Radio group: Only one pill selected at a time
+- **Touch Target:** Minimum 44x44px for each pill (increase padding if needed)
+- **Color Contrast:**
+  - Selected state: Verify entity color meets 4.5:1 with white text
+  - Unselected state: Gray background meets 4.5:1 with text
+  - Focus indicator: 3:1 contrast with pill background
 
 **Examples:**
 
@@ -737,11 +1055,55 @@ interface SyncStatusIndicatorProps {
 
 **Accessibility:**
 
-- `role="status"`
-- `aria-live="polite"` for status changes
-- `aria-label` with full status description
-- Tooltip with `aria-describedby`
-- Keyboard: `Enter` to trigger manual sync if interactive
+- **Role:** `role="status"` on container
+- **ARIA Live:** `aria-live="polite"` for status change announcements
+- **ARIA Atomic:** `aria-atomic="true"` (reads entire status on change)
+- **ARIA Label:** `aria-label="Sync status: {status}"` with full context
+  - Example: "Sync status: Synced 2 minutes ago"
+  - Example: "Sync status: Syncing in progress"
+  - Example: "Sync status: Error, last synced 5 minutes ago"
+- **Status Text:**
+  - Visible status text updates in sync with aria-label
+  - Use same wording for consistency
+  - Include timestamp in readable format ("2 minutes ago", not "2m")
+- **Icon:**
+  - `aria-hidden="true"` (decorative, status conveyed by text)
+  - Or include icon meaning in aria-label if icon-only mode
+- **Interactive Mode (Manual Sync Button):**
+  - If clickable: `role="button"` on container or separate button
+  - `aria-label="Trigger manual sync"`
+  - `tabindex="0"`
+  - `aria-disabled="true"` when syncing (prevent duplicate actions)
+  - Keyboard: `Enter` or `Space` to activate
+- **States:**
+  - Synced: Green checkmark, "Synced {time} ago"
+  - Syncing: Animated spinner, "Syncing in progress"
+  - Error: Red X, "Sync failed: {error message}"
+  - Offline: Gray icon, "Offline, sync unavailable"
+- **Screen Reader Announcements:**
+  - Synced: "Sync complete" (automatically via aria-live)
+  - Syncing: "Syncing started" on start, no continuous announcements
+  - Error: "Sync error: {error message}" (assertive via role="alert")
+  - Offline: "Connection lost, sync unavailable"
+- **Error State:**
+  - Error message: Full text in tooltip
+  - `role="alert"` for error announcements (higher priority)
+  - `aria-describedby="sync-error-{id}"` pointing to detailed error
+- **Tooltip:**
+  - `role="tooltip"`
+  - `id="sync-status-tooltip-{id}"`
+  - Associated via `aria-describedby`
+  - Shows: Last sync time, next sync time, sync status details
+  - Visible on hover/focus
+- **Animation:**
+  - Spinner: Respects `prefers-reduced-motion`
+  - If motion reduced: Use static icon or gentle pulse
+  - Continuous spin only during active syncing
+- **Compact Mode:**
+  - Icon-only: Full status in `aria-label`
+  - Tooltip always available for detailed info
+  - Ensure icon is large enough (minimum 16px, prefer 20px)
+- **Touch Target:** Minimum 44x44px if interactive
 
 **Examples:**
 
@@ -829,12 +1191,47 @@ interface SelectionAction {
 
 **Accessibility:**
 
-- `role="toolbar"`
-- `aria-label="Text selection actions"`
-- Each action button: `aria-label` with action name
-- Keyboard: `Tab` to navigate actions, `Enter` to execute
-- Focus trap when visible
-- `Escape` to dismiss
+- **Role:** `role="toolbar"` on container
+- **ARIA Label:** `aria-label="Text selection actions"`
+- **ARIA Orientation:** `aria-orientation="horizontal"`
+- **Action Buttons:**
+  - Each button: `aria-label="{Action name}: {selected text snippet}"` (e.g., "Look up: cognitive load")
+  - Icon-only buttons must have text labels
+  - Minimum 44x44px touch target (critical for mobile)
+- **Keyboard Interactions:**
+  - `Tab`: Focus first action button
+  - `Arrow Left/Right`: Navigate between action buttons
+  - `Enter` or `Space`: Execute action
+  - `Escape`: Dismiss selection bar and clear selection
+  - `Shift+Tab`: Navigate backwards
+- **Focus Management:**
+  - On appear: Auto-focus first action button
+  - Focus trap: Keep focus within toolbar
+  - On dismiss: Return focus to reading content
+  - Focus indicator: High contrast ring (white or primary color on dark background)
+- **Positioning:**
+  - Use `aria-describedby` to associate with selected text
+  - Avoid covering selected text (position above/below)
+  - Ensure adequate contrast with background (dark bar on light content)
+- **Screen Reader Announcements:**
+  - On appear: "Text selection toolbar, {actionCount} actions available"
+  - Selected text: Read by screen reader automatically (text selection)
+  - Action result: Announce via `aria-live="polite"` region
+    - "Added highlight"
+    - "Note created"
+    - "Lookup for cognitive load"
+- **Animation:**
+  - Respect `prefers-reduced-motion`
+  - Fade-in: 200ms or instant if motion reduced
+  - Smooth position adjustment as selection changes
+- **Mobile Considerations:**
+  - Larger touch targets (48x48px minimum)
+  - Position to avoid keyboard overlap
+  - Consider bottom position on mobile
+- **Visibility:**
+  - `aria-hidden="true"` when not visible
+  - Remove from tab order when hidden
+  - Use `display: none` or `visibility: hidden` (not just opacity)
 
 **Examples:**
 
@@ -934,12 +1331,54 @@ type BottomSheetState = 'collapsed' | 'half' | 'full';
 
 **Accessibility:**
 
-- `role="dialog"`
-- `aria-modal="true"` when full
-- `aria-label` with sheet purpose
-- Drag handle: `aria-label="Drag to resize"`
-- Keyboard: `Escape` to collapse/close
-- Focus trap when full
+- **Role:** `role="dialog"` when half/full, `role="region"` when collapsed
+- **ARIA Modal:** `aria-modal="true"` when full screen (traps focus)
+- **ARIA Label:** `aria-labelledby="sheet-title-{id}"` or `aria-label="Entity details sheet"`
+- **ARIA Hidden:** `aria-hidden="true"` when fully closed (not just collapsed)
+- **Drag Handle:**
+  - `role="slider"` or `role="separator"`
+  - `aria-label="Drag to resize sheet"`
+  - `aria-orientation="vertical"`
+  - `aria-valuenow="{currentState}"` (0=collapsed, 1=half, 2=full)
+  - `aria-valuetext="{stateLabel}"` ("Collapsed", "Half screen", "Full screen")
+  - `tabindex="0"` (keyboard accessible)
+- **Keyboard Interactions:**
+  - `Escape`: Collapse sheet (or close if already collapsed)
+  - `Arrow Up/Down` on handle: Change sheet state
+  - `Tab`: Navigate content (trapped when full screen)
+  - `Shift+Tab`: Navigate backwards
+- **Focus Management:**
+  - Collapsed: No focus trap, handle is focusable
+  - Half: No focus trap, content remains accessible
+  - Full: Focus trap enabled, Escape to exit
+  - On expand: Focus moves to first interactive element or sheet title
+  - On collapse: Focus returns to trigger element or handle
+  - Save and restore focus appropriately
+- **Touch Gestures:**
+  - Swipe up: Expand sheet
+  - Swipe down: Collapse sheet
+  - Ensure touch target for handle is 44px tall minimum
+- **Screen Reader Announcements:**
+  - State change: "Sheet expanded to {state}" via `aria-live="polite"`
+  - Opening: "Dialog opened" (if modal)
+  - Closing: "Dialog closed"
+  - Use status region for non-modal announcements
+- **Content:**
+  - Scrollable content: `aria-label="Sheet content"` on scroll container
+  - Overflow: Ensure scrollable region is keyboard accessible
+  - Long content: Virtual scrolling for performance
+- **Backdrop (when full):**
+  - Semi-transparent overlay behind sheet
+  - Click to collapse (if not modal)
+  - `aria-hidden="true"` (decorative)
+- **Animation:**
+  - Respect `prefers-reduced-motion`
+  - Instant snap if motion reduced
+  - Otherwise smooth 300ms ease-out
+- **Mobile Optimization:**
+  - Handles touch gestures with appropriate thresholds
+  - Momentum scrolling within content
+  - Safe area insets respected (notch, home indicator)
 
 **Examples:**
 
@@ -1047,11 +1486,53 @@ interface GraphNodeProps {
 
 **Accessibility:**
 
-- `role="button"`
-- `aria-label="Entity: {name} ({type})"`
-- `aria-pressed="true"` if selected
-- Keyboard: `Enter` to select, `Space` to expand
-- Focus visible ring
+- **Role:** `role="button"` (interactive node)
+- **ARIA Label:** `aria-label="{name}, {type}, {connectionCount} connections"`
+  - Example: "Cognitive Load, Concept, 12 connections"
+- **ARIA Pressed:** `aria-pressed="true"` if selected/active
+- **ARIA Describedby:** `aria-describedby="node-tooltip-{id}"` for extended info
+- **Keyboard Interactions:**
+  - `Tab`: Navigate to next node
+  - `Shift+Tab`: Navigate to previous node
+  - `Enter`: Select node (primary action)
+  - `Space`: Expand/show node connections
+  - `Escape`: Deselect node
+  - Arrow keys: Handled by parent GraphCanvas for viewport navigation
+- **Focus Management:**
+  - Each node: `tabindex="0"` or managed by canvas
+  - Focus indicator: 3px ring offset from node circle
+  - High contrast: primary-500 or white (depending on background)
+  - Selected node: Additional visual treatment (thicker border)
+- **States:**
+  - Default: `aria-pressed="false"`
+  - Selected: `aria-pressed="true"`, announced as "selected"
+  - Active: Additional pulse animation (respect prefers-reduced-motion)
+  - Muted: `aria-disabled="true"`, reduced opacity, not interactive
+  - Hover: Tooltip appears (via aria-describedby)
+- **Screen Reader Announcements:**
+  - On selection: "{name} selected, {type} entity"
+  - On expansion: "Showing {count} related entities"
+  - On deselection: "{name} deselected"
+- **Node Label:**
+  - Text label below node is decorative (already in aria-label)
+  - Use `aria-hidden="true"` on label if node has aria-label
+  - Or make label the accessible name source
+- **Tooltip:**
+  - Appears on hover/focus
+  - `role="tooltip"`
+  - `id` referenced by node's `aria-describedby`
+  - Contains full name if truncated, description, connection count
+- **Touch Target:**
+  - Minimum 44x44px for interactive area (expand beyond visual circle if needed)
+  - Use padding/transparent hit area for small nodes
+- **Color Contrast:**
+  - Border color meets 3:1 with background
+  - Text label meets 4.5:1 with background
+  - Focus indicator meets 3:1 with node and background
+- **Animation:**
+  - Respect `prefers-reduced-motion`
+  - Disable pulse/glow animations if motion reduced
+  - Maintain state indication without animation
 
 **Examples:**
 
@@ -1161,10 +1642,53 @@ interface GraphEdgeProps {
 
 **Accessibility:**
 
-- `role="img"`
-- `aria-label="Connection from {source} to {target}"`
-- Not keyboard focusable (navigate via nodes)
-- Tooltip with relationship details on hover
+- **Role:** `role="img"` (represents visual connection)
+- **ARIA Label:** `aria-label="Connection from {source} to {target}"`
+  - If relationship typed: `aria-label="{source} {relationship} {target}"`
+  - Example: "Cognitive Load influences Working Memory"
+  - Directed: Include direction in label
+- **ARIA Describedby:** `aria-describedby="edge-tooltip-{id}"` for detailed relationship info
+- **Keyboard Navigation:**
+  - Edges are not directly keyboard focusable
+  - Navigate via connected nodes (Tab to nodes)
+  - Relationship info announced when node is selected
+  - Alternative: List view of relationships for keyboard users
+- **Hover/Focus:**
+  - Hover triggers tooltip with relationship details
+  - When connected node is focused, related edges can be highlighted
+  - Screen reader announces relationships when node is selected
+- **Tooltip:**
+  - `role="tooltip"`
+  - Contains: Relationship type, strength, description
+  - Example: "influences (strength: 0.8) - Cognitive Load affects the capacity of Working Memory"
+  - Appears on edge hover or when either node is focused
+- **Visual Only:**
+  - Edge is primarily visual representation
+  - Full relationship information provided through:
+    - Node announcements (lists connected entities)
+    - Tooltip on hover
+    - Alternative list view of relationships
+- **Screen Reader Support:**
+  - When node is selected, announce: "{name} connected to {count} entities"
+  - List connected entities in FlowPanel or details view
+  - Provide "View relationships" button for text-based navigation
+- **Arrow/Direction:**
+  - Directional relationships: Include direction in aria-label
+  - "Cognitive Load influences Working Memory" (not bidirectional)
+  - Non-directed: "Connected to" or "Related to"
+- **Label on Edge:**
+  - Relationship label text: `aria-hidden="true"` (already in edge aria-label)
+  - Or make label the primary accessible name source
+- **Color Coding:**
+  - If edges use color for relationship types:
+    - Don't rely solely on color (include label/icon)
+    - Ensure sufficient contrast (3:1 minimum)
+    - Pattern/dash style as additional indicator
+- **Alternative Access:**
+  - Provide "Relationships" list in entity detail panel
+  - Keyboard-accessible list of all connections
+  - "View as list" toggle for non-visual users
+  - List includes all relationship info without requiring graph interaction
 
 **Examples:**
 
@@ -1289,11 +1813,55 @@ interface Viewport {
 
 **Accessibility:**
 
-- `role="application"`
-- `aria-label="Entity relationship graph"`
-- Keyboard: Arrow keys to pan, +/- to zoom, Home to fit
-- Focus management for nodes
-- Screen reader announcements for viewport changes
+- **Role:** `role="application"` (tells screen readers this uses custom keyboard interactions)
+- **ARIA Label:** `aria-label="Entity relationship graph, {nodeCount} entities, {edgeCount} connections"`
+- **ARIA Roledescription:** `aria-roledescription="interactive graph visualization"`
+- **Keyboard Interactions (Graph Navigation):**
+  - `Arrow Keys`: Pan viewport (20px per press, hold for continuous)
+  - `+` or `=`: Zoom in
+  - `-`: Zoom out
+  - `0`: Reset to 100% zoom
+  - `Home`: Fit all nodes in view
+  - `F`: Alternative fit-to-view shortcut
+  - `Tab`: Navigate between graph nodes (logical order)
+  - `Enter` on node: Select/activate node
+  - `Space` on node: Expand node connections
+  - `Escape`: Clear selection
+  - `Ctrl/Cmd + F`: Focus search (if present)
+- **Focus Management:**
+  - Canvas container: `tabindex="0"` (receives focus for arrow key navigation)
+  - Individual nodes: `tabindex="0"` or managed via `aria-activedescendant`
+  - Zoom controls: Standard button focus
+  - Active node highlighted with visible focus ring
+- **Screen Reader Support:**
+  - Viewport changes: Announced via `aria-live="polite"` region
+    - "Zoomed in to {zoom}%"
+    - "Panned to {position}"
+    - "Fit to view, showing all {count} entities"
+  - Node selection: "Selected {entityName}, {entityType}"
+  - Loading: `aria-busy="true"` with "Loading graph" announcement
+  - Empty state: "No entities to display"
+- **Graph Controls:**
+  - Zoom in button: `aria-label="Zoom in"`, keyboard shortcut displayed
+  - Zoom out button: `aria-label="Zoom out"`
+  - Fit view button: `aria-label="Fit all entities in view"`
+  - Reset button: `aria-label="Reset graph view"`
+  - All buttons: minimum 44x44px touch target
+- **Alternative Access:**
+  - Provide text-based entity list as alternative navigation method
+  - "View as list" toggle for non-visual access
+  - Keyboard-only users can navigate via Tab through nodes
+- **Grid Background:**
+  - Decorative only: `aria-hidden="true"`
+  - Or use CSS background (not in DOM)
+- **Animation:**
+  - Respect `prefers-reduced-motion`
+  - Disable pan/zoom animations if motion reduced
+  - Instant transitions instead of smooth
+- **Instructions:**
+  - Provide keyboard shortcuts help: `aria-describedby="graph-instructions-{id}"`
+  - Instructions region: Hidden but accessible
+  - Keyboard shortcut: `?` to show instructions modal
 
 **Examples:**
 
@@ -1399,12 +1967,46 @@ interface FlowPanelProps {
 
 **Accessibility:**
 
-- `role="complementary"`
-- `aria-label="Exploration panel"`
-- `aria-expanded` state
-- Keyboard: `Escape` to close
-- Focus trap when open
-- Resize handle: `aria-label="Resize panel"`
+- **Role:** `role="complementary"` (or `role="region"` with label)
+- **ARIA Label:** `aria-label="Entity exploration panel"` or `aria-labelledby="panel-title-{id}"`
+- **ARIA Hidden:** `aria-hidden="true"` when collapsed (removes from accessibility tree)
+- **ARIA Expanded:** `aria-expanded="true/false"` on toggle button
+- **Keyboard Interactions:**
+  - `Escape`: Close panel and return focus to trigger element
+  - `Tab`: Navigate through panel contents (trapped when open)
+  - `Shift+Tab`: Navigate backwards (trapped within panel)
+  - Panel toggle button: `Enter` or `Space` to open/close
+- **Focus Management (Critical):**
+  - On open: Move focus to first focusable element (usually close button or first interactive element)
+  - Focus trap: Tab cycles within panel boundaries
+  - Save previous focus: Return to it on close
+  - First focusable: Close button or panel title
+  - Last focusable: Last action button in panel
+- **Resize Handle:**
+  - `role="separator"`
+  - `aria-label="Resize exploration panel"`
+  - `aria-orientation="vertical"`
+  - `aria-valuenow="{currentWidth}"`
+  - `aria-valuemin="{minWidth}"`
+  - `aria-valuemax="{maxWidth}"`
+  - Keyboard: `Arrow Left/Right` to resize (10px increments)
+  - Screen reader: Announce width changes "Panel width {width} pixels"
+- **Close Button:**
+  - `aria-label="Close exploration panel"`
+  - Visible and first in focus order
+  - Icon button needs text label
+- **Screen Reader Announcements:**
+  - On open: "Exploration panel opened"
+  - On close: "Exploration panel closed"
+  - Use `aria-live="polite"` region for panel status
+- **Mobile Considerations:**
+  - On mobile, use BottomSheet instead (different focus trap behavior)
+  - Ensure touch target sizes meet 44x44px minimum
+- **Animation:**
+  - Respect `prefers-reduced-motion`
+  - Instant open/close if motion reduced
+  - Otherwise smooth 300ms transition
+- **Touch Target:** Close button minimum 44x44px
 
 **Examples:**
 
@@ -1512,12 +2114,63 @@ interface Tab {
 
 **Accessibility:**
 
-- `role="tablist"`
-- Each tab: `role="tab"`, `aria-selected`
-- Keyboard: Arrow keys to navigate, `Enter`/`Space` to select
-- `aria-controls` pointing to tab panel
-- Focus visible ring
-- Shortcuts registered globally
+- **Role:** `role="tablist"` on container
+- **ARIA Label:** `aria-label="Thinking mode selector"` or `aria-label="View switcher"`
+- **ARIA Orientation:** `aria-orientation="horizontal"` (or "vertical" if vertical tabs)
+- **Each Tab:**
+  - `role="tab"`
+  - `aria-selected="true"` for active tab, `"false"` for others
+  - `aria-controls="tabpanel-{id}"` pointing to associated panel
+  - `aria-label="{TabName} mode"` (e.g., "Flow mode")
+  - `tabindex="0"` for active tab, `"-1"` for inactive tabs
+- **Tab Panel:**
+  - `role="tabpanel"`
+  - `id="tabpanel-{id}"` (referenced by tab's aria-controls)
+  - `aria-labelledby="tab-{id}"` (references controlling tab)
+  - `tabindex="0"` (focusable for keyboard scrolling)
+- **Keyboard Interactions:**
+  - `Tab`: Enter/exit tab list (focus active tab)
+  - `Arrow Left`: Navigate to previous tab (circular)
+  - `Arrow Right`: Navigate to next tab (circular)
+  - `Home`: Jump to first tab
+  - `End`: Jump to last tab
+  - `Enter` or `Space`: Activate focused tab (switch mode)
+  - Shortcuts (if defined): e.g., `Ctrl+1` for first tab
+- **Focus Management:**
+  - Roving tabindex: Only active tab is in tab order
+  - Arrow keys move focus between tabs
+  - Entering tab list focuses active tab
+  - Focus indicator: 2px offset ring
+  - Clear visual distinction for focused vs active tab
+- **States:**
+  - Active: `aria-selected="true"`, visual indicator (border/background)
+  - Inactive: `aria-selected="false"`, muted appearance
+  - Disabled: `aria-disabled="true"`, `tabindex="-1"`, cannot be selected
+  - Hover: Visual feedback (not announced)
+- **Screen Reader Announcements:**
+  - On tab focus: "{TabName}, tab, {position} of {total}"
+  - Active tab: "Selected" appended
+  - On activation: "{TabName} tab selected"
+  - Tab panel content announced when panel gains focus
+- **Badge (Notification Count):**
+  - Visual badge only: Include count in aria-label
+  - Example: `aria-label="Forge mode, 3 notifications"`
+  - Or use `aria-describedby` pointing to badge
+- **Keyboard Shortcuts:**
+  - Display shortcut hints visually (e.g., "⌘1")
+  - Register globally (not just when tab list focused)
+  - Document in instructions or help
+- **Touch Target:**
+  - Minimum 44x44px for each tab
+  - Adequate spacing between tabs for touch accuracy
+- **Color Contrast:**
+  - Active indicator meets 3:1 with background
+  - Text meets 4.5:1 in all states
+  - Disabled tabs meet 3:1 minimum (can be lower opacity)
+- **Icon + Text:**
+  - Icon: `aria-hidden="true"` (decorative, meaning in label)
+  - Text: Provides accessible name
+  - If icon-only: Must have text label (visible or aria-label)
 
 **Examples:**
 

@@ -5,9 +5,9 @@
 **Created:** 2025-12-09
 **Last Updated:** 2025-12-09
 **Depends On:**
-- `04-critical-evaluation.md` (30 issues identified)
-- `05-flow-mode-blueprint.md` (Graph visualization redesign)
-- `06-design-system-spec.md` (Unified tokens & components)
+- `02-critical-evaluation.md` (30 issues identified)
+- `06-flow-mode-blueprint.md` (Graph visualization redesign)
+- `04-design-language-guide.md` (Unified tokens & components)
 
 ---
 
@@ -354,7 +354,7 @@ Based on Blueprint specifications:
 
 ## Phase 4: Component Library
 **Timeline:** Weeks 7-8 (80 hours)
-**Goal:** Build reusable components from Design System Spec, document in Storybook
+**Goal:** Build reusable components from Design Language Guide, document in Storybook
 
 ### Objectives
 - Extract common patterns into shared components
@@ -984,9 +984,9 @@ Features identified but deferred to stay on timeline:
 
 ### References
 
-- **Critical Evaluation:** `04-critical-evaluation.md` (30 UX issues)
-- **Flow Mode Blueprint:** `05-flow-mode-blueprint.md` (Graph visualization spec)
-- **Design System Spec:** `06-design-system-spec.md` (Tokens & components)
+- **Critical Evaluation:** `02-critical-evaluation.md` (30 UX issues)
+- **Flow Mode Blueprint:** `06-flow-mode-blueprint.md` (Graph visualization spec)
+- **Design Language Guide:** `04-design-language-guide.md` (Tokens & components)
 - **Architecture Doc:** `../ARCHITECTURE-AND-INTERACTIONS.md` (API routes)
 - **Gap Analysis:** `../GAP-ANALYSIS-2025-12-09.md` (Implementation status)
 

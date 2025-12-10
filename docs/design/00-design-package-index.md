@@ -43,6 +43,59 @@ The IES (Intelligent Exploration System) consists of four layers:
 
 ---
 
+## Design Decisions
+
+### Aesthetic Direction: Option F (Current IES Enhanced)
+- Maintains visual continuity with existing implementation
+- Dark theme with glassmorphism accents
+- See `08-aesthetic-directions-and-component-systems.md` for alternatives considered
+
+### Component System: System 6 (Headless + Styled Variants)
+- Maximum flexibility and testability
+- Clean separation of behavior and presentation
+- See `08-aesthetic-directions-and-component-systems.md` for full comparison
+
+---
+
+## Getting Started for Developers
+
+### Quick Navigation by Task
+
+| Task | Read These Docs |
+|------|-----------------|
+| **Building a new component** | 04 (tokens) → 05 (specs) → 08 (system architecture) |
+| **Implementing Flow Mode graph** | 06 (blueprint) → 07 Phase 2 (implementation) |
+| **Fixing a UX issue** | 02 (evaluation) → 07 (roadmap phase) |
+| **Setting up design tokens** | 04 → Appendix A (token package) |
+| **Adding accessibility** | 05 (ARIA specs) → 02 (audit findings) |
+| **Choosing styles/theme** | 08 (aesthetics) → playground.html |
+
+### Implementation Order
+
+1. **Phase 0** (Quick Wins): Fix critical UX blockers - selection bar, ARIA labels, error states
+2. **Phase 1** (Foundation): Set up design tokens package, configure Storybook
+3. **Phase 2** (Flow Mode): Implement D3 graph visualization
+4. **Phase 3** (Enhancement): Keyboard nav, animations, performance
+5. **Phase 4** (Components): Build component library in Storybook
+6. **Phase 5** (Mobile): Responsive layouts, touch interactions
+7. **Phase 6** (AI): Conversational UI, smart suggestions
+
+### Key Files to Know
+
+| File | Purpose |
+|------|---------|
+| `ies/design-tokens/` | Design token package (to be created) |
+| `ies/reader/src/` | IES Reader React components |
+| `.worktrees/siyuan/ies/plugin/src/` | SiYuan Plugin Svelte components |
+| `docs/design/` | This design package |
+
+---
+
+## Interactive Tools
+- [Design Playground](./interactive-design-playground.html) - Live theme/component tester (open in browser)
+
+---
+
 ## Key Findings Summary
 
 ### Critical UX Issues Discovered (02-critical-evaluation.md)

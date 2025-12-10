@@ -13,6 +13,7 @@
 1. [Color System](#1-color-system)
 2. [Typography](#2-typography)
 3. [Spacing System](#3-spacing-system)
+   - [Responsive Breakpoints](#35-responsive-breakpoints)
 4. [Animation System](#4-animation-system)
 5. [Interactive States](#5-interactive-states)
 6. [Glass Morphism / Elevation](#6-glass-morphism--elevation)
@@ -453,7 +454,60 @@ Page-level spacing for consistent structure.
 
 ---
 
-### 3.5 Border Radius
+### 3.5 Responsive Breakpoints
+
+Mobile-first breakpoint system (min-width):
+
+| Token | Value | Target |
+|-------|-------|--------|
+| `--breakpoint-sm` | 480px | Mobile landscape |
+| `--breakpoint-md` | 768px | Tablet portrait |
+| `--breakpoint-lg` | 1024px | Tablet landscape |
+| `--breakpoint-xl` | 1280px | Desktop |
+| `--breakpoint-2xl` | 1536px | Wide desktop |
+
+```css
+/* CSS Custom Properties */
+:root {
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* Usage (mobile-first) */
+.component {
+  padding: var(--space-2);  /* Mobile default */
+}
+
+@media (min-width: 768px) {
+  .component {
+    padding: var(--space-4);  /* Tablet+ */
+  }
+}
+
+@media (min-width: 1024px) {
+  .component {
+    padding: var(--space-6);  /* Desktop+ */
+  }
+}
+```
+
+#### Container Widths
+
+| Breakpoint | Max Container Width |
+|------------|---------------------|
+| < sm | 100% (fluid) |
+| sm-md | 100% (fluid) |
+| md-lg | 720px |
+| lg-xl | 960px |
+| xl-2xl | 1140px |
+| > 2xl | 1320px |
+
+---
+
+### 3.6 Border Radius
 
 Modern, subtle rounding for approachable UI without excessive roundness.
 
@@ -1285,3 +1339,81 @@ If migrating from an earlier design system, use this mapping:
 ---
 
 **End of Design Language Guide v2**
+
+## Appendix C: Design Tokens Package Specification
+
+### Package Structure
+```
+ies/design-tokens/
+├── tokens/
+│   ├── colors.json      # Color palette tokens
+│   ├── spacing.json     # Spacing scale (4px base)
+│   ├── typography.json  # Font families, sizes, weights
+│   └── motion.json      # Animation durations, easings
+├── build.js             # Style Dictionary build script
+├── package.json
+├── dist/
+│   ├── tokens.css       # CSS custom properties
+│   ├── tokens.scss      # SCSS variables
+│   └── tokens.ts        # TypeScript constants
+└── README.md
+```
+
+### JSON Schema (Style Dictionary Format)
+
+```json
+// colors.json example
+{
+  "color": {
+    "entity": {
+      "concept": { "value": "#3b82f6" },
+      "person": { "value": "#10b981" },
+      "theory": { "value": "#8b5cf6" }
+    },
+    "bg": {
+      "primary": { "value": "#0a0a0f" },
+      "secondary": { "value": "#12121a" },
+      "tertiary": { "value": "#1a1a24" }
+    }
+  }
+}
+```
+
+### Build Pipeline
+
+```javascript
+// build.js
+const StyleDictionary = require('style-dictionary');
+
+StyleDictionary.buildAllPlatforms({
+  source: ['tokens/**/*.json'],
+  platforms: {
+    css: {
+      transformGroup: 'css',
+      buildPath: 'dist/',
+      files: [{ destination: 'tokens.css', format: 'css/variables' }]
+    },
+    scss: {
+      transformGroup: 'scss',
+      buildPath: 'dist/',
+      files: [{ destination: 'tokens.scss', format: 'scss/variables' }]
+    },
+    ts: {
+      transformGroup: 'js',
+      buildPath: 'dist/',
+      files: [{ destination: 'tokens.ts', format: 'javascript/es6' }]
+    }
+  }
+});
+```
+
+### Usage
+
+```tsx
+// In React components
+import { color, spacing } from '@ies/design-tokens';
+
+// In CSS
+@import '@ies/design-tokens/dist/tokens.css';
+.card { background: var(--color-bg-secondary); }
+```
