@@ -1,5 +1,6 @@
 /* IES Reader - Global Styles */
 @import './styles/design-system.css';
+@import './styles/motion.css';
 
 body {
   display: block;

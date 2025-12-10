@@ -1,0 +1,87 @@
+/**
+ * IES Reader - Motion & Animation System
+ * Accessibility-first approach with prefers-reduced-motion support
+ */
+
+/* ============================================
+   REDUCED MOTION OVERRIDE
+   Respects user's OS-level preference for reduced motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* Disable all animations */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+
+    /* Instant transitions */
+    transition-duration: 0.01ms !important;
+
+    /* Disable smooth scrolling */
+    scroll-behavior: auto !important;
+  }
+
+  /* Ensure spinner animations still work but are minimal */
+  .reader-sync-spinner,
+  .reader-loading-spinner,
+  .flow-panel-spinner {
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   SCROLL BEHAVIOR
+   Smooth scrolling with reduced motion override
+   ============================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ============================================
+   DEFAULT MOTION SETTINGS
+   Only applied when user has no motion preference
+   ============================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Transitions */
+  .reader-sync-indicator,
+  .reader-flow-toggle,
+  .flow-panel,
+  .entity-type-pill {
+    transition: all var(--duration-fast) var(--ease-out);
+  }
+
+  /* Spin animation for loading indicators */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .reader-sync-spinner,
+  .reader-loading-spinner {
+    animation: spin 1s linear infinite;
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Force disable motion on specific elements */
+.no-motion {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Force enable motion (use sparingly) */
+@media (prefers-reduced-motion: no-preference) {
+  .force-motion {
+    animation-duration: var(--duration-base) !important;
+    transition-duration: var(--duration-base) !important;
+  }
+}
