@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IES Design Playground</title>
+  <style>
+    /* ===== CSS RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Default theme (Current IES) */
+      --bg-primary: #0f0f10;
+      --bg-secondary: #1a1a1c;
+      --bg-tertiary: #252528;
+      --bg-hover: #2a2a2e;
+      --bg-active: #323236;
+
+      --text-primary: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-muted: #6e6e73;
+
+      --entity-concept: #3b82f6;
+      --entity-person: #10b981;
+      --entity-theory: #8b5cf6;
+      --entity-framework: #f59e0b;
+      --entity-assessment: #ef4444;
+      --entity-spark: #ec4899;
+      --entity-insight: #06b6d4;
+      --entity-thread: #84cc16;
+
+      --border-subtle: rgba(255, 255, 255, 0.05);
+      --border-default: rgba(255, 255, 255, 0.1);
+      --border-focus: rgba(255, 255, 255, 0.2);
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --radius-full: 9999px;
+
+      --duration-fast: 150ms;
+      --duration-base: 200ms;
+      --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+      --font-sans: 'Inter', -apple-system, system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+      --glass-blur: blur(0px);
+      --glass-bg: var(--bg-secondary);
+    }
+
+    /* ===== THEME VARIATIONS ===== */
+
+    /* Theme A: Obsidian Depths */
+    .theme-obsidian {
+      --bg-primary: #05070a;
+      --bg-secondary: #0a0d12;
+      --bg-tertiary: #111621;
+      --bg-hover: #1a2030;
+      --bg-active: #222d40;
+      --text-primary: #e8edf5;
+      --text-secondary: #8892a6;
+      --text-muted: #5a6478;
+      --entity-concept: #4a9eff;
+      --entity-person: #2dd4a7;
+      --entity-theory: #a78bfa;
+      --entity-framework: #fbbf24;
+      --entity-assessment: #f87171;
+      --entity-spark: #f472b6;
+      --entity-insight: #22d3ee;
+      --entity-thread: #a3e635;
+      --border-subtle: rgba(100, 140, 200, 0.06);
+      --border-default: rgba(100, 140, 200, 0.12);
+      --border-focus: rgba(100, 140, 200, 0.25);
+      --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+      --radius-xl: 8px;
+      --duration-fast: 100ms;
+      --duration-base: 150ms;
+    }
+
+    /* Theme B: Warm Ember */
+    .theme-ember {
+      --bg-primary: #100d0a;
+      --bg-secondary: #1a1612;
+      --bg-tertiary: #252018;
+      --bg-hover: #2e2720;
+      --bg-active: #38302a;
+      --text-primary: #f5f2ed;
+      --text-secondary: #b8a894;
+      --text-muted: #7a6e5f;
+      --entity-concept: #6ea8fe;
+      --entity-person: #69d9a5;
+      --entity-theory: #b794f4;
+      --entity-framework: #ffc078;
+      --entity-assessment: #ff8a8a;
+      --entity-spark: #ff9ec4;
+      --entity-insight: #78dce8;
+      --entity-thread: #c5e478;
+      --border-subtle: rgba(200, 160, 100, 0.06);
+      --border-default: rgba(200, 160, 100, 0.12);
+      --border-focus: rgba(232, 168, 85, 0.4);
+      --font-sans: 'Source Sans Pro', 'Segoe UI', sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --duration-fast: 180ms;
+      --duration-base: 280ms;
+    }
+
+    /* Theme C: Neon Grid */
+    .theme-neon {
+      --bg-primary: #000000;
+      --bg-secondary: #0a0a0a;
+      --bg-tertiary: #141414;
+      --bg-hover: #1a1a1a;
+      --bg-active: #242424;
+      --text-primary: #ffffff;
+      --text-secondary: #888888;
+      --text-muted: #555555;
+      --entity-concept: #00aaff;
+      --entity-person: #00ff88;
+      --entity-theory: #aa55ff;
+      --entity-framework: #ffaa00;
+      --entity-assessment: #ff5555;
+      --entity-spark: #ff55aa;
+      --entity-insight: #00ffff;
+      --entity-thread: #aaff00;
+      --border-subtle: rgba(255, 255, 255, 0.05);
+      --border-default: rgba(255, 255, 255, 0.1);
+      --border-focus: rgba(0, 170, 255, 0.5);
+      --font-sans: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --radius-sm: 0;
+      --radius-md: 0;
+      --radius-lg: 0;
+      --radius-xl: 0;
+      --duration-fast: 80ms;
+      --duration-base: 120ms;
+    }
+
+    /* Theme D: Zen Paper */
+    .theme-zen {
+      --bg-primary: #0e0e0e;
+      --bg-secondary: #161616;
+      --bg-tertiary: #1e1e1e;
+      --bg-hover: #262626;
+      --bg-active: #2e2e2e;
+      --text-primary: #e6e6e6;
+      --text-secondary: #999999;
+      --text-muted: #666666;
+      --entity-concept: #7eb8da;
+      --entity-person: #8fbc8f;
+      --entity-theory: #b8a9c9;
+      --entity-framework: #d4a574;
+      --entity-assessment: #cd5c5c;
+      --entity-spark: #e8a4b8;
+      --entity-insight: #8ecae6;
+      --entity-thread: #adc178;
+      --border-subtle: rgba(255, 255, 255, 0.03);
+      --border-default: rgba(255, 255, 255, 0.06);
+      --border-focus: rgba(196, 168, 124, 0.4);
+      --font-sans: 'Noto Sans', system-ui, sans-serif;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 8px;
+      --radius-xl: 12px;
+      --duration-fast: 300ms;
+      --duration-base: 400ms;
+    }
+
+    /* Theme E: Glass Prism */
+    .theme-glass {
+      --bg-primary: #0a0a0c;
+      --bg-secondary: rgba(20, 20, 24, 0.8);
+      --bg-tertiary: rgba(30, 30, 36, 0.7);
+      --bg-hover: rgba(40, 40, 48, 0.8);
+      --bg-active: rgba(50, 50, 60, 0.85);
+      --text-primary: #f8f8fc;
+      --text-secondary: #a0a0b0;
+      --text-muted: #606070;
+      --entity-concept: #60a5fa;
+      --entity-person: #34d399;
+      --entity-theory: #a78bfa;
+      --entity-framework: #fbbf24;
+      --entity-assessment: #f87171;
+      --entity-spark: #f472b6;
+      --entity-insight: #22d3ee;
+      --entity-thread: #a3e635;
+      --border-subtle: rgba(255, 255, 255, 0.05);
+      --border-default: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(255, 255, 255, 0.15);
+      --font-sans: 'Inter', system-ui, sans-serif;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --glass-blur: blur(16px);
+      --glass-bg: rgba(20, 20, 24, 0.7);
+      --duration-fast: 150ms;
+      --duration-base: 250ms;
+    }
+
+    /* ===== COMPONENT STYLE VARIATIONS ===== */
+
+    /* Style: Minimal */
+    .style-minimal .entity-badge {
+      background: transparent;
+      border: none;
+      padding: 4px 8px;
+    }
+    .style-minimal .entity-badge::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .style-minimal .card {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border-default);
+      border-radius: 0;
+    }
+
+    /* Style: Outlined */
+    .style-outlined .entity-badge {
+      background: transparent;
+      border: 1px solid currentColor;
+    }
+    .style-outlined .card {
+      background: transparent;
+      border: 1px solid var(--border-default);
+    }
+    .style-outlined .button {
+      background: transparent;
+      border: 1px solid var(--border-default);
+    }
+
+    /* Style: Filled */
+    .style-filled .entity-badge {
+      background: currentColor;
+      color: var(--bg-primary) !important;
+    }
+    .style-filled .entity-badge span {
+      color: var(--bg-primary);
+    }
+    .style-filled .card {
+      background: var(--bg-tertiary);
+      border: none;
+    }
+
+    /* Style: Glass */
+    .style-glass .entity-badge,
+    .style-glass .card,
+    .style-glass .panel {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-default);
+    }
+
+    /* Style: Neon */
+    .style-neon .entity-badge {
+      box-shadow: 0 0 10px currentColor;
+      border: 1px solid currentColor;
+      background: rgba(0,0,0,0.5);
+    }
+    .style-neon .card:hover {
+      box-shadow: 0 0 20px var(--entity-concept);
+    }
+    .style-neon .button:hover {
+      box-shadow: 0 0 15px var(--entity-concept);
+    }
+
+    /* ===== SPACING VARIATIONS ===== */
+    .spacing-compact { --space-unit: 0.75; }
+    .spacing-normal { --space-unit: 1; }
+    .spacing-comfortable { --space-unit: 1.25; }
+    .spacing-spacious { --space-unit: 1.5; }
+
+    /* ===== BASE STYLES ===== */
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .playground {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 100vh;
+    }
+
+    @media (max-width: 900px) {
+      .playground {
+        grid-template-columns: 1fr;
+      }
+      .controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 50vh;
+        overflow-y: auto;
+        z-index: 100;
+      }
+    }
+
+    /* ===== CONTROLS PANEL ===== */
+    .controls {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-default);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .controls h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .controls .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .control-section {
+      margin-bottom: 24px;
+    }
+
+    .control-section h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .option-btn {
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+      text-align: left;
+    }
+
+    .option-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .option-btn.active {
+      background: var(--entity-concept);
+      color: white;
+      border-color: var(--entity-concept);
+    }
+
+    .option-btn .label {
+      display: block;
+      font-weight: 500;
+    }
+
+    .option-btn .desc {
+      font-size: 0.6875rem;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    /* ===== PREVIEW AREA ===== */
+    .preview {
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    .preview-header {
+      margin-bottom: 32px;
+    }
+
+    .preview-header h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .preview-header p {
+      color: var(--text-secondary);
+    }
+
+    .component-section {
+      margin-bottom: 48px;
+    }
+
+    .component-section h3 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .component-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: calc(12px * var(--space-unit, 1));
+      margin-bottom: calc(16px * var(--space-unit, 1));
+      align-items: flex-start;
+    }
+
+    /* ===== ENTITY BADGES ===== */
+    .entity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: calc(4px * var(--space-unit, 1)) calc(12px * var(--space-unit, 1));
+      border-radius: var(--radius-full);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: all var(--duration-fast) var(--ease-out);
+      cursor: pointer;
+    }
+
+    .entity-badge:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+
+    .entity-badge.concept { color: var(--entity-concept); background: rgba(59, 130, 246, 0.15); }
+    .entity-badge.person { color: var(--entity-person); background: rgba(16, 185, 129, 0.15); }
+    .entity-badge.theory { color: var(--entity-theory); background: rgba(139, 92, 246, 0.15); }
+    .entity-badge.framework { color: var(--entity-framework); background: rgba(245, 158, 11, 0.15); }
+    .entity-badge.spark { color: var(--entity-spark); background: rgba(236, 72, 153, 0.15); }
+    .entity-badge.insight { color: var(--entity-insight); background: rgba(6, 182, 212, 0.15); }
+
+    .entity-badge .icon {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Geometric shape variants for entity icons */
+    .entity-badge.concept .icon { border-radius: 50%; }           /* Circle */
+    .entity-badge.person .icon { border-radius: 2px; }            /* Square */
+    .entity-badge.theory .icon {
+      border-radius: 0;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);             /* Triangle */
+    }
+    .entity-badge.framework .icon {
+      border-radius: 0;
+      transform: rotate(45deg);                                    /* Diamond */
+      width: 8px;
+      height: 8px;
+    }
+    .entity-badge.spark .icon {
+      border-radius: 0;
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);  /* Star */
+      width: 12px;
+      height: 12px;
+    }
+    .entity-badge.insight .icon {
+      border-radius: 0;
+      clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);  /* Pentagon */
+    }
+    .entity-badge.assessment .icon {
+      border-radius: 0;
+      transform: rotate(45deg);
+      width: 8px;
+      height: 8px;
+    }
+    .entity-badge.thread .icon {
+      width: 14px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* ===== BUTTONS ===== */
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: calc(8px * var(--space-unit, 1)) calc(16px * var(--space-unit, 1));
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .button:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-focus);
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    .button.primary {
+      background: var(--entity-concept);
+      border-color: var(--entity-concept);
+      color: white;
+    }
+
+    .button.primary:hover {
+      opacity: 0.9;
+    }
+
+    .button.ghost {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .button.ghost:hover {
+      background: var(--bg-hover);
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: calc(16px * var(--space-unit, 1));
+      transition: all var(--duration-fast) var(--ease-out);
+      max-width: 360px;
+    }
+
+    .card:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-focus);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: calc(12px * var(--space-unit, 1));
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .card-body {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      margin-bottom: calc(12px * var(--space-unit, 1));
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .card-footer span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Card footer icon shapes */
+    .card-footer .icon {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+    }
+
+    .card-footer .icon.connections {
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      width: 8px;
+      height: 8px;
+      position: relative;
+    }
+    .card-footer .icon.connections::before {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 2px;
+      background: currentColor;
+      top: 1px;
+      left: 6px;
+    }
+    .card-footer .icon.connections::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      top: -2px;
+      left: 10px;
+    }
+
+    .card-footer .icon.time {
+      width: 10px;
+      height: 10px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      position: relative;
+    }
+    .card-footer .icon.time::before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 4px;
+      background: currentColor;
+      top: 1px;
+      left: 3px;
+    }
+    .card-footer .icon.time::after {
+      content: '';
+      position: absolute;
+      width: 3px;
+      height: 2px;
+      background: currentColor;
+      top: 3px;
+      left: 3px;
+    }
+
+    /* ===== SEARCH INPUT ===== */
+    .search-input {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: calc(10px * var(--space-unit, 1)) calc(40px * var(--space-unit, 1));
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-family: inherit;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: var(--entity-concept);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .search-input input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-input .icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      width: 16px;
+      height: 16px;
+    }
+
+    .search-input .icon::before {
+      content: '';
+      display: block;
+      width: 10px;
+      height: 10px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+    }
+
+    .search-input .icon::after {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 2px;
+      background: currentColor;
+      transform: rotate(45deg);
+      position: relative;
+      top: -2px;
+      left: 8px;
+    }
+
+    .search-input .shortcut {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 2px 6px;
+      background: var(--bg-hover);
+      border-radius: 4px;
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== PANEL (Flow Panel) ===== */
+    .panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      max-width: 400px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(16px * var(--space-unit, 1));
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .panel-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .panel-close:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .panel-content {
+      padding: calc(16px * var(--space-unit, 1));
+    }
+
+    /* ===== TABS ===== */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+    }
+
+    .tab {
+      flex: 1;
+      padding: calc(10px * var(--space-unit, 1)) calc(16px * var(--space-unit, 1));
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tab:hover {
+      color: var(--text-primary);
+    }
+
+    .tab.active {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .tab .icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Mode tab icon shapes */
+    .tab .icon.flow {
+      position: relative;
+    }
+    .tab .icon.flow::before {
+      content: '';
+      width: 16px;
+      height: 8px;
+      border: 2px solid currentColor;
+      border-radius: 8px 8px 0 0;
+      border-bottom: none;
+    }
+    .tab .icon.flow::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 8px;
+      border: 2px solid currentColor;
+      border-radius: 0 0 8px 8px;
+      border-top: none;
+      top: 10px;
+    }
+
+    .tab .icon.forge {
+      width: 16px;
+      height: 16px;
+      background: currentColor;
+      clip-path: polygon(35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%);
+    }
+
+    .tab .icon.focus {
+      width: 14px;
+      height: 14px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      position: relative;
+    }
+    .tab .icon.focus::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: currentColor;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .tab .icon.weave {
+      width: 16px;
+      height: 14px;
+      position: relative;
+    }
+    .tab .icon.weave::before,
+    .tab .icon.weave::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 2px;
+      background: currentColor;
+    }
+    .tab .icon.weave::before {
+      top: 2px;
+      transform: rotate(20deg);
+    }
+    .tab .icon.weave::after {
+      bottom: 2px;
+      transform: rotate(-20deg);
+    }
+
+    .tab .icon.frame {
+      width: 14px;
+      height: 12px;
+      border: 2px solid currentColor;
+      border-radius: 2px;
+    }
+
+    /* ===== BREADCRUMBS ===== */
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .breadcrumb-item {
+      padding: calc(6px * var(--space-unit, 1)) calc(12px * var(--space-unit, 1));
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .breadcrumb-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .breadcrumb-item.current {
+      background: var(--entity-concept);
+      color: white;
+    }
+
+    .breadcrumb-sep {
+      color: var(--text-muted);
+    }
+
+    /* ===== GRAPH NODE ===== */
+    .graph-preview {
+      position: relative;
+      height: 300px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .graph-node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all var(--duration-base) var(--ease-out);
+    }
+
+    .graph-node:hover {
+      transform: scale(1.1);
+    }
+
+    .graph-node.selected {
+      transform: scale(1.15);
+    }
+
+    .node-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid;
+      background: var(--bg-secondary);
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    /* Graph node icon shapes */
+    .node-circle .icon {
+      width: 18px;
+      height: 18px;
+      background: currentColor;
+    }
+
+    .graph-node.concept .node-circle .icon {
+      border-radius: 50%;
+      background: var(--entity-concept);
+    }
+    .graph-node.person .node-circle .icon {
+      border-radius: 3px;
+      background: var(--entity-person);
+    }
+    .graph-node.theory .node-circle .icon {
+      background: var(--entity-theory);
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    }
+    .graph-node.framework .node-circle .icon {
+      background: var(--entity-framework);
+      transform: rotate(45deg);
+      width: 14px;
+      height: 14px;
+    }
+
+    .graph-node.concept .node-circle { border-color: var(--entity-concept); }
+    .graph-node.person .node-circle { border-color: var(--entity-person); }
+    .graph-node.theory .node-circle { border-color: var(--entity-theory); }
+    .graph-node.framework .node-circle { border-color: var(--entity-framework); }
+
+    .graph-node.selected .node-circle {
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+    }
+
+    .node-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      max-width: 80px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .graph-edge {
+      position: absolute;
+      height: 2px;
+      background: var(--border-default);
+      transform-origin: left center;
+    }
+
+    /* ===== SYNC STATUS ===== */
+    .sync-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .sync-status.synced { color: var(--entity-person); }
+    .sync-status.syncing { color: var(--entity-concept); }
+    .sync-status.error { color: var(--entity-assessment); }
+
+    .sync-status .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .sync-status.syncing .dot {
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ===== SELECTION BAR ===== */
+    .selection-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .selection-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .selection-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* Selection bar icon shapes */
+    .selection-btn .icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      position: relative;
+    }
+
+    .selection-btn .icon.search::before {
+      content: '';
+      display: block;
+      width: 10px;
+      height: 10px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+    }
+    .selection-btn .icon.search::after {
+      content: '';
+      display: block;
+      width: 5px;
+      height: 2px;
+      background: currentColor;
+      transform: rotate(45deg);
+      position: absolute;
+      top: 11px;
+      left: 9px;
+    }
+
+    .selection-btn .icon.note {
+      border: 2px solid currentColor;
+      border-radius: 2px;
+      width: 12px;
+      height: 14px;
+    }
+    .selection-btn .icon.note::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 2px;
+      width: 6px;
+      height: 1px;
+      background: currentColor;
+      box-shadow: 0 3px 0 currentColor;
+    }
+
+    .selection-btn .icon.highlight {
+      width: 14px;
+      height: 14px;
+      background: currentColor;
+      clip-path: polygon(20% 0%, 80% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%);
+    }
+
+    .selection-btn .icon.copy {
+      position: relative;
+    }
+    .selection-btn .icon.copy::before,
+    .selection-btn .icon.copy::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 12px;
+      border: 2px solid currentColor;
+      border-radius: 2px;
+    }
+    .selection-btn .icon.copy::before {
+      top: 0;
+      left: 0;
+      background: var(--bg-tertiary);
+    }
+    .selection-btn .icon.copy::after {
+      top: 4px;
+      left: 4px;
+      background: var(--bg-tertiary);
+    }
+
+    /* ===== FILTER PILLS ===== */
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: calc(8px * var(--space-unit, 1)) calc(14px * var(--space-unit, 1));
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-full);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .filter-pill:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .filter-pill.active {
+      background: var(--entity-concept);
+      border-color: var(--entity-concept);
+      color: white;
+    }
+
+    .filter-pill.active.concept { background: var(--entity-concept); border-color: var(--entity-concept); }
+    .filter-pill.active.person { background: var(--entity-person); border-color: var(--entity-person); }
+    .filter-pill.active.theory { background: var(--entity-theory); border-color: var(--entity-theory); }
+
+    /* Filter pill icons */
+    .filter-pill .icon {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: currentColor;
+    }
+
+    .filter-pill.concept .icon { border-radius: 50%; }
+    .filter-pill.person .icon { border-radius: 2px; }
+    .filter-pill.theory .icon {
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    }
+    .filter-pill.framework .icon {
+      transform: rotate(45deg);
+      width: 8px;
+      height: 8px;
+    }
+
+    /* ===== QUESTION BADGE ===== */
+    .question-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: calc(6px * var(--space-unit, 1)) calc(12px * var(--space-unit, 1));
+      border-radius: var(--radius-md);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .question-badge .icon {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: currentColor;
+    }
+
+    .question-badge.schema { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .question-badge.boundary { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .question-badge.causal { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .question-badge.counterfactual { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+    .question-badge.meta { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+
+    /* Question badge icon shapes */
+    .question-badge.schema .icon {
+      clip-path: polygon(0% 100%, 50% 0%, 100% 100%, 80% 100%, 80% 40%, 50% 20%, 20% 40%, 20% 100%);  /* Building/structure */
+    }
+    .question-badge.boundary .icon {
+      border: 2px solid currentColor;
+      background: transparent;
+      border-radius: 2px;  /* Box outline */
+    }
+    .question-badge.causal .icon {
+      clip-path: polygon(30% 0%, 70% 0%, 70% 40%, 100% 40%, 50% 100%, 0% 40%, 30% 40%);  /* Arrow/bolt */
+    }
+    .question-badge.counterfactual .icon {
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      background: transparent;  /* Empty circle - possibility */
+    }
+    .question-badge.meta .icon {
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      border: 2px solid currentColor;
+      background: transparent;
+      position: relative;
+    }
+    .question-badge.meta .icon::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: currentColor;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ===== EXPORT SECTION ===== */
+    .export-section {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-default);
+    }
+
+    .export-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--entity-concept);
+      border: none;
+      border-radius: var(--radius-md);
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .export-btn:hover {
+      opacity: 0.9;
+    }
+
+    .current-config {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+    }
+
+    /* ===== NEON GRID BACKGROUND ===== */
+    .theme-neon .preview {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    /* ===== ZEN MINIMAL ADJUSTMENTS ===== */
+    .theme-zen .card {
+      border: none;
+      border-bottom: 1px solid var(--border-default);
+      border-radius: 0;
+    }
+
+    .theme-zen .entity-badge {
+      background: transparent;
+      border-radius: 0;
+      border-bottom: 2px solid currentColor;
+      padding: 2px 0;
+    }
+  </style>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600&family=Source+Code+Pro:wght@400;500&family=Source+Sans+Pro:wght@400;600&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="playground" id="playground">
+    <!-- Controls Panel -->
+    <div class="controls">
+      <h1>IES Design Playground</h1>
+      <p class="subtitle">Mix and match to find your perfect combination</p>
+
+      <!-- Theme Selection -->
+      <div class="control-section">
+        <h2>Aesthetic Direction</h2>
+        <div class="option-grid">
+          <button class="option-btn active" data-theme="default" onclick="setTheme('default')">
+            <span class="label">Current IES</span>
+            <span class="desc">Familiar, balanced</span>
+          </button>
+          <button class="option-btn" data-theme="obsidian" onclick="setTheme('obsidian')">
+            <span class="label">Obsidian</span>
+            <span class="desc">Deep, technical</span>
+          </button>
+          <button class="option-btn" data-theme="ember" onclick="setTheme('ember')">
+            <span class="label">Warm Ember</span>
+            <span class="desc">Cozy, inviting</span>
+          </button>
+          <button class="option-btn" data-theme="neon" onclick="setTheme('neon')">
+            <span class="label">Neon Grid</span>
+            <span class="desc">Cyberpunk</span>
+          </button>
+          <button class="option-btn" data-theme="zen" onclick="setTheme('zen')">
+            <span class="label">Zen Paper</span>
+            <span class="desc">Minimal, calm</span>
+          </button>
+          <button class="option-btn" data-theme="glass" onclick="setTheme('glass')">
+            <span class="label">Glass Prism</span>
+            <span class="desc">Modern blur</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Component Style -->
+      <div class="control-section">
+        <h2>Component Style</h2>
+        <div class="option-grid">
+          <button class="option-btn active" data-style="default" onclick="setStyle('default')">
+            <span class="label">Default</span>
+            <span class="desc">Filled + border</span>
+          </button>
+          <button class="option-btn" data-style="minimal" onclick="setStyle('minimal')">
+            <span class="label">Minimal</span>
+            <span class="desc">Text only</span>
+          </button>
+          <button class="option-btn" data-style="outlined" onclick="setStyle('outlined')">
+            <span class="label">Outlined</span>
+            <span class="desc">Border focus</span>
+          </button>
+          <button class="option-btn" data-style="filled" onclick="setStyle('filled')">
+            <span class="label">Filled</span>
+            <span class="desc">Solid colors</span>
+          </button>
+          <button class="option-btn" data-style="glass" onclick="setStyle('glass')">
+            <span class="label">Glass</span>
+            <span class="desc">Backdrop blur</span>
+          </button>
+          <button class="option-btn" data-style="neon" onclick="setStyle('neon')">
+            <span class="label">Neon</span>
+            <span class="desc">Glow effects</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Spacing -->
+      <div class="control-section">
+        <h2>Spacing Density</h2>
+        <div class="option-grid">
+          <button class="option-btn" data-spacing="compact" onclick="setSpacing('compact')">
+            <span class="label">Compact</span>
+            <span class="desc">Dense info</span>
+          </button>
+          <button class="option-btn active" data-spacing="normal" onclick="setSpacing('normal')">
+            <span class="label">Normal</span>
+            <span class="desc">Balanced</span>
+          </button>
+          <button class="option-btn" data-spacing="comfortable" onclick="setSpacing('comfortable')">
+            <span class="label">Comfortable</span>
+            <span class="desc">Relaxed</span>
+          </button>
+          <button class="option-btn" data-spacing="spacious" onclick="setSpacing('spacious')">
+            <span class="label">Spacious</span>
+            <span class="desc">Breathing room</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div class="export-section">
+        <button class="export-btn" onclick="exportConfig()">Export Configuration</button>
+        <div class="current-config" id="currentConfig">
+Theme: default
+Style: default
+Spacing: normal
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Area -->
+    <div class="preview">
+      <div class="preview-header">
+        <h2>Component Preview</h2>
+        <p>Interactive preview of all components with your selected configuration</p>
+      </div>
+
+      <!-- Entity Badges -->
+      <div class="component-section">
+        <h3>Entity Badges</h3>
+        <div class="component-row">
+          <span class="entity-badge concept"><span class="icon"></span> Concept</span>
+          <span class="entity-badge person"><span class="icon"></span> Person</span>
+          <span class="entity-badge theory"><span class="icon"></span> Theory</span>
+          <span class="entity-badge framework"><span class="icon"></span> Framework</span>
+          <span class="entity-badge spark"><span class="icon"></span> Spark</span>
+          <span class="entity-badge insight"><span class="icon"></span> Insight</span>
+        </div>
+      </div>
+
+      <!-- Question Badges -->
+      <div class="component-section">
+        <h3>Question Class Badges</h3>
+        <div class="component-row">
+          <span class="question-badge schema"><span class="icon"></span> Schema-Probe</span>
+          <span class="question-badge boundary"><span class="icon"></span> Boundary</span>
+          <span class="question-badge causal"><span class="icon"></span> Causal</span>
+          <span class="question-badge counterfactual"><span class="icon"></span> What-If</span>
+          <span class="question-badge meta"><span class="icon"></span> Meta</span>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="component-section">
+        <h3>Buttons</h3>
+        <div class="component-row">
+          <button class="button">Default</button>
+          <button class="button primary">Primary</button>
+          <button class="button ghost">Ghost</button>
+          <button class="button" disabled>Disabled</button>
+        </div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="component-section">
+        <h3>Search Input</h3>
+        <div class="component-row">
+          <div class="search-input">
+            <span class="icon"></span>
+            <input type="text" placeholder="Search entities...">
+            <span class="shortcut">Cmd+K</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="component-section">
+        <h3>Filter Pills</h3>
+        <div class="filter-pills">
+          <button class="filter-pill active concept" onclick="this.classList.toggle('active')">
+            <span class="icon"></span> Concepts
+          </button>
+          <button class="filter-pill active person" onclick="this.classList.toggle('active')">
+            <span class="icon"></span> People
+          </button>
+          <button class="filter-pill theory" onclick="this.classList.toggle('active')">
+            <span class="icon"></span> Theories
+          </button>
+          <button class="filter-pill framework" onclick="this.classList.toggle('active')">
+            <span class="icon"></span> Frameworks
+          </button>
+        </div>
+      </div>
+
+      <!-- Sync Status -->
+      <div class="component-section">
+        <h3>Sync Status Indicators</h3>
+        <div class="component-row">
+          <span class="sync-status synced"><span class="dot"></span> Synced</span>
+          <span class="sync-status syncing"><span class="dot"></span> Syncing...</span>
+          <span class="sync-status error"><span class="dot"></span> Error</span>
+        </div>
+      </div>
+
+      <!-- Breadcrumbs -->
+      <div class="component-section">
+        <h3>Breadcrumb Trail</h3>
+        <div class="breadcrumbs">
+          <div class="breadcrumb">
+            <span class="breadcrumb-item">Cognitive Load</span>
+            <span class="breadcrumb-sep">→</span>
+          </div>
+          <div class="breadcrumb">
+            <span class="breadcrumb-item">Working Memory</span>
+            <span class="breadcrumb-sep">→</span>
+          </div>
+          <div class="breadcrumb">
+            <span class="breadcrumb-item current">Miller's Law</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selection Bar -->
+      <div class="component-section">
+        <h3>Selection Bar</h3>
+        <div class="component-row">
+          <div class="selection-bar">
+            <button class="selection-btn" title="Look up"><span class="icon search"></span></button>
+            <button class="selection-btn" title="Add note"><span class="icon note"></span></button>
+            <button class="selection-btn" title="Highlight"><span class="icon highlight"></span></button>
+            <button class="selection-btn" title="Copy"><span class="icon copy"></span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="component-section">
+        <h3>Mode Tabs</h3>
+        <div class="component-row" style="max-width: 500px;">
+          <div class="tabs">
+            <button class="tab active" onclick="setActiveTab(this)">
+              <span class="icon flow"></span>
+              Flow
+            </button>
+            <button class="tab" onclick="setActiveTab(this)">
+              <span class="icon forge"></span>
+              Forge
+            </button>
+            <button class="tab" onclick="setActiveTab(this)">
+              <span class="icon focus"></span>
+              Focus
+            </button>
+            <button class="tab" onclick="setActiveTab(this)">
+              <span class="icon weave"></span>
+              Weave
+            </button>
+            <button class="tab" onclick="setActiveTab(this)">
+              <span class="icon frame"></span>
+              Frame
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entity Cards -->
+      <div class="component-section">
+        <h3>Entity Cards</h3>
+        <div class="component-row" style="align-items: stretch;">
+          <div class="card">
+            <div class="card-header">
+              <span class="entity-badge concept"><span class="icon"></span></span>
+              <span class="card-title">Cognitive Load</span>
+            </div>
+            <div class="card-body">
+              The amount of mental effort being used in working memory. High cognitive load can impair learning and decision-making.
+            </div>
+            <div class="card-footer">
+              <span><span class="icon connections"></span> 12 connections</span>
+              <span><span class="icon time"></span> 2h ago</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="entity-badge person"><span class="icon"></span></span>
+              <span class="card-title">John Sweller</span>
+            </div>
+            <div class="card-body">
+              Educational psychologist who developed Cognitive Load Theory, providing a framework for instructional design.
+            </div>
+            <div class="card-footer">
+              <span><span class="icon connections"></span> 8 connections</span>
+              <span><span class="icon time"></span> 1d ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flow Panel -->
+      <div class="component-section">
+        <h3>Flow Panel</h3>
+        <div class="component-row">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Entity Details</span>
+              <button class="panel-close">X</button>
+            </div>
+            <div class="panel-content">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <span class="entity-badge concept"><span class="icon"></span></span>
+                <span class="card-title">Working Memory</span>
+              </div>
+              <div class="card-body">
+                A cognitive system with limited capacity responsible for temporarily holding information available for processing.
+              </div>
+              <div style="margin-top: 16px;">
+                <h4 style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Related Entities</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  <span class="entity-badge concept" style="font-size: 0.75rem;"><span class="icon"></span> Attention</span>
+                  <span class="entity-badge theory" style="font-size: 0.75rem;"><span class="icon"></span> CLT</span>
+                  <span class="entity-badge person" style="font-size: 0.75rem;"><span class="icon"></span> Baddeley</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graph Preview -->
+      <div class="component-section">
+        <h3>Graph Visualization</h3>
+        <div class="graph-preview" id="graphPreview">
+          <!-- Edges (rendered behind nodes) -->
+          <div class="graph-edge" style="left: 180px; top: 125px; width: 100px; transform: rotate(20deg);"></div>
+          <div class="graph-edge" style="left: 180px; top: 145px; width: 120px; transform: rotate(-15deg);"></div>
+          <div class="graph-edge" style="left: 180px; top: 135px; width: 140px; transform: rotate(45deg);"></div>
+
+          <!-- Nodes -->
+          <div class="graph-node concept selected" style="left: 130px; top: 110px;" onclick="selectNode(this)">
+            <div class="node-circle"><span class="icon"></span></div>
+            <span class="node-label">Cognitive Load</span>
+          </div>
+          <div class="graph-node theory" style="left: 280px; top: 80px;" onclick="selectNode(this)">
+            <div class="node-circle"><span class="icon"></span></div>
+            <span class="node-label">CLT</span>
+          </div>
+          <div class="graph-node person" style="left: 300px; top: 180px;" onclick="selectNode(this)">
+            <div class="node-circle"><span class="icon"></span></div>
+            <span class="node-label">John Sweller</span>
+          </div>
+          <div class="graph-node concept" style="left: 80px; top: 220px;" onclick="selectNode(this)">
+            <div class="node-circle"><span class="icon"></span></div>
+            <span class="node-label">Working Memory</span>
+          </div>
+          <div class="graph-node framework" style="left: 320px; top: 50px;" onclick="selectNode(this)">
+            <div class="node-circle"><span class="icon"></span></div>
+            <span class="node-label">Chunking</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentTheme = 'default';
+    let currentStyle = 'default';
+    let currentSpacing = 'normal';
+
+    // Theme classes
+    const themeClasses = ['theme-obsidian', 'theme-ember', 'theme-neon', 'theme-zen', 'theme-glass'];
+    const styleClasses = ['style-minimal', 'style-outlined', 'style-filled', 'style-glass', 'style-neon'];
+    const spacingClasses = ['spacing-compact', 'spacing-normal', 'spacing-comfortable', 'spacing-spacious'];
+
+    function setTheme(theme) {
+      currentTheme = theme;
+      const playground = document.getElementById('playground');
+
+      // Remove all theme classes
+      themeClasses.forEach(c => playground.classList.remove(c));
+
+      // Add new theme class
+      if (theme !== 'default') {
+        playground.classList.add(`theme-${theme}`);
+      }
+
+      // Update button states
+      document.querySelectorAll('[data-theme]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+      });
+
+      updateConfig();
+    }
+
+    function setStyle(style) {
+      currentStyle = style;
+      const playground = document.getElementById('playground');
+
+      // Remove all style classes
+      styleClasses.forEach(c => playground.classList.remove(c));
+
+      // Add new style class
+      if (style !== 'default') {
+        playground.classList.add(`style-${style}`);
+      }
+
+      // Update button states
+      document.querySelectorAll('[data-style]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.style === style);
+      });
+
+      updateConfig();
+    }
+
+    function setSpacing(spacing) {
+      currentSpacing = spacing;
+      const playground = document.getElementById('playground');
+
+      // Remove all spacing classes
+      spacingClasses.forEach(c => playground.classList.remove(c));
+
+      // Add new spacing class
+      playground.classList.add(`spacing-${spacing}`);
+
+      // Update button states
+      document.querySelectorAll('[data-spacing]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.spacing === spacing);
+      });
+
+      updateConfig();
+    }
+
+    function setActiveTab(tab) {
+      tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    }
+
+    function selectNode(node) {
+      document.querySelectorAll('.graph-node').forEach(n => n.classList.remove('selected'));
+      node.classList.add('selected');
+    }
+
+    function updateConfig() {
+      const themeNames = {
+        'default': 'Current IES (F)',
+        'obsidian': 'Obsidian Depths (A)',
+        'ember': 'Warm Ember (B)',
+        'neon': 'Neon Grid (C)',
+        'zen': 'Zen Paper (D)',
+        'glass': 'Glass Prism (E)'
+      };
+
+      const styleNames = {
+        'default': 'Default (filled + border)',
+        'minimal': 'Minimal (text only)',
+        'outlined': 'Outlined (border focus)',
+        'filled': 'Filled (solid colors)',
+        'glass': 'Glass (backdrop blur)',
+        'neon': 'Neon (glow effects)'
+      };
+
+      const spacingNames = {
+        'compact': 'Compact (0.75x)',
+        'normal': 'Normal (1x)',
+        'comfortable': 'Comfortable (1.25x)',
+        'spacious': 'Spacious (1.5x)'
+      };
+
+      document.getElementById('currentConfig').textContent =
+`Theme: ${themeNames[currentTheme]}
+Style: ${styleNames[currentStyle]}
+Spacing: ${spacingNames[currentSpacing]}
+
+CSS Variables to copy:
+--theme: ${currentTheme}
+--component-style: ${currentStyle}
+--space-unit: ${currentSpacing === 'compact' ? '0.75' : currentSpacing === 'normal' ? '1' : currentSpacing === 'comfortable' ? '1.25' : '1.5'}`;
+    }
+
+    function exportConfig() {
+      const config = {
+        theme: currentTheme,
+        style: currentStyle,
+        spacing: currentSpacing,
+        timestamp: new Date().toISOString()
+      };
+
+      const configStr = JSON.stringify(config, null, 2);
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(configStr).then(() => {
+        alert('Configuration copied to clipboard!\n\n' + configStr);
+      }).catch(() => {
+        alert('Configuration:\n\n' + configStr);
+      });
+    }
+
+    // Initialize
+    setSpacing('normal');
+  </script>
+</body>
+</html>
