@@ -1,5 +1,8 @@
 # SiYuan Note Schema for AI Navigation
 
+> **DEPRECATED:** This document is outdated. See `docs/SIYUAN-FOLDER-STRUCTURE.md` for the current source of truth.
+> The folder structure has changed significantly (no `/Mind/` hierarchy, different organization).
+
 **Created:** 2025-12-08
 **Purpose:** Define uniform note structure enabling AI to navigate, read, and edit notes in the IES system.
 

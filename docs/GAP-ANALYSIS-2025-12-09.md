@@ -1,7 +1,7 @@
 # Implementation Gap Analysis — Redux Specs vs Current State
 
 **Created:** 2025-12-09
-**Updated:** 2025-12-09 (Journey Continuity API complete)
+**Updated:** 2025-12-09 (Phase 2c 100% — Journey Pattern Analysis complete)
 **Purpose:** Map redux specifications to implemented features, identify gaps, prioritize next work
 
 > **Ground Truth:** For system design and semantics, see `docs/IES-SYSTEM-DESIGN.md`.
@@ -18,7 +18,7 @@ The `redux/` directory contains detailed specifications for the Context + Questi
 3. **What's missing** — Features not yet started
 4. **Priority recommendations** — What to build next
 
-**Overall Status:** ~99% of redux specifications implemented (updated Dec 9 — Journey Continuity API complete)
+**Overall Status:** 100% of redux specifications implemented (Phase 2c complete Dec 9)
 
 ---
 
@@ -641,6 +641,99 @@ ies/reader/src/services/
 
 ---
 
+## UX/Frontend Gaps (Dec 9 Journey Analysis)
+
+> **Source:** `USER-JOURNEY-ANALYSIS-2025-12-09.md` + `CROSS-APP-JOURNEY-ANALYSIS-2025-12-09.md`
+> **Verdict:** "Feature-complete backend, experience-poor frontend"
+
+### Statistics
+
+| Metric | Count |
+|--------|-------|
+| Total Issues | 67 |
+| CRITICAL | 18 |
+| HIGH | 24 |
+| Backend features with zero UI | 12 |
+| Stub hooks | 4 |
+
+### P0 — Critical (Blocks Real-World Use)
+
+| # | Issue | Location | Impact | Effort |
+|---|-------|----------|--------|--------|
+| 1 | **Entity overlay is 1-line stub** | `useEntityHighlighter.ts`, `useEntityOverlay.ts`, `useEntityLookup.ts` | Flagship feature broken — entity buttons do nothing | 20h |
+| 2 | **No session resume dialog** | `App.tsx:42` — TODO comment | Users lose position on restart despite backend saving it | 4h |
+| 3 | **Library browser is stub** | `LibraryBrowser.tsx` (20 lines) | Cannot browse Calibre library | 16h |
+| 4 | **Notes are write-only** | `NotesSheet.tsx` — no browse UI | Users capture notes but can never retrieve them | 12h |
+| 5 | **No question delete/edit** | `QuestionSelector.tsx` — missing handlers | Typos permanent, creates ADHD shame | 5h |
+| 6 | **Selection bar off-screen** | `Reader.tsx:195-208` | Core interaction broken on mobile/top selections | 2h |
+| 7 | **No sync status indicator** | `flowStore.ts` has state, no UI | Users can't tell if changes saved, silent failures | 3h |
+| 8 | **Journey trail not displayed** | Backend tracks, no visualization | Cross-app exploration path invisible | 6h |
+| 9 | **No deep linking UI** | Backend `/continue` endpoint ready | Can't navigate between apps despite backend support | 4h |
+| 10 | **Entity visits not auto-tracked** | `addEntityVisit()` never called | Journey trail incomplete for Reader | 4h |
+
+### P1 — High (Degrades Experience)
+
+| # | Issue | Location | Impact | Effort |
+|---|-------|----------|--------|--------|
+| 11 | **No first-run tutorial** | `App.tsx`, `Dashboard.svelte` | Users see complex UI with no explanation | 6h |
+| 12 | **Flow Panel hidden by default** | `Reader.tsx` panel state | Users never discover core feature | 2h |
+| 13 | **Journey trail asymmetry** | Reader read-only, SiYuan writes | Reader entity visits invisible to SiYuan | 4h |
+| 14 | **No error recovery UI** | Both apps log to console only | Network failures = silent data loss | 8h |
+| 15 | **No conflict resolution** | Last-write-wins, no UI | Simultaneous edits silently overwrite | 12h |
+| 16 | **No session timeout warning** | 30min timeout, no notice | Sessions expire without warning | 3h |
+| 17 | **TOC navigation missing** | epub.js provides data, no UI | Cannot navigate long books | 8h |
+| 18 | **Progress indicator missing** | Data extracted, never displayed | Users disoriented in long books | 6h |
+| 19 | **Energy filtering no UI** | `/personal/sparks/by-energy` ready | ADHD energy navigation unavailable | 4h |
+| 20 | **Resonance signals no capture UI** | 8 signals in backend | Emotional retrieval cues lost | 6h |
+
+### P2 — Medium (Usability Friction)
+
+| # | Issue | Location | Impact | Effort |
+|---|-------|----------|--------|--------|
+| 21 | **No activity timeline UI** | `GET /session-state/{user_id}/history` unused | Can't review exploration history | 8h |
+| 22 | **No dwell time tracking** | Backend supports `dwell_seconds` | Can't analyze time spent on entities | 4h |
+| 23 | **No last-app-source indicator** | Backend tracks, UI doesn't show | Users can't see which app was last active | 2h |
+| 24 | **Keyboard navigation missing** | FlowMode.svelte — zero handlers | Power users and accessibility blocked | 12h |
+| 25 | **Mobile bottom sheet not draggable** | FlowPanel fixed at 60vh | Blocks 60% of screen permanently | 8h |
+
+### State Transfer Matrix (Cross-App)
+
+| State Field | Reader → SiYuan | SiYuan → Reader | UI Status |
+|-------------|-----------------|-----------------|-----------|
+| `active_context_id` | ✅ Writes | ✅ Reads | No indicator |
+| `active_question_id` | ✅ Writes | ✅ Reads | No indicator |
+| `current_book` (CFI) | ✅ Writes | 🟡 Read-only | No indicator |
+| `journey_trail` | 🔴 Read-only | ✅ Writes | **No UI** |
+| `current_entity_id` | 🟡 Manual only | ✅ Writes | **No UI** |
+| Deep links | Backend ready | Backend ready | **No buttons** |
+| Sync status | State exists | State exists | **No UI** |
+
+### Recommended Sprint: UX Foundation (Week 1, ~40h)
+
+| Task | Effort | Impact |
+|------|--------|--------|
+| Fix selection bar positioning | 2h | Core interaction |
+| Add question delete/edit buttons | 5h | ADHD forgiveness |
+| Add sync status indicator | 3h | User confidence |
+| Resume reading position on book open | 2h | Session continuity |
+| Add resume dialog in App.tsx | 4h | Session UX |
+| Display journey trail breadcrumb | 6h | Navigation context |
+| Auto-track entity visits in Reader | 4h | Complete journey data |
+| Add "Open in Reader" buttons | 4h | Cross-app navigation |
+| Wire notes to browse/search UI | 8h | Data retrieval |
+| First-run tutorial overlay | 6h | Onboarding |
+
+### Root Cause
+
+Features built in isolation without:
+- End-to-end journey testing
+- User validation
+- Holistic UX design
+
+**The gap is not capability—it's translation.** Every missing feature has backend support.
+
+---
+
 ## Dec 9 Spec Compliance Audit Findings
 
 **Audit Date:** 2025-12-09
@@ -679,7 +772,10 @@ ies/reader/src/services/
 
 **P2 - Important:**
 1. Discovery Mode clarification (spec vs implementation)
-2. Journey pattern analysis service
+2. ~~Journey pattern analysis service~~ ✅ **COMPLETE** (Dec 9)
+   - Added `JourneyPatternService` with entity clustering, path detection, recommendations
+   - New API: `GET /journey-patterns/user/{user_id}`, `GET /journey-patterns/context/{context_id}`
+   - 14 new tests (457 total backend tests)
 3. Passage ranking endpoint fix (`POST /rank-passages` → `GET /relevant-passages`)
 
 ### Code-Doc Sync Issues Fixed
